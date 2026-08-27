@@ -1,0 +1,96 @@
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.animate-spin-slow {
+  animation: spin 3s linear infinite;
+}
+@import "tailwindcss";
+
+/* Snappy button feedback */
+button {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+@media print {
+
+  /* Force exact background colors and graphic details to print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Set clean page layout margins (A4 standard) */
+  @page {
+    size: A4 portrait;
+    margin: 12mm 15mm;
+  }
+
+  /* Reset layout constraints so the pages break and print properly beyond the first page */
+  html, body, #root, .min-h-screen, main, .h-screen {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    position: static !important;
+    background: #ffffff !important;
+    color: #1e293b !important;
+  }
+
+  /* Hide navigation sidebar, back buttons, warnings, header controllers completely */
+  .print\:hidden,
+  aside,
+  header,
+  .sidebar,
+  [role="navigation"],
+  button:not(.print-visible),
+  .logo-selector,
+  .back-btn-container,
+  .warning-banner {
+    display: none !important;
+  }
+
+  /* Make sure container handles full-width layout with zero background limits */
+  .max-w-7xl, .max-w-5xl {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Prevent sections, cards, and tables from breaking ugly in the middle of a page */
+  .break-inside-avoid,
+  .card,
+  tr,
+  li {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Ensure card backgrounds and borders look crisp and elegant in high contrast */
+  .bg-slate-50, .bg-slate-50\/55, .bg-blue-50, .bg-emerald-50\/50, .bg-rose-50\/50, .bg-slate-100 {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  /* Ensure text colors are high-contrast for readability */
+  .text-slate-800, .text-slate-900 {
+    color: #0f172a !important;
+  }
+  .text-slate-600, .text-slate-500 {
+    color: #334155 !important;
+  }
+
+  /* Charts should span full width in print since sidebars/controls are hidden */
+  .xl\:col-span-3, .xl\:col-span-2 {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex-basis: 100% !important;
+  }
+}
+

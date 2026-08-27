@@ -1,0 +1,262 @@
+{
+  "entities": {
+    "Empresa": {
+      "title": "Empresa",
+      "description": "Dados da empresa cliente",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nome": { "type": "string" },
+        "razaoSocial": { "type": "string" },
+        "nomeFantasia": { "type": "string" },
+        "cnpj": { "type": "string" },
+        "tipoEmpresa": { "type": "string" },
+        "cafNumero": { "type": "string" },
+        "dataCadastro": { "type": "string", "format": "date-time" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["nome", "ownerId"]
+    },
+    "Premissa": {
+      "title": "Premissa",
+      "description": "Premissas/Perguntas base para o diagnóstico",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "idProblema": { "type": "string" },
+        "problema": { "type": "string" },
+        "peso": { "type": "number" },
+        "pergunta": { "type": "string" }
+      },
+      "required": ["idProblema", "problema", "pergunta", "peso"]
+    },
+    "Problema": {
+      "title": "Problema",
+      "description": "Biblioteca de problemas por área",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "descricao_problemas": { "type": "string" },
+        "area": { "type": "string" },
+        "impacto": { "type": "string" },
+        "NivelMaturidade": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["descricao_problemas", "area", "impacto", "NivelMaturidade"]
+    },
+    "Diagnostico": {
+      "title": "Diagnóstico",
+      "description": "Registro de um diagnóstico realizado",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "empresaId": { "type": "string" },
+        "dataDiagnostico": { "type": "string", "format": "date-time" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["empresaId", "ownerId"]
+    },
+    "Resposta": {
+      "title": "Resposta",
+      "description": "Resposta individual para cada premissa no diagnóstico",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "diagnosticoId": { "type": "string" },
+        "premissaId": { "type": "string" },
+        "idProblema": { "type": "string" },
+        "problema": { "type": "string" },
+        "pergunta": { "type": "string" },
+        "peso": { "type": "number" },
+        "resposta": { "type": "string", "enum": ["Sim", "Não", "Parcial"] },
+        "observacao": { "type": "string" },
+        "score": { "type": "number" }
+      },
+      "required": ["diagnosticoId", "premissaId", "resposta", "peso"]
+    },
+    "Solucao": {
+      "title": "Solução",
+      "description": "Soluções recomendadas para os problemas",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "idProblema": { "type": "string" },
+        "problema": { "type": "string" },
+        "area": { "type": "string" },
+        "solucao_recomendada": { "type": "string" },
+        "acoes_sugeridas": { "type": "string" },
+        "prazo_sugerido": { "type": "string" },
+        "responsavel_sugerido": { "type": "string" },
+        "kpis_sugeridos": { "type": "string" },
+        "resultado_esperado": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["idProblema", "problema", "area", "solucao_recomendada"]
+    },
+    "TarefaPlanoAcao": {
+      "title": "Tarefa do Plano de Ação",
+      "description": "Tarefa gerada a partir do diagnóstico para o plano de ação",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "diagnosticoId": { "type": "string" },
+        "empresaId": { "type": "string" },
+        "idProblema": { "type": "string" },
+        "problema": { "type": "string" },
+        "area": { "type": "string" },
+        "solucaoSugerida": { "type": "string" },
+        "acoes": { "type": "string" },
+        "status": { "type": "string", "enum": ["Pendente", "Em Andamento", "Concluído"] },
+        "prioridade": { "type": "string", "enum": ["Baixa", "Média", "Alta"] },
+        "responsavel": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "evidenciaUrl": { "type": "string" },
+        "evidenciaNome": { "type": "string" },
+        "dataVencimento": { "type": "string" },
+        "lembreteEmail": { "type": "boolean" },
+        "lembreteWhatsapp": { "type": "boolean" },
+        "lembretePush": { "type": "boolean" },
+        "lembreteDiasAntes": { "type": "number" },
+        "lembreteContato": { "type": "string" }
+      },
+      "required": ["diagnosticoId", "empresaId", "idProblema", "problema", "status", "prioridade", "ownerId"]
+    },
+    "AgendaEvento": {
+      "title": "Evento de Agenda",
+      "description": "Compromissos, reuniões e sessões de consultoria agendadas pelo consultor",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "titulo": { "type": "string" },
+        "data": { "type": "string" },
+        "horaInicio": { "type": "string" },
+        "horaFim": { "type": "string" },
+        "empresaId": { "type": "string" },
+        "diagnosticoId": { "type": "string" },
+        "tipo": { "type": "string" },
+        "descricao": { "type": "string" },
+        "status": { "type": "string" },
+        "ownerId": { "type": "string" }
+      },
+      "required": ["titulo", "data", "ownerId"]
+    },
+    "DiscAvaliacao": {
+      "title": "Avaliação DISC",
+      "description": "Avaliação comportamental DISC realizada para um profissional",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "empresaId": { "type": "string" },
+        "nomeAvaliado": { "type": "string" },
+        "cargo": { "type": "string" },
+        "dataAvaliacao": { "type": "string", "format": "date-time" },
+        "ownerId": { "type": "string" },
+        "scoreD": { "type": "number" },
+        "scoreI": { "type": "number" },
+        "scoreS": { "type": "number" },
+        "scoreC": { "type": "number" },
+        "perfilPrincipal": { "type": "string" },
+        "relatorio": { "type": "string" },
+        "sugestoesMelhoria": { "type": "string" }
+      },
+      "required": ["empresaId", "nomeAvaliado", "ownerId", "scoreD", "scoreI", "scoreS", "scoreC", "perfilPrincipal"]
+    },
+    "MaturidadeAvaliacao": {
+      "title": "Avaliação de Maturidade Empresarial",
+      "description": "Avaliação das 10 competências do empresário",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "empresaId": { "type": "string" },
+        "dataAvaliacao": { "type": "string", "format": "date-time" },
+        "ownerId": { "type": "string" },
+        "pontuacaoTotal": { "type": "number" },
+        "nivelMaturidade": { "type": "string" },
+        "scores": {
+          "type": "object",
+          "properties": {
+            "disciplina": { "type": "number" },
+            "planejamento": { "type": "number" },
+            "organizacao": { "type": "number" },
+            "gestaoTempo": { "type": "number" },
+            "persistencia": { "type": "number" },
+            "lideranca": { "type": "number" },
+            "tomadaDecisao": { "type": "number" },
+            "focoResultados": { "type": "number" },
+            "inteligenciaEmocional": { "type": "number" },
+            "capacidadeExecucao": { "type": "number" }
+          },
+          "required": [
+            "disciplina", "planejamento", "organizacao", "gestaoTempo", "persistencia",
+            "lideranca", "tomadaDecisao", "focoResultados", "inteligenciaEmocional", "capacidadeExecucao"
+          ]
+        },
+        "observacoes": { "type": "string" }
+      },
+      "required": ["empresaId", "ownerId", "pontuacaoTotal", "nivelMaturidade", "scores"]
+    },
+    "Area": {
+      "title": "Área Organizacional",
+      "description": "Cadastro de área organizacional para a biblioteca do sistema",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "nome": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["nome"]
+    }
+  },
+  "firestore": {
+    "/areas/{areaId}": {
+      "schema": "Area",
+      "description": "Coleção de áreas organizacionais"
+    },
+    "/empresas/{empresaId}": {
+      "schema": "Empresa",
+      "description": "Coleção de empresas"
+    },
+    "/problemas/{problemaId}": {
+      "schema": "Problema",
+      "description": "Coleção de problemas por área"
+    },
+    "/premissas/{premissaId}": {
+      "schema": "Premissa",
+      "description": "Coleção de premissas base"
+    },
+    "/diagnosticos/{diagnosticoId}": {
+      "schema": "Diagnostico",
+      "description": "Coleção de diagnósticos"
+    },
+    "/respostas/{respostaId}": {
+      "schema": "Resposta",
+      "description": "Coleção de respostas detalhadas"
+    },
+    "/solucoes/{solucaoId}": {
+      "schema": "Solucao",
+      "description": "Coleção de soluções recomendadas"
+    },
+    "/tarefas_plano/{tarefaId}": {
+      "schema": "TarefaPlanoAcao",
+      "description": "Coleção de tarefas do plano de ação"
+    },
+    "/agenda_eventos/{eventoId}": {
+      "schema": "AgendaEvento",
+      "description": "Coleção de eventos da agenda do consultor"
+    },
+    "/disc_avaliacoes/{avaliacaoId}": {
+      "schema": "DiscAvaliacao",
+      "description": "Coleção de avaliações comportamentais DISC"
+    },
+    "/maturidade_avaliacoes/{avaliacaoId}": {
+      "schema": "MaturidadeAvaliacao",
+      "description": "Coleção de avaliações de maturidade empresarial e competências"
+    }
+  }
+}

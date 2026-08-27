@@ -1,0 +1,6 @@
+{
+  "name": "Consultoria Empresarial Pro",
+  "description": "Sistema completo de diagnóstico empresarial para consultores, com geração automática de premissas, dashboard de indicadores, avaliação comportamental DISC e relatórios em PDF.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

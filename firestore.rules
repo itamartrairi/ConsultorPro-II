@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    function isDocOwner() {
+      return isAuthenticated() && request.auth.uid == resource.data.ownerId;
+    }
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        request.auth.token.email == "itamartrairi@gmail.com");
+    }
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    match /users/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+    match /empresas/{empresaId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /areas/{areaId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /segmentos/{segmentoId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /problemas/{problemaId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /premissas/{premissaId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /diagnosticos/{diagnosticoId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /respostas/{respostaId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /solucoes/{solucaoId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /empresas_credenciadas/{credId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /tarefas_plano/{tarefaId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /agenda_eventos/{eventoId} {
+      allow read, write: if isAuthenticated();
+    }
+    match /disc_avaliacoes/{id} {
+      allow read, write: if isAuthenticated();
+    }
+    match /maturidade_avaliacoes/{id} {
+      allow read, write: if isAuthenticated();
+    }
+  }
+}
