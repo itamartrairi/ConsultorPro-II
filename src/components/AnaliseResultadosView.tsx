@@ -199,7 +199,6 @@ interface Props {
   respostas?: any[];
   solucoes?: any[];
   problemas?: any[];
-  premissas?: any[];
   tarefasPlano?: any[];
   empresasCredenciadas?: any[];
   customLogo?: string | null;
@@ -251,65 +250,34 @@ const deduplicateRespostas = (respostasList: any[]): any[] => {
 };
 
 // Helper to extract clean, grouped diagnostic problems for a specific client/diagnostic
-export const extractGroupedProblemasForDiag = (
-  diagId: string,
-  allRespostas: any[],
-  allProblemas: any[] = [],
-  allPremissas: any[] = []
-): ProblemaAvaliado[] => {
+export const extractGroupedProblemasForDiag = (diagId: string, allRespostas: any[]): ProblemaAvaliado[] => {
   const diagResps = (allRespostas && allRespostas.length > 0 ? allRespostas : [])
-    .filter(r => r && r.diagnosticoId === diagId);
+    .filter(r => r.diagnosticoId === diagId);
   
   const cleanResps = deduplicateRespostas(diagResps);
-  const negativeResps = cleanResps.filter(r => r.resposta === 'Não' || r.resposta === 'Parcial' || (typeof r.score === 'number' && r.score < 50));
+  const negativeResps = cleanResps.filter(r => r.resposta === 'Não' || r.resposta === 'Parcial');
 
   // Group by unique problem description / title
-  const probMap = new Map<string, { problema: string; area: string; hasNao: boolean; count: number; perguntas: string[] }>();
+  const probMap = new Map<string, { problema: string; area: string; hasNao: boolean; count: number }>();
   
   negativeResps.forEach(r => {
-    let rawName = r.problema?.trim();
-    if (!rawName && r.premissaId && allPremissas && allPremissas.length > 0) {
-      const prem = allPremissas.find((p: any) => p.id === r.premissaId);
-      if (prem?.problema) rawName = prem.problema.trim();
-    }
-    if (!rawName && r.idProblema && allProblemas && allProblemas.length > 0) {
-      const probObj = allProblemas.find((p: any) => p.id === r.idProblema || p.id === r.premissaId);
-      if (probObj?.descricao_problemas) rawName = probObj.descricao_problemas.trim();
-    }
-    if (!rawName) {
-      rawName = r.pergunta?.trim() || 'Fragilidade de Gestão Identificada';
-    }
-
+    const rawName = (r.problema?.trim() || r.pergunta?.trim() || 'Fragilidade de Gestão Identificada');
     if (!probMap.has(rawName)) {
       probMap.set(rawName, {
         problema: rawName,
         area: r.area || 'Gestão Financeira',
         hasNao: r.resposta === 'Não',
-        count: 1,
-        perguntas: r.pergunta ? [r.pergunta.trim()] : []
+        count: 1
       });
     } else {
       const entry = probMap.get(rawName)!;
       entry.count++;
       if (r.resposta === 'Não') entry.hasNao = true;
-      if (r.pergunta && !entry.perguntas.includes(r.pergunta.trim())) {
-        entry.perguntas.push(r.pergunta.trim());
-      }
     }
   });
 
   if (probMap.size > 0) {
-    // Sort so the most critical problems (having 'Não' answers, highest count) come first
-    const sorted = Array.from(probMap.values()).sort((a, b) => {
-      if (a.hasNao && !b.hasNao) return -1;
-      if (!a.hasNao && b.hasNao) return 1;
-      return b.count - a.count;
-    });
-
-    // Cap to top 6 to 8 most impactful problems to keep report executive and clean
-    const selectedProblems = sorted.slice(0, 8);
-
-    return selectedProblems.map((p, idx) => ({
+    return Array.from(probMap.values()).map((p, idx) => ({
       id: `prob_${idx}_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       problema: p.problema,
       area: p.area,
@@ -430,7 +398,6 @@ export const AnaliseResultadosView: React.FC<Props> = ({
   respostas = [],
   solucoes = [],
   problemas = [],
-  premissas = [],
   tarefasPlano = [],
   empresasCredenciadas = [],
   customLogo,
@@ -616,7 +583,7 @@ export const AnaliseResultadosView: React.FC<Props> = ({
     }
 
     // 3. Otherwise generate fresh data strictly scoped to this client
-    const freshProbs = extractGroupedProblemasForDiag(selectedDiagnostico.id, respostas, problemas, premissas);
+    const freshProbs = extractGroupedProblemasForDiag(selectedDiagnostico.id, respostas);
     const freshSols = extractCronogramaSolucoesForDiag(selectedDiagnostico);
 
     setData({
@@ -716,7 +683,7 @@ export const AnaliseResultadosView: React.FC<Props> = ({
     setIsAutoFilling(true);
     
     // 1. Identify and cleanly group problems from this client's diagnostic answers
-    const generatedProblemas = extractGroupedProblemasForDiag(selectedDiagnostico.id, respostas, problemas, premissas);
+    const generatedProblemas = extractGroupedProblemasForDiag(selectedDiagnostico.id, respostas);
 
     // 2. Identify solutions from cronograma activities
     const generatedSolucoes = extractCronogramaSolucoesForDiag(selectedDiagnostico);
