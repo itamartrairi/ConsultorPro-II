@@ -4,7 +4,9 @@ import {
   getFirestore, 
   initializeFirestore, 
   persistentLocalCache, 
-  persistentMultipleTabManager,
+  persistentSingleTabManager,
+  memoryLocalCache,
+  Firestore,
   collection, 
   getDocs, 
   addDoc, 
@@ -15,21 +17,58 @@ import {
 } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 
+// Safely clean any corrupted or encrypted localStorage keys that break Firebase's internal cache parser
+if (typeof window !== 'undefined' && window.localStorage) {
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('firebase:') || key.startsWith('firestore:') || key.includes('firestore') || key.includes('applet_token'))) {
+        const val = localStorage.getItem(key);
+        if (val && (val.startsWith('enc:') || val === 'undefined' || val === 'null' || !val.startsWith('{') && !val.startsWith('[') && !val.startsWith('"') && !val.startsWith("'"))) {
+          keysToRemove.push(key);
+        }
+      }
+    }
+    keysToRemove.forEach(k => localStorage.removeItem(k));
+  } catch (e) {
+    // Ignore storage cleaning errors
+  }
+}
+
 // Initialize Firebase SDK
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const firestoreDbId = (firebaseConfig as any).firestoreDatabaseId;
 
-export const db = firestoreDbId && firestoreDbId !== '(default)'
-  ? initializeFirestore(app, {
+function initFirestoreInstance(): Firestore {
+  try {
+    if (firestoreDbId && firestoreDbId !== '(default)') {
+      return initializeFirestore(app, {
+        localCache: persistentLocalCache({
+          tabManager: persistentSingleTabManager({})
+        })
+      }, firestoreDbId);
+    }
+    return initializeFirestore(app, {
       localCache: persistentLocalCache({
-        tabManager: persistentMultipleTabManager()
-      })
-    }, firestoreDbId)
-  : initializeFirestore(app, {
-      localCache: persistentLocalCache({
-        tabManager: persistentMultipleTabManager()
+        tabManager: persistentSingleTabManager({})
       })
     });
+  } catch {
+    try {
+      if (firestoreDbId && firestoreDbId !== '(default)') {
+        return getFirestore(app, firestoreDbId);
+      }
+      return getFirestore(app);
+    } catch {
+      return initializeFirestore(app, {
+        localCache: memoryLocalCache({})
+      }, firestoreDbId && firestoreDbId !== '(default)' ? firestoreDbId : undefined);
+    }
+  }
+}
+
+export const db = initFirestoreInstance();
 export const auth = getAuth(app);
 
 // Connection verification helper for UI diagnostics
