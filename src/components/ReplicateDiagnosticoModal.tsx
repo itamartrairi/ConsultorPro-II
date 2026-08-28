@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
-import { Copy, CheckCircle2, Building2, Calendar, Target, HelpCircle, Layers, ArrowRight, X, AlertCircle, Sparkles, Filter } from 'lucide-react';
+import { Copy, CheckCircle2, Building2, Calendar, Target, HelpCircle, Layers, ArrowRight, X, AlertCircle, Sparkles, Filter, FileSpreadsheet } from 'lucide-react';
 import { Button } from './Button';
 import { Empresa, Diagnostico, Resposta } from '../App';
 
@@ -13,11 +13,11 @@ interface ReplicateDiagnosticoModalProps {
   defaultSourceDiagId?: string;
   defaultTargetEmpresaId?: string;
   onReplicate: (
-    sourceDiagId: string,
-    targetEmpresaId: string,
-    options: {
-      includeAnswers: boolean;
-      includeConsultoria: boolean;
+    sourceDiagId: string, 
+    targetEmpresaId: string, 
+    options: { 
+      includeAnswers: boolean; 
+      includeConsultoria: boolean; 
       customName?: string;
       customDate?: string;
     }
@@ -27,33 +27,49 @@ interface ReplicateDiagnosticoModalProps {
 export const ReplicateDiagnosticoModal: React.FC<ReplicateDiagnosticoModalProps> = ({
   isOpen,
   onClose,
-  empresas,
-  diagnosticos,
+  empresas = [],
+  diagnosticos = [],
   defaultSourceDiagId,
   defaultTargetEmpresaId,
   onReplicate
 }) => {
-  if (!isOpen) return null;
-
-  const [selectedSourceDiagId, setSelectedSourceDiagId] = useState<string>(() => {
-    return defaultSourceDiagId || (diagnosticos.length > 0 ? diagnosticos[0].id : '');
-  });
-
-  const [selectedTargetEmpresaId, setSelectedTargetEmpresaId] = useState<string>(() => {
-    if (defaultTargetEmpresaId) return defaultTargetEmpresaId;
-    const firstOther = empresas.find(e => {
-      const src = diagnosticos.find(d => d.id === (defaultSourceDiagId || diagnosticos[0]?.id));
-      return e.id !== src?.empresaId;
-    });
-    return firstOther ? firstOther.id : (empresas[0]?.id || '');
-  });
-
+  const [selectedSourceDiagId, setSelectedSourceDiagId] = useState<string>('');
+  const [selectedTargetEmpresaId, setSelectedTargetEmpresaId] = useState<string>('');
   const [filterSegment, setFilterSegment] = useState<string>('todos');
   const [includeAnswers, setIncludeAnswers] = useState<boolean>(true);
-  const [includeConsultoria, setIncludeConsultoria] = useState<boolean>(false);
+  const [includeConsultoria, setIncludeConsultoria] = useState<boolean>(true);
   const [customDate, setCustomDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [customName, setCustomName] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const isSubmittingRef = useRef<boolean>(false);
+
+  // Sync state whenever modal is opened or props change
+  useEffect(() => {
+    if (!isOpen) {
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
+      return;
+    }
+
+    const initialSourceId = defaultSourceDiagId || (diagnosticos.length > 0 ? diagnosticos[0].id : '');
+    setSelectedSourceDiagId(initialSourceId);
+
+    if (defaultTargetEmpresaId) {
+      setSelectedTargetEmpresaId(defaultTargetEmpresaId);
+    } else {
+      const src = diagnosticos.find(d => d.id === initialSourceId);
+      const firstOther = empresas.find(e => e.id !== src?.empresaId);
+      setSelectedTargetEmpresaId(firstOther ? firstOther.id : (empresas[0]?.id || ''));
+    }
+
+    setIncludeAnswers(true);
+    setIncludeConsultoria(true);
+    setCustomDate(new Date().toISOString().split('T')[0]);
+    setCustomName('');
+    setFilterSegment('todos');
+    setIsSubmitting(false);
+    isSubmittingRef.current = false;
+  }, [isOpen, defaultSourceDiagId, defaultTargetEmpresaId, diagnosticos, empresas]);
 
   const sourceDiag = useMemo(() => {
     return diagnosticos.find(d => d.id === selectedSourceDiagId);
@@ -90,13 +106,20 @@ export const ReplicateDiagnosticoModal: React.FC<ReplicateDiagnosticoModalProps>
     return `${targetEmpresa.nome} - Diagnóstico Replicado (${segment})`;
   }, [targetEmpresa, sourceDiag]);
 
+  if (!isOpen) return null;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmittingRef.current || isSubmitting) return;
+
     if (!selectedSourceDiagId || !selectedTargetEmpresaId) {
       alert("Por favor, selecione o diagnóstico de origem e a empresa de destino.");
       return;
     }
+
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
+
     try {
       await onReplicate(selectedSourceDiagId, selectedTargetEmpresaId, {
         includeAnswers,
@@ -110,11 +133,12 @@ export const ReplicateDiagnosticoModal: React.FC<ReplicateDiagnosticoModalProps>
       alert("Erro ao replicar diagnóstico: " + (err?.message || "Tente novamente."));
     } finally {
       setIsSubmitting(false);
+      isSubmittingRef.current = false;
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -130,7 +154,7 @@ export const ReplicateDiagnosticoModal: React.FC<ReplicateDiagnosticoModalProps>
             <div>
               <h3 className="text-lg font-bold">Replicar Diagnóstico por Atividade</h3>
               <p className="text-xs text-emerald-100/90">
-                Aproveite diagnósticos e premissas de empresas do mesmo segmento econômico
+                Aproveite diagnósticos, respostas e dados de consultoria de empresas do mesmo segmento econômico
               </p>
             </div>
           </div>
@@ -203,6 +227,11 @@ export const ReplicateDiagnosticoModal: React.FC<ReplicateDiagnosticoModalProps>
                           {diag.areasDiagnostico && diag.areasDiagnostico.length > 0 && (
                             <span>{diag.areasDiagnostico.length} áreas</span>
                           )}
+                          {diag.dadosConsultoria && (
+                            <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-[10px] font-semibold border border-emerald-200">
+                              Consultoria SGF
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -272,7 +301,7 @@ export const ReplicateDiagnosticoModal: React.FC<ReplicateDiagnosticoModalProps>
                 </div>
               </label>
 
-              <label className="flex items-start gap-3 p-3 rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 cursor-pointer">
+              <label className="flex items-start gap-3 p-3 rounded-xl border border-emerald-200 bg-emerald-50/40 hover:bg-emerald-50 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={includeConsultoria}
@@ -280,9 +309,12 @@ export const ReplicateDiagnosticoModal: React.FC<ReplicateDiagnosticoModalProps>
                   className="mt-1 rounded text-emerald-600 focus:ring-emerald-500 h-4 w-4"
                 />
                 <div>
-                  <div className="text-xs font-bold text-slate-800">Copiar Dados da Consultoria</div>
-                  <div className="text-[11px] text-slate-500">
-                    Inclui objetivos, cronograma sugerido e observações gerais.
+                  <div className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                    <FileSpreadsheet size={13} className="text-emerald-700" />
+                    Copiar Dados da Consultoria
+                  </div>
+                  <div className="text-[11px] text-emerald-800/80">
+                    Copia dados SGF, credenciada, consultor, carga horária e cronograma/atividades.
                   </div>
                 </div>
               </label>
@@ -315,7 +347,7 @@ export const ReplicateDiagnosticoModal: React.FC<ReplicateDiagnosticoModalProps>
           <div className="p-3.5 bg-emerald-50/80 border border-emerald-200/80 rounded-2xl flex items-start gap-3">
             <Sparkles className="text-emerald-600 shrink-0 mt-0.5" size={16} />
             <p className="text-xs text-emerald-900 leading-relaxed">
-              O novo diagnóstico será gerado de forma totalmente independente para <strong>{targetEmpresa?.nome || 'o cliente'}</strong>, permitindo edições, ajustes específicos e geração ágil de relatórios sem alterar os dados originais.
+              O novo diagnóstico será gerado de forma totalmente independente para <strong>{targetEmpresa?.nome || 'o cliente'}</strong>, preservando integralmente o diagnóstico original e permitindo edições, ajustes específicos e geração ágil de relatórios.
             </p>
           </div>
 
