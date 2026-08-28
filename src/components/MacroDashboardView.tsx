@@ -3,7 +3,6 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
-import { encryptedLocalStorage } from '../lib/cryptoStorage';
 import { 
   ResponsiveContainer, 
   LineChart, 
@@ -15,7 +14,9 @@ import {
   Legend, 
   BarChart, 
   Bar, 
-  Cell 
+  Cell,
+  PieChart,
+  Pie
 } from 'recharts';
 import { 
   Loader2, 
@@ -52,7 +53,12 @@ import {
   Activity,
   ChevronDown,
   ChevronUp,
-  Server
+  Server,
+  ListTodo,
+  Flag,
+  CalendarDays,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 import { getAI, extractAndParseJSON, Type } from '../App';
 import { SyncSummary } from './SmartSyncModal';
@@ -88,6 +94,26 @@ interface Resposta {
   peso: number;
   score: number;
   area: string;
+}
+
+export interface TarefaPlanoAcao {
+  id: string;
+  diagnosticoId: string;
+  empresaId: string;
+  idProblema?: string;
+  solucaoId?: string;
+  problema: string;
+  area?: string;
+  solucaoSugerida?: string;
+  acoes?: string;
+  status: 'Pendente' | 'Em Andamento' | 'Concluído' | 'Atrasado';
+  prioridade?: 'Baixa' | 'Média' | 'Alta';
+  dataInicio?: any;
+  dataFim?: any;
+  dataVencimento?: any;
+  responsavel?: string;
+  ownerId?: string;
+  [key: string]: any;
 }
 
 interface MacroItem {
@@ -154,7 +180,9 @@ const Sparkline = ({ data }: { data: number[] }) => {
 export const MacroDashboardView = ({
   empresas,
   diagnosticos,
+  tarefas,
   onNavigateToDiagnosis,
+  onNavigateToKanban,
   lastSyncSummary,
   isSyncingCloud,
   onOpenSmartSync,
@@ -164,7 +192,9 @@ export const MacroDashboardView = ({
 }: {
   empresas: Empresa[];
   diagnosticos: Diagnostico[];
+  tarefas?: TarefaPlanoAcao[];
   onNavigateToDiagnosis?: (diagnostico: Diagnostico) => void;
+  onNavigateToKanban?: (diagnosticoId: string) => void;
   lastSyncSummary?: SyncSummary | null;
   isSyncingCloud?: boolean;
   onOpenSmartSync?: () => void;
@@ -179,12 +209,57 @@ export const MacroDashboardView = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [sectorFilter, setSectorFilter] = useState('Todos');
   const [isSyncLogExpanded, setIsSyncLogExpanded] = useState(false);
+
+  // Task state and filters for Action Plan summary
+  const [internalTasks, setInternalTasks] = useState<TarefaPlanoAcao[]>([]);
+  const [taskDeadlineFilter, setTaskDeadlineFilter] = useState<'all' | 'urgent' | '7days' | '15days'>('all');
+  const [taskStatusFilter, setTaskStatusFilter] = useState<'all' | 'Pendente' | 'Em Andamento' | 'Concluído'>('all');
+
+  useEffect(() => {
+    if (tarefas && tarefas.length > 0) {
+      setInternalTasks(tarefas);
+      return;
+    }
+
+    try {
+      const saved = localStorage.getItem('local_tarefas_plano');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setInternalTasks(parsed);
+        }
+      }
+    } catch (e) {
+      console.warn("Erro ao ler tarefas locais:", e);
+    }
+
+    const fetchTasksFromCloud = async () => {
+      try {
+        const snap = await getDocs(collection(db, 'tarefas_plano'));
+        if (!snap.empty) {
+          const list: TarefaPlanoAcao[] = [];
+          snap.docs.forEach(docSnap => {
+            list.push({ id: docSnap.id, ...(docSnap.data() as any) });
+          });
+          setInternalTasks(list);
+        }
+      } catch (err) {
+        // quiet fallback
+      }
+    };
+    fetchTasksFromCloud();
+  }, [tarefas]);
+
+  const activeTarefas = useMemo(() => {
+    if (tarefas && tarefas.length > 0) return tarefas;
+    return internalTasks;
+  }, [tarefas, internalTasks]);
   
   // Local fallback for lastSyncSummary if not passed from parent
   const activeSummary = useMemo<SyncSummary | null>(() => {
     if (lastSyncSummary) return lastSyncSummary;
     try {
-      const saved = encryptedLocalStorage.getItem('last_sync_summary');
+      const saved = localStorage.getItem('last_sync_summary');
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -504,6 +579,201 @@ export const MacroDashboardView = ({
   const strongGrowthCount = useMemo(() => {
     return clientSummary.filter(c => c.growth > 10).length;
   }, [clientSummary]);
+
+  // Helper to parse dates accurately
+  const parseTaskDate = (val: any): Date | null => {
+    if (!val) return null;
+    if (val instanceof Date && !isNaN(val.getTime())) return val;
+    if (typeof val === 'number' && !isNaN(val) && val > 0) {
+      return new Date(val < 10000000000 ? val * 1000 : val);
+    }
+    if (typeof val === 'object') {
+      if (typeof val.toDate === 'function') {
+        try {
+          const d = val.toDate();
+          if (d instanceof Date && !isNaN(d.getTime())) return d;
+        } catch {}
+      }
+      if (typeof val.seconds === 'number') {
+        return new Date(val.seconds * 1000);
+      }
+    }
+    if (typeof val === 'string') {
+      const s = val.trim();
+      if (!s) return null;
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
+        const [dd, mm, yyyy] = s.split('/');
+        return new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+      }
+      const parsed = Date.parse(s.includes('T') ? s : s + 'T00:00:00');
+      if (!isNaN(parsed)) return new Date(parsed);
+    }
+    return null;
+  };
+
+  // Filter tasks based on active company search and sector filter
+  const filteredTasks = useMemo(() => {
+    if (!activeTarefas || activeTarefas.length === 0) return [];
+    
+    return activeTarefas.filter(t => {
+      const emp = empresas.find(e => e.id === t.empresaId);
+      const empNome = emp?.nome || (t as any).empresaNome || '';
+      const empSector = emp?.tipoEmpresa || 'Geral';
+
+      const matchesSearch = searchQuery === '' || 
+        empNome.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        (t.problema || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.responsavel || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.area || '').toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesSector = sectorFilter === 'Todos' || empSector === sectorFilter;
+
+      return matchesSearch && matchesSector;
+    });
+  }, [activeTarefas, empresas, searchQuery, sectorFilter]);
+
+  // Task stats and timeline analysis
+  const taskAnalytics = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let pendentes = 0;
+    let emAndamento = 0;
+    let concluidas = 0;
+    let atrasadas = 0;
+
+    let alta = 0;
+    let media = 0;
+    let baixa = 0;
+
+    const enrichedList: Array<TarefaPlanoAcao & {
+      parsedDate: Date | null;
+      dateFormatted: string;
+      diffDays: number | null;
+      deadlineCategory: 'overdue' | 'today' | 'within7days' | 'within15days' | 'within30days' | 'later' | 'no_date';
+      empresaNome: string;
+      empresaSegmento: string;
+    }> = [];
+
+    filteredTasks.forEach(task => {
+      const isConcluida = task.status === 'Concluído';
+      const isEmAndamento = task.status === 'Em Andamento';
+      const isPendente = task.status === 'Pendente' || !task.status;
+
+      const pDate = parseTaskDate(task.dataVencimento || task.dataFim);
+      let diffDays: number | null = null;
+      let deadlineCategory: 'overdue' | 'today' | 'within7days' | 'within15days' | 'within30days' | 'later' | 'no_date' = 'no_date';
+
+      if (pDate) {
+        const target = new Date(pDate);
+        target.setHours(0, 0, 0, 0);
+        const diffTime = target.getTime() - today.getTime();
+        diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        if (!isConcluida && diffDays < 0) {
+          deadlineCategory = 'overdue';
+          atrasadas++;
+        } else if (diffDays === 0) {
+          deadlineCategory = 'today';
+        } else if (diffDays > 0 && diffDays <= 7) {
+          deadlineCategory = 'within7days';
+        } else if (diffDays > 7 && diffDays <= 15) {
+          deadlineCategory = 'within15days';
+        } else if (diffDays > 15 && diffDays <= 30) {
+          deadlineCategory = 'within30days';
+        } else if (diffDays > 30) {
+          deadlineCategory = 'later';
+        }
+      }
+
+      if (isConcluida) concluidas++;
+      else if (isEmAndamento) emAndamento++;
+      else pendentes++;
+
+      const prioridade = task.prioridade || 'Média';
+      if (prioridade === 'Alta') alta++;
+      else if (prioridade === 'Média') media++;
+      else baixa++;
+
+      const emp = empresas.find(e => e.id === task.empresaId);
+
+      enrichedList.push({
+        ...task,
+        parsedDate: pDate,
+        dateFormatted: pDate ? pDate.toLocaleDateString('pt-BR') : 'Sem prazo',
+        diffDays,
+        deadlineCategory,
+        empresaNome: emp?.nome || (task as any).empresaNome || 'Empresa',
+        empresaSegmento: emp?.tipoEmpresa || 'Geral'
+      });
+    });
+
+    const total = filteredTasks.length;
+    const taxaConclusao = total > 0 ? Math.round((concluidas / total) * 100) : 0;
+    const taxaEmAndamento = total > 0 ? Math.round((emAndamento / total) * 100) : 0;
+    const taxaPendente = total > 0 ? Math.round((pendentes / total) * 100) : 0;
+    const taxaAtrasadas = total > 0 ? Math.round((atrasadas / total) * 100) : 0;
+
+    // Upcoming urgent tasks (Overdue first, then today, then within 7 days, then 15 days, sorted by deadline)
+    const upcomingTasks = enrichedList
+      .filter(t => t.status !== 'Concluído')
+      .sort((a, b) => {
+        if (a.parsedDate && b.parsedDate) return a.parsedDate.getTime() - b.parsedDate.getTime();
+        if (a.parsedDate) return -1;
+        if (b.parsedDate) return 1;
+        return 0;
+      });
+
+    // Chart status distribution data
+    const statusChartData = [
+      { name: 'Pendente', count: pendentes, percent: taxaPendente, color: '#f59e0b', fill: '#f59e0b' },
+      { name: 'Em Andamento', count: emAndamento, percent: taxaEmAndamento, color: '#3b82f6', fill: '#3b82f6' },
+      { name: 'Concluído', count: concluidas, percent: taxaConclusao, color: '#10b981', fill: '#10b981' }
+    ];
+    if (atrasadas > 0) {
+      statusChartData.push({
+        name: 'Atrasadas',
+        count: atrasadas,
+        percent: taxaAtrasadas,
+        color: '#ef4444',
+        fill: '#ef4444'
+      });
+    }
+
+    // Deadline distribution counts
+    const overdueCount = enrichedList.filter(t => t.status !== 'Concluído' && t.deadlineCategory === 'overdue').length;
+    const todayCount = enrichedList.filter(t => t.status !== 'Concluído' && t.deadlineCategory === 'today').length;
+    const next7Count = enrichedList.filter(t => t.status !== 'Concluído' && t.deadlineCategory === 'within7days').length;
+    const next15Count = enrichedList.filter(t => t.status !== 'Concluído' && t.deadlineCategory === 'within15days').length;
+    const laterCount = enrichedList.filter(t => t.status !== 'Concluído' && (t.deadlineCategory === 'within30days' || t.deadlineCategory === 'later')).length;
+    const noDateCount = enrichedList.filter(t => t.status !== 'Concluído' && t.deadlineCategory === 'no_date').length;
+
+    const deadlineChartData = [
+      { label: 'Vencidas', count: overdueCount, color: '#ef4444', badge: 'bg-rose-50 text-rose-700 border-rose-200' },
+      { label: 'Hoje', count: todayCount, color: '#f97316', badge: 'bg-orange-50 text-orange-700 border-orange-200' },
+      { label: 'Até 7 dias', count: next7Count, color: '#eab308', badge: 'bg-amber-50 text-amber-700 border-amber-200' },
+      { label: '8 a 15 dias', count: next15Count, color: '#3b82f6', badge: 'bg-blue-50 text-blue-700 border-blue-200' },
+      { label: '+15 dias', count: laterCount, color: '#6366f1', badge: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+      { label: 'Sem data', count: noDateCount, color: '#94a3b8', badge: 'bg-slate-50 text-slate-600 border-slate-200' }
+    ];
+
+    return {
+      total,
+      pendentes,
+      emAndamento,
+      concluidas,
+      atrasadas,
+      taxaConclusao,
+      taxaEmAndamento,
+      taxaPendente,
+      taxaAtrasadas,
+      prioridades: { alta, media, baixa },
+      enrichedList,
+      upcomingTasks,
+      statusChartData,
+      deadlineChartData
+    };
+  }, [filteredTasks, empresas]);
 
   // Generate automated AI insights based on current portfolio status
   const generatePortfolioAIInsight = async () => {
@@ -1015,6 +1285,425 @@ export const MacroDashboardView = ({
           {/* TAB 1: VISÃO GERAL */}
           {activeTab === 'visao-geral' && (
             <div className="space-y-6">
+              {/* Executive Summary Card: Plano de Ação (Status Distribution & Upcoming Deadlines) */}
+              <div className="bg-white rounded-3xl border border-slate-100 p-6 lg:p-7 shadow-sm space-y-6">
+                {/* Header Row */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+                  <div className="flex items-start sm:items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                      <ListTodo size={24} />
+                    </div>
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-extrabold text-lg text-slate-800 tracking-tight">
+                          Resumo Executivo dos Planos de Ação
+                        </h3>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-100">
+                          {taskAnalytics.total} {taskAnalytics.total === 1 ? 'Tarefa' : 'Tarefas'}
+                        </span>
+                      </div>
+                      <p className="text-slate-500 text-xs mt-0.5 font-sans">
+                        Distribuição consolidada de status das tarefas e radar de prazos para a carteira de clientes
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Completion Rate Pill */}
+                  <div className="flex items-center gap-3 self-start sm:self-center">
+                    <div className="text-right">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Taxa de Conclusão</p>
+                      <p className="text-xl font-black text-emerald-600">{taskAnalytics.taxaConclusao}%</p>
+                    </div>
+                    <div className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+                      <CheckCircle2 size={22} />
+                    </div>
+                  </div>
+                </div>
+
+                {taskAnalytics.total === 0 ? (
+                  <div className="py-8 text-center bg-slate-50/50 rounded-2xl border border-slate-100/60 p-6 flex flex-col items-center justify-center">
+                    <ListTodo size={32} className="text-slate-300 mb-2" />
+                    <p className="text-sm font-bold text-slate-700">Nenhum plano de ação encontrado</p>
+                    <p className="text-xs text-slate-400 max-w-md mt-1 font-sans">
+                      Gere planos de ação nos diagnósticos empresariais para visualizar aqui a distribuição de status e o radar de prazos da carteira.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Status Metric Cards Grid */}
+                    <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-5 gap-3">
+                      {/* Total */}
+                      <div className="bg-slate-50/70 border border-slate-100 rounded-2xl p-3.5 flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-slate-400 mb-1">
+                          <span className="text-[10px] font-black uppercase tracking-wider">Total Tarefas</span>
+                          <Layers size={15} className="text-slate-500" />
+                        </div>
+                        <p className="text-2xl font-black text-slate-800 tracking-tight">{taskAnalytics.total}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">100% do escopo</p>
+                      </div>
+
+                      {/* Pendentes */}
+                      <div className="bg-amber-50/40 border border-amber-100/60 rounded-2xl p-3.5 flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-amber-700 mb-1">
+                          <span className="text-[10px] font-black uppercase tracking-wider">Pendentes</span>
+                          <Clock size={15} className="text-amber-500" />
+                        </div>
+                        <p className="text-2xl font-black text-amber-600 tracking-tight">{taskAnalytics.pendentes}</p>
+                        <p className="text-[10px] text-amber-700/70 mt-0.5">{taskAnalytics.taxaPendente}% do total</p>
+                      </div>
+
+                      {/* Em Andamento */}
+                      <div className="bg-blue-50/40 border border-blue-100/60 rounded-2xl p-3.5 flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-blue-700 mb-1">
+                          <span className="text-[10px] font-black uppercase tracking-wider">Em Andamento</span>
+                          <Activity size={15} className="text-blue-500" />
+                        </div>
+                        <p className="text-2xl font-black text-blue-600 tracking-tight">{taskAnalytics.emAndamento}</p>
+                        <p className="text-[10px] text-blue-700/70 mt-0.5">{taskAnalytics.taxaEmAndamento}% do total</p>
+                      </div>
+
+                      {/* Concluídas */}
+                      <div className="bg-emerald-50/40 border border-emerald-100/60 rounded-2xl p-3.5 flex flex-col justify-between">
+                        <div className="flex items-center justify-between text-emerald-700 mb-1">
+                          <span className="text-[10px] font-black uppercase tracking-wider">Concluídas</span>
+                          <CheckCircle2 size={15} className="text-emerald-500" />
+                        </div>
+                        <p className="text-2xl font-black text-emerald-600 tracking-tight">{taskAnalytics.concluidas}</p>
+                        <p className="text-[10px] text-emerald-700/70 mt-0.5">{taskAnalytics.taxaConclusao}% de sucesso</p>
+                      </div>
+
+                      {/* Atrasadas */}
+                      <div className={cn(
+                        "rounded-2xl p-3.5 flex flex-col justify-between border col-span-2 sm:col-span-1",
+                        taskAnalytics.atrasadas > 0 
+                          ? "bg-rose-50/60 border-rose-200 text-rose-900" 
+                          : "bg-slate-50/40 border-slate-100 text-slate-500"
+                      )}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] font-black uppercase tracking-wider">
+                            {taskAnalytics.atrasadas > 0 ? 'Atrasadas' : 'Sem Atrasos'}
+                          </span>
+                          <AlertTriangle size={15} className={taskAnalytics.atrasadas > 0 ? "text-rose-500 animate-pulse" : "text-slate-400"} />
+                        </div>
+                        <p className={cn("text-2xl font-black tracking-tight", taskAnalytics.atrasadas > 0 ? "text-rose-600" : "text-slate-700")}>
+                          {taskAnalytics.atrasadas}
+                        </p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">
+                          {taskAnalytics.atrasadas > 0 ? `${taskAnalytics.taxaAtrasadas}% demandam atenção` : 'Todos no prazo'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Multi-segment Progress Bar */}
+                    <div className="space-y-1.5 pt-1">
+                      <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                        <span>Progresso Geral de Execução</span>
+                        <span className="font-bold text-slate-700">
+                          {taskAnalytics.concluidas} de {taskAnalytics.total} tarefas finalizadas ({taskAnalytics.taxaConclusao}%)
+                        </span>
+                      </div>
+                      <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden flex p-0.5 gap-0.5">
+                        {taskAnalytics.concluidas > 0 && (
+                          <div 
+                            style={{ width: `${(taskAnalytics.concluidas / taskAnalytics.total) * 100}%` }}
+                            className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                            title={`Concluídas: ${taskAnalytics.concluidas} (${taskAnalytics.taxaConclusao}%)`}
+                          />
+                        )}
+                        {taskAnalytics.emAndamento > 0 && (
+                          <div 
+                            style={{ width: `${(taskAnalytics.emAndamento / taskAnalytics.total) * 100}%` }}
+                            className="bg-blue-500 h-full rounded-full transition-all duration-500"
+                            title={`Em Andamento: ${taskAnalytics.emAndamento} (${taskAnalytics.taxaEmAndamento}%)`}
+                          />
+                        )}
+                        {taskAnalytics.pendentes > 0 && (
+                          <div 
+                            style={{ width: `${(taskAnalytics.pendentes / taskAnalytics.total) * 100}%` }}
+                            className="bg-amber-400 h-full rounded-full transition-all duration-500"
+                            title={`Pendentes: ${taskAnalytics.pendentes} (${taskAnalytics.taxaPendente}%)`}
+                          />
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-4 text-[10px] text-slate-500 pt-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                          <span>Concluído ({taskAnalytics.concluidas})</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                          <span>Em Andamento ({taskAnalytics.emAndamento})</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                          <span>Pendente ({taskAnalytics.pendentes})</span>
+                        </div>
+                        {taskAnalytics.atrasadas > 0 && (
+                          <div className="flex items-center gap-1.5 text-rose-600 font-bold">
+                            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse" />
+                            <span>Vencidas ({taskAnalytics.atrasadas})</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 2-Column Split: Status Distribution Chart vs Upcoming Deadlines Radar */}
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2 border-t border-slate-100">
+                      {/* Left: Status & Priority Distribution (5 cols) */}
+                      <div className="lg:col-span-5 space-y-4 flex flex-col justify-between">
+                        <div>
+                          <h4 className="font-bold text-sm text-slate-800 flex items-center gap-2">
+                            <Layers size={16} className="text-indigo-600" />
+                            Distribuição de Status e Prioridades
+                          </h4>
+                          <p className="text-slate-400 text-xs mt-0.5 font-sans">
+                            Comparativo quantitativo por status e criticidade de execução
+                          </p>
+                        </div>
+
+                        {/* Bar Chart of Status */}
+                        <div className="h-48 w-full">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={taskAnalytics.statusChartData} layout="vertical" margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+                              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f8fafc" />
+                              <XAxis type="number" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
+                              <YAxis dataKey="name" type="category" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} width={100} />
+                              <Tooltip 
+                                contentStyle={{ borderRadius: '0.75rem', border: '1px solid #f1f5f9', fontSize: '11px', fontFamily: 'Inter, sans-serif' }}
+                                formatter={(value: any, name: string, props: any) => [
+                                  `${value} tarefas (${props.payload.percent}%)`, 
+                                  'Volume'
+                                ]}
+                              />
+                              <Bar dataKey="count" radius={[0, 6, 6, 0]} barSize={16}>
+                                {taskAnalytics.statusChartData.map((entry, index) => (
+                                  <Cell key={`status-cell-${index}`} fill={entry.color} />
+                                ))}
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+
+                        {/* Priority Breakdown Pills */}
+                        <div className="bg-slate-50/70 border border-slate-100 rounded-2xl p-3.5 space-y-2">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                            Tarefas por Nível de Prioridade
+                          </span>
+                          <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                            <div className="bg-white border border-rose-100 rounded-xl p-2">
+                              <span className="text-[10px] font-bold text-rose-600 block">Alta</span>
+                              <span className="text-base font-black text-rose-700">{taskAnalytics.prioridades.alta}</span>
+                              <span className="text-[9px] text-slate-400 block">
+                                {taskAnalytics.total > 0 ? Math.round((taskAnalytics.prioridades.alta / taskAnalytics.total) * 100) : 0}%
+                              </span>
+                            </div>
+                            <div className="bg-white border border-amber-100 rounded-xl p-2">
+                              <span className="text-[10px] font-bold text-amber-600 block">Média</span>
+                              <span className="text-base font-black text-amber-700">{taskAnalytics.prioridades.media}</span>
+                              <span className="text-[9px] text-slate-400 block">
+                                {taskAnalytics.total > 0 ? Math.round((taskAnalytics.prioridades.media / taskAnalytics.total) * 100) : 0}%
+                              </span>
+                            </div>
+                            <div className="bg-white border border-slate-200/70 rounded-xl p-2">
+                              <span className="text-[10px] font-bold text-slate-600 block">Baixa</span>
+                              <span className="text-base font-black text-slate-700">{taskAnalytics.prioridades.baixa}</span>
+                              <span className="text-[9px] text-slate-400 block">
+                                {taskAnalytics.total > 0 ? Math.round((taskAnalytics.prioridades.baixa / taskAnalytics.total) * 100) : 0}%
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right: Upcoming Deadlines Radar (7 cols) */}
+                      <div className="lg:col-span-7 space-y-3.5 flex flex-col justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div>
+                            <h4 className="font-bold text-sm text-slate-800 flex items-center gap-2">
+                              <CalendarDays size={16} className="text-indigo-600" />
+                              Radar de Prazos Próximos
+                            </h4>
+                            <p className="text-slate-400 text-xs mt-0.5 font-sans">
+                              Tarefas pendentes e em andamento ordenadas por criticidade de entrega
+                            </p>
+                          </div>
+
+                          {/* Quick Deadline Filter Tabs */}
+                          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-[10px] font-bold self-start sm:self-auto">
+                            <button
+                              type="button"
+                              onClick={() => setTaskDeadlineFilter('all')}
+                              className={cn(
+                                "px-2.5 py-1 rounded-lg transition-all border-none cursor-pointer",
+                                taskDeadlineFilter === 'all' ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-800"
+                              )}
+                            >
+                              Todos ({taskAnalytics.upcomingTasks.length})
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setTaskDeadlineFilter('urgent')}
+                              className={cn(
+                                "px-2.5 py-1 rounded-lg transition-all border-none cursor-pointer",
+                                taskDeadlineFilter === 'urgent' ? "bg-rose-600 text-white shadow-sm" : "text-slate-500 hover:text-rose-600"
+                              )}
+                            >
+                              Vencidas ({taskAnalytics.atrasadas})
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setTaskDeadlineFilter('7days')}
+                              className={cn(
+                                "px-2.5 py-1 rounded-lg transition-all border-none cursor-pointer",
+                                taskDeadlineFilter === '7days' ? "bg-amber-500 text-white shadow-sm" : "text-slate-500 hover:text-amber-600"
+                              )}
+                            >
+                              7 Dias
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setTaskDeadlineFilter('15days')}
+                              className={cn(
+                                "px-2.5 py-1 rounded-lg transition-all border-none cursor-pointer",
+                                taskDeadlineFilter === '15days' ? "bg-blue-600 text-white shadow-sm" : "text-slate-500 hover:text-blue-600"
+                              )}
+                            >
+                              15 Dias
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Deadline Timeline summary chips */}
+                        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                          {taskAnalytics.deadlineChartData.map((d, i) => (
+                            <div key={i} className={cn("px-2 py-1.5 rounded-xl border text-center", d.badge)}>
+                              <span className="block text-[9px] font-bold uppercase truncate">{d.label}</span>
+                              <span className="block text-sm font-black mt-0.5">{d.count}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Filtered Upcoming Task List */}
+                        <div className="space-y-2 overflow-y-auto max-h-[17rem] pr-1 scrollbar-thin">
+                          {(() => {
+                            const filteredUpcoming = taskAnalytics.upcomingTasks.filter(t => {
+                              if (taskDeadlineFilter === 'urgent') return t.deadlineCategory === 'overdue';
+                              if (taskDeadlineFilter === '7days') return t.deadlineCategory === 'within7days' || t.deadlineCategory === 'today' || t.deadlineCategory === 'overdue';
+                              if (taskDeadlineFilter === '15days') return t.deadlineCategory === 'within7days' || t.deadlineCategory === 'within15days' || t.deadlineCategory === 'today' || t.deadlineCategory === 'overdue';
+                              return true;
+                            });
+
+                            if (filteredUpcoming.length === 0) {
+                              return (
+                                <div className="py-8 text-center bg-slate-50/50 rounded-xl border border-slate-100 text-slate-400 text-xs font-sans italic">
+                                  Nenhuma tarefa pendente com este critério de prazo.
+                                </div>
+                              );
+                            }
+
+                            return filteredUpcoming.slice(0, 10).map((t) => {
+                              const isOverdue = t.deadlineCategory === 'overdue';
+                              const isToday = t.deadlineCategory === 'today';
+                              const isWithin7 = t.deadlineCategory === 'within7days';
+                              const isWithin15 = t.deadlineCategory === 'within15days';
+
+                              return (
+                                <div 
+                                  key={t.id}
+                                  className={cn(
+                                    "p-3 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2.5",
+                                    isOverdue ? "bg-rose-50/40 border-rose-200/80 hover:bg-rose-50/60" :
+                                    isToday ? "bg-orange-50/40 border-orange-200/80 hover:bg-orange-50/60" :
+                                    isWithin7 ? "bg-amber-50/30 border-amber-200/70 hover:bg-amber-50/50" :
+                                    "bg-white border-slate-100 hover:bg-slate-50/70"
+                                  )}
+                                >
+                                  <div className="space-y-1 flex-1 min-w-0">
+                                    <div className="flex flex-wrap items-center gap-1.5">
+                                      {/* Urgency Badge */}
+                                      <span className={cn(
+                                        "px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider inline-flex items-center gap-1",
+                                        isOverdue ? "bg-rose-600 text-white" :
+                                        isToday ? "bg-orange-500 text-white animate-pulse" :
+                                        isWithin7 ? "bg-amber-500 text-white" :
+                                        isWithin15 ? "bg-blue-100 text-blue-800 border border-blue-200" :
+                                        "bg-slate-100 text-slate-600"
+                                      )}>
+                                        <Clock size={10} />
+                                        {isOverdue ? `Atrasada há ${Math.abs(t.diffDays || 0)}d` :
+                                         isToday ? 'Vence Hoje' :
+                                         isWithin7 ? `Vence em ${t.diffDays}d` :
+                                         isWithin15 ? `Vence em ${t.diffDays}d` :
+                                         t.parsedDate ? t.dateFormatted : 'Sem prazo'}
+                                      </span>
+
+                                      {/* Company */}
+                                      <span className="text-xs font-bold text-slate-800 truncate max-w-[140px]" title={t.empresaNome}>
+                                        {t.empresaNome}
+                                      </span>
+
+                                      {/* Sector */}
+                                      <span className="text-[9px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
+                                        {t.empresaSegmento}
+                                      </span>
+                                    </div>
+
+                                    {/* Problem / Task Title */}
+                                    <p className="text-xs text-slate-700 font-medium line-clamp-1 font-sans">
+                                      {t.problema || t.solucaoSugerida || 'Tarefa do Plano de Ação'}
+                                    </p>
+
+                                    {/* Responsible & Priority */}
+                                    <div className="flex items-center gap-3 text-[10px] text-slate-400 font-sans">
+                                      <span>Resp: <strong className="text-slate-600">{t.responsavel || 'Não atribuído'}</strong></span>
+                                      {t.area && <span>Área: <strong className="text-slate-600">{t.area}</strong></span>}
+                                    </div>
+                                  </div>
+
+                                  {/* Right meta and Action */}
+                                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                                    {/* Priority Badge */}
+                                    <span className={cn(
+                                      "px-2 py-0.5 rounded text-[10px] font-black uppercase",
+                                      t.prioridade === 'Alta' ? "bg-rose-100 text-rose-700 border border-rose-200" :
+                                      t.prioridade === 'Média' ? "bg-amber-100 text-amber-800 border border-amber-200" :
+                                      "bg-slate-100 text-slate-600"
+                                    )}>
+                                      {t.prioridade || 'Média'}
+                                    </span>
+
+                                    {/* Status Badge */}
+                                    <span className={cn(
+                                      "px-2 py-0.5 rounded text-[10px] font-bold",
+                                      t.status === 'Em Andamento' ? "bg-blue-50 text-blue-700 border border-blue-100" :
+                                      "bg-amber-50 text-amber-700 border border-amber-100"
+                                    )}>
+                                      {t.status || 'Pendente'}
+                                    </span>
+
+                                    {/* Shortcut to Kanban / Diagnosis */}
+                                    {onNavigateToKanban && t.diagnosticoId && (
+                                      <button
+                                        type="button"
+                                        onClick={() => onNavigateToKanban(t.diagnosticoId)}
+                                        title="Abrir no Kanban do Plano de Ação"
+                                        className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer border border-slate-200/60"
+                                      >
+                                        <ChevronRight size={14} />
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            });
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 {/* Main Evolution Line Chart */}
                 <div className="p-6 bg-white rounded-3xl border border-slate-100 lg:col-span-3 shadow-sm flex flex-col justify-between space-y-4">

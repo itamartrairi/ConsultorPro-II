@@ -37,7 +37,6 @@ export interface SyncSummary {
     biblioteca: { uploaded: number; downloaded: number; updated: number };
     outros: { uploaded: number; downloaded: number; updated: number };
   };
-  logs?: string[];
 }
 
 interface SmartSyncModalProps {
@@ -270,32 +269,6 @@ export const SmartSyncModal: React.FC<SmartSyncModalProps> = ({
                   </div>
                 </div>
               </div>
-
-              {/* Status Logs */}
-              {lastSummary.logs && lastSummary.logs.length > 0 && (
-                <div className="p-4 bg-slate-50 border border-slate-200/70 rounded-2xl">
-                  <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
-                    Histórico de Operações
-                  </p>
-                  <div className="bg-white border border-slate-200/80 rounded-xl p-3 h-36 overflow-y-auto font-mono text-[10px] sm:text-[11px] leading-relaxed text-slate-600 space-y-1.5 custom-scrollbar">
-                    {lastSummary.logs.map((log, i) => {
-                      const isLocal = log.includes("baixado") || log.includes("local");
-                      const isIdentical = log.includes("conformidade");
-                      return (
-                        <div key={i} className="flex gap-2 items-start">
-                          <span className={cn(
-                            "shrink-0 font-bold",
-                            isIdentical ? "text-indigo-400" : (isLocal ? "text-cyan-500" : "text-emerald-500")
-                          )}>
-                            {isIdentical ? "—" : (isLocal ? "↓" : "↑")}
-                          </span>
-                          <span>{log}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
           ) : (
             <div className="text-center py-6 px-4 bg-slate-50 border border-dashed border-slate-200 rounded-2xl">

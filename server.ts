@@ -11,24 +11,24 @@ function getSystemGeminiApiKey(): string | undefined {
   if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'undefined' && process.env.GEMINI_API_KEY !== 'null' && process.env.GEMINI_API_KEY.trim() !== '') {
     return process.env.GEMINI_API_KEY.trim();
   }
-  if (process.env.VITE_GEMINI_API_KEY && process.env.VITE_GEMINI_API_KEY !== 'undefined' && process.env.VITE_GEMINI_API_KEY !== 'null' && process.env.VITE_GEMINI_API_KEY.trim() !== '') {
-    return process.env.VITE_GEMINI_API_KEY.trim();
-  }
 
   // Look through all environment keys
   for (const envKey of Object.keys(process.env)) {
     const lKey = envKey.toLowerCase();
-    // Match any version of gemini key spelling, such as Gemini_api_key, etc.
+    // Match any version of gemini key spelling, such as Gemini_api_kei, Gemini_api_key, etc.
     if (
       lKey === 'gemini_api_key' ||
-      lKey === 'vite_gemini_api_key' ||
+      lKey === 'gemini_api_kei' ||
+      lKey === 'gemini_api_keys' ||
+      lKey === 'gemini_api_keis' ||
       lKey === 'gemini_key' ||
-      lKey === 'google_api_key' ||
-      lKey.includes('gemini') ||
-      lKey.includes('genai')
+      lKey === 'gemini_kei' ||
+      lKey.includes('gemini_api') ||
+      lKey.includes('gemini_key') ||
+      lKey.includes('gemini_kei')
     ) {
       const val = process.env[envKey];
-      if (typeof val === 'string' && val.trim().length > 10 && val !== 'undefined' && val !== 'null') {
+      if (typeof val === 'string' && val.trim() !== '' && val !== 'undefined' && val !== 'null') {
         console.log(`[Gemini Config] Detected API key under environment variable: ${envKey}`);
         return val.trim();
       }
@@ -79,15 +79,12 @@ async function startServer() {
       const rawCustomKey = req.headers['x-custom-api-key'] || req.headers['X-Custom-Api-Key'];
       const systemKey = getSystemGeminiApiKey();
       let apiKey = systemKey;
-      if (typeof rawCustomKey === 'string' && rawCustomKey.trim().length > 10) {
+      if (typeof rawCustomKey === 'string' && rawCustomKey.trim().startsWith('AIzaSy')) {
         apiKey = rawCustomKey.trim();
       }
 
       if (!apiKey || apiKey === "undefined" || apiKey.trim() === "") {
-        return res.status(400).json({ 
-          ok: false, 
-          error: "Chave API do Gemini não configurada. Por favor, insira sua GEMINI_API_KEY no menu Configurações." 
-        });
+        return res.status(400).json({ ok: false, error: "Chave API do Gemini não configurada no servidor." });
       }
 
       const ai = new GoogleGenAI({
@@ -99,14 +96,14 @@ async function startServer() {
         }
       });
 
-      const testModels = ["gemini-3.1-flash-lite", "gemini-3.7-flash", "gemini-flash-latest"];
+      const testModels = ["gemini-3.6-flash", "gemini-3.7-flash", "gemini-3.1-flash-lite"];
       let workingModel: string | null = null;
       let lastErr: any = null;
 
       for (const m of testModels) {
         try {
           const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Timeout de teste da API")), 10000)
+            setTimeout(() => reject(new Error("Timeout de teste da API")), 6000)
           );
           const r: any = await Promise.race([
             ai.models.generateContent({
@@ -115,32 +112,19 @@ async function startServer() {
             }),
             timeoutPromise
           ]);
-          if (r && (r.text || r.candidates?.[0]?.content?.parts?.[0]?.text)) {
+          if (r && r.text) {
             workingModel = m;
             break;
           }
         } catch (e: any) {
-          console.warn(`[Gemini Test] Model ${m} attempt failed:`, e?.message || e);
           lastErr = e;
         }
       }
 
       if (workingModel) {
-        return res.json({ 
-          ok: true, 
-          model: workingModel, 
-          message: `Conexão bem-sucedida com a IA do Google Gemini (modelo: ${workingModel})!` 
-        });
+        return res.json({ ok: true, model: workingModel, message: `Conexão bem-sucedida com o modelo ${workingModel}!` });
       } else {
-        const rawErrMsg = lastErr?.message || "";
-        let friendlyErr = rawErrMsg;
-        if (rawErrMsg.includes("API key not valid") || rawErrMsg.includes("API_KEY_INVALID")) {
-          friendlyErr = "Chave de API inválida. Verifique se copiou a chave completa gerada no Google AI Studio.";
-        }
-        return res.status(500).json({ 
-          ok: false, 
-          error: friendlyErr || "Falha ao conectar aos modelos do Gemini. Verifique sua chave de API." 
-        });
+        return res.status(500).json({ ok: false, error: lastErr?.message || "Falha ao conectar aos modelos do Gemini." });
       }
     } catch (e: any) {
       return res.status(500).json({ ok: false, error: e?.message || "Erro inesperado ao testar Gemini." });
@@ -155,13 +139,13 @@ async function startServer() {
       const rawCustomKey = req.headers['x-custom-api-key'] || req.headers['X-Custom-Api-Key'];
       const systemKey = getSystemGeminiApiKey();
       let apiKey = systemKey;
-      if (typeof rawCustomKey === 'string' && rawCustomKey.trim().length > 10) {
+      if (typeof rawCustomKey === 'string' && rawCustomKey.trim().startsWith('AIzaSy')) {
         apiKey = rawCustomKey.trim();
       }
 
       if (!apiKey || apiKey === "undefined" || apiKey.trim() === "") {
         console.warn("[Gemini Server] Warning: No API Key configured!");
-        return res.status(400).json({ error: "Chave API do Gemini não configurada. Por favor, adicione sua chave no menu Configurações." });
+        return res.status(400).json({ error: "Chave API do Gemini não configurada no servidor. Por favor, adicione sua GEMINI_API_KEY no painel de Secrets ou nas Configurações da aplicação." });
       }
 
       const ai = new GoogleGenAI({
@@ -173,17 +157,17 @@ async function startServer() {
         }
       });
 
-      const GEMINI_PRIMARY = "gemini-3.1-flash-lite";
+      const GEMINI_PRIMARY = "gemini-3.6-flash";
       const GEMINI_CHAIN = [
-        "gemini-3.1-flash-lite",
+        "gemini-3.6-flash",
         "gemini-3.7-flash",
-        "gemini-flash-latest"
+        "gemini-3.1-flash-lite"
       ];
 
       function normalizeServerModel(m?: string): string {
         if (!m) return GEMINI_PRIMARY;
-        if (m.includes("2.5") || m.includes("2.0") || m.includes("1.5") || m.includes("1.0") || m.includes("3.6")) {
-          return "gemini-3.1-flash-lite";
+        if (m.includes("2.5") || m.includes("2.0") || m.includes("1.5") || m.includes("1.0")) {
+          return "gemini-3.6-flash";
         }
         return m;
       }
