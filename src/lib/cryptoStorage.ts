@@ -42,9 +42,8 @@ export function getActiveEncryptionKey(): string {
   if (customSessionPassword && customSessionPassword.trim()) {
     return CryptoJS.SHA256(`pass:${customSessionPassword}:${BASE_SALT}`).toString();
   }
-  if (currentUserId && currentUserId.trim()) {
-    return CryptoJS.SHA256(`uid:${currentUserId}:${BASE_SALT}`).toString();
-  }
+  // Ignore currentUserId to ensure decryption works synchronously on boot
+  // before Firebase auth resolves.
   const deviceKey = getDeviceKey();
   return CryptoJS.SHA256(`dev:${deviceKey}:${BASE_SALT}`).toString();
 }
@@ -110,6 +109,36 @@ const UNENCRYPTED_KEYS = new Set([
   'preferred_logo'
 ]);
 
+function isUnencryptedKey(key: string): boolean {
+  if (UNENCRYPTED_KEYS.has(key)) return true;
+  if (key.startsWith('ai_cache_')) return true;
+  if (key.startsWith('firebase')) return true;
+  if (key.startsWith('firestore')) return true;
+  return false;
+}
+
+// Emergency cleanup: Remove accidentally encrypted Firebase internal cache keys
+// which causes Firebase to crash or fallback to memory cache on boot.
+if (typeof window !== 'undefined' && window.localStorage) {
+  try {
+    const keysToRecover: string[] = [];
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const k = window.localStorage.key(i);
+      if (k && (k.startsWith('firebase') || k.startsWith('firestore'))) {
+        const val = window.localStorage.getItem(k);
+        if (val && val.startsWith('enc:v1:')) {
+          keysToRecover.push(k);
+        }
+      }
+    }
+    keysToRecover.forEach(k => {
+      window.localStorage.removeItem(k);
+    });
+  } catch (e) {
+    // Ignore
+  }
+}
+
 /**
  * Safe local storage wrapper with automatic AES-256 Encryption at Rest.
  */
@@ -129,7 +158,7 @@ export const encryptedLocalStorage = {
     }
 
     if (!rawVal) return null;
-    if (UNENCRYPTED_KEYS.has(key)) return rawVal;
+    if (isUnencryptedKey(key)) return rawVal;
 
     return decryptValue(rawVal);
   },
@@ -140,7 +169,7 @@ export const encryptedLocalStorage = {
       return;
     }
 
-    const valueToStore = UNENCRYPTED_KEYS.has(key) ? value : encryptValue(value);
+    const valueToStore = isUnencryptedKey(key) ? value : encryptValue(value);
 
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -175,7 +204,7 @@ export const encryptedLocalStorage = {
       const keysToMigrate: string[] = [];
       for (let i = 0; i < window.localStorage.length; i++) {
         const k = window.localStorage.key(i);
-        if (k && !UNENCRYPTED_KEYS.has(k)) {
+        if (k && !isUnencryptedKey(k)) {
           keysToMigrate.push(k);
         }
       }

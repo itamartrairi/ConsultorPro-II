@@ -3,6 +3,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
+import { encryptedLocalStorage } from '../lib/cryptoStorage';
 import { 
   ResponsiveContainer, 
   LineChart, 
@@ -183,7 +184,7 @@ export const MacroDashboardView = ({
   const activeSummary = useMemo<SyncSummary | null>(() => {
     if (lastSyncSummary) return lastSyncSummary;
     try {
-      const saved = localStorage.getItem('last_sync_summary');
+      const saved = encryptedLocalStorage.getItem('last_sync_summary');
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;

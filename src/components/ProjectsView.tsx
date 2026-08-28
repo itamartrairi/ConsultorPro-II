@@ -41,6 +41,7 @@ import {
 import { doc, updateDoc, collection, addDoc, getDocs, deleteDoc, query, where, writeBatch } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Button } from './Button';
+import { encryptedLocalStorage } from '../lib/cryptoStorage';
 import { getAI, extractAndParseJSON, Type } from '../App';
 import { ReplicateDiagnosticoModal } from './ReplicateDiagnosticoModal';
 
@@ -348,12 +349,12 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
 
         // Clean local storage
         try {
-          const allLocal = localStorage.getItem('local_all_respostas');
+          const allLocal = encryptedLocalStorage.getItem('local_all_respostas');
           if (allLocal) {
             const parsed = JSON.parse(allLocal);
             if (Array.isArray(parsed)) {
-              localStorage.setItem('local_all_respostas', JSON.stringify(parsed.filter((r: any) => r.diagnosticoId !== diagId)));
-              localStorage.setItem('local_respostas', JSON.stringify(parsed.filter((r: any) => r.diagnosticoId !== diagId)));
+              encryptedLocalStorage.setItem('local_all_respostas', JSON.stringify(parsed.filter((r: any) => r.diagnosticoId !== diagId)));
+              encryptedLocalStorage.setItem('local_respostas', JSON.stringify(parsed.filter((r: any) => r.diagnosticoId !== diagId)));
             }
           }
         } catch (e) {}

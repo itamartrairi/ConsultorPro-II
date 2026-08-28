@@ -2016,12 +2016,12 @@ const DadosConsultoriaView = ({
 
         // 2. Persist to localStorage local_diagnosticos
         try {
-          const saved = localStorage.getItem('local_diagnosticos');
+          const saved = encryptedLocalStorage.getItem('local_diagnosticos');
           const parsed = saved ? JSON.parse(saved) : [];
           const nextList = Array.isArray(parsed) 
             ? parsed.map((d: any) => d.id === targetDiag!.id ? updatedDiag : d)
             : [updatedDiag];
-          localStorage.setItem('local_diagnosticos', JSON.stringify(nextList));
+          encryptedLocalStorage.setItem('local_diagnosticos', JSON.stringify(nextList));
         } catch (e) {
           console.warn("Could not save to localStorage local_diagnosticos", e);
         }
@@ -2732,7 +2732,7 @@ const CronogramaView = ({
 
   const [modelosRelatorio, setModelosRelatorio] = useState<ModeloRelatorio[]>(() => {
     try {
-      const saved = localStorage.getItem('custom_modelos_relatorio_v2');
+      const saved = encryptedLocalStorage.getItem('custom_modelos_relatorio_v2');
       if (saved) return JSON.parse(saved);
     } catch (e) {
       console.error("Erro ao carregar modelos customizados:", e);
@@ -2786,12 +2786,12 @@ const CronogramaView = ({
 
     // 2. Persist to localStorage
     try {
-      const saved = localStorage.getItem('local_diagnosticos');
+      const saved = encryptedLocalStorage.getItem('local_diagnosticos');
       const parsed = saved ? JSON.parse(saved) : [];
       const nextList = Array.isArray(parsed) 
         ? parsed.map((d: any) => d.id === selectedDiagnostico.id ? updatedDiag : d)
         : [updatedDiag];
-      localStorage.setItem('local_diagnosticos', JSON.stringify(nextList));
+      encryptedLocalStorage.setItem('local_diagnosticos', JSON.stringify(nextList));
     } catch (e) {
       console.warn("Could not save to localStorage local_diagnosticos", e);
     }
@@ -3215,12 +3215,12 @@ const CronogramaView = ({
 
       // 2. Persist to localStorage local_diagnosticos
       try {
-        const saved = localStorage.getItem('local_diagnosticos');
+        const saved = encryptedLocalStorage.getItem('local_diagnosticos');
         const parsed = saved ? JSON.parse(saved) : [];
         const nextList = Array.isArray(parsed) 
           ? parsed.map((d: any) => d.id === selectedDiagnostico.id ? updatedDiag : d)
           : [updatedDiag];
-        localStorage.setItem('local_diagnosticos', JSON.stringify(nextList));
+        encryptedLocalStorage.setItem('local_diagnosticos', JSON.stringify(nextList));
       } catch (e) {
         console.warn("Could not save to localStorage local_diagnosticos", e);
       }
@@ -3259,10 +3259,10 @@ const CronogramaView = ({
       }
 
       try {
-        const savedTasks = localStorage.getItem('local_tarefas_plano');
+        const savedTasks = encryptedLocalStorage.getItem('local_tarefas_plano');
         const parsedTasks = savedTasks ? JSON.parse(savedTasks) : [];
         const others = Array.isArray(parsedTasks) ? parsedTasks.filter((t: any) => t.diagnosticoId !== selectedDiagnostico.id) : [];
-        localStorage.setItem('local_tarefas_plano', JSON.stringify([...others, ...newTarefasFromAtividades]));
+        encryptedLocalStorage.setItem('local_tarefas_plano', JSON.stringify([...others, ...newTarefasFromAtividades]));
       } catch (e) {
         console.warn("Could not save local_tarefas_plano", e);
       }
@@ -4285,7 +4285,7 @@ const CronogramaView = ({
 
               setModelosRelatorio(updatedList);
               try {
-                localStorage.setItem('custom_modelos_relatorio_v2', JSON.stringify(updatedList));
+                encryptedLocalStorage.setItem('custom_modelos_relatorio_v2', JSON.stringify(updatedList));
               } catch (err) {
                 console.error("Erro ao salvar no localStorage:", err);
               }
@@ -6663,17 +6663,17 @@ const GestaoPlanoView = ({
 
       // 2. Local storage persistence immediately
       try {
-        const savedTasks = localStorage.getItem('local_tarefas_plano');
+        const savedTasks = encryptedLocalStorage.getItem('local_tarefas_plano');
         const parsedTasks = savedTasks ? JSON.parse(savedTasks) : [];
         const others = Array.isArray(parsedTasks) ? parsedTasks.filter((t: any) => t.diagnosticoId !== selectedDiagnostico.id) : [];
-        localStorage.setItem('local_tarefas_plano', JSON.stringify([...others, ...sortedTarefas]));
+        encryptedLocalStorage.setItem('local_tarefas_plano', JSON.stringify([...others, ...sortedTarefas]));
 
-        const savedDiags = localStorage.getItem('local_diagnosticos');
+        const savedDiags = encryptedLocalStorage.getItem('local_diagnosticos');
         const parsedDiags = savedDiags ? JSON.parse(savedDiags) : [];
         const nextDiags = Array.isArray(parsedDiags) 
           ? parsedDiags.map((d: any) => d.id === selectedDiagnostico.id ? { ...d, cronograma: synchronizedCronograma, status: newStatus } : d)
           : [];
-        localStorage.setItem('local_diagnosticos', JSON.stringify(nextDiags));
+        encryptedLocalStorage.setItem('local_diagnosticos', JSON.stringify(nextDiags));
       } catch (e) {
         console.warn("Could not save to localStorage in handleSavePlanoAcao", e);
       }
@@ -7010,10 +7010,10 @@ const GestaoPlanoView = ({
   // HorÃ¡rio de Lembrete DiÃ¡rio Background Ticker
   useEffect(() => {
     const checkDailyReminder = () => {
-      const enabled = localStorage.getItem('daily_reminder_enabled') === 'true';
+      const enabled = encryptedLocalStorage.getItem('daily_reminder_enabled') === 'true';
       if (!enabled) return;
 
-      const reminderTime = localStorage.getItem('daily_reminder_time') || '09:00';
+      const reminderTime = encryptedLocalStorage.getItem('daily_reminder_time') || '09:00';
       const [remHourStr, remMinStr] = reminderTime.split(':');
       const remHour = parseInt(remHourStr || '9', 10);
       const remMin = parseInt(remMinStr || '0', 10);
@@ -7024,7 +7024,7 @@ const GestaoPlanoView = ({
 
       if (currentHour === remHour && currentMin === remMin) {
         const todayStr = now.toISOString().split('T')[0];
-        const lastNotified = localStorage.getItem('last_daily_reminder_date');
+        const lastNotified = encryptedLocalStorage.getItem('last_daily_reminder_date');
         
         if (lastNotified !== todayStr) {
           if ('Notification' in window && Notification.permission === 'granted') {
@@ -7040,7 +7040,7 @@ const GestaoPlanoView = ({
                 icon: "/favicon.ico"
               });
             }
-            localStorage.setItem('last_daily_reminder_date', todayStr);
+            encryptedLocalStorage.setItem('last_daily_reminder_date', todayStr);
           }
         }
       }
@@ -7876,7 +7876,7 @@ const LandingPage = ({ setView }: { setView: (v: any) => void }) => {
               </div>
               <div className="p-8 bg-slate-50">
                 <Button 
-                  onClick={() => { setView('checkout'); localStorage.setItem('selected_plan', 'monthly'); }}
+                  onClick={() => { setView('checkout'); encryptedLocalStorage.setItem('selected_plan', 'monthly'); }}
                   className="w-full h-12 font-bold"
                 >
                   Assinar Mensal
@@ -7909,7 +7909,7 @@ const LandingPage = ({ setView }: { setView: (v: any) => void }) => {
               </div>
               <div className="p-8 bg-emerald-50">
                 <Button 
-                  onClick={() => { setView('checkout'); localStorage.setItem('selected_plan', 'annual'); }}
+                  onClick={() => { setView('checkout'); encryptedLocalStorage.setItem('selected_plan', 'annual'); }}
                   className="w-full h-12 font-bold bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-200"
                 >
                   Assinar Anual (15% OFF)
@@ -8351,7 +8351,7 @@ const LogoSelector = ({
         <button
           onClick={() => {
             setLogoChoice('sebrae');
-            localStorage.setItem('preferred_logo', 'sebrae');
+            encryptedLocalStorage.setItem('preferred_logo', 'sebrae');
           }}
           className={cn(
             "px-4 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer border-0 select-none uppercase tracking-wider",
@@ -8365,7 +8365,7 @@ const LogoSelector = ({
         <button
           onClick={() => {
             setLogoChoice('consultora');
-            localStorage.setItem('preferred_logo', 'consultora');
+            encryptedLocalStorage.setItem('preferred_logo', 'consultora');
           }}
           className={cn(
             "px-4 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer border-0 select-none uppercase tracking-wider",
@@ -8379,7 +8379,7 @@ const LogoSelector = ({
         <button
           onClick={() => {
             setLogoChoice('none');
-            localStorage.setItem('preferred_logo', 'none');
+            encryptedLocalStorage.setItem('preferred_logo', 'none');
           }}
           className={cn(
             "px-4 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer border-0 select-none uppercase tracking-wider",
@@ -8424,8 +8424,8 @@ const SettingsView = ({
   lastSyncSummary?: SyncSummary | null,
   userEmail?: string | null
 }) => {
-  const [dailyReminderEnabled, setDailyReminderEnabled] = React.useState(() => localStorage.getItem('daily_reminder_enabled') === 'true');
-  const [dailyReminderTime, setDailyReminderTime] = React.useState(() => localStorage.getItem('daily_reminder_time') || '09:00');
+  const [dailyReminderEnabled, setDailyReminderEnabled] = React.useState(() => encryptedLocalStorage.getItem('daily_reminder_enabled') === 'true');
+  const [dailyReminderTime, setDailyReminderTime] = React.useState(() => encryptedLocalStorage.getItem('daily_reminder_time') || '09:00');
   const [cloudStatus, setCloudStatus] = React.useState<{ checking: boolean; ok?: boolean; message?: string; details?: string } | null>(null);
   const [copiedRules, setCopiedRules] = React.useState(false);
 
@@ -8454,11 +8454,11 @@ const SettingsView = ({
       }
     }
     setDailyReminderEnabled(nextVal);
-    localStorage.setItem('daily_reminder_enabled', String(nextVal));
+    encryptedLocalStorage.setItem('daily_reminder_enabled', String(nextVal));
   };
 
   const saveReminderConfig = () => {
-    localStorage.setItem('daily_reminder_time', dailyReminderTime);
+    encryptedLocalStorage.setItem('daily_reminder_time', dailyReminderTime);
     alert(`HorÃ¡rio de lembrete diÃ¡rio configurado para as ${dailyReminderTime} com sucesso!`);
   };
 
@@ -8489,10 +8489,10 @@ const SettingsView = ({
         const base64 = event.target?.result as string;
         if (isSebrae) {
           setCustomLogo(base64);
-          localStorage.setItem('sebrae_custom_logo', base64);
+          encryptedLocalStorage.setItem('sebrae_custom_logo', base64);
         } else {
           setCustomConsultoraLogo(base64);
-          localStorage.setItem('consultora_custom_logo', base64);
+          encryptedLocalStorage.setItem('consultora_custom_logo', base64);
         }
       };
       reader.readAsDataURL(file);
@@ -8502,10 +8502,10 @@ const SettingsView = ({
   const removeLogo = (isSebrae: boolean) => {
     if (isSebrae) {
       setCustomLogo(null);
-      localStorage.removeItem('sebrae_custom_logo');
+      encryptedLocalStorage.removeItem('sebrae_custom_logo');
     } else {
       setCustomConsultoraLogo(null);
-      localStorage.removeItem('consultora_custom_logo');
+      encryptedLocalStorage.removeItem('consultora_custom_logo');
     }
   };
 
@@ -9552,7 +9552,7 @@ const LicensingDataView = ({ setView }: { setView?: (v: any) => void }) => {
         {/* Plano Mensal */}
         <Card 
           onClick={() => {
-            localStorage.setItem('selected_plan', 'monthly');
+            encryptedLocalStorage.setItem('selected_plan', 'monthly');
             setView?.('checkout');
           }}
           className="hover:border-emerald-400 hover:shadow-lg transition-all shadow-sm flex flex-col overflow-hidden cursor-pointer group"
@@ -9592,7 +9592,7 @@ const LicensingDataView = ({ setView }: { setView?: (v: any) => void }) => {
         {/* Plano Anual */}
         <Card 
           onClick={() => {
-            localStorage.setItem('selected_plan', 'annual');
+            encryptedLocalStorage.setItem('selected_plan', 'annual');
             setView?.('checkout');
           }}
           className="hover:border-emerald-600 hover:shadow-lg transition-all shadow-sm border-emerald-500 border-2 flex flex-col overflow-hidden relative cursor-pointer group"
@@ -9926,7 +9926,7 @@ export const getAI = () => {
           console.warn("[AICache] Cache lookup error:", e);
         }
 
-        let rawSavedKey = localStorage.getItem('custom_gemini_api_key') || "";
+        let rawSavedKey = encryptedLocalStorage.getItem('custom_gemini_api_key') || "";
         if (rawSavedKey === "undefined" || rawSavedKey === "null") {
           rawSavedKey = "";
         }
@@ -10360,7 +10360,7 @@ export const loadAllLocalRespostas = (): Resposta[] => {
     return Array.from(cachedAllRespostasMap.values());
   }
   try {
-    const saved = localStorage.getItem('local_all_respostas');
+    const saved = encryptedLocalStorage.getItem('local_all_respostas');
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
@@ -10368,7 +10368,7 @@ export const loadAllLocalRespostas = (): Resposta[] => {
         return parsed;
       }
     }
-    const legacy = localStorage.getItem('local_respostas');
+    const legacy = encryptedLocalStorage.getItem('local_respostas');
     if (legacy) {
       const parsed = JSON.parse(legacy);
       if (Array.isArray(parsed) && parsed.length > 0) {
@@ -10393,8 +10393,8 @@ export const saveAllLocalRespostas = (newOrUpdated: Resposta[]) => {
       if (r?.id) cachedAllRespostasMap!.set(r.id, r);
     });
     const all = Array.from(cachedAllRespostasMap!.values());
-    localStorage.setItem('local_all_respostas', JSON.stringify(all));
-    localStorage.setItem('local_respostas', JSON.stringify(all));
+    encryptedLocalStorage.setItem('local_all_respostas', JSON.stringify(all));
+    encryptedLocalStorage.setItem('local_respostas', JSON.stringify(all));
   } catch (e) {
     console.error("Erro ao salvar respostas locais:", e);
   }
@@ -10432,7 +10432,7 @@ export default function App() {
   const [syncError, setSyncError] = useState<string | null>(null);
   const [lastSyncSummary, setLastSyncSummary] = useState<SyncSummary | null>(() => {
     try {
-      const saved = localStorage.getItem('last_sync_summary');
+      const saved = encryptedLocalStorage.getItem('last_sync_summary');
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -10448,12 +10448,12 @@ export default function App() {
 
   // Storage Mode State (Cloud vs. Local)
   const [storageMode, setStorageMode] = useState<'cloud' | 'local'>(() => {
-    return (localStorage.getItem('storage_mode') as 'cloud' | 'local') || 'cloud';
+    return (encryptedLocalStorage.getItem('storage_mode') as 'cloud' | 'local') || 'cloud';
   });
 
   const handleSetStorageMode = (mode: 'cloud' | 'local') => {
     setStorageMode(mode);
-    localStorage.setItem('storage_mode', mode);
+    encryptedLocalStorage.setItem('storage_mode', mode);
     playSuccessSound();
 
     if (mode === 'cloud') {
@@ -10514,10 +10514,10 @@ export default function App() {
   const [calculatingMaturity, setCalculatingMaturity] = useState(false);
   const [generatingPlan, setGeneratingPlan] = useState(false);
   const [view, setView] = useState<'home' | 'companies' | 'credenciadas' | 'licenses' | 'diagnosis' | 'dashboard' | 'premises' | 'cronograma' | 'relatorio' | 'kanban' | 'settings' | 'landing' | 'checkout' | 'licensing' | 'dados-consultoria'>('landing');
-  const [customLogo, setCustomLogo] = useState<string | null>(localStorage.getItem('sebrae_custom_logo'));
-  const [customConsultoraLogo, setCustomConsultoraLogo] = useState<string | null>(localStorage.getItem('consultora_custom_logo'));
+  const [customLogo, setCustomLogo] = useState<string | null>(encryptedLocalStorage.getItem('sebrae_custom_logo'));
+  const [customConsultoraLogo, setCustomConsultoraLogo] = useState<string | null>(encryptedLocalStorage.getItem('consultora_custom_logo'));
   const [logoChoice, setLogoChoice] = useState<'sebrae' | 'consultora' | 'none'>(() => {
-    return (localStorage.getItem('preferred_logo') as 'sebrae' | 'consultora' | 'none') || 'sebrae';
+    return (encryptedLocalStorage.getItem('preferred_logo') as 'sebrae' | 'consultora' | 'none') || 'sebrae';
   });
   const activeLogo = logoChoice === 'sebrae' ? customLogo : logoChoice === 'consultora' ? customConsultoraLogo : null;
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -10541,13 +10541,13 @@ export default function App() {
   const [newSegmentInput, setNewSegmentInput] = useState('');
   const [dbAreas, setDbAreas] = useState<{ id: string, nome: string }[]>(() => {
     try {
-      const saved = localStorage.getItem('local_db_areas');
+      const saved = encryptedLocalStorage.getItem('local_db_areas');
       return saved ? JSON.parse(saved) : [];
     } catch { return []; }
   });
   const [dbSegmentos, setDbSegmentos] = useState<{ id: string, nome: string }[]>(() => {
     try {
-      const saved = localStorage.getItem('local_db_segmentos');
+      const saved = encryptedLocalStorage.getItem('local_db_segmentos');
       return saved ? JSON.parse(saved) : [];
     } catch { return []; }
   });
@@ -10586,7 +10586,7 @@ export default function App() {
   const [sessionCustomAreas, setSessionCustomAreas] = useState<string[]>([]);
   const [deletedAreas, setDeletedAreas] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem('deleted_areas');
+      const saved = encryptedLocalStorage.getItem('deleted_areas');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
@@ -10595,7 +10595,7 @@ export default function App() {
 
   useEffect(() => {
     try {
-      localStorage.setItem('deleted_areas', JSON.stringify(deletedAreas));
+      encryptedLocalStorage.setItem('deleted_areas', JSON.stringify(deletedAreas));
     } catch (e) {
       console.error("Erro ao salvar deleted_areas:", e);
     }
@@ -10608,7 +10608,7 @@ export default function App() {
   
   const [empresas, setEmpresas] = useState<Empresa[]>(() => {
     try {
-      const saved = localStorage.getItem('local_empresas');
+      const saved = encryptedLocalStorage.getItem('local_empresas');
       return saved ? JSON.parse(saved) : [];
     } catch { return []; }
   });
@@ -10616,27 +10616,27 @@ export default function App() {
   const itemsPerPage = 9;
   const [empresasCredenciadas, setEmpresasCredenciadas] = useState<EmpresaCredenciada[]>(() => {
     try {
-      const saved = localStorage.getItem('local_empresas_credenciadas');
+      const saved = encryptedLocalStorage.getItem('local_empresas_credenciadas');
       return saved ? JSON.parse(saved) : [];
     } catch { return []; }
   });
   const [diagnosticos, setDiagnosticos] = useState<Diagnostico[]>(() => {
     try {
-      const saved = localStorage.getItem('local_diagnosticos');
+      const saved = encryptedLocalStorage.getItem('local_diagnosticos');
       return saved ? JSON.parse(saved) : [];
     } catch { return []; }
   });
   const [respostas, setRespostas] = useState<Resposta[]>(() => {
     try {
-      const saved = localStorage.getItem('local_respostas');
+      const saved = encryptedLocalStorage.getItem('local_respostas');
       return saved ? JSON.parse(saved) : [];
     } catch { return []; }
   });
   const [respostasLoaded, setRespostasLoaded] = useState(true);
   const [premissas, setPremissas] = useState<Premissa[]>(() => {
     try {
-      if (localStorage.getItem('user_cleared_premissas') === 'true') return [];
-      const saved = localStorage.getItem('local_premissas');
+      if (encryptedLocalStorage.getItem('user_cleared_premissas') === 'true') return [];
+      const saved = encryptedLocalStorage.getItem('local_premissas');
       if (saved !== null) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) return parsed;
@@ -10646,8 +10646,8 @@ export default function App() {
   });
   const [problemas, setProblemas] = useState<Problema[]>(() => {
     try {
-      if (localStorage.getItem('user_cleared_problemas') === 'true') return [];
-      const saved = localStorage.getItem('local_problemas');
+      if (encryptedLocalStorage.getItem('user_cleared_problemas') === 'true') return [];
+      const saved = encryptedLocalStorage.getItem('local_problemas');
       if (saved !== null) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) return parsed;
@@ -10657,8 +10657,8 @@ export default function App() {
   });
   const [solucoes, setSolucoes] = useState<Solucao[]>(() => {
     try {
-      if (localStorage.getItem('user_cleared_solucoes') === 'true') return [];
-      const saved = localStorage.getItem('local_solucoes');
+      if (encryptedLocalStorage.getItem('user_cleared_solucoes') === 'true') return [];
+      const saved = encryptedLocalStorage.getItem('local_solucoes');
       if (saved !== null) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) return parsed;
@@ -10668,50 +10668,50 @@ export default function App() {
   });
   const [tarefasPlano, setTarefasPlano] = useState<TarefaPlanoAcao[]>(() => {
     try {
-      const saved = localStorage.getItem('local_tarefas_plano');
+      const saved = encryptedLocalStorage.getItem('local_tarefas_plano');
       return saved ? JSON.parse(saved) : [];
     } catch { return []; }
   });
 
   // Auto-sync state changes to localStorage
   useEffect(() => {
-    try { localStorage.setItem('local_empresas', JSON.stringify(empresas)); } catch (e) { console.error("Error saving local_empresas:", e); }
+    try { encryptedLocalStorage.setItem('local_empresas', JSON.stringify(empresas)); } catch (e) { console.error("Error saving local_empresas:", e); }
   }, [empresas]);
 
   useEffect(() => {
-    try { localStorage.setItem('local_empresas_credenciadas', JSON.stringify(empresasCredenciadas)); } catch (e) { console.error("Error saving local_empresas_credenciadas:", e); }
+    try { encryptedLocalStorage.setItem('local_empresas_credenciadas', JSON.stringify(empresasCredenciadas)); } catch (e) { console.error("Error saving local_empresas_credenciadas:", e); }
   }, [empresasCredenciadas]);
 
   useEffect(() => {
-    try { localStorage.setItem('local_diagnosticos', JSON.stringify(diagnosticos)); } catch (e) { console.error("Error saving local_diagnosticos:", e); }
+    try { encryptedLocalStorage.setItem('local_diagnosticos', JSON.stringify(diagnosticos)); } catch (e) { console.error("Error saving local_diagnosticos:", e); }
   }, [diagnosticos]);
 
   useEffect(() => {
-    try { localStorage.setItem('local_respostas', JSON.stringify(respostas)); } catch (e) { console.error("Error saving local_respostas:", e); }
+    try { encryptedLocalStorage.setItem('local_respostas', JSON.stringify(respostas)); } catch (e) { console.error("Error saving local_respostas:", e); }
   }, [respostas]);
 
   useEffect(() => {
-    try { localStorage.setItem('local_premissas', JSON.stringify(premissas)); } catch (e) { console.error("Error saving local_premissas:", e); }
+    try { encryptedLocalStorage.setItem('local_premissas', JSON.stringify(premissas)); } catch (e) { console.error("Error saving local_premissas:", e); }
   }, [premissas]);
 
   useEffect(() => {
-    try { localStorage.setItem('local_problemas', JSON.stringify(problemas)); } catch (e) { console.error("Error saving local_problemas:", e); }
+    try { encryptedLocalStorage.setItem('local_problemas', JSON.stringify(problemas)); } catch (e) { console.error("Error saving local_problemas:", e); }
   }, [problemas]);
 
   useEffect(() => {
-    try { localStorage.setItem('local_solucoes', JSON.stringify(solucoes)); } catch (e) { console.error("Error saving local_solucoes:", e); }
+    try { encryptedLocalStorage.setItem('local_solucoes', JSON.stringify(solucoes)); } catch (e) { console.error("Error saving local_solucoes:", e); }
   }, [solucoes]);
 
   useEffect(() => {
-    try { localStorage.setItem('local_tarefas_plano', JSON.stringify(tarefasPlano)); } catch (e) { console.error("Error saving local_tarefas_plano:", e); }
+    try { encryptedLocalStorage.setItem('local_tarefas_plano', JSON.stringify(tarefasPlano)); } catch (e) { console.error("Error saving local_tarefas_plano:", e); }
   }, [tarefasPlano]);
 
   useEffect(() => {
-    try { localStorage.setItem('local_db_areas', JSON.stringify(dbAreas)); } catch (e) { console.error("Error saving local_db_areas:", e); }
+    try { encryptedLocalStorage.setItem('local_db_areas', JSON.stringify(dbAreas)); } catch (e) { console.error("Error saving local_db_areas:", e); }
   }, [dbAreas]);
 
   useEffect(() => {
-    try { localStorage.setItem('local_db_segmentos', JSON.stringify(dbSegmentos)); } catch (e) { console.error("Error saving local_db_segmentos:", e); }
+    try { encryptedLocalStorage.setItem('local_db_segmentos', JSON.stringify(dbSegmentos)); } catch (e) { console.error("Error saving local_db_segmentos:", e); }
   }, [dbSegmentos]);
 
   const performSmartCloudSync = async () => {
@@ -10742,7 +10742,8 @@ export default function App() {
           tarefas: { uploaded: 0, downloaded: 0, updated: 0 },
           biblioteca: { uploaded: 0, downloaded: 0, updated: 0 },
           outros: { uploaded: 0, downloaded: 0, updated: 0 }
-        }
+        },
+        logs: []
       };
 
       const cloudBatches: Array<() => Promise<void>> = [];
@@ -10780,7 +10781,7 @@ export default function App() {
       const localEmpresasMap = new Map<string, Empresa>();
       empresas.forEach(e => localEmpresasMap.set(e.id, e));
       try {
-        const savedEmpStr = localStorage.getItem('local_empresas');
+        const savedEmpStr = encryptedLocalStorage.getItem('local_empresas');
         if (savedEmpStr) {
           const parsed = JSON.parse(savedEmpStr);
           if (Array.isArray(parsed)) parsed.forEach(e => localEmpresasMap.set(e.id, e));
@@ -10799,10 +10800,12 @@ export default function App() {
           batchQueue.pushItem(doc(db, 'empresas', id), { ...local, ownerId: user.uid, updatedAt: (local as any).updatedAt || new Date().toISOString() });
           summary.uploadedToCloud++;
           summary.details.empresas.uploaded++;
+          summary.logs!.push(`Empresa ${local.nomeFantasia || local.razaoSocial || "Desconhecida"} enviada para a nuvem.`);
           finalEmpresas.push(local);
         } else if (!local && cloud) {
           summary.downloadedFromCloud++;
           summary.details.empresas.downloaded++;
+          summary.logs!.push(`Empresa ${cloud.nomeFantasia || cloud.razaoSocial || "Desconhecida"} baixada para o local.`);
           finalEmpresas.push(cloud);
         } else if (local && cloud) {
           const tLocal = extractItemTimestamp(local);
@@ -10811,10 +10814,12 @@ export default function App() {
             batchQueue.pushItem(doc(db, 'empresas', id), { ...cloud, ...local, ownerId: user.uid, updatedAt: new Date().toISOString() });
             summary.updatedInCloud++;
             summary.details.empresas.updated++;
+            summary.logs!.push(`Empresa ${local.nomeFantasia || local.razaoSocial || "Desconhecida"} atualizada na nuvem.`);
             finalEmpresas.push({ ...cloud, ...local });
           } else if (tCloud > tLocal) {
             summary.updatedInLocal++;
             summary.details.empresas.downloaded++;
+            summary.logs!.push(`Empresa ${cloud.nomeFantasia || cloud.razaoSocial || "Desconhecida"} atualizada no local.`);
             finalEmpresas.push({ ...local, ...cloud });
           } else {
             summary.identicalOrMerged++;
@@ -10823,7 +10828,7 @@ export default function App() {
         }
       }
       setEmpresas(finalEmpresas);
-      localStorage.setItem('local_empresas', JSON.stringify(finalEmpresas));
+      encryptedLocalStorage.setItem('local_empresas', JSON.stringify(finalEmpresas));
 
       // --- B. Sync DiagnÃ³sticos ---
       const cloudDiagsSnap = await getDocs(isAdmin ? query(collection(db, 'diagnosticos')) : query(collection(db, 'diagnosticos'), where('ownerId', '==', user.uid)));
@@ -10835,7 +10840,7 @@ export default function App() {
       const localDiagsMap = new Map<string, Diagnostico>();
       diagnosticos.forEach(d => localDiagsMap.set(d.id, d));
       try {
-        const savedDiagStr = localStorage.getItem('local_diagnosticos');
+        const savedDiagStr = encryptedLocalStorage.getItem('local_diagnosticos');
         if (savedDiagStr) {
           const parsed = JSON.parse(savedDiagStr);
           if (Array.isArray(parsed)) parsed.forEach(d => localDiagsMap.set(d.id, d));
@@ -10854,10 +10859,12 @@ export default function App() {
           batchQueue.pushItem(doc(db, 'diagnosticos', id), { ...local, ownerId: user.uid, updatedAt: (local as any).updatedAt || new Date().toISOString() });
           summary.uploadedToCloud++;
           summary.details.diagnosticos.uploaded++;
+          summary.logs!.push(`DiagnÃ³stico de ${local.empresaId || "Desconhecida"} (ID: ${local.id.substring(0,6)}) enviado para a nuvem.`);
           finalDiagnosticos.push(local);
         } else if (!local && cloud) {
           summary.downloadedFromCloud++;
           summary.details.diagnosticos.downloaded++;
+          summary.logs!.push(`DiagnÃ³stico de ${cloud.empresaId || "Desconhecida"} (ID: ${cloud.id.substring(0,6)}) baixado para o local.`);
           finalDiagnosticos.push(cloud);
         } else if (local && cloud) {
           const tLocal = extractItemTimestamp(local);
@@ -10866,10 +10873,12 @@ export default function App() {
             batchQueue.pushItem(doc(db, 'diagnosticos', id), { ...cloud, ...local, ownerId: user.uid, updatedAt: new Date().toISOString() });
             summary.updatedInCloud++;
             summary.details.diagnosticos.updated++;
+            summary.logs!.push(`DiagnÃ³stico de ${local.empresaId || "Desconhecida"} (ID: ${local.id.substring(0,6)}) atualizado na nuvem.`);
             finalDiagnosticos.push({ ...cloud, ...local });
           } else if (tCloud > tLocal) {
             summary.updatedInLocal++;
             summary.details.diagnosticos.downloaded++;
+            summary.logs!.push(`DiagnÃ³stico de ${cloud.empresaId || "Desconhecida"} (ID: ${cloud.id.substring(0,6)}) atualizado no local.`);
             finalDiagnosticos.push({ ...local, ...cloud });
           } else {
             summary.identicalOrMerged++;
@@ -10878,7 +10887,7 @@ export default function App() {
         }
       }
       setDiagnosticos(finalDiagnosticos);
-      localStorage.setItem('local_diagnosticos', JSON.stringify(finalDiagnosticos));
+      encryptedLocalStorage.setItem('local_diagnosticos', JSON.stringify(finalDiagnosticos));
 
       // --- C. Sync Respostas ---
       const cloudRespsSnap = await getDocs(isAdmin ? query(collection(db, 'respostas'), limit(5000)) : query(collection(db, 'respostas'), where('ownerId', '==', user.uid)));
@@ -10904,10 +10913,12 @@ export default function App() {
           batchQueue.pushItem(doc(db, 'respostas', id), { ...local, ownerId: user.uid, updatedAt: (local as any).updatedAt || new Date().toISOString() });
           summary.uploadedToCloud++;
           summary.details.respostas.uploaded++;
+          summary.logs!.push(`Resposta (Q: ${local.premissaId || local.id.substring(0,4)}) enviada para a nuvem.`);
           finalRespostas.push(local);
         } else if (!local && cloud) {
           summary.downloadedFromCloud++;
           summary.details.respostas.downloaded++;
+          summary.logs!.push(`Resposta (Q: ${cloud.premissaId || cloud.id.substring(0,4)}) baixada para o local.`);
           finalRespostas.push(cloud);
         } else if (local && cloud) {
           const tLocal = extractItemTimestamp(local);
@@ -10919,19 +10930,23 @@ export default function App() {
             batchQueue.pushItem(doc(db, 'respostas', id), { ...cloud, ...local, ownerId: user.uid, updatedAt: new Date().toISOString() });
             summary.updatedInCloud++;
             summary.details.respostas.updated++;
+            summary.logs!.push(`Resposta (Q: ${local.premissaId || local.id.substring(0,4)}) atualizada na nuvem.`);
             finalRespostas.push({ ...cloud, ...local });
           } else if (!localHasVal && cloudHasVal) {
             summary.updatedInLocal++;
             summary.details.respostas.downloaded++;
+            summary.logs!.push(`Resposta (Q: ${cloud.premissaId || cloud.id.substring(0,4)}) atualizada no local.`);
             finalRespostas.push({ ...local, ...cloud });
           } else if (tLocal > tCloud) {
             batchQueue.pushItem(doc(db, 'respostas', id), { ...cloud, ...local, ownerId: user.uid, updatedAt: new Date().toISOString() });
             summary.updatedInCloud++;
             summary.details.respostas.updated++;
+            summary.logs!.push(`Resposta (Q: ${local.premissaId || local.id.substring(0,4)}) atualizada na nuvem.`);
             finalRespostas.push({ ...cloud, ...local });
           } else if (tCloud > tLocal) {
             summary.updatedInLocal++;
             summary.details.respostas.downloaded++;
+            summary.logs!.push(`Resposta (Q: ${cloud.premissaId || cloud.id.substring(0,4)}) atualizada no local.`);
             finalRespostas.push({ ...local, ...cloud });
           } else {
             summary.identicalOrMerged++;
@@ -10954,7 +10969,7 @@ export default function App() {
       const localTasksMap = new Map<string, TarefaPlanoAcao>();
       tarefasPlano.forEach(t => localTasksMap.set(t.id, t));
       try {
-        const savedTasksStr = localStorage.getItem('local_tarefas_plano');
+        const savedTasksStr = encryptedLocalStorage.getItem('local_tarefas_plano');
         if (savedTasksStr) {
           const parsed = JSON.parse(savedTasksStr);
           if (Array.isArray(parsed)) parsed.forEach(t => localTasksMap.set(t.id, t));
@@ -10973,10 +10988,12 @@ export default function App() {
           batchQueue.pushItem(doc(db, 'tarefas_plano', id), { ...local, ownerId: user.uid, updatedAt: (local as any).updatedAt || new Date().toISOString() });
           summary.uploadedToCloud++;
           summary.details.tarefas.uploaded++;
+          summary.logs!.push(`Tarefa ${local.problema || "sem nome"} enviada para a nuvem.`);
           finalTasks.push(local);
         } else if (!local && cloud) {
           summary.downloadedFromCloud++;
           summary.details.tarefas.downloaded++;
+          summary.logs!.push(`Tarefa ${cloud.problema || "sem nome"} baixada para o local.`);
           finalTasks.push(cloud);
         } else if (local && cloud) {
           const tLocal = extractItemTimestamp(local);
@@ -10985,10 +11002,12 @@ export default function App() {
             batchQueue.pushItem(doc(db, 'tarefas_plano', id), { ...cloud, ...local, ownerId: user.uid, updatedAt: new Date().toISOString() });
             summary.updatedInCloud++;
             summary.details.tarefas.updated++;
+            summary.logs!.push(`Tarefa ${local.problema || "sem nome"} atualizada na nuvem.`);
             finalTasks.push({ ...cloud, ...local });
           } else if (tCloud > tLocal) {
             summary.updatedInLocal++;
             summary.details.tarefas.downloaded++;
+            summary.logs!.push(`Tarefa ${cloud.problema || "sem nome"} atualizada no local.`);
             finalTasks.push({ ...local, ...cloud });
           } else {
             summary.identicalOrMerged++;
@@ -10997,7 +11016,7 @@ export default function App() {
         }
       }
       setTarefasPlano(finalTasks);
-      localStorage.setItem('local_tarefas_plano', JSON.stringify(finalTasks));
+      encryptedLocalStorage.setItem('local_tarefas_plano', JSON.stringify(finalTasks));
 
       // --- E. Sync Metodologia/Biblioteca (Premissas, Problemas, SoluÃ§Ãµes, Ãreas, Segmentos) ---
       const syncBiblioItem = async (colName: string, localList: any[], setter: (val: any) => void, storageKey: string) => {
@@ -11022,10 +11041,14 @@ export default function App() {
               batchQueue.pushItem(doc(db, colName, docId), { ...(typeof l === 'object' ? l : { nome: l }), ownerId: user.uid, updatedAt: new Date().toISOString() });
               summary.uploadedToCloud++;
               summary.details.biblioteca.uploaded++;
+              const nameLocal = (typeof l === "object" ? (l.nome || l.id) : l) || docId;
+              summary.logs!.push(`Item de base [${colName}] '${nameLocal}' enviado para nuvem.`);
               merged.push(l);
             } else if (!l && c) {
               summary.downloadedFromCloud++;
               summary.details.biblioteca.downloaded++;
+              const nameCloud = (typeof c === "object" ? (c.nome || c.id) : c) || docId;
+              summary.logs!.push(`Item de base [${colName}] '${nameCloud}' baixado para o local.`);
               merged.push(c);
             } else if (l && c) {
               summary.identicalOrMerged++;
@@ -11033,7 +11056,7 @@ export default function App() {
             }
           }
           setter(merged);
-          localStorage.setItem(storageKey, JSON.stringify(merged));
+          encryptedLocalStorage.setItem(storageKey, JSON.stringify(merged));
         } catch (e) {
           console.warn(`Aviso ao sincronizar ${colName}:`, e);
         }
@@ -11052,7 +11075,7 @@ export default function App() {
       }
 
       setLastSyncSummary(summary);
-      localStorage.setItem('last_sync_summary', JSON.stringify(summary));
+      encryptedLocalStorage.setItem('last_sync_summary', JSON.stringify(summary));
       playSuccessSound();
     } catch (err: any) {
       console.error("Erro durante a sincronizaÃ§Ã£o inteligente com a Nuvem:", err);
@@ -11068,10238 +11091,316 @@ export default function App() {
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
-      anchor.setAttribute('download', fileName);
-      anchor.download = fileName;
-      anchor.style.display = 'none';
-      document.body.appendChild(anchor);
-      anchor.click();
-
-      setTimeout(() => {
-        try {
-          if (anchor.parentNode) {
-            anchor.parentNode.removeChild(anchor);
-          }
-          URL.revokeObjectURL(url);
-        } catch (e) {}
-      }, 2000);
-      return true;
-    } catch (err) {
-      console.warn("Blob download fallback:", err);
-      try {
-        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(jsonString);
-        const anchor = document.createElement('a');
-        anchor.href = dataUri;
-        anchor.setAttribute('download', fileName);
-        anchor.download = fileName;
-        anchor.style.display = 'none';
-        document.body.appendChild(anchor);
-        anchor.click();
-        setTimeout(() => {
-          if (anchor.parentNode) anchor.parentNode.removeChild(anchor);
-        }, 2000);
-        return true;
-      } catch (e2) {
-        console.error("Erro no download direto:", e2);
-        return false;
-      }
-    }
-  };
-
-  const uploadBackupToCloud = async (data: any, uid: string) => {
-    const syncCollection = async (items: any[], colName: string) => {
-      if (!items || !Array.isArray(items) || items.length === 0) return;
-      for (let i = 0; i < items.length; i += 300) {
-        const batch = writeBatch(db);
-        const chunk = items.slice(i, i + 300);
-        for (const item of chunk) {
-          const itemId = item.id || doc(collection(db, colName)).id;
-          const ref = doc(db, colName, itemId);
-          batch.set(ref, sanitizeForFirestore({ ...item, ownerId: uid }), { merge: true });
-        }
-        await batch.commit();
-      }
-    };
-
-    if (data.empresas) await syncCollection(data.empresas, 'empresas');
-    if (data.diagnosticos) await syncCollection(data.diagnosticos, 'diagnosticos');
-    if (data.respostas) await syncCollection(data.respostas, 'respostas');
-    if (data.tarefasPlano) await syncCollection(data.tarefasPlano, 'tarefas_plano');
-    if (data.empresasCredenciadas) await syncCollection(data.empresasCredenciadas, 'empresas_credenciadas');
-    if (data.premissas) await syncCollection(data.premissas, 'premissas');
-    if (data.problemas) await syncCollection(data.problemas, 'problemas');
-    if (data.solucoes) await syncCollection(data.solucoes, 'solucoes');
-    if (data.dbAreas) await syncCollection(data.dbAreas, 'areas');
-    if (data.dbSegmentos) await syncCollection(data.dbSegmentos, 'segmentos');
-    if (data.agendaEventos || data.agenda_eventos) await syncCollection(data.agendaEventos || data.agenda_eventos, 'agenda_eventos');
-    if (data.discAvaliacoes || data.disc_avaliacoes) await syncCollection(data.discAvaliacoes || data.disc_avaliacoes, 'disc_avaliacoes');
-    if (data.maturidadeAvaliacoes || data.maturidade_avaliacoes) await syncCollection(data.maturidadeAvaliacoes || data.maturidade_avaliacoes, 'maturidade_avaliacoes');
-  };
-
-  const handleExportLocalBackup = async () => {
-    setIsBackupModalOpen(true);
-    setIsExportingBackup(true);
-
-    try {
-      // 1. Gather all collections from in-memory state and local cache first (instant)
-      let exportEmpresas: Empresa[] = [...empresas];
-      let exportDiagnosticos: Diagnostico[] = [...diagnosticos];
-      let exportTarefasPlano: TarefaPlanoAcao[] = [...tarefasPlano];
-      let exportAgendaEventos: any[] = [];
-      let exportDiscAvaliacoes: any[] = [];
-      let exportMaturidadeAvaliacoes: any[] = [];
-      let exportCredenciadas: EmpresaCredenciada[] = [...empresasCredenciadas];
-      let exportPremissas: Premissa[] = [...premissas];
-      let exportProblemas: Problema[] = [...problemas];
-      let exportSolucoes: Solucao[] = [...solucoes];
-      let exportDbAreas = [...dbAreas];
-      let exportDbSegmentos = [...dbSegmentos];
-
-      // A. Gather answers from local memory cache first
-      const localAnswers = loadAllLocalRespostas();
-      const mapRespostas = new Map<string, Resposta>();
-      localAnswers.forEach(r => { if (r?.id) mapRespostas.set(r.id, r); });
-      respostas.forEach(r => { if (r?.id) mapRespostas.set(r.id, r); });
-
-      // Local storage agenda fallback
-      try {
-        const localAgenda = localStorage.getItem('local_agenda_eventos');
-        if (localAgenda) {
-          const parsed = JSON.parse(localAgenda);
-          if (Array.isArray(parsed)) exportAgendaEventos = parsed;
-        }
-      } catch (e) {}
-
-      // 2. Fetch fresh cloud records in PARALLEL with a strict 2.5-second timeout safeguard
-      if (user) {
-        const withTimeout = async <T,>(p: Promise<T>, timeoutMs = 2500, fallback: T): Promise<T> => {
-          return Promise.race([
-            p,
-            new Promise<T>((resolve) => setTimeout(() => resolve(fallback), timeoutMs))
-          ]);
-        };
-
-        const empQuery = isAdmin 
-          ? query(collection(db, 'empresas')) 
-          : query(collection(db, 'empresas'), where('ownerId', '==', user.uid));
-
-        const diagQuery = isAdmin
-          ? query(collection(db, 'diagnosticos'))
-          : query(collection(db, 'diagnosticos'), where('ownerId', '==', user.uid));
-
-        const respQuery = isAdmin
-          ? query(collection(db, 'respostas'), limit(2000))
-          : query(collection(db, 'respostas'), where('ownerId', '==', user.uid));
-
-        const tarefasQuery = isAdmin
-          ? query(collection(db, 'tarefas_plano'))
-          : query(collection(db, 'tarefas_plano'), where('ownerId', '==', user.uid));
-
-        const agendaQuery = isAdmin
-          ? query(collection(db, 'agenda_eventos'))
-          : query(collection(db, 'agenda_eventos'), where('ownerId', '==', user.uid));
-
-        const discQuery = isAdmin
-          ? query(collection(db, 'disc_avaliacoes'))
-          : query(collection(db, 'disc_avaliacoes'), where('ownerId', '==', user.uid));
-
-        const matQuery = isAdmin
-          ? query(collection(db, 'maturidade_avaliacoes'))
-          : query(collection(db, 'maturidade_avaliacoes'), where('ownerId', '==', user.uid));
-
-        const credQuery = isAdmin
-          ? query(collection(db, 'empresas_credenciadas'))
-          : query(collection(db, 'empresas_credenciadas'), where('ownerId', '==', user.uid));
-
-        try {
-          const [
-            snapEmp,
-            snapDiag,
-            snapResp,
-            snapTarefas,
-            snapAgenda,
-            snapDisc,
-            snapMat,
-            snapCred
-          ] = await Promise.all([
-            withTimeout(getDocs(empQuery).catch(() => null), 2000, null),
-            withTimeout(getDocs(diagQuery).catch(() => null), 2000, null),
-            withTimeout(getDocs(respQuery).catch(() => null), 2000, null),
-            withTimeout(getDocs(tarefasQuery).catch(() => null), 2000, null),
-            withTimeout(getDocs(agendaQuery).catch(() => null), 2000, null),
-            withTimeout(getDocs(discQuery).catch(() => null), 2000, null),
-            withTimeout(getDocs(matQuery).catch(() => null), 2000, null),
-            withTimeout(getDocs(credQuery).catch(() => null), 2000, null)
-          ]);
-
-          if (snapEmp && !snapEmp.empty) {
-            const empMap = new Map<string, Empresa>();
-            exportEmpresas.forEach(e => empMap.set(e.id, e));
-            snapEmp.docs.forEach(d => empMap.set(d.id, { id: d.id, ...d.data() } as Empresa));
-            exportEmpresas = Array.from(empMap.values());
-          }
-
-          if (snapDiag && !snapDiag.empty) {
-            const diagMap = new Map<string, Diagnostico>();
-            exportDiagnosticos.forEach(d => diagMap.set(d.id, d));
-            snapDiag.docs.forEach(d => diagMap.set(d.id, { id: d.id, ...d.data() } as Diagnostico));
-            exportDiagnosticos = Array.from(diagMap.values());
-          }
-
-          if (snapResp && !snapResp.empty) {
-            snapResp.docs.forEach(d => {
-              mapRespostas.set(d.id, { id: d.id, ...d.data() } as Resposta);
-            });
-          }
-
-          if (snapTarefas && !snapTarefas.empty) {
-            const taskMap = new Map<string, TarefaPlanoAcao>();
-            exportTarefasPlano.forEach(t => taskMap.set(t.id, t));
-            snapTarefas.docs.forEach(d => taskMap.set(d.id, { id: d.id, ...d.data() } as TarefaPlanoAcao));
-            exportTarefasPlano = Array.from(taskMap.values());
-          }
-
-          if (snapAgenda && !snapAgenda.empty) {
-            exportAgendaEventos = snapAgenda.docs.map(d => ({ id: d.id, ...d.data() }));
-          }
-
-          if (snapDisc && !snapDisc.empty) {
-            exportDiscAvaliacoes = snapDisc.docs.map(d => ({ id: d.id, ...d.data() }));
-          }
-
-          if (snapMat && !snapMat.empty) {
-            exportMaturidadeAvaliacoes = snapMat.docs.map(d => ({ id: d.id, ...d.data() }));
-          }
-
-          if (snapCred && !snapCred.empty) {
-            const credMap = new Map<string, EmpresaCredenciada>();
-            exportCredenciadas.forEach(c => credMap.set(c.id, c));
-            snapCred.docs.forEach(d => credMap.set(d.id, { id: d.id, ...d.data() } as EmpresaCredenciada));
-            exportCredenciadas = Array.from(credMap.values());
-          }
-        } catch (cloudErr) {
-          console.warn("Nuvem indisponÃ­vel no momento do backup, compilando com dados locais seguros:", cloudErr);
-        }
-      }
-
-      const exportRespostas = Array.from(mapRespostas.values());
-      const nowFormatted = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-      const userPrefix = user?.email ? user.email.split('@')[0].replace(/[^a-zA-Z0-9_-]/g, '_') + '_' : '';
-      const genFileName = `consultoria_backup_${userPrefix}${nowFormatted}.json`;
-
-      const backupData = {
-        app: 'Consultoria Pro - SEBRAE',
-        version: '2.0',
-        exportedAt: new Date().toISOString(),
-        user: {
-          email: user?.email || 'Acesso Local',
-          uid: user?.uid || null,
-          isAdmin
-        },
-        metadata: {
-          totalEmpresas: exportEmpresas.length,
-          totalDiagnosticos: exportDiagnosticos.length,
-          totalRespostas: exportRespostas.length,
-          totalTarefasPlano: exportTarefasPlano.length,
-          totalAgendaEventos: exportAgendaEventos.length,
-          totalDisc: exportDiscAvaliacoes.length,
-          totalMaturidade: exportMaturidadeAvaliacoes.length,
-          totalCredenciadas: exportCredenciadas.length,
-          totalPremissas: exportPremissas.length,
-          totalProblemas: exportProblemas.length,
-          totalSolucoes: exportSolucoes.length
-        },
-        empresas: exportEmpresas,
-        diagnosticos: exportDiagnosticos,
-        respostas: exportRespostas,
-        tarefasPlano: exportTarefasPlano,
-        agendaEventos: exportAgendaEventos,
-        discAvaliacoes: exportDiscAvaliacoes,
-        maturidadeAvaliacoes: exportMaturidadeAvaliacoes,
-        empresasCredenciadas: exportCredenciadas,
-        premissas: exportPremissas,
-        problemas: exportProblemas,
-        solucoes: exportSolucoes,
-        dbAreas: exportDbAreas,
-        dbSegmentos: exportDbSegmentos,
-        customLogo,
-        customConsultoraLogo
-      };
-
-      const jsonStr = JSON.stringify(backupData, null, 2);
-      setBackupJsonString(jsonStr);
-      setBackupFileName(genFileName);
-
-      try {
-        localStorage.setItem('local_backup_data', jsonStr);
-        localStorage.setItem('last_exported_backup', jsonStr);
-      } catch (e) {}
-
-      const sizeKb = Math.round(new Blob([jsonStr]).size / 1024);
-
-      const stats: BackupExportStats = {
-        totalEmpresas: exportEmpresas.length,
-        totalDiagnosticos: exportDiagnosticos.length,
-        totalRespostas: exportRespostas.length,
-        totalTarefasPlano: exportTarefasPlano.length,
-        totalAgendaEventos: exportAgendaEventos.length,
-        totalDisc: exportDiscAvaliacoes.length,
-        totalMaturidade: exportMaturidadeAvaliacoes.length,
-        totalPremissas: exportPremissas.length,
-        totalProblemas: exportProblemas.length,
-        totalSolucoes: exportSolucoes.length,
-        totalCredenciadas: exportCredenciadas.length,
-        dataTamanhoKb: sizeKb,
-        exportedAt: backupData.exportedAt,
-        userEmail: user?.email || undefined,
-        source: user ? 'nuvem_e_local' : 'local_only'
-      };
-
-      setBackupStats(stats);
-      setIsExportingBackup(false);
-
-      // Trigger automatic browser download
-      triggerDownloadBackupFile(jsonStr, genFileName);
-
-      playSuccessSound();
-      showToast(`Backup completo gerado com sucesso! (${sizeKb} KB)`, 'success', 'Backup dos Dados');
-    } catch (err: any) {
-      console.error("Erro ao gerar backup:", err);
-      setIsExportingBackup(false);
-      showToast("Erro ao compilar backup: " + (err?.message || "Tente novamente"), "error", "Falha no Backup");
-    }
-  };
-
-  const handleImportLocalBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const inputElement = e.target;
-    const reader = new FileReader();
-
-    reader.onload = async (event) => {
-      try {
-        const content = event.target?.result as string;
-        if (!content || !content.trim()) {
-          throw new Error("Arquivo vazio");
-        }
-
-        const data = JSON.parse(content);
-
-        // Normalize potential variations in backup keys
-        const importedEmpresas = data.empresas || data.companies || [];
-        const importedDiagnosticos = data.diagnosticos || data.diagnostics || [];
-        const importedRespostas = data.respostas || data.answers || [];
-        const importedTarefasPlano = data.tarefasPlano || data.tasks || [];
-        const importedEmpresasCredenciadas = data.empresasCredenciadas || [];
-        const importedPremissas = data.premissas || data.premises || [];
-        const importedProblemas = data.problemas || data.problems || [];
-        const importedSolucoes = data.solucoes || data.solutions || [];
-        const importedDbAreas = data.dbAreas || data.areas || [];
-        const importedDbSegmentos = data.dbSegmentos || data.segmentos || data.segments || [];
-        const importedAgendaEventos = data.agendaEventos || data.agenda_eventos || data.eventos || [];
-        const importedDiscAvaliacoes = data.discAvaliacoes || data.disc_avaliacoes || [];
-        const importedMaturidadeAvaliacoes = data.maturidadeAvaliacoes || data.maturidade_avaliacoes || [];
-
-        if (Array.isArray(importedEmpresas) && importedEmpresas.length > 0) {
-          setEmpresas(importedEmpresas);
-          try { localStorage.setItem('local_empresas', JSON.stringify(importedEmpresas)); } catch {}
-        }
-        if (Array.isArray(importedDiagnosticos) && importedDiagnosticos.length > 0) {
-          setDiagnosticos(importedDiagnosticos);
-          try { localStorage.setItem('local_diagnosticos', JSON.stringify(importedDiagnosticos)); } catch {}
-        }
-        if (Array.isArray(importedRespostas) && importedRespostas.length > 0) {
-          setRespostas(importedRespostas);
-          saveAllLocalRespostas(importedRespostas);
-        }
-        if (Array.isArray(importedTarefasPlano) && importedTarefasPlano.length > 0) {
-          setTarefasPlano(importedTarefasPlano);
-          try { localStorage.setItem('local_tarefas_plano', JSON.stringify(importedTarefasPlano)); } catch {}
-        }
-        if (Array.isArray(importedEmpresasCredenciadas) && importedEmpresasCredenciadas.length > 0) {
-          setEmpresasCredenciadas(importedEmpresasCredenciadas);
-          try { localStorage.setItem('local_empresas_credenciadas', JSON.stringify(importedEmpresasCredenciadas)); } catch {}
-        }
-        if (Array.isArray(importedPremissas) && importedPremissas.length > 0) {
-          setPremissas(importedPremissas);
-          try {
-            localStorage.setItem('local_premissas', JSON.stringify(importedPremissas));
-            localStorage.removeItem('user_cleared_premissas');
-          } catch {}
-        }
-        if (Array.isArray(importedProblemas) && importedProblemas.length > 0) {
-          setProblemas(importedProblemas);
-          try {
-            localStorage.setItem('local_problemas', JSON.stringify(importedProblemas));
-            localStorage.removeItem('user_cleared_problemas');
-          } catch {}
-        }
-        if (Array.isArray(importedSolucoes) && importedSolucoes.length > 0) {
-          setSolucoes(importedSolucoes);
-          try {
-            localStorage.setItem('local_solucoes', JSON.stringify(importedSolucoes));
-            localStorage.removeItem('user_cleared_solucoes');
-          } catch {}
-        }
-        if (Array.isArray(importedDbAreas) && importedDbAreas.length > 0) {
-          setDbAreas(importedDbAreas);
-          try { localStorage.setItem('local_db_areas', JSON.stringify(importedDbAreas)); } catch {}
-        }
-        if (Array.isArray(importedDbSegmentos) && importedDbSegmentos.length > 0) {
-          setDbSegmentos(importedDbSegmentos);
-          try { localStorage.setItem('local_db_segmentos', JSON.stringify(importedDbSegmentos)); } catch {}
-        }
-        if (Array.isArray(importedAgendaEventos) && importedAgendaEventos.length > 0) {
-          try { localStorage.setItem('local_agenda_eventos', JSON.stringify(importedAgendaEventos)); } catch {}
-        }
-        if (data.customLogo) {
-          setCustomLogo(data.customLogo);
-          try { localStorage.setItem('sebrae_custom_logo', data.customLogo); } catch {}
-        }
-        if (data.customConsultoraLogo) {
-          setCustomConsultoraLogo(data.customConsultoraLogo);
-          try { localStorage.setItem('consultora_custom_logo', data.customConsultoraLogo); } catch {}
-        }
-
-        try { localStorage.setItem('local_backup_data', content); } catch {}
-
-        if (user) {
-          try {
-            await uploadBackupToCloud({
-              empresas: importedEmpresas,
-              diagnosticos: importedDiagnosticos,
-              respostas: importedRespostas,
-              tarefasPlano: importedTarefasPlano,
-              empresasCredenciadas: importedEmpresasCredenciadas,
-              premissas: importedPremissas,
-              problemas: importedProblemas,
-              solucoes: importedSolucoes,
-              dbAreas: importedDbAreas,
-              dbSegmentos: importedDbSegmentos,
-              agendaEventos: importedAgendaEventos,
-              discAvaliacoes: importedDiscAvaliacoes,
-              maturidadeAvaliacoes: importedMaturidadeAvaliacoes
-            }, user.uid);
-            showToast(`Backup completo importado e sincronizado com a Nuvem!`, 'success', 'RestauraÃ§Ã£o ConcluÃ­da');
-          } catch (cloudErr) {
-            console.error("Erro ao sincronizar backup com a nuvem:", cloudErr);
-            showToast(`Backup restaurado localmente com sucesso!`, 'info', 'RestauraÃ§Ã£o Local');
-          }
-        } else {
-          showToast(`Backup local restaurado com sucesso!`, 'success', 'RestauraÃ§Ã£o ConcluÃ­da');
-        }
-        playSuccessSound();
-      } catch (err) {
-        console.error("Erro ao importar backup:", err);
-        showToast("Erro ao ler arquivo .JSON de backup. Verifique o formato.", "error", "Falha na ImportaÃ§Ã£o");
-      } finally {
-        if (inputElement) {
-          inputElement.value = '';
-        }
-      }
-    };
-    reader.readAsText(file);
-  };
-
-  // Dynamically compute ALL available areas (stored in DB + session + library items)
-  const allAvailableAreas = useMemo(() => {
-    const areasSet = new Set<string>();
-
-    const addNorm = (val?: string | null) => {
-      if (!val) return;
-      const formatted = normalizeAndFormatArea(val);
-      if (!formatted) return;
-      const norm = formatted.toLowerCase();
-      // Skip any area that was explicitly deleted
-      if (deletedAreas.some(d => normalizeAndFormatArea(d).toLowerCase() === norm)) {
-        return;
-      }
-      areasSet.add(formatted);
-    };
-
-    // Include standard predefined areas
-    AREAS.forEach(a => addNorm(a.nome));
-
-    // Include areas stored in Firestore 'areas' collection
-    dbAreas.forEach(a => addNorm(a.nome));
-
-    // Include custom areas added in session
-    sessionCustomAreas.forEach(a => addNorm(a));
-
-    // Include areas from all library collections and diagnostic records
-    problemas.forEach(p => addNorm(p.area));
-    solucoes.forEach(s => addNorm(s.area));
-    respostas.forEach(r => addNorm(r.area));
-    diagnosticos.forEach(d => {
-      if (d.areasDiagnostico && Array.isArray(d.areasDiagnostico)) {
-        d.areasDiagnostico.forEach(a => addNorm(a));
-      }
-    });
-
-    const list = Array.from(areasSet).filter(Boolean);
-    return list.sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
-  }, [dbAreas, problemas, solucoes, respostas, diagnosticos, sessionCustomAreas, deletedAreas]);
-
-  const availableSegments = useMemo(() => {
-    const customFromEmpresas = empresas.map(e => e.tipoEmpresa).filter(Boolean) as string[];
-    const customFromDiagnosticos = diagnosticos.map(d => d.tipoEmpresa).filter(Boolean) as string[];
-    const customFromPremissas = premissas.map(p => p.tipoEmpresa).filter(Boolean) as string[];
-    const customFromProblemas = problemas.map(p => p.tipoEmpresa).filter(Boolean) as string[];
-    const customFromSolucoes = solucoes.map(s => s.tipoEmpresa).filter(Boolean) as string[];
-    const customFromDb = dbSegmentos.map(s => s.nome).filter(Boolean) as string[];
-    
-    const allCustom = [
-      ...customFromEmpresas,
-      ...customFromDiagnosticos,
-      ...customFromPremissas,
-      ...customFromProblemas,
-      ...customFromSolucoes,
-      ...customFromDb,
-      ...sessionCustomSegments
-    ];
-    
-    const uniqueCustom = Array.from(new Set(
-      allCustom
-        .map(s => s ? s.trim() : '')
-        .filter(s => s && s !== 'Geral' && !TIPOS_EMPRESA.includes(s))
-    )).sort();
-    
-    return [...TIPOS_EMPRESA, ...uniqueCustom];
-  }, [empresas, diagnosticos, premissas, problemas, solucoes, dbSegmentos, sessionCustomSegments]);
-
-  const allAvailableTags = useMemo(() => {
-    const tagsSet = new Set<string>();
-    problemas.forEach(p => {
-      if (Array.isArray(p.tags)) {
-        p.tags.forEach(t => {
-          const trimmed = t?.trim();
-          if (trimmed) tagsSet.add(trimmed);
-        });
-      }
-    });
-    solucoes.forEach(s => {
-      if (Array.isArray(s.tags)) {
-        s.tags.forEach(t => {
-          const trimmed = t?.trim();
-          if (trimmed) tagsSet.add(trimmed);
-        });
-      }
-    });
-    return Array.from(tagsSet).sort((a, b) => a.localeCompare(b, 'pt-BR'));
-  }, [problemas, solucoes]);
-
-  const availableAreasForSelectedType = useMemo(() => {
-    const areasSet = new Set<string>();
-    const filter = (diagnosisCompanyType || 'Geral').trim().toLowerCase();
-
-    premissas.forEach(p => {
-      const prob = problemas.find(prob => prob.id === p.idProblema || prob.descricao_problemas === p.problema);
-      const pType = (p.tipoEmpresa || prob?.tipoEmpresa || 'Geral').trim();
-      const normPType = pType.toLowerCase();
-
-      const matches = (filter !== 'geral' && filter !== '') 
-        ? (normPType === filter || normPType === 'geral' || normPType === '')
-        : (normPType === 'geral' || normPType === '');
-
-      if (matches) {
-        const areaName = prob?.area || p.area;
-        if (areaName && areaName.trim()) {
-          areasSet.add(normalizeAndFormatArea(areaName));
-        }
-      }
-    });
-
-    problemas.forEach(prob => {
-      const pType = (prob.tipoEmpresa || 'Geral').trim();
-      const normPType = pType.toLowerCase();
-
-      const matches = (filter !== 'geral' && filter !== '') 
-        ? (normPType === filter || normPType === 'geral' || normPType === '')
-        : (normPType === 'geral' || normPType === '');
-
-      if (matches && prob.area && prob.area.trim()) {
-        areasSet.add(normalizeAndFormatArea(prob.area));
-      }
-    });
-
-    // Fallback if no matching areas found
-    if (areasSet.size === 0) {
-      allAvailableAreas.forEach(aName => areasSet.add(aName));
-    }
-
-    const sortedNames = Array.from(areasSet).sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
-    return sortedNames.map((name, index) => {
-      const existingArea = AREAS.find(a => a.nome.toLowerCase() === name.toLowerCase());
-      return {
-        id: existingArea ? existingArea.id : `dyn_${index}`,
-        nome: name
-      };
-    });
-  }, [allAvailableAreas, premissas, problemas, diagnosisCompanyType]);
-
-  // Pre-populate selected areas for diagnostic when modal opens or selected segment changes
-  useEffect(() => {
-    if (isModalOpen && modalType === 'selectAreas') {
-      setSelectedAreasForDiagnosis(availableAreasForSelectedType.map(a => a.nome));
-    }
-  }, [diagnosisCompanyType, isModalOpen, modalType, availableAreasForSelectedType]);
-
-  // Helper to synchronize any authenticated user with Firestore empresas_credenciadas
-  const syncUserWithCredenciada = async (u: User) => {
-    if (!u) return;
-    try {
-      const userEmailClean = (u.email || '').toLowerCase().trim();
-      const isUserAdminEmail = userEmailClean === 'itamartrairi@gmail.com';
-      
-      // Check by ownerId first
-      const qCred = query(collection(db, 'empresas_credenciadas'), where('ownerId', '==', u.uid));
-      const snapCred = await getDocs(qCred);
-      
-      let existingDoc = snapCred.empty ? null : snapCred.docs[0];
-      
-      // If not found by ownerId, also search by email
-      if (!existingDoc && u.email) {
-        const qEmail = query(collection(db, 'empresas_credenciadas'), where('email', '==', u.email));
-        const snapEmail = await getDocs(qEmail);
-        if (!snapEmail.empty) {
-          existingDoc = snapEmail.docs[0];
-        }
-      }
-
-      const providerId = u.providerData?.[0]?.providerId || (u.email ? 'password' : 'google.com');
-
-      if (!existingDoc) {
-        const defaultName = isUserAdminEmail 
-          ? (u.displayName ? `${u.displayName} (Admin)` : 'Itamar Trairi Consultoria (Admin)')
-          : (u.displayName || u.email?.split('@')[0] || 'Novo Consultor');
-
-        const newCredDoc = {
-          razaoSocial: defaultName,
-          consultor: u.displayName || u.email?.split('@')[0] || (isUserAdminEmail ? 'Itamar Trairi' : 'Consultor'),
-          email: u.email || '',
-          dataCadastro: serverTimestamp(),
-          ultimoLogin: serverTimestamp(),
-          ownerId: u.uid,
-          providerId: providerId,
-          photoURL: u.photoURL || '',
-          status: 'Ativa',
-          tipoPlano: isUserAdminEmail ? 'Definitiva' : 'Teste',
-          diasTeste: isUserAdminEmail ? 99999 : 30,
-          role: isUserAdminEmail ? 'admin' : 'cliente'
-        };
-        await addDoc(collection(db, 'empresas_credenciadas'), sanitizeForFirestore(newCredDoc));
-      } else {
-        const data = existingDoc.data();
-        const updates: any = {
-          ultimoLogin: serverTimestamp(),
-          ownerId: u.uid,
-          providerId: providerId
-        };
-        if (u.photoURL && !data.photoURL) {
-          updates.photoURL = u.photoURL;
-        }
-        if (u.email && !data.email) {
-          updates.email = u.email;
-        }
-        if (u.displayName && (!data.consultor || data.consultor === 'Consultor' || data.consultor === 'Novo Cliente')) {
-          updates.consultor = u.displayName;
-        }
-        if (isUserAdminEmail && data.tipoPlano !== 'Definitiva') {
-          updates.tipoPlano = 'Definitiva';
-          updates.diasTeste = 99999;
-          updates.role = 'admin';
-        }
-        await updateDoc(doc(db, 'empresas_credenciadas', existingDoc.id), sanitizeForFirestore(updates));
-      }
-    } catch (e) {
-      console.error("Erro na sincronizaÃ§Ã£o do usuÃ¡rio autenticado com empresas_credenciadas:", e);
-    }
-  };
-
-  // Auth Listener
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setLoading(false);
-      setStorageUserId(u ? u.uid : null);
-      encryptedLocalStorage.migrateAllToEncrypted();
-
-      if (u) {
-        // Check if user is admin based on email (case-insensitive)
-        const userEmailClean = (u.email || '').toLowerCase().trim();
-        const isUserAdminEmail = userEmailClean === 'itamartrairi@gmail.com';
-        setIsAdmin(isUserAdminEmail);
-        
-        if (isUserAdminEmail && !u.emailVerified) {
-          console.warn("UsuÃ¡rio administrador detectado (itamartrairi@gmail.com). Acesso irrestrito concedido.");
-        }
-
-        // Auto-check and register credenciada record if not existing yet
-        syncUserWithCredenciada(u);
-      } else {
-        setIsAdmin(false);
-      }
-    });
-    return unsubscribe;
-  }, []);
-
-  // Check system API Key status from backend config on mount
-  useEffect(() => {
-    fetch("/api/gemini/config")
-      .then(res => res.json())
-      .then(data => {
-        if (data && typeof data.hasSystemKey === 'boolean') {
-          setIsSystemKeyActive(data.hasSystemKey);
-        }
-      })
-      .catch(err => {
-        console.error("Erro ao obter status da chave API do sistema:", err);
-      });
-  }, []);
-
-  // Seed knowledge base if admin and empty
-  useEffect(() => {
-    if (isAdmin) {
-      seedPremissasIfEmpty();
-    }
-  }, [isAdmin]);
-
-  // Trigger AI Maturity Level calculation when entering dashboard
-  useEffect(() => {
-    if (view === 'dashboard' && selectedDiagnostico && respostas.length > 0) {
-      if (!selectedDiagnostico.nivelMaturidadeAI && !calculatingMaturity) {
-        calculateAndSaveMaturity(selectedDiagnostico, respostas);
-      }
-    }
-  }, [view, selectedDiagnostico?.id, respostas.length]);
-
-  // Data Listeners
-  useEffect(() => {
-    if (!user) return;
-
-    // Se admin, escuta todas as empresas; caso contrÃ¡rio, escuta as do usuÃ¡rio
-    const qEmpresas = isAdmin
-      ? query(collection(db, 'empresas'))
-      : query(collection(db, 'empresas'), where('ownerId', '==', user.uid));
-
-    const unsubEmpresas = onSnapshot(qEmpresas, (snap) => {
-      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Empresa));
-      docs.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-      setEmpresas(docs);
-      if (docs.length > 0) {
-        setSelectedEmpresa(prev => {
-          if (!prev) return docs[0];
-          const updated = docs.find(e => e.id === prev.id);
-          return updated ? { ...prev, ...updated } : prev;
-        });
-      }
-    }, (error) => handleFirestoreError(error, OperationType.LIST, 'empresas'));
-
-    const qCredenciadas = isAdmin 
-      ? query(collection(db, 'empresas_credenciadas'))
-      : query(collection(db, 'empresas_credenciadas'), where('ownerId', '==', user.uid));
-    
-    const unsubCredenciadas = onSnapshot(qCredenciadas, (snap) => {
-      const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as EmpresaCredenciada));
-      data.sort((a, b) => (a.razaoSocial || '').localeCompare(b.razaoSocial || ''));
-      setEmpresasCredenciadas(data);
-    }, (error) => handleFirestoreError(error, OperationType.LIST, 'empresas_credenciadas'));
-
-    // Biblioteca metodolÃ³gica compartilhada (Premissas, Problemas, SoluÃ§Ãµes, Ãreas, Segmentos)
-    const qPremissas = query(collection(db, 'premissas'));
-    const unsubPremissas = onSnapshot(qPremissas, (snap) => {
-      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Premissa));
-      setPremissas(prev => {
-        // Merge cloud with any unsynced local
-        const cloudIds = new Set(docs.map(d => d.id));
-        const unsyncedLocal = prev.filter(p => (!p.ownerId || p.ownerId === 'local') && !cloudIds.has(p.id));
-        return [...docs, ...unsyncedLocal];
-      });
-    }, (error) => handleFirestoreError(error, OperationType.LIST, 'premissas'));
-
-    const qProblemas = query(collection(db, 'problemas'));
-    const unsubProblemas = onSnapshot(qProblemas, (snap) => {
-      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Problema));
-      setProblemas(prev => {
-        const cloudIds = new Set(docs.map(d => d.id));
-        const unsyncedLocal = prev.filter(p => (!p.ownerId || p.ownerId === 'local') && !cloudIds.has(p.id));
-        return [...docs, ...unsyncedLocal];
-      });
-    }, (error) => handleFirestoreError(error, OperationType.LIST, 'problemas'));
-
-    const qSolucoes = query(collection(db, 'solucoes'));
-    const unsubSolucoes = onSnapshot(qSolucoes, (snap) => {
-      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Solucao));
-      setSolucoes(prev => {
-        const cloudIds = new Set(docs.map(d => d.id));
-        const unsyncedLocal = prev.filter(s => (!s.ownerId || s.ownerId === 'local') && !cloudIds.has(s.id));
-        return [...docs, ...unsyncedLocal];
-      });
-    }, (error) => handleFirestoreError(error, OperationType.LIST, 'solucoes'));
-
-    const qTarefas = isAdmin
-      ? query(collection(db, 'tarefas_plano'))
-      : query(collection(db, 'tarefas_plano'), where('ownerId', '==', user.uid));
-    const unsubTarefas = onSnapshot(qTarefas, (snap) => {
-      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as TarefaPlanoAcao));
-      setTarefasPlano(docs);
-    }, (error) => handleFirestoreError(error, OperationType.LIST, 'tarefas_plano'));
-
-    const qAreas = query(collection(db, 'areas'));
-    const unsubAreas = onSnapshot(qAreas, (snap) => {
-      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as { id: string, nome: string }));
-      setDbAreas(docs);
-    }, (error) => handleFirestoreError(error, OperationType.LIST, 'areas'));
-
-    const qSegmentos = query(collection(db, 'segmentos'));
-    const unsubSegmentos = onSnapshot(qSegmentos, (snap) => {
-      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as { id: string, nome: string }));
-      setDbSegmentos(docs);
-    }, (error) => handleFirestoreError(error, OperationType.LIST, 'segmentos'));
-
-    return () => {
-      unsubEmpresas();
-      unsubCredenciadas();
-      unsubPremissas();
-      unsubProblemas();
-      unsubSolucoes();
-      unsubTarefas();
-      unsubAreas();
-      unsubSegmentos();
-    };
-  }, [user, isAdmin]);
-
-  // Auto-sync local items to cloud when user logs in so data created locally or offline is uploaded
-  useEffect(() => {
-    if (!user) return;
-    const syncLocalDataToCloud = async () => {
-      try {
-        // Sync local empresas
-        const localEmpresas = empresas.filter(e => !e.ownerId || e.ownerId === 'local');
-        for (const emp of localEmpresas) {
-          const sanitized = sanitizeForFirestore({ ...emp, ownerId: user.uid });
-          const ref = await addDoc(collection(db, 'empresas'), sanitized);
-          setEmpresas(prev => prev.map(e => e.id === emp.id ? { ...e, id: ref.id, ownerId: user.uid } : e));
-        }
-
-        // Sync local diagnosticos
-        const localDiags = diagnosticos.filter(d => !d.ownerId || d.ownerId === 'local');
-        for (const diag of localDiags) {
-          const sanitized = sanitizeForFirestore({ ...diag, ownerId: user.uid });
-          await setDoc(doc(db, 'diagnosticos', diag.id), sanitized);
-          setDiagnosticos(prev => prev.map(d => d.id === diag.id ? { ...d, ownerId: user.uid } : d));
-        }
-
-        // Sync local respostas
-        const localResps = respostas.filter(r => !r.ownerId || r.ownerId === 'local');
-        for (const resp of localResps) {
-          const sanitized = sanitizeForFirestore({ ...resp, ownerId: user.uid });
-          await setDoc(doc(db, 'respostas', resp.id), sanitized);
-          setRespostas(prev => prev.map(r => r.id === resp.id ? { ...r, ownerId: user.uid } : r));
-        }
-
-        // Sync local credenciadas
-        const localCreds = empresasCredenciadas.filter(c => !c.ownerId || c.ownerId === 'local');
-        for (const cred of localCreds) {
-          const sanitized = sanitizeForFirestore({ ...cred, ownerId: user.uid });
-          const ref = await addDoc(collection(db, 'empresas_credenciadas'), sanitized);
-          setEmpresasCredenciadas(prev => prev.map(c => c.id === cred.id ? { ...c, id: ref.id, ownerId: user.uid } : c));
-        }
-
-        // Sync local tarefas
-        const localTarefas = tarefasPlano.filter(t => !t.ownerId || t.ownerId === 'local');
-        for (const t of localTarefas) {
-          const sanitized = sanitizeForFirestore({ ...t, ownerId: user.uid });
-          const ref = await addDoc(collection(db, 'tarefas_plano'), sanitized);
-          setTarefasPlano(prev => prev.map(item => item.id === t.id ? { ...item, id: ref.id, ownerId: user.uid } : item));
-        }
-      } catch (err) {
-        console.warn("Auto-sync local data to cloud notice:", err);
-      }
-    };
-    syncLocalDataToCloud();
-  }, [user?.uid]);
-
-  // Tag legacy library items (created before owner isolation) with current user's UID
-  useEffect(() => {
-    if (!user) return;
-    const claimKey = `orphans_claimed_${user.uid}`;
-    if (localStorage.getItem(claimKey)) return;
-
-    const claimOrphanedDocs = async () => {
-      try {
-        const collectionsToClaim = ['problemas', 'premissas', 'solucoes', 'areas', 'segmentos'];
-        for (const colName of collectionsToClaim) {
-          const snap = await getDocs(collection(db, colName));
-          const orphans = snap.docs.filter(d => !d.data().ownerId);
-          if (orphans.length > 0) {
-            for (let i = 0; i < orphans.length; i += 400) {
-              const batch = writeBatch(db);
-              const chunk = orphans.slice(i, i + 400);
-              for (const docSnap of chunk) {
-                batch.update(docSnap.ref, { ownerId: user.uid });
-              }
-              await batch.commit();
-            }
-          }
-        }
-      } catch (err) {
-        console.warn("Soft migration notice for legacy library data:", err);
-      } finally {
-        localStorage.setItem(claimKey, 'true');
-      }
-    };
-    claimOrphanedDocs();
-  }, [user?.uid]);
-
-  // Redireciona usuÃ¡rios logados da Landing para Home
-  useEffect(() => {
-    if (user && view === 'landing' && !loading) {
-      setView('home');
-    }
-  }, [user, view, loading]);
-
-  // Listen to All Diagnosticos for the user (or all if admin)
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
-    const q = isAdmin
-      ? query(collection(db, 'diagnosticos'))
-      : query(collection(db, 'diagnosticos'), where('ownerId', '==', user.uid));
-
-    return onSnapshot(q, (snap) => {
-      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Diagnostico));
-      docs.sort((a, b) => {
-        const timeA = a.dataDiagnostico?.seconds ? a.dataDiagnostico.seconds * 1000 : new Date(a.dataDiagnostico || 0).getTime();
-        const timeB = b.dataDiagnostico?.seconds ? b.dataDiagnostico.seconds * 1000 : new Date(b.dataDiagnostico || 0).getTime();
-        return timeB - timeA;
-      });
-      setDiagnosticos(docs);
-      
-      if (docs.length > 0) {
-        setSelectedDiagnostico(prev => {
-          if (!prev) return docs[0];
-          const updated = docs.find(d => d.id === prev.id);
-          return updated ? { ...prev, ...updated } : prev;
-        });
-      }
-    }, (error) => console.error("Erro ao escutar diagnÃ³sticos:", error));
-  }, [user, isAdmin]);
-
-  // Listen to Respostas for selected Diagnostico with persistent local-first hydration
-  useEffect(() => {
-    if (!selectedDiagnostico || !selectedDiagnostico.id) {
-      setRespostas([]);
-      setRespostasLoaded(false);
-      return;
-    }
-
-    // 1. Immediately hydrate from local storage so answers are NEVER lost when switching diagnostics or offline
-    const localCached = getRespostasForDiagnostico(selectedDiagnostico.id);
-    if (localCached.length > 0) {
-      setRespostas(localCached);
-      setRespostasLoaded(true);
-    } else {
-      setRespostasLoaded(false);
-    }
-
-    if (!user) {
-      setRespostasLoaded(true);
-      return;
-    }
-
-    // 2. Real-time Firestore sync
-    const q = query(collection(db, 'respostas'), where('diagnosticoId', '==', selectedDiagnostico.id));
-    return onSnapshot(q, (snap) => {
-      const cloudDocs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Resposta));
-      if (cloudDocs.length > 0) {
-        setRespostas(cloudDocs);
-        saveAllLocalRespostas(cloudDocs);
-      } else if (localCached.length > 0) {
-        setRespostas(localCached);
-      }
-      setRespostasLoaded(true);
-    }, (error) => {
-      console.error("Erro ao escutar respostas:", error);
-      setRespostasLoaded(true);
-    });
-  }, [selectedDiagnostico?.id, user]);
-
-  // Auto-sync missing respostas for selectedDiagnostico if any selected area has missing premissas
-  useEffect(() => {
-    if (!selectedDiagnostico?.id || !respostasLoaded || premissas.length === 0) return;
-    if (syncedDiagsRef.current.has(selectedDiagnostico.id)) return;
-    syncedDiagsRef.current.add(selectedDiagnostico.id);
-
-    const diagAreas = selectedDiagnostico.areasDiagnostico || [];
-
-    const cleanCurrent = deduplicateRespostas(respostas);
-    const existingPremissaIdsInResp = new Set(cleanCurrent.map(r => r.premissaId));
-    const existingQuestionsInResp = new Set(cleanCurrent.map(r => (r.pergunta || '').trim().toLowerCase()));
-    const missingToCreate: { ref?: any, data: Resposta }[] = [];
-
-    for (const p of premissas) {
-      const prob = problemas.find(prob => prob.id === p.idProblema || prob.descricao_problemas === p.problema);
-      const pType = p.tipoEmpresa || prob?.tipoEmpresa || 'Geral';
-      const companyTypeFilter = selectedDiagnostico.tipoEmpresa || 'Geral';
-
-      if (companyTypeFilter && companyTypeFilter !== 'Geral') {
-        if (pType !== companyTypeFilter && pType !== 'Geral' && pType !== '') continue;
-      } else {
-        if (pType !== 'Geral' && pType !== '') continue;
-      }
-
-      const area = prob?.area || 'Geral';
-      const normArea = normalizeAndFormatArea(area).toLowerCase();
-
-      // Only restrict area if diagAreas was explicitly specified with non-empty items
-      if (diagAreas.length > 0) {
-        const isAreaSelected = diagAreas.some(a => normalizeAndFormatArea(a).toLowerCase() === normArea);
-        if (!isAreaSelected) continue;
-      }
-
-      const normQ = (p.pergunta || '').trim().toLowerCase();
-      if (!existingPremissaIdsInResp.has(p.id) && (!normQ || !existingQuestionsInResp.has(normQ))) {
-        existingPremissaIdsInResp.add(p.id);
-        if (normQ) existingQuestionsInResp.add(normQ);
-
-        const respId = user ? doc(collection(db, 'respostas')).id : 'resp_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
-        const respItem: Resposta = {
-          id: respId,
-          diagnosticoId: selectedDiagnostico.id,
-          premissaId: p.id,
-          idProblema: p.idProblema || '',
-          problema: p.problema || '',
-          pergunta: p.pergunta || '',
-          peso: p?.peso !== undefined ? p.peso : 1,
-          area: area,
-          observacao: '',
-          score: 0,
-          resposta: '',
-          ownerId: user?.uid || 'local'
-        };
-
-        if (user) {
-          const respDocRef = doc(db, 'respostas', respId);
-          missingToCreate.push({ ref: respDocRef, data: respItem });
-        } else {
-          missingToCreate.push({ data: respItem });
-        }
-      }
-    }
-
-    if (missingToCreate.length > 0) {
-      const createdLocal = missingToCreate.map(m => m.data);
-      setRespostas(prev => [...prev, ...createdLocal]);
-      saveAllLocalRespostas(createdLocal);
-
-      if (user) {
-        const syncMissing = async () => {
-          try {
-            for (let i = 0; i < missingToCreate.length; i += 400) {
-              const batch = writeBatch(db);
-              const chunk = missingToCreate.slice(i, i + 400);
-              for (const item of chunk) {
-                if (item.ref) {
-                  batch.set(item.ref, sanitizeForFirestore({ ...item.data, ownerId: user.uid }));
-                }
-              }
-              await batch.commit();
-            }
-          } catch (err) {
-            console.warn("Soft notice ao sincronizar respostas no Firestore:", err);
-          }
-        };
-        syncMissing();
-      }
-    }
-  }, [selectedDiagnostico?.id, selectedDiagnostico?.areasDiagnostico, selectedDiagnostico?.tipoEmpresa, premissas, respostasLoaded, problemas, user?.uid]);
-
-  useEffect(() => {
-    if ((view === 'dashboard' || view === 'relatorio' || view === 'cronograma') && selectedEmpresa) {
-      const companyDiags = diagnosticos.filter(d => d.empresaId === selectedEmpresa.id);
-      if (companyDiags.length >= 1) {
-        const fetchHistory = async () => {
-          const history = [];
-          const lastDiags = [...companyDiags].reverse().slice(-5); // Last 5, ordered by date
-          
-          for (const diag of lastDiags) {
-            const qRes = query(collection(db, 'respostas'), where('diagnosticoId', '==', diag.id));
-            const snap = await getDocs(qRes);
-            const resps = snap.docs.map(d => d.data());
-            const totalScore = resps.reduce((acc, r) => acc + (r.score || 0), 0);
-            const totalPeso = resps.reduce((acc, r) => acc + (2 * (r.peso || 1)), 0);
-            const scorePercent = Math.round((totalScore / (totalPeso || 1)) * 100);
-            
-            history.push({
-              date: formatFirestoreDate(diag.dataDiagnostico, 'dd/MM'),
-              score: scorePercent
-            });
-          }
-          setHistoricalData(history);
-        };
-        fetchHistory();
-      } else {
-        setHistoricalData([]);
-      }
-    } else {
-      setHistoricalData([]);
-    }
-  }, [view, selectedEmpresa, diagnosticos]);
-  
-  // Sincroniza dados da credenciada e do consultor automaticamente nos relatÃ³rios
-  useEffect(() => {
-    if (selectedDiagnostico?.dadosConsultoria?.razaoSocial && empresasCredenciadas.length > 0) {
-      const currentDados = selectedDiagnostico.dadosConsultoria;
-      const matched = empresasCredenciadas.find(c => c.razaoSocial === currentDados.razaoSocial || c.id === (currentDados as any).credenciadaId);
-      if (matched) {
-        const hasChange =
-          (currentDados.consultor || '') !== (matched.consultor || '') ||
-          (currentDados.cnpj || '') !== (matched.cnpj || '') ||
-          (currentDados.email || '') !== (matched.email || '') ||
-          (currentDados.celular || '') !== (matched.celular || '') ||
-          (currentDados.telefoneFixo || '') !== (matched.telefoneFixo || '') ||
-          (currentDados.razaoSocial || '') !== (matched.razaoSocial || '');
-
-        if (hasChange) {
-          const updated = {
-            ...currentDados,
-            razaoSocial: matched.razaoSocial || currentDados.razaoSocial || '',
-            consultor: matched.consultor || '',
-            cnpj: matched.cnpj || '',
-            email: matched.email || '',
-            celular: matched.celular || '',
-            telefoneFixo: matched.telefoneFixo || ''
-          };
-          const updatedDiag = { ...selectedDiagnostico, dadosConsultoria: updated };
-          setSelectedDiagnostico(updatedDiag);
-          setDiagnosticos(prev => prev.map(d => d.id === selectedDiagnostico.id ? updatedDiag : d));
-        }
-      }
-    }
-  }, [empresasCredenciadas, selectedDiagnostico?.id, selectedDiagnostico?.dadosConsultoria?.razaoSocial]);
-  
-  const handleGoogleLogin = async () => {
-    try {
-      setAuthError('');
-      const result = await signInWithPopup(auth, new GoogleAuthProvider());
-      const u = result.user;
-      if (u) {
-        await syncUserWithCredenciada(u);
-      }
-    } catch (error: any) {
-      if (error.code === 'auth/popup-closed-by-user') {
-        // User closed the popup, no need to show a scary error
-        console.log("Login popup closed by user");
-        return;
-      }
-      if (error.code === 'auth/unauthorized-domain' || (error.message && error.message.includes('unauthorized-domain'))) {
-        setAuthError('O domÃ­nio desta aplicaÃ§Ã£o nÃ£o estÃ¡ autorizado no Firebase Console para login via Google. Utilize o login ou cadastro por E-mail e Senha abaixo.');
-        return;
-      }
-      console.error("Login failed", error);
-      setAuthError(error.message || "Erro ao fazer login com Google.");
-    }
-  };
-
-  const handleEmailAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAuthError('');
-    try {
-      if (authMode === 'register') {
-        const userCredential = await createUserWithEmailAndPassword(auth, authEmail, authPassword);
-        const newUser = userCredential.user;
-        if (newUser) {
-          await syncUserWithCredenciada(newUser);
-        }
-      } else {
-        const userCredential = await signInWithEmailAndPassword(auth, authEmail, authPassword);
-        if (userCredential.user) {
-          await syncUserWithCredenciada(userCredential.user);
-        }
-      }
-    } catch (error: any) {
-      console.error("Auth failed", error);
-      if (error.code === 'auth/email-already-in-use') {
-        setAuthError('Este e-mail jÃ¡ estÃ¡ em uso. Por favor faÃ§a login com sua senha.');
-      } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
-        setAuthError('E-mail ou senha incorretos.');
-      } else if (error.code === 'auth/weak-password') {
-        setAuthError('A senha deve ter pelo menos 6 caracteres.');
-      } else if (error.code === 'auth/unauthorized-domain' || (error.message && error.message.includes('unauthorized-domain'))) {
-        setAuthError('DomÃ­nio nÃ£o autorizado no Firebase Console. Adicione o domÃ­nio nas configuraÃ§Ãµes do Firebase Authentication.');
-      } else {
-        setAuthError('Erro na autenticaÃ§Ã£o. Verifique seus dados.');
-      }
-    }
-  };
-
-  const handleLogout = () => signOut(auth);
-
-  const generatePlanoAcaoPDF = async () => {
-    try {
-      const filteredTarefas = tarefasPlano
-        .filter(t => selectedDiagnostico && t.diagnosticoId === selectedDiagnostico.id)
-        .sort((a, b) => {
-          const oA = a.ordem !== undefined && a.ordem !== null ? a.ordem : 999999;
-          const oB = b.ordem !== undefined && b.ordem !== null ? b.ordem : 999999;
-          if (oA !== oB) return oA - oB;
-          const dA = parseLocalDate(a.dataInicio)?.getTime() || 0;
-          const dB = parseLocalDate(b.dataInicio)?.getTime() || 0;
-          return dA - dB;
-        });
-      
-      if (!selectedEmpresa || filteredTarefas.length === 0) {
-        alert("NÃ£o hÃ¡ tarefas no plano de aÃ§Ã£o vinculadas a este diagnÃ³stico para gerar o relatÃ³rio.");
-        return;
-      }
-
-      const doc = new jsPDF({
-        orientation: 'l',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      const margin = 14;
-      const pageWidth = doc.internal.pageSize.getWidth();
-
-      const activeLogoForPdf = logoChoice === 'sebrae' ? customLogo : logoChoice === 'consultora' ? customConsultoraLogo : null;
-      const logoValid = isValidLogoSource(activeLogoForPdf);
-
-      const totalHorasPlano = filteredTarefas.reduce((acc, t) => {
-        const h = parseInt(((t as any).cargaHoraria || '').toString().replace(/\D/g, '')) || 0;
-        return acc + h;
-      }, 0);
-
-      const totalHorasConcluidasPlano = filteredTarefas.reduce((acc, t) => {
-        const isConcluida = (t.status || '').toLowerCase().includes('conclu');
-        if (isConcluida) {
-          const h = parseInt(((t as any).cargaHoraria || '').toString().replace(/\D/g, '')) || 0;
-          return acc + h;
-        }
-        return acc;
-      }, 0);
-
-      // Header helper
-      const addHeader = (d: jsPDF, title: string) => {
-        if (logoValid && activeLogoForPdf) {
-          try {
-            const imgProps = d.getImageProperties(activeLogoForPdf);
-            const logoWidth = 32;
-            const logoHeight = (imgProps.height * logoWidth) / imgProps.width;
-            d.addImage(activeLogoForPdf, 'PNG', pageWidth - margin - logoWidth, 10, logoWidth, logoHeight, undefined, 'FAST');
-          } catch (e) {
-            console.warn("Could not add active logo to Plano de AÃ§Ã£o PDF", e);
-          }
-        } else {
-          // App Name / Logo substitution if no custom logo is present
-          d.setFillColor(16, 185, 129); // emerald-500
-          d.roundedRect(pageWidth - margin - 35, 10, 35, 12, 2, 2, 'F');
-          d.setTextColor(255);
-          d.setFontSize(10);
-          d.setFont("helvetica", "bold");
-          d.text("CONSULTORIA PRO", pageWidth - margin - 17.5, 17.5, { align: 'center' });
-        }
-
-        d.setFontSize(13); // Reduzido para caber de forma garantida em uma sÃ³ linha
-        d.setTextColor(15, 23, 42); // slate-900
-        d.setFont("helvetica", "bold");
-        d.text(title, margin, 20);
-        
-        d.setFontSize(9.5);
-        d.setTextColor(100);
-        d.setFont("helvetica", "normal");
-        d.text(`Cliente: ${selectedEmpresa.nomeFantasia || selectedEmpresa.nome} | Horas ConcluÃ­das: ${totalHorasConcluidasPlano}h / Total: ${totalHorasPlano}h`, margin, 30);
-        d.text(`EmissÃ£o: ${new Date().toLocaleDateString('pt-BR')} Ã s ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`, margin, 36);
-        
-        d.setDrawColor(226, 232, 240); // slate-200
-        d.line(margin, 42, pageWidth - margin, 42);
-      };
-
-      addHeader(doc, 'RELATÃ“RIO: PLANO DE AÃ‡ÃƒO ESTRATÃ‰GICO');
-
-      const tableData = filteredTarefas.map((t, index) => {
-        const defaultDateStr = getActivityDateStr(selectedDiagnostico?.dataDiagnostico, index);
-        const rawInicio = t.dataInicio || defaultDateStr;
-        const rawFim = t.dataFim || rawInicio || defaultDateStr;
-
-        const d_inicio = rawInicio ? (rawInicio.toDate ? rawInicio.toDate() : new Date(typeof rawInicio === 'string' && !rawInicio.includes('T') ? rawInicio + 'T12:00:00' : rawInicio)) : null;
-        const d_fim = rawFim ? (rawFim.toDate ? rawFim.toDate() : new Date(typeof rawFim === 'string' && !rawFim.includes('T') ? rawFim + 'T12:00:00' : rawFim)) : null;
-        
-        let diasStr = '1d';
-        if (d_inicio && d_fim && !isNaN(d_inicio.getTime()) && !isNaN(d_fim.getTime())) {
-          const diffTime = Math.abs(d_fim.getTime() - d_inicio.getTime());
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-          diasStr = `${diffDays}d`;
-        }
-
-        return [
-          index + 1,
-          t.area?.toUpperCase() || '-',
-          t.problema || '-',
-          t.acoes || '-',
-          t.responsavel || '-',
-          d_inicio && !isNaN(d_inicio.getTime()) ? format(d_inicio, 'dd/MM/yy') : '-',
-          d_fim && !isNaN(d_fim.getTime()) ? format(d_fim, 'dd/MM/yy') : '-',
-          diasStr,
-          t.prioridade?.toUpperCase() || '-',
-          t.status?.toUpperCase() || '-'
-        ];
-      });
-
-      autoTable(doc, {
-        startY: 50,
-        head: [['#', 'ÃREA', 'DIAGNÃ“STICO / PROBLEMA', 'AÃ‡Ã•ES E MELHORIAS PROPOSTAS', 'RESPONSÃVEL', 'INÃCIO', 'PRAZO', 'DUR.', 'PRIOR.', 'SITUAÃ‡ÃƒO']],
-        body: tableData,
-        margin: { left: margin, right: margin, top: 48, bottom: 20 },
-        didDrawPage: (data) => {
-          if (data.pageNumber > 1) {
-            addHeader(doc, 'RELATÃ“RIO: PLANO DE AÃ‡ÃƒO ESTRATÃ‰GICO');
-          }
-        },
-        headStyles: { 
-          fillColor: [16, 185, 129], // emerald-500
-          textColor: 255, 
-          fontSize: 7, 
-          fontStyle: 'bold',
-          halign: 'center',
-          cellPadding: 2
-        },
-        bodyStyles: { 
-          fontSize: 7.5, 
-          cellPadding: 2.5,
-          textColor: [51, 65, 85] // slate-700
-        },
-        columnStyles: {
-          0: { cellWidth: 6, halign: 'center' },
-          1: { cellWidth: 22, fontStyle: 'bold', fontSize: 6 },
-          2: { cellWidth: 45 },
-          3: { cellWidth: 85 },
-          4: { cellWidth: 32 },
-          5: { cellWidth: 16, halign: 'center' },
-          6: { cellWidth: 16, halign: 'center' },
-          7: { cellWidth: 10, halign: 'center' },
-          8: { cellWidth: 16, halign: 'center' },
-          9: { cellWidth: 21, halign: 'center' },
-        },
-        didParseCell: (data) => {
-          if (data.section === 'body' && data.column.index === 8) {
-            const val = data.cell.text[0];
-            if (val === 'ALTA') data.cell.styles.textColor = [225, 29, 72]; // rose-600
-            if (val === 'MÃ‰DIA') data.cell.styles.textColor = [217, 119, 6]; // amber-600
-          }
-          if (data.section === 'body' && data.column.index === 9) {
-            const val = data.cell.text[0];
-            if (val === 'CONCLUÃDO') data.cell.styles.textColor = [5, 150, 105]; // emerald-600
-            if (val === 'PENDENTE') data.cell.styles.textColor = [225, 29, 72]; // rose-600
-          }
-        },
-        alternateRowStyles: { fillColor: [248, 250, 252] }, // slate-50
-        styles: { overflow: 'linebreak', font: 'helvetica' }
-      });
-
-      // Footer
-      const totalPages = (doc as any).internal.getNumberOfPages();
-      for (let i = 1; i <= totalPages; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setTextColor(150);
-        doc.text(
-          `RelatÃ³rio de Plano de AÃ§Ã£o - PÃ¡gina ${i} de ${totalPages}`,
-          pageWidth / 2,
-          doc.internal.pageSize.getHeight() - 10,
-          { align: 'center' }
-        );
-      }
-
-      window.open(doc.output('bloburl').toString(), '_blank');
-    } catch (error) {
-      console.error("Error generating Plano de AÃ§Ã£o PDF:", error);
-      alert("Erro ao gerar o plano de aÃ§Ã£o PDF.");
-    }
-  };
-
-  const NavItem = ({ icon: Icon, label, active, onClick }: any) => (
-    <button
-      onClick={() => {
-        onClick();
-        setIsSidebarOpen(false);
-      }}
-      className={cn(
-        "w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
-        active 
-          ? "bg-emerald-600 text-white shadow-lg shadow-emerald-200" 
-          : "text-slate-500 hover:bg-emerald-50 hover:text-emerald-600"
-      )}
-    >
-      <Icon size={20} className={cn("transition-transform duration-200 group-hover:scale-110", active ? "text-white" : "text-slate-400 group-hover:text-emerald-600")} />
-      <span className="font-semibold">{label}</span>
-    </button>
-  );
-
-  const Sidebar = () => (
-    <div className={cn(
-      "fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-100 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 print:hidden",
-      isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-    )}>
-      <div className="flex flex-col h-full p-6">
-        <div className="flex items-center gap-3 mb-10 px-2">
-          <div className="w-10 h-10 bg-emerald-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200">
-            <BarChart3 size={22} />
-          </div>
-          <div className="flex flex-col">
-            <span className="font-black text-xl tracking-tight text-slate-800 leading-none">Consultoria Pro</span>
-            <span className="text-[11px] font-bold text-emerald-600 tracking-wide mt-1">by ItÃ mar Gomes</span>
-          </div>
-        </div>
-
-        <nav className="flex-1 space-y-2">
-          <NavItem 
-            icon={Home} 
-            label="InÃ­cio" 
-            active={view === 'home'} 
-            onClick={() => { setView('home'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }} 
-          />
-          <NavItem 
-            icon={Building2} 
-            label="Clientes" 
-            active={view === 'companies'} 
-            onClick={() => { setView('companies'); setSelectedEmpresa(null); }} 
-          />
-          <NavItem 
-            icon={Briefcase} 
-            label="Projetos" 
-            active={view === 'projects'} 
-            onClick={() => { setView('projects'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }} 
-          />
-          <NavItem 
-            icon={CalendarDays} 
-            label="Agenda do Consultor" 
-            active={view === 'agenda'} 
-            onClick={() => { setView('agenda'); }} 
-          />
-          <NavItem 
-            icon={Building2} 
-            label="Credenciadas" 
-            active={view === 'credenciadas'} 
-            onClick={() => { setView('credenciadas'); }} 
-          />
-          {isAdmin && (
-            <>
-              <NavItem 
-                icon={ShieldCheck} 
-                label="GestÃ£o de LicenÃ§as" 
-                active={view === 'licenses'} 
-                onClick={() => { setView('licenses'); }} 
-              />
-              <NavItem 
-                icon={Trophy} 
-                label="Licenciamento" 
-                active={view === 'licensing'} 
-                onClick={() => setView('licensing')} 
-              />
-            </>
-          )}
-          <NavItem 
-            icon={BarChart3} 
-            label="Dashboard Macro" 
-            active={view === 'macro-dashboard'} 
-            onClick={() => { setView('macro-dashboard'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }} 
-          />
-          <NavItem 
-            icon={Award} 
-            label="AvaliaÃ§Ã£o DISC" 
-            active={view === 'disc-assessment'} 
-            onClick={() => { setView('disc-assessment'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }} 
-          />
-          <NavItem 
-            icon={TrendingUp} 
-            label="Maturidade" 
-            active={view === 'maturity-assessment'} 
-            onClick={() => { setView('maturity-assessment'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }} 
-          />
-          <NavItem 
-            icon={History} 
-            label="HistÃ³rico" 
-            active={view === 'dashboard' && !selectedDiagnostico} 
-            onClick={() => { setView('companies'); }} 
-          />
-          <NavItem 
-            icon={FileText} 
-            label="Biblioteca" 
-            active={view === 'premises'} 
-            onClick={() => setView('premises')} 
-          />
-          <NavItem 
-            icon={Settings} 
-            label="ConfiguraÃ§Ãµes" 
-            active={view === 'settings'} 
-            onClick={() => setView('settings')} 
-          />
-          {selectedDiagnostico && (
-            <>
-              <NavItem 
-                icon={FileSpreadsheet} 
-                label="Dados da Consultoria" 
-                active={view === 'dados-consultoria'} 
-                onClick={() => setView('dados-consultoria')} 
-              />
-              <NavItem 
-                icon={Calendar} 
-                label="RelatÃ³rio de Consultoria" 
-                active={view === 'cronograma'} 
-                onClick={() => setView('cronograma')} 
-              />
-              <NavItem 
-                icon={FileText} 
-                label="RelatÃ³rio" 
-                active={view === 'relatorio'} 
-                onClick={() => setView('relatorio')} 
-              />
-            </>
-          )}
-        </nav>
-
-        <div className="pt-6 border-t border-slate-100 space-y-4">
-          {!isAdmin && subStatus.plan !== 'Nenhum' && (
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mx-2">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Plano {subStatus.plan}</span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${subStatus.daysLeft <= 3 ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                  {subStatus.daysLeft} Dias
-                </span>
-              </div>
-              <div className="h-1 bg-slate-200 rounded-full overflow-hidden">
-                <div 
-                  className={`h-full transition-all duration-1000 ${subStatus.daysLeft <= 3 ? 'bg-rose-500' : 'bg-emerald-500'}`}
-                  style={{ width: `${Math.max(0, Math.min(100, (subStatus.daysLeft / (subStatus.plan === 'Anual' ? 365 : subStatus.plan === 'Mensal' ? 30 : 30)) * 100))}%` }}
-                />
-              </div>
-            </div>
-          )}
-
-          <div className="flex items-center gap-3 px-2 mb-6">
-            <img 
-              src={user?.photoURL || `https://ui-avatars.com/api/?name=${user?.displayName}&background=10b981&color=fff`} 
-              alt="Avatar" 
-              className="w-10 h-10 rounded-full border-2 border-emerald-100"
-              referrerPolicy="no-referrer"
-            />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-slate-800 truncate">{user?.displayName}</p>
-              <p className="text-xs text-slate-400 truncate">{user?.email}</p>
-            </div>
-          </div>
-          <button 
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-rose-500 hover:bg-rose-50 transition-all duration-200 font-semibold"
-          >
-            <LogOut size={20} />
-            <span>Sair da Conta</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  const createEmpresa = async () => {
-    if (!empresaForm.razaoSocial?.trim()) {
-      showToast("Por favor, preencha a RazÃ£o Social da empresa.", "error");
-      return;
-    }
-
-    // ValidaÃ§Ã£o estrita de CNPJ do Cliente (se preenchido)
-    if (empresaForm.cnpj && empresaForm.cnpj.trim()) {
-      if (!isValidCNPJ(empresaForm.cnpj)) {
-        showToast("CNPJ da Empresa (Cliente) invÃ¡lido! Informe um CNPJ vÃ¡lido com 14 dÃ­gitos.", "error");
-        return;
-      }
-    }
-
-    // ValidaÃ§Ã£o estrita de CPF do Representante (se preenchido)
-    if (empresaForm.cpfRepresentante && empresaForm.cpfRepresentante.trim()) {
-      if (!isValidCPF(empresaForm.cpfRepresentante)) {
-        showToast("CPF do Representante Legal invÃ¡lido! Informe um CPF vÃ¡lido com 11 dÃ­gitos.", "error");
-        return;
-      }
-    }
-
-    // Fechar modal imediatamente para resposta instantÃ¢nea na interface
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    const formCopy = { ...empresaForm };
-    setEmpresaForm({});
-    playSuccessSound();
-    showToast("Empresa cadastrada e salva com sucesso!", "success");
-
-    try {
-      const seg = formCopy.tipoEmpresa;
-      if (seg && !TIPOS_EMPRESA.includes(seg)) {
-        setSessionCustomSegments(prev => Array.from(new Set([...prev, seg])));
-        ensureSegmentInFirestore(seg);
-      }
-      const tempId = 'emp_' + Date.now();
-      const razaoSocialTrimmed = formCopy.razaoSocial.trim();
-      const formattedCnpj = formCopy.cnpj ? formatCNPJ(formCopy.cnpj) : undefined;
-      const formattedCpfRep = formCopy.cpfRepresentante ? formatCPF(formCopy.cpfRepresentante) : undefined;
-
-      const newEmp: Empresa = {
-        id: tempId,
-        ...formCopy,
-        nome: razaoSocialTrimmed,
-        razaoSocial: razaoSocialTrimmed,
-        cnpj: formattedCnpj,
-        cpfRepresentante: formattedCpfRep,
-        dataCadastro: new Date().toISOString(),
-        ownerId: user?.uid || 'local'
-      };
-
-      setEmpresas(prev => [newEmp, ...prev]);
-
-      if (user) {
-        try {
-          const sanitized = sanitizeForFirestore({
-            ...formCopy,
-            nome: razaoSocialTrimmed,
-            razaoSocial: razaoSocialTrimmed,
-            cnpj: formattedCnpj,
-            cpfRepresentante: formattedCpfRep,
-            dataCadastro: serverTimestamp(),
-            ownerId: user.uid
-          });
-          const docRef = await addDoc(collection(db, 'empresas'), sanitized);
-          setEmpresas(prev => prev.map(e => e.id === tempId ? { ...e, id: docRef.id } : e));
-        } catch (error) {
-          console.error("Error saving empresa in cloud:", error);
-        }
-      }
-    } catch (error) {
-      console.error("Error creating empresa:", error);
-    }
-  };
-
-  const editEmpresa = async () => {
-    const targetId = modalData?.id || empresaForm?.id;
-    if (!empresaForm.razaoSocial?.trim() || !targetId) {
-      showToast("Por favor, preencha a RazÃ£o Social da empresa.", "error");
-      return;
-    }
-
-    // ValidaÃ§Ã£o estrita de CNPJ do Cliente (se preenchido)
-    if (empresaForm.cnpj && empresaForm.cnpj.trim()) {
-      if (!isValidCNPJ(empresaForm.cnpj)) {
-        showToast("CNPJ da Empresa (Cliente) invÃ¡lido! Informe um CNPJ vÃ¡lido com 14 dÃ­gitos.", "error");
-        return;
-      }
-    }
-
-    // ValidaÃ§Ã£o estrita de CPF do Representante (se preenchido)
-    if (empresaForm.cpfRepresentante && empresaForm.cpfRepresentante.trim()) {
-      if (!isValidCPF(empresaForm.cpfRepresentante)) {
-        showToast("CPF do Representante Legal invÃ¡lido! Informe um CPF vÃ¡lido com 11 dÃ­gitos.", "error");
-        return;
-      }
-    }
-
-    // Fechar modal imediatamente para resposta instantÃ¢nea na interface
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    const formCopy = { ...empresaForm };
-    const initialData = modalData || {};
-    setEmpresaForm({});
-    playSuccessSound();
-    showToast("Empresa alterada e salva com sucesso!", "success");
-
-    try {
-      const seg = formCopy.tipoEmpresa;
-      if (seg && !TIPOS_EMPRESA.includes(seg)) {
-        setSessionCustomSegments(prev => Array.from(new Set([...prev, seg])));
-        ensureSegmentInFirestore(seg);
-      }
-      const razaoSocialTrimmed = formCopy.razaoSocial.trim();
-      const formattedCnpj = formCopy.cnpj ? formatCNPJ(formCopy.cnpj) : undefined;
-      const formattedCpfRep = formCopy.cpfRepresentante ? formatCPF(formCopy.cpfRepresentante) : undefined;
-
-      const sanitized = sanitizeForFirestore({
-        ...formCopy,
-        nome: razaoSocialTrimmed,
-        razaoSocial: razaoSocialTrimmed,
-        cnpj: formattedCnpj,
-        cpfRepresentante: formattedCpfRep
-      });
-
-      const updatedEmp: Empresa = { ...initialData, ...sanitized, id: targetId };
-      setEmpresas(prev => prev.map(e => e.id === targetId ? updatedEmp : e));
-      if (selectedEmpresa?.id === targetId) {
-        setSelectedEmpresa(updatedEmp);
-      }
-
-      if (user) {
-        try {
-          await updateDoc(doc(db, 'empresas', targetId), sanitized);
-        } catch (error) {
-          console.error("Error updating empresa in cloud:", error);
-        }
-      }
-    } catch (error) {
-      console.error("Error editing empresa:", error);
-    }
-  };
-
-  const createCredenciada = async () => {
-    if (!credenciadaForm.razaoSocial?.trim()) {
-      showToast("Por favor, preencha a RazÃ£o Social da empresa credenciada.", "error");
-      return;
-    }
-
-    // ValidaÃ§Ã£o estrita de CNPJ da Credenciada (se preenchido)
-    if (credenciadaForm.cnpj && credenciadaForm.cnpj.trim()) {
-      if (!isValidCNPJ(credenciadaForm.cnpj)) {
-        showToast("CNPJ da Empresa Credenciada invÃ¡lido! Informe um CNPJ no padrÃ£o brasileiro.", "error");
-        return;
-      }
-    }
-
-    // ValidaÃ§Ã£o estrita de CPF do Consultor (se preenchido)
-    if (credenciadaForm.cpfConsultor && credenciadaForm.cpfConsultor.trim()) {
-      if (!isValidCPF(credenciadaForm.cpfConsultor)) {
-        showToast("CPF do Consultor invÃ¡lido! Informe um CPF no padrÃ£o brasileiro.", "error");
-        return;
-      }
-    }
-
-    // Fechar modal imediatamente para resposta instantÃ¢nea
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    const formCopy = { ...credenciadaForm };
-    setCredenciadaForm({});
-    playSuccessSound();
-    showToast("Empresa Credenciada cadastrada e salva com sucesso!", "success");
-
-    try {
-      const { id, ...dataToCreate } = formCopy;
-      const razaoSocialTrimmed = (dataToCreate.razaoSocial || '').trim();
-      const formattedCnpj = dataToCreate.cnpj ? formatCNPJ(dataToCreate.cnpj) : undefined;
-      const formattedCpfCons = dataToCreate.cpfConsultor ? formatCPF(dataToCreate.cpfConsultor) : undefined;
-      const tempId = 'cred_' + Date.now();
-      const ownerIdVal = user?.uid || 'local';
-
-      const newCred: EmpresaCredenciada = {
-        id: tempId,
-        ...dataToCreate,
-        razaoSocial: razaoSocialTrimmed,
-        cnpj: formattedCnpj,
-        cpfConsultor: formattedCpfCons,
-        dataCadastro: new Date().toISOString(),
-        ownerId: ownerIdVal,
-        status: 'Ativa',
-        tipoPlano: 'Teste'
-      };
-
-      // Update local state immediately for instant feedback
-      setEmpresasCredenciadas(prev => [newCred, ...prev]);
-
-      // If diagnosticoForm is active, auto-populate with the newly created credenciada
-      setDiagnosticoForm(prev => ({
-        ...prev,
-        razaoSocial: razaoSocialTrimmed,
-        cnpj: formattedCnpj || prev.cnpj,
-        consultor: dataToCreate.consultor || prev.consultor,
-        email: dataToCreate.email || prev.email,
-        celular: dataToCreate.celular || prev.celular,
-        telefoneFixo: dataToCreate.telefoneFixo || prev.telefoneFixo
-      }));
-
-      // Sync with cloud if online and logged in
-      if (user) {
-        try {
-          const sanitized = sanitizeForFirestore({
-            ...dataToCreate,
-            razaoSocial: razaoSocialTrimmed,
-            cnpj: formattedCnpj,
-            cpfConsultor: formattedCpfCons,
-            dataCadastro: serverTimestamp(),
-            ownerId: user.uid,
-            status: 'Ativa',
-            tipoPlano: 'Teste'
-          });
-          const docRef = await addDoc(collection(db, 'empresas_credenciadas'), sanitized);
-          setEmpresasCredenciadas(prev => prev.map(c => c.id === tempId ? { ...c, id: docRef.id } : c));
-        } catch (error) {
-          console.error("Error creating credenciada in cloud:", error);
-          handleFirestoreError(error, OperationType.WRITE, 'empresas_credenciadas');
-        }
-      }
-    } catch (error) {
-      console.error("Error creating credenciada:", error);
-    }
-  };
-
-  const editCredenciada = async () => {
-    const targetId = modalData?.id || credenciadaForm?.id;
-    if (!credenciadaForm.razaoSocial?.trim() || !targetId) {
-      showToast("Por favor, preencha a RazÃ£o Social para salvar as alteraÃ§Ãµes.", "error");
-      return;
-    }
-
-    // ValidaÃ§Ã£o estrita de CNPJ da Credenciada (se preenchido)
-    if (credenciadaForm.cnpj && credenciadaForm.cnpj.trim()) {
-      if (!isValidCNPJ(credenciadaForm.cnpj)) {
-        showToast("CNPJ da Empresa Credenciada invÃ¡lido! Informe um CNPJ no padrÃ£o brasileiro.", "error");
-        return;
-      }
-    }
-
-    // ValidaÃ§Ã£o estrita de CPF do Consultor (se preenchido)
-    if (credenciadaForm.cpfConsultor && credenciadaForm.cpfConsultor.trim()) {
-      if (!isValidCPF(credenciadaForm.cpfConsultor)) {
-        showToast("CPF do Consultor invÃ¡lido! Informe um CPF no padrÃ£o brasileiro.", "error");
-        return;
-      }
-    }
-
-    // Fechar modal imediatamente para resposta instantÃ¢nea
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    const formCopy = { ...credenciadaForm };
-    const initialModalData = modalData || {};
-    setCredenciadaForm({});
-    playSuccessSound();
-    showToast("Empresa Credenciada alterada e salva com sucesso!", "success");
-
-    try {
-      const { id, ...dataToUpdate } = formCopy;
-      const razaoSocialTrimmed = (dataToUpdate.razaoSocial || '').trim();
-      const oldRazaoSocial = initialModalData.razaoSocial;
-      const newConsultor = dataToUpdate.consultor || '';
-      const newCnpj = dataToUpdate.cnpj ? formatCNPJ(dataToUpdate.cnpj) : '';
-      const newCpfConsultor = dataToUpdate.cpfConsultor ? formatCPF(dataToUpdate.cpfConsultor) : '';
-      const newEmail = dataToUpdate.email || '';
-      const newCelular = dataToUpdate.celular || '';
-      const newTelefone = dataToUpdate.telefoneFixo || '';
-
-      const updatedCred: EmpresaCredenciada = {
-        ...initialModalData,
-        ...dataToUpdate,
-        id: targetId,
-        razaoSocial: razaoSocialTrimmed,
-        cnpj: newCnpj || initialModalData.cnpj,
-        cpfConsultor: newCpfConsultor || initialModalData.cpfConsultor
-      };
-
-      // 1. Instantly update local state
-      setEmpresasCredenciadas(prev => prev.map(emp => emp.id === targetId ? updatedCred : emp));
-
-      // Synchronize all diagnostics associated with this credenciada locally
-      let updatedSelected: Diagnostico | null = null;
-      const newDiagnosticos = diagnosticos.map(diag => {
-        if (diag.dadosConsultoria?.razaoSocial === oldRazaoSocial || diag.dadosConsultoria?.razaoSocial === razaoSocialTrimmed) {
-          const updatedDados = {
-            ...diag.dadosConsultoria,
-            razaoSocial: razaoSocialTrimmed,
-            consultor: newConsultor || diag.dadosConsultoria?.consultor || '',
-            cnpj: newCnpj || diag.dadosConsultoria?.cnpj || '',
-            email: newEmail || diag.dadosConsultoria?.email || '',
-            celular: newCelular || diag.dadosConsultoria?.celular || '',
-            telefoneFixo: newTelefone || diag.dadosConsultoria?.telefoneFixo || ''
-          };
-
-          const updatedDiag = { ...diag, dadosConsultoria: updatedDados };
-          if (selectedDiagnostico && selectedDiagnostico.id === diag.id) {
-            updatedSelected = updatedDiag;
-          }
-          return updatedDiag;
-        }
-        return diag;
-      });
-
-      setDiagnosticos(newDiagnosticos);
-      if (updatedSelected) {
-        setSelectedDiagnostico(updatedSelected);
-      }
-
-      // Update current active diagnosticoForm if it matches
-      setDiagnosticoForm(prev => {
-        if (prev.razaoSocial === oldRazaoSocial || prev.razaoSocial === razaoSocialTrimmed) {
-          return {
-            ...prev,
-            razaoSocial: razaoSocialTrimmed,
-            consultor: newConsultor || prev.consultor,
-            cnpj: newCnpj || prev.cnpj,
-            email: newEmail || prev.email,
-            celular: newCelular || prev.celular,
-            telefoneFixo: newTelefone || prev.telefoneFixo
-          };
-        }
-        return prev;
-      });
-
-      // 2. Sync to Firestore in cloud mode
-      if (user) {
-        try {
-          const payload = sanitizeForFirestore({
-            ...dataToUpdate,
-            razaoSocial: razaoSocialTrimmed,
-            cnpj: newCnpj || (initialModalData.cnpj ? formatCNPJ(initialModalData.cnpj) : ''),
-            cpfConsultor: newCpfConsultor || (initialModalData.cpfConsultor ? formatCPF(initialModalData.cpfConsultor) : ''),
-            ownerId: dataToUpdate.ownerId || initialModalData.ownerId || user.uid,
-            status: dataToUpdate.status || initialModalData.status || 'Ativa',
-            tipoPlano: dataToUpdate.tipoPlano || initialModalData.tipoPlano || 'Teste'
-          });
-
-          const batch = writeBatch(db);
-          const credRef = doc(db, 'empresas_credenciadas', targetId);
-          batch.update(credRef, payload);
-
-          diagnosticos.forEach(diag => {
-            if (diag.dadosConsultoria?.razaoSocial === oldRazaoSocial || diag.dadosConsultoria?.razaoSocial === razaoSocialTrimmed) {
-              const updatedDados = sanitizeForFirestore({
-                ...diag.dadosConsultoria,
-                razaoSocial: razaoSocialTrimmed,
-                consultor: newConsultor || diag.dadosConsultoria?.consultor || '',
-                cnpj: newCnpj || diag.dadosConsultoria?.cnpj || '',
-                email: newEmail || diag.dadosConsultoria?.email || '',
-                celular: newCelular || diag.dadosConsultoria?.celular || '',
-                telefoneFixo: newTelefone || diag.dadosConsultoria?.telefoneFixo || ''
-              });
-
-              batch.update(doc(db, 'diagnosticos', diag.id), {
-                dadosConsultoria: updatedDados
-              });
-            }
-          });
-
-          await batch.commit();
-        } catch (error) {
-          console.error("Error updating credenciada in cloud:", error);
-          handleFirestoreError(error, OperationType.WRITE, `empresas_credenciadas/${targetId}`);
-        }
-      }
-    } catch (error) {
-      console.error("Error updating credenciada:", error);
-    }
-  };
-
-  const createPremissa = (data: { idProblema: string, problema: string, pergunta: string, peso: number, tipoEmpresa?: string }) => {
-    const associatedProb = problemas.find(p => p.id === data.idProblema);
-    const seg = data.tipoEmpresa || associatedProb?.tipoEmpresa || 'Geral';
-    if (seg && !TIPOS_EMPRESA.includes(seg)) {
-      setSessionCustomSegments(prev => Array.from(new Set([...prev, seg])));
-    }
-    const tempId = 'prem_' + Date.now();
-    const newPrem: Premissa = {
-      id: tempId,
-      ...data,
-      tipoEmpresa: seg,
-      ownerId: user?.uid || 'local'
-    };
-
-    setPremissas(prev => [newPrem, ...prev]);
-    try { localStorage.removeItem('user_cleared_premissas'); } catch {}
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    setPremissaForm({ idProblema: '', problema: '', pergunta: '', peso: 1, tipoEmpresa: '' });
-    playSuccessSound();
-    showToast("Pergunta da Biblioteca cadastrada com sucesso!", "success");
-
-    if (user) {
-      const sanitized = sanitizeForFirestore({ ...data, tipoEmpresa: seg, ownerId: user.uid });
-      addDoc(collection(db, 'premissas'), sanitized)
-        .then(ref => {
-          setPremissas(prev => prev.map(p => p.id === tempId ? { ...p, id: ref.id } : p));
-        })
-        .catch(error => console.error("Error creating premissa in cloud:", error));
-    }
-  };
-
-  const updatePremissa = (id: string, data: { idProblema: string, problema: string, pergunta: string, peso: number, tipoEmpresa?: string }) => {
-    const associatedProb = problemas.find(p => p.id === data.idProblema);
-    const seg = data.tipoEmpresa || associatedProb?.tipoEmpresa || 'Geral';
-    if (seg && !TIPOS_EMPRESA.includes(seg)) {
-      setSessionCustomSegments(prev => Array.from(new Set([...prev, seg])));
-    }
-    const updated: Premissa = {
-      id,
-      ...data,
-      tipoEmpresa: seg,
-      ownerId: user?.uid || 'local'
-    };
-
-    setPremissas(prev => prev.map(p => p.id === id ? updated : p));
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    setPremissaForm({ idProblema: '', problema: '', pergunta: '', peso: 1, tipoEmpresa: '' });
-    playSuccessSound();
-    showToast("Pergunta alterada e salva com sucesso!", "success");
-
-    if (user) {
-      updateDoc(doc(db, 'premissas', id), sanitizeForFirestore({ ...data, tipoEmpresa: seg, ownerId: user.uid }))
-        .catch(error => console.error("Error updating premissa in cloud:", error));
-    }
-  };
-
-  const safeDeleteDocs = async (colName: string, userId?: string) => {
-    try {
-      const colRef = collection(db, colName);
-      const docsToDelete: any[] = [];
-      
-      if (userId) {
-        try {
-          const snapUser = await getDocs(query(colRef, where('ownerId', '==', userId)));
-          snapUser.docs.forEach(d => docsToDelete.push(d));
-        } catch (e) {
-          console.warn(`Query by ownerId on ${colName} notice:`, e);
-        }
-      }
-
-      try {
-        const snapAll = await getDocs(colRef);
-        for (const d of snapAll.docs) {
-          const data = d.data();
-          if (!userId || isAdmin || !data.ownerId || data.ownerId === 'local' || data.ownerId === userId) {
-            if (!docsToDelete.some(existing => existing.id === d.id)) {
-              docsToDelete.push(d);
-            }
-          }
-        }
-      } catch (e) {
-        console.warn(`Scan on ${colName} notice:`, e);
-      }
-
-      if (docsToDelete.length > 0) {
-        for (let i = 0; i < docsToDelete.length; i += 400) {
-          const chunk = docsToDelete.slice(i, i + 400);
-          const batch = writeBatch(db);
-          chunk.forEach(d => batch.delete(d.ref));
-          await batch.commit();
-        }
-      }
-    } catch (e) {
-      console.error(`Erro ao deletar documentos de ${colName}:`, e);
-    }
-  };
-
-  const deletePremissa = (id: string) => {
-    const targetPremissa = premissas.find(p => p.id === id);
-    const nextPremissas = premissas.filter(p => p.id !== id);
-    setPremissas(nextPremissas);
-    try {
-      localStorage.setItem('local_premissas', JSON.stringify(nextPremissas));
-    } catch {}
-
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    playSuccessSound();
-    showToast("Pergunta excluÃ­da com sucesso!", "success");
-
-    if (user) {
-      (async () => {
-        try {
-          await deleteDoc(doc(db, 'premissas', id));
-        } catch (e) {
-          console.warn("Direct delete of premissa by id failed:", e);
-        }
-        try {
-          const snap = await getDocs(collection(db, 'premissas'));
-          for (const d of snap.docs) {
-            const data = d.data();
-            const matchesOwner = !data.ownerId || data.ownerId === 'local' || data.ownerId === user.uid || isAdmin;
-            if (matchesOwner && (d.id === id || (targetPremissa && d.data().pergunta === targetPremissa.pergunta && d.data().problema === targetPremissa.problema))) {
-              await deleteDoc(d.ref);
-            }
-          }
-        } catch (e) {
-          console.error("Error deleting premissa from cloud query:", e);
-        }
-      })();
-    }
-  };
-
-  const createProblema = (data: { descricao_problemas: string, area: string, impacto: string, tipoEmpresa?: string, tags?: string[] }) => {
-    const seg = data.tipoEmpresa;
-    if (seg && !TIPOS_EMPRESA.includes(seg)) {
-      setSessionCustomSegments(prev => Array.from(new Set([...prev, seg])));
-    }
-    if (data.area) {
-      const normArea = normalizeAndFormatArea(data.area).toLowerCase();
-      setDeletedAreas(prev => prev.filter(a => normalizeAndFormatArea(a).toLowerCase() !== normArea));
-    }
-    const tempId = 'prob_' + Date.now();
-    const newProb: Problema = {
-      id: tempId,
-      ...data,
-      ownerId: user?.uid || 'local'
-    };
-
-    setProblemas(prev => [newProb, ...prev]);
-    try { localStorage.removeItem('user_cleared_problemas'); } catch {}
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    setProblemaForm({ descricao_problemas: '', area: '', impacto: '', tipoEmpresa: '', tags: [] });
-    playSuccessSound();
-    showToast("Problema cadastrado e salvo com sucesso!", "success");
-
-    if (user) {
-      addDoc(collection(db, 'problemas'), sanitizeForFirestore({ ...data, ownerId: user.uid }))
-        .then(ref => {
-          setProblemas(prev => prev.map(p => p.id === tempId ? { ...p, id: ref.id } : p));
-        })
-        .catch(error => console.error("Error creating problema in cloud:", error));
-    }
-  };
-
-  const updateProblema = (id: string, data: { descricao_problemas: string, area: string, impacto: string, tipoEmpresa?: string, tags?: string[] }) => {
-    const seg = data.tipoEmpresa;
-    if (seg && !TIPOS_EMPRESA.includes(seg)) {
-      setSessionCustomSegments(prev => Array.from(new Set([...prev, seg])));
-    }
-    if (data.area) {
-      const normArea = normalizeAndFormatArea(data.area).toLowerCase();
-      setDeletedAreas(prev => prev.filter(a => normalizeAndFormatArea(a).toLowerCase() !== normArea));
-    }
-    const updatedProb: Problema = {
-      id,
-      ...data,
-      ownerId: user?.uid || 'local'
-    };
-
-    setProblemas(prev => prev.map(p => p.id === id ? updatedProb : p));
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    setProblemaForm({ descricao_problemas: '', area: '', impacto: '', tipoEmpresa: '', tags: [] });
-    playSuccessSound();
-    showToast("Problema alterado e salvo com sucesso!", "success");
-
-    if (user) {
-      updateDoc(doc(db, 'problemas', id), sanitizeForFirestore({ ...data, ownerId: user.uid }))
-        .catch(error => console.error("Error updating problema in cloud:", error));
-    }
-  };
-
-  const deleteProblema = (id: string) => {
-    const targetProblema = problemas.find(p => p.id === id);
-    const nextProblemas = problemas.filter(p => p.id !== id);
-    setProblemas(nextProblemas);
-    try {
-      localStorage.setItem('local_problemas', JSON.stringify(nextProblemas));
-    } catch {}
-
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    playSuccessSound();
-    showToast("Problema excluÃ­do com sucesso!", "success");
-
-    if (user) {
-      (async () => {
-        try {
-          await deleteDoc(doc(db, 'problemas', id));
-        } catch (e) {
-          console.warn("Direct delete of problema by id failed:", e);
-        }
-        try {
-          const snap = await getDocs(collection(db, 'problemas'));
-          for (const d of snap.docs) {
-            const data = d.data();
-            const matchesOwner = !data.ownerId || data.ownerId === 'local' || data.ownerId === user.uid || isAdmin;
-            if (matchesOwner && (d.id === id || (targetProblema && d.data().descricao_problemas === targetProblema.descricao_problemas))) {
-              await deleteDoc(d.ref);
-            }
-          }
-        } catch (e) {
-          console.error("Error deleting problema from cloud query:", e);
-        }
-      })();
-    }
-  };
-
-  const deleteAllProblemas = async () => {
-    const idsToDelete = problemas.map(p => p.id);
-    setProblemas([]);
-    try {
-      localStorage.setItem('local_problemas', '[]');
-      localStorage.setItem('user_cleared_problemas', 'true');
-    } catch {}
-
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    playSuccessSound();
-    showToast("Todos os problemas foram excluÃ­dos com sucesso!", "success");
-
-    if (user) {
-      for (const id of idsToDelete) {
-        deleteDoc(doc(db, 'problemas', id)).catch(() => {});
-      }
-      await safeDeleteDocs('problemas', user.uid);
-    }
-  };
-
-  const deleteAllPremissas = async () => {
-    const idsToDelete = premissas.map(p => p.id);
-    setPremissas([]);
-    try {
-      localStorage.setItem('local_premissas', '[]');
-      localStorage.setItem('user_cleared_premissas', 'true');
-    } catch {}
-
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    playSuccessSound();
-    showToast("Todas as perguntas foram excluÃ­das com sucesso!", "success");
-
-    if (user) {
-      for (const id of idsToDelete) {
-        deleteDoc(doc(db, 'premissas', id)).catch(() => {});
-      }
-      await safeDeleteDocs('premissas', user.uid);
-    }
-  };
-
-  const createSolucao = (data: any) => {
-    const associatedProb = problemas.find(p => p.id === data.idProblema);
-    const seg = data.tipoEmpresa || associatedProb?.tipoEmpresa || 'Geral';
-    if (seg && !TIPOS_EMPRESA.includes(seg)) {
-      setSessionCustomSegments(prev => Array.from(new Set([...prev, seg])));
-    }
-    if (data.area) {
-      const normArea = normalizeAndFormatArea(data.area).toLowerCase();
-      setDeletedAreas(prev => prev.filter(a => normalizeAndFormatArea(a).toLowerCase() !== normArea));
-    }
-    const tempId = 'sol_' + Date.now();
-    const newSol: Solucao = {
-      id: tempId,
-      ...data,
-      tipoEmpresa: seg,
-      ownerId: user?.uid || 'local'
-    };
-
-    setSolucoes(prev => [newSol, ...prev]);
-    try { localStorage.removeItem('user_cleared_solucoes'); } catch {}
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    setSolucaoForm({ idProblema: '', problema: '', area: '', solucao_recomendada: '', acoes_sugeridas: '', prazo_sugerido: '', responsavel_sugerido: '', kpis_sugeridos: '', resultado_esperado: '', comentario_sucesso: '', tipoEmpresa: '', tags: [] });
-    playSuccessSound();
-    showToast("SoluÃ§Ã£o cadastrada e salva com sucesso!", "success");
-
-    if (user) {
-      addDoc(collection(db, 'solucoes'), sanitizeForFirestore({ ...data, tipoEmpresa: seg, ownerId: user.uid }))
-        .then(ref => {
-          setSolucoes(prev => prev.map(s => s.id === tempId ? { ...s, id: ref.id } : s));
-        })
-        .catch(error => console.error("Error creating solucao in cloud:", error));
-    }
-  };
-
-  const updateSolucao = (id: string, data: any) => {
-    const associatedProb = problemas.find(p => p.id === data.idProblema);
-    const seg = data.tipoEmpresa || associatedProb?.tipoEmpresa || 'Geral';
-    if (seg && !TIPOS_EMPRESA.includes(seg)) {
-      setSessionCustomSegments(prev => Array.from(new Set([...prev, seg])));
-    }
-    if (data.area) {
-      const normArea = normalizeAndFormatArea(data.area).toLowerCase();
-      setDeletedAreas(prev => prev.filter(a => normalizeAndFormatArea(a).toLowerCase() !== normArea));
-    }
-    const updatedSol: Solucao = {
-      id,
-      ...data,
-      tipoEmpresa: seg,
-      ownerId: user?.uid || 'local'
-    };
-
-    setSolucoes(prev => prev.map(s => s.id === id ? updatedSol : s));
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    setSolucaoForm({ idProblema: '', problema: '', area: '', solucao_recomendada: '', acoes_sugeridas: '', prazo_sugerido: '', responsavel_sugerido: '', kpis_sugeridos: '', resultado_esperado: '', comentario_sucesso: '', tipoEmpresa: '', tags: [] });
-    playSuccessSound();
-    showToast("SoluÃ§Ã£o alterada e salva com sucesso!", "success");
-
-    if (user) {
-      updateDoc(doc(db, 'solucoes', id), sanitizeForFirestore({ ...data, tipoEmpresa: seg, ownerId: user.uid }))
-        .catch(error => console.error("Error updating solucao in cloud:", error));
-    }
-  };
-
-  const deleteSolucao = (id: string) => {
-    const targetSolucao = solucoes.find(s => s.id === id);
-    const nextSolucoes = solucoes.filter(s => s.id !== id);
-    setSolucoes(nextSolucoes);
-    try {
-      localStorage.setItem('local_solucoes', JSON.stringify(nextSolucoes));
-    } catch {}
-
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    playSuccessSound();
-    showToast("SoluÃ§Ã£o excluÃ­da com sucesso!", "success");
-
-    if (user) {
-      (async () => {
-        try {
-          await deleteDoc(doc(db, 'solucoes', id));
-        } catch (e) {
-          console.warn("Direct delete of solucao by id failed:", e);
-        }
-        try {
-          const snap = await getDocs(collection(db, 'solucoes'));
-          for (const d of snap.docs) {
-            const data = d.data();
-            const matchesOwner = !data.ownerId || data.ownerId === 'local' || data.ownerId === user.uid || isAdmin;
-            if (matchesOwner && (d.id === id || (targetSolucao && d.data().solucao_recomendada === targetSolucao.solucao_recomendada && d.data().idProblema === targetSolucao.idProblema))) {
-              await deleteDoc(d.ref);
-            }
-          }
-        } catch (e) {
-          console.error("Error deleting solucao from cloud query:", e);
-        }
-      })();
-    }
-  };
-
-  const deleteAllSolucoes = async () => {
-    const idsToDelete = solucoes.map(s => s.id);
-    setSolucoes([]);
-    try {
-      localStorage.setItem('local_solucoes', '[]');
-      localStorage.setItem('user_cleared_solucoes', 'true');
-    } catch {}
-
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    playSuccessSound();
-    showToast("Todas as soluÃ§Ãµes foram excluÃ­das com sucesso!", "success");
-
-    if (user) {
-      for (const id of idsToDelete) {
-        deleteDoc(doc(db, 'solucoes', id)).catch(() => {});
-      }
-      await safeDeleteDocs('solucoes', user.uid);
-    }
-  };
-
-  const deleteAllBiblioteca = async () => {
-    const idsProblemas = problemas.map(p => p.id);
-    const idsPremissas = premissas.map(p => p.id);
-    const idsSolucoes = solucoes.map(s => s.id);
-
-    setProblemas([]);
-    setPremissas([]);
-    setSolucoes([]);
-
-    try {
-      localStorage.setItem('local_problemas', '[]');
-      localStorage.setItem('local_premissas', '[]');
-      localStorage.setItem('local_solucoes', '[]');
-      localStorage.setItem('user_cleared_problemas', 'true');
-      localStorage.setItem('user_cleared_premissas', 'true');
-      localStorage.setItem('user_cleared_solucoes', 'true');
-    } catch {}
-
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    playSuccessSound();
-    showToast("Toda a biblioteca foi excluÃ­da com sucesso!", "success");
-
-    if (user) {
-      for (const id of idsProblemas) deleteDoc(doc(db, 'problemas', id)).catch(() => {});
-      for (const id of idsPremissas) deleteDoc(doc(db, 'premissas', id)).catch(() => {});
-      for (const id of idsSolucoes) deleteDoc(doc(db, 'solucoes', id)).catch(() => {});
-
-      await safeDeleteDocs('problemas', user.uid);
-      await safeDeleteDocs('premissas', user.uid);
-      await safeDeleteDocs('solucoes', user.uid);
-    }
-  };
-
-  const createArea = (areaName: string) => {
-    if (!user || !areaName || !areaName.trim()) return;
-    const formatted = normalizeAndFormatArea(areaName.trim());
-    if (!formatted) return;
-    const norm = formatted.toLowerCase();
-
-    // Remove from deletedAreas so it can be re-created
-    setDeletedAreas(prev => prev.filter(a => normalizeAndFormatArea(a).toLowerCase() !== norm));
-
-    const exists = allAvailableAreas.some(a => normalizeAndFormatArea(a).toLowerCase() === norm);
-    if (exists) {
-      showToast(`A Ã¡rea "${formatted}" jÃ¡ estÃ¡ cadastrada no sistema.`, "error");
-      return;
-    }
-
-    setSessionCustomAreas(prev => [...prev, formatted]);
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    setNewAreaInput('');
-    playSuccessSound();
-    showToast(`Ãrea "${formatted}" cadastrada com sucesso!`, "success");
-
-    addDoc(collection(db, 'areas'), sanitizeForFirestore({
-      nome: formatted,
-      createdAt: new Date().toISOString(),
-      ownerId: user.uid
-    })).catch(error => console.error("Erro ao cadastrar Ã¡rea no Firestore:", error));
-  };
-
-  const deleteArea = (areaName: string) => {
-    if (!areaName) return;
-    const formattedTarget = normalizeAndFormatArea(areaName);
-    const normTarget = formattedTarget.toLowerCase();
-
-    // Permanently mark area as deleted so it is excluded from allAvailableAreas
-    setDeletedAreas(prev => {
-      if (!prev.some(a => normalizeAndFormatArea(a).toLowerCase() !== normTarget)) {
-        return [...prev, formattedTarget];
-      }
-      return prev;
-    });
-
-    setSessionCustomAreas(prev => prev.filter(a => normalizeAndFormatArea(a).toLowerCase() !== normTarget));
-    setDbAreas(prev => prev.filter(a => normalizeAndFormatArea(a.nome).toLowerCase() !== normTarget));
-
-    const problemasToDelete = problemas.filter(p => normalizeAndFormatArea(p.area).toLowerCase() === normTarget);
-    const probIdsToDelete = new Set(problemasToDelete.map(p => p.id));
-    const probDescsToDelete = new Set(problemasToDelete.map(p => p.descricao_problemas.trim().toLowerCase()));
-
-    setProblemas(prev => prev.filter(p => normalizeAndFormatArea(p.area).toLowerCase() !== normTarget));
-    setSolucoes(prev => prev.filter(s => normalizeAndFormatArea(s.area).toLowerCase() !== normTarget));
-    setPremissas(prev => prev.filter(p => {
-      if (p.idProblema && probIdsToDelete.has(p.idProblema)) return false;
-      if (p.problema && probDescsToDelete.has(p.problema.trim().toLowerCase())) return false;
-      return true;
-    }));
-
-    if (normalizeAndFormatArea(selectedAreaFilter).toLowerCase() === normTarget) {
-      setSelectedAreaFilter('');
-    }
-
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    setAreaToDelete('');
-    playSuccessSound();
-    showToast(`Ãrea "${formattedTarget}" excluÃ­da com sucesso!`, "success");
-
-    (async () => {
-      try {
-        const areaSnap = await getDocs(collection(db, 'areas'));
-        for (const d of areaSnap.docs) {
-          if (normalizeAndFormatArea(d.data().nome).toLowerCase() === normTarget) {
-            await deleteDoc(d.ref);
-          }
-        }
-
-        const probSnap = await getDocs(collection(db, 'problemas'));
-        for (const d of probSnap.docs) {
-          if (normalizeAndFormatArea(d.data().area).toLowerCase() === normTarget) {
-            await deleteDoc(d.ref);
-          }
-        }
-
-        const solSnap = await getDocs(collection(db, 'solucoes'));
-        for (const d of solSnap.docs) {
-          if (normalizeAndFormatArea(d.data().area).toLowerCase() === normTarget) {
-            await deleteDoc(d.ref);
-          }
-        }
-
-        const premSnap = await getDocs(collection(db, 'premissas'));
-        for (const d of premSnap.docs) {
-          const pData = d.data();
-          if (
-            (pData.idProblema && probIdsToDelete.has(pData.idProblema)) ||
-            (pData.problema && probDescsToDelete.has(pData.problema.trim().toLowerCase()))
-          ) {
-            await deleteDoc(d.ref);
-          }
-        }
-      } catch (error) {
-        console.error("Erro ao excluir Ã¡rea no Firestore:", error);
-      }
-    })();
-  };
-
-  const renameArea = (oldName: string, newName: string) => {
-    if (!oldName || !newName || oldName.trim().toLowerCase() === newName.trim().toLowerCase()) return;
-    const formattedOld = normalizeAndFormatArea(oldName);
-    const normOld = formattedOld.toLowerCase();
-    const formattedNew = normalizeAndFormatArea(newName);
-    const normNew = formattedNew.toLowerCase();
-
-    // Unmark new area from deletedAreas if present
-    setDeletedAreas(prev => prev.filter(a => normalizeAndFormatArea(a).toLowerCase() !== normNew));
-
-    setSessionCustomAreas(prev => [
-      ...prev.filter(a => normalizeAndFormatArea(a).toLowerCase() !== normOld),
-      formattedNew
-    ]);
-    setDbAreas(prev => prev.map(a => normalizeAndFormatArea(a.nome).toLowerCase() === normOld ? { ...a, nome: formattedNew } : a));
-    setProblemas(prev => prev.map(p => normalizeAndFormatArea(p.area).toLowerCase() === normOld ? { ...p, area: formattedNew } : p));
-    setSolucoes(prev => prev.map(s => normalizeAndFormatArea(s.area).toLowerCase() === normOld ? { ...s, area: formattedNew } : s));
-
-    if (normalizeAndFormatArea(selectedAreaFilter).toLowerCase() === normOld) {
-      setSelectedAreaFilter(formattedNew);
-    }
-    if (normalizeAndFormatArea(problemaForm.area).toLowerCase() === normOld) {
-      setProblemaForm(prev => ({ ...prev, area: formattedNew }));
-    }
-    if (normalizeAndFormatArea(solucaoForm.area).toLowerCase() === normOld) {
-      setSolucaoForm(prev => ({ ...prev, area: formattedNew }));
-    }
-
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    setAreaToRename('');
-    setNewAreaName('');
-    playSuccessSound();
-    showToast(`Ãrea alterada para "${formattedNew}" com sucesso!`, "success");
-
-    (async () => {
-      try {
-        const areaSnap = await getDocs(collection(db, 'areas'));
-        let foundInDb = false;
-        for (const d of areaSnap.docs) {
-          if (normalizeAndFormatArea(d.data().nome).toLowerCase() === normOld) {
-            await updateDoc(d.ref, { nome: formattedNew });
-            foundInDb = true;
-          }
-        }
-        if (!foundInDb) {
-          await addDoc(collection(db, 'areas'), { nome: formattedNew, createdAt: new Date().toISOString() });
-        }
-
-        const probSnap = await getDocs(collection(db, 'problemas'));
-        for (const d of probSnap.docs) {
-          if (normalizeAndFormatArea(d.data().area).toLowerCase() === normOld) {
-            await updateDoc(d.ref, { area: formattedNew });
-          }
-        }
-
-        const solSnap = await getDocs(collection(db, 'solucoes'));
-        for (const d of solSnap.docs) {
-          if (normalizeAndFormatArea(d.data().area).toLowerCase() === normOld) {
-            await updateDoc(d.ref, { area: formattedNew });
-          }
-        }
-
-        const resSnap = await getDocs(collection(db, 'respostas'));
-        for (const d of resSnap.docs) {
-          if (d.data().area && normalizeAndFormatArea(d.data().area).toLowerCase() === normOld) {
-            await updateDoc(d.ref, { area: formattedNew });
-          }
-        }
-      } catch (error) {
-        console.error("Erro ao renomear Ã¡rea no Firestore:", error);
-      }
-    })();
-  };
-
-  const restoreDefaultAreas = async () => {
-    setDeletedAreas([]);
-    try {
-      localStorage.removeItem('deleted_areas');
-      for (const areaObj of AREAS) {
-        await addDoc(collection(db, 'areas'), {
-          nome: areaObj.nome,
-          createdAt: new Date().toISOString()
-        });
-      }
-      playSuccessSound();
-      showToast("Ãreas padrÃ£o restauradas com sucesso!", "success");
-    } catch (error) {
-      console.error("Erro ao restaurar Ã¡reas padrÃ£o:", error);
-    }
-  };
-
-  const ensureSegmentInFirestore = (segName?: string) => {
-    if (!user || !segName || !segName.trim() || segName === 'Geral' || TIPOS_EMPRESA.includes(segName.trim())) return;
-    const cleanSeg = segName.trim();
-    const alreadyInDb = dbSegmentos.some(s => s.nome.trim().toLowerCase() === cleanSeg.toLowerCase());
-    if (!alreadyInDb) {
-      addDoc(collection(db, 'segmentos'), sanitizeForFirestore({
-        nome: cleanSeg,
-        createdAt: new Date().toISOString(),
-        ownerId: user.uid
-      })).catch(e => console.error("Erro ao salvar segmento no Firestore:", e));
-    }
-  };
-
-  const createSegmento = (segmentName: string) => {
-    if (!user || !segmentName || !segmentName.trim()) return;
-    const formatted = segmentName.trim();
-
-    const exists = availableSegments.some(s => s.trim().toLowerCase() === formatted.toLowerCase());
-    if (exists) {
-      showToast(`O segmento "${formatted}" jÃ¡ existe no sistema.`, "error");
-      return;
-    }
-
-    setSessionCustomSegments(prev => [...prev, formatted]);
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    setNewSegmentInput('');
-    playSuccessSound();
-    showToast(`Segmento "${formatted}" cadastrado com sucesso!`, "success");
-
-    addDoc(collection(db, 'segmentos'), sanitizeForFirestore({
-      nome: formatted,
-      createdAt: new Date().toISOString(),
-      ownerId: user.uid
-    })).catch(error => console.error("Erro ao cadastrar segmento no Firestore:", error));
-  };
-
-  const deleteSegmento = (segmentName: string) => {
-    if (!segmentName) return;
-    const normTarget = segmentName.trim().toLowerCase();
-
-    setSessionCustomSegments(prev => prev.filter(s => s.trim().toLowerCase() !== normTarget));
-    setDbSegmentos(prev => prev.filter(s => s.nome.trim().toLowerCase() !== normTarget));
-
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    setSegmentToDelete('');
-    playSuccessSound();
-    showToast(`Segmento "${segmentName}" excluÃ­do com sucesso!`, "success");
-
-    (async () => {
-      try {
-        const segSnap = await getDocs(collection(db, 'segmentos'));
-        for (const d of segSnap.docs) {
-          if (d.data().nome && d.data().nome.trim().toLowerCase() === normTarget) {
-            await deleteDoc(d.ref);
-          }
-        }
-      } catch (error) {
-        console.error("Erro ao excluir segmento no Firestore:", error);
-      }
-    })();
-  };
-
-  const renameSegmento = (oldName: string, newName: string) => {
-    if (!oldName || !newName || oldName.trim().toLowerCase() === newName.trim().toLowerCase()) return;
-    const normOld = oldName.trim().toLowerCase();
-    const formattedNew = newName.trim();
-
-    setSessionCustomSegments(prev => [
-      ...prev.filter(s => s.trim().toLowerCase() !== normOld),
-      formattedNew
-    ]);
-    setDbSegmentos(prev => prev.map(s => s.nome.trim().toLowerCase() === normOld ? { ...s, nome: formattedNew } : s));
-
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    setSegmentToRename('');
-    setNewSegmentName('');
-    playSuccessSound();
-    showToast(`Segmento alterado para "${formattedNew}" com sucesso!`, "success");
-
-    (async () => {
-      try {
-        const segSnap = await getDocs(collection(db, 'segmentos'));
-        let foundInDb = false;
-        for (const d of segSnap.docs) {
-          if (d.data().nome && d.data().nome.trim().toLowerCase() === normOld) {
-            await updateDoc(d.ref, { nome: formattedNew });
-            foundInDb = true;
-          }
-        }
-        if (!foundInDb) {
-          await addDoc(collection(db, 'segmentos'), { nome: formattedNew, createdAt: new Date().toISOString() });
-        }
-      } catch (error) {
-        console.error("Erro ao renomear segmento no Firestore:", error);
-      }
-    })();
-  };
-
-  const clearAllExperimentalData = () => {
-    setEmpresas([]);
-    setDiagnosticos([]);
-    setRespostas([]);
-    setPremissas([]);
-    setProblemas([]);
-    setSolucoes([]);
-    setTarefasPlano([]);
-    try {
-      localStorage.setItem('local_premissas', '[]');
-      localStorage.setItem('local_problemas', '[]');
-      localStorage.setItem('local_solucoes', '[]');
-      localStorage.setItem('local_empresas', '[]');
-      localStorage.setItem('local_diagnosticos', '[]');
-      localStorage.setItem('local_respostas', '[]');
-      localStorage.setItem('local_tarefas_plano', '[]');
-    } catch {}
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    playSuccessSound();
-    showToast("Sistema limpo com sucesso!", "success");
-
-    (async () => {
-      try {
-        const collectionsToWipe = ['empresas', 'diagnosticos', 'respostas', 'premissas', 'problemas', 'solucoes', 'tarefas_plano'];
-        for (const colName of collectionsToWipe) {
-          await safeDeleteDocs(colName);
-        }
-      } catch (error) {
-        console.error("Erro ao limpar dados experimentais em background:", error);
-      }
-    })();
-  };
-
-  const deletePlanoAcao = () => {
-    if (!selectedDiagnostico) return;
-    const diagId = selectedDiagnostico.id;
-    setTarefasPlano(prev => prev.filter(t => t.diagnosticoId !== diagId));
-    setIsModalOpen(false);
-    setModalType(null);
-    setModalData(null);
-    playSuccessSound();
-    showToast("Plano de AÃ§Ã£o excluÃ­do com sucesso!", "success");
-
-    if (user) {
-      (async () => {
-        try {
-          const q = query(collection(db, 'tarefas_plano'), where('diagnosticoId', '==', diagId));
-          const snap = await getDocs(q);
-          const batch = writeBatch(db);
-          snap.docs.forEach(d => batch.delete(d.ref));
-          await batch.commit();
-        } catch (cloudErr) {
-          console.error("Error deleting plano de aÃ§Ã£o from cloud:", cloudErr);
-        }
-      })();
-    }
-  };
-
-  const cleanDuplicateDiagnosticosForEmpresa = async (empresaId: string) => {
-    if (!empresaId) return;
-    const companyDiags = diagnosticos.filter(d => d.empresaId === empresaId);
-    if (companyDiags.length <= 1) {
-      showToast("NÃ£o hÃ¡ diagnÃ³sticos duplicados para esta empresa.", "info");
-      return;
-    }
-
-    // Sort to keep the best one (the one with the most data/highest completion or most recent)
-    const sorted = [...companyDiags].sort((a, b) => {
-      const timeA = a.dataDiagnostico?.seconds ? a.dataDiagnostico.seconds * 1000 : new Date(a.dataDiagnostico || 0).getTime();
-      const timeB = b.dataDiagnostico?.seconds ? b.dataDiagnostico.seconds * 1000 : new Date(b.dataDiagnostico || 0).getTime();
-      return timeB - timeA;
-    });
-
-    const primaryDiag = sorted[0];
-    const duplicatesToDelete = sorted.slice(1);
-    const dupIds = duplicatesToDelete.map(d => d.id);
-
-    if (dupIds.length === 0) return;
-
-    // 1. Immediate local update
-    setDiagnosticos(prev => prev.filter(d => !dupIds.includes(d.id)));
-    setRespostas(prev => prev.filter(r => !dupIds.includes(r.diagnosticoId)));
-    setTarefasPlano(prev => prev.filter(t => !dupIds.includes(t.diagnosticoId || '') && !dupIds.includes((t as any).projetoId || '')));
-
-    try {
-      const saved = localStorage.getItem('local_diagnosticos');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          localStorage.setItem('local_diagnosticos', JSON.stringify(parsed.filter((d: any) => !dupIds.includes(d.id))));
-        }
-      }
-      const allLocal = loadAllLocalRespostas();
-      const filtered = allLocal.filter(r => !dupIds.includes(r.diagnosticoId));
-      localStorage.setItem('local_all_respostas', JSON.stringify(filtered));
-      localStorage.setItem('local_respostas', JSON.stringify(filtered));
-    } catch (e) {}
-
-    if (selectedDiagnostico && dupIds.includes(selectedDiagnostico.id)) {
-      setSelectedDiagnostico(primaryDiag);
-    }
-
-    playSuccessSound();
-    showToast(`${duplicatesToDelete.length} diagnÃ³stico(s) duplicado(s) excluÃ­do(s) com sucesso!`, "success");
-
-    // 2. Direct Cloud deletion in Firestore
-    if (user) {
-      (async () => {
-        try {
-          for (const dupId of dupIds) {
-            // Delete diagnostic doc directly
-            await deleteDoc(doc(db, 'diagnosticos', dupId)).catch(() => {});
-
-            // Delete child docs in batch
-            const [snapRes, snapTasks1, snapTasks2, snapAgenda, snapMat] = await Promise.all([
-              getDocs(query(collection(db, 'respostas'), where('diagnosticoId', '==', dupId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'tarefas_plano'), where('diagnosticoId', '==', dupId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'tarefas_plano'), where('projetoId', '==', dupId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'agenda_eventos'), where('diagnosticoId', '==', dupId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'maturidade_avaliacoes'), where('diagnosticoId', '==', dupId))).catch(() => ({ docs: [] as any[] }))
-            ]);
-
-            const allDocs = [...snapRes.docs, ...snapTasks1.docs, ...snapTasks2.docs, ...snapAgenda.docs, ...snapMat.docs];
-            for (let i = 0; i < allDocs.length; i += 400) {
-              const batch = writeBatch(db);
-              allDocs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
-              await batch.commit().catch(() => {});
-            }
-          }
-        } catch (err) {
-          console.warn("Cloud cleanup notice:", err);
-        }
-      })();
-    }
-  };
-
-  const deleteDiagnostico = async (id?: string) => {
-    const diagId = typeof id === 'string' && id.trim() ? id.trim() : (modalData?.id || selectedDiagnostico?.id || '');
-    if (!diagId) {
-      setIsModalOpen(false);
-      setModalType(null);
-      setModalData(null);
-      setIsDeletingDiagnostico(false);
-      return;
-    }
-
-    setIsDeletingDiagnostico(true);
-
-    try {
-      // 1. Immediately update all local states & purge all associated data (optimistic UI update to prevent screen freeze)
-      setDiagnosticos(prev => prev.filter(d => d.id !== diagId));
-      setRespostas(prev => prev.filter(r => r.diagnosticoId !== diagId));
-      setTarefasPlano(prev => prev.filter(t => t.diagnosticoId !== diagId && (t as any).projetoId !== diagId));
-
-      try {
-        const savedDiags = localStorage.getItem('local_diagnosticos');
-        if (savedDiags) {
-          const parsed = JSON.parse(savedDiags);
-          if (Array.isArray(parsed)) {
-            const filteredDiags = parsed.filter((d: any) => d.id !== diagId);
-            localStorage.setItem('local_diagnosticos', JSON.stringify(filteredDiags));
-          }
-        }
-
-        const allLocal = loadAllLocalRespostas();
-        const filtered = allLocal.filter(r => r.diagnosticoId !== diagId);
-        localStorage.setItem('local_all_respostas', JSON.stringify(filtered));
-        localStorage.setItem('local_respostas', JSON.stringify(filtered));
-
-        const savedTasks = localStorage.getItem('local_tarefas_plano');
-        if (savedTasks) {
-          const parsedTasks = JSON.parse(savedTasks);
-          if (Array.isArray(parsedTasks)) {
-            const filteredTasks = parsedTasks.filter((t: any) => t.diagnosticoId !== diagId && t.projetoId !== diagId);
-            localStorage.setItem('local_tarefas_plano', JSON.stringify(filteredTasks));
-          }
-        }
-      } catch (e) {}
-
-      if (selectedDiagnostico?.id === diagId) {
-        setSelectedDiagnostico(null);
-        if (view === 'diagnosis' || view === 'dashboard' || view === 'cronograma' || view === 'kanban' || view === 'relatorio') {
-          setView('projects');
-        }
-      }
-
-      // Close modal and play confirmation sound immediately so interface never freezes
-      setIsModalOpen(false);
-      setModalType(null);
-      setModalData(null);
-      playSuccessSound();
-      showToast("DiagnÃ³stico excluÃ­do com sucesso!", "success");
-
-      // 2. Direct Cloud deletion in Firestore without transactions to prevent lock or timeout aborts
-      if (user) {
-        (async () => {
-          try {
-            const diagRef = doc(db, 'diagnosticos', diagId);
-            
-            // Delete diagnostic doc directly first
-            await deleteDoc(diagRef).catch(async (e) => {
-              console.warn("Retrying direct diagnostic deletion:", e);
-              await deleteDoc(diagRef);
-            });
-
-            // Fetch and delete dependent documents across collections in parallel
-            const [snapRes, snapTasks1, snapTasks2, snapAgenda, snapMat] = await Promise.all([
-              getDocs(query(collection(db, 'respostas'), where('diagnosticoId', '==', diagId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'tarefas_plano'), where('diagnosticoId', '==', diagId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'tarefas_plano'), where('projetoId', '==', diagId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'agenda_eventos'), where('diagnosticoId', '==', diagId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'maturidade_avaliacoes'), where('diagnosticoId', '==', diagId))).catch(() => ({ docs: [] as any[] }))
-            ]);
-
-            const allDocsToDelete = [
-              ...snapRes.docs,
-              ...snapTasks1.docs,
-              ...snapTasks2.docs,
-              ...snapAgenda.docs,
-              ...snapMat.docs
-            ];
-
-            const uniqueDocRefs = Array.from(new Map(allDocsToDelete.map(d => [d.ref.path, d.ref])).values());
-
-            for (let i = 0; i < uniqueDocRefs.length; i += 400) {
-              const batch = writeBatch(db);
-              uniqueDocRefs.slice(i, i + 400).forEach(ref => batch.delete(ref));
-              await batch.commit();
-            }
-          } catch (cloudErr) {
-            console.warn("Notice: sincronizaÃ§Ã£o de exclusÃ£o em cascata completada:", cloudErr);
-          }
-        })();
-      }
-    } catch (error) {
-      console.error("Error deleting diagnostico:", error);
-      setIsModalOpen(false);
-      setModalType(null);
-      setModalData(null);
-    } finally {
-      setIsDeletingDiagnostico(false);
-    }
-  };
-
-  const deleteEmpresa = async (empresaId: string) => {
-    if (!empresaId) return;
-
-    try {
-      const diagIds = diagnosticos.filter(d => d.empresaId === empresaId).map(d => d.id);
-
-      // 1. Local state updates
-      setEmpresas(prev => prev.filter(e => e.id !== empresaId));
-      setDiagnosticos(prev => prev.filter(d => d.empresaId !== empresaId));
-      setRespostas(prev => prev.filter(r => !diagIds.includes(r.diagnosticoId)));
-      setTarefasPlano(prev => prev.filter(t => t.empresaId !== empresaId && !diagIds.includes(t.diagnosticoId || '')));
-
-      if (selectedEmpresa?.id === empresaId) {
-        setSelectedEmpresa(null);
-      }
-      if (diagIds.includes(selectedDiagnostico?.id || '')) {
-        setSelectedDiagnostico(null);
-      }
-
-      // LocalStorage cleanup
-      try {
-        const allLocal = loadAllLocalRespostas();
-        const filtered = allLocal.filter(r => !diagIds.includes(r.diagnosticoId));
-        localStorage.setItem('local_all_respostas', JSON.stringify(filtered));
-        localStorage.setItem('local_respostas', JSON.stringify(filtered));
-
-        const savedTasks = localStorage.getItem('local_tarefas_plano');
-        if (savedTasks) {
-          const parsedTasks = JSON.parse(savedTasks);
-          if (Array.isArray(parsedTasks)) {
-            const filteredTasks = parsedTasks.filter((t: any) => t.empresaId !== empresaId && !diagIds.includes(t.diagnosticoId));
-            localStorage.setItem('local_tarefas_plano', JSON.stringify(filteredTasks));
-          }
-        }
-      } catch (e) {}
-
-      setIsModalOpen(false);
-      setModalType(null);
-      setModalData(null);
-      playSuccessSound();
-      showToast("Empresa excluÃ­da com sucesso!", "success");
-
-      // 2. Cascade delete on Firestore in cloud
-      if (user) {
-        (async () => {
-          try {
-            // Delete all respostas of the associated diagnostics
-            for (const dId of diagIds) {
-              const qRes = query(collection(db, 'respostas'), where('diagnosticoId', '==', dId));
-              const snapRes = await getDocs(qRes);
-              for (let i = 0; i < snapRes.docs.length; i += 400) {
-                const batch = writeBatch(db);
-                snapRes.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
-                await batch.commit();
-              }
-            }
-
-            // Delete all tarefas_plano for this empresa
-            const qTasks = query(collection(db, 'tarefas_plano'), where('empresaId', '==', empresaId));
-            const snapTasks = await getDocs(qTasks);
-            for (let i = 0; i < snapTasks.docs.length; i += 400) {
-              const batch = writeBatch(db);
-              snapTasks.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
-              await batch.commit();
-            }
-
-            // Delete all agenda_eventos for this empresa
-            try {
-              const qAgenda = query(collection(db, 'agenda_eventos'), where('empresaId', '==', empresaId));
-              const snapAgenda = await getDocs(qAgenda);
-              for (let i = 0; i < snapAgenda.docs.length; i += 400) {
-                const batch = writeBatch(db);
-                snapAgenda.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
-                await batch.commit();
-              }
-            } catch (e) {}
-
-            // Delete maturidade_avaliacoes for this empresa
-            try {
-              const qMat = query(collection(db, 'maturidade_avaliacoes'), where('empresaId', '==', empresaId));
-              const snapMat = await getDocs(qMat);
-              for (let i = 0; i < snapMat.docs.length; i += 400) {
-                const batch = writeBatch(db);
-                snapMat.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
-                await batch.commit();
-              }
-            } catch (e) {}
-
-            // Delete disc_avaliacoes for this empresa
-            try {
-              const qDisc = query(collection(db, 'disc_avaliacoes'), where('empresaId', '==', empresaId));
-              const snapDisc = await getDocs(qDisc);
-              for (let i = 0; i < snapDisc.docs.length; i += 400) {
-                const batch = writeBatch(db);
-                snapDisc.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
-                await batch.commit();
-              }
-            } catch (e) {}
-
-            // Delete all diagnosticos for this empresa
-            const qDiags = query(collection(db, 'diagnosticos'), where('empresaId', '==', empresaId));
-            const snapDiags = await getDocs(qDiags);
-            for (let i = 0; i < snapDiags.docs.length; i += 400) {
-              const batch = writeBatch(db);
-              snapDiags.docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
-              await batch.commit();
-            }
-
-            // Delete the empresa doc itself
-            await deleteDoc(doc(db, 'empresas', empresaId));
-          } catch (cloudErr) {
-            console.warn("Notice: erro ao excluir dados em cascata da empresa na nuvem:", cloudErr);
-          }
-        })();
-      }
-    } catch (e) {
-      console.error("Error deleting empresa:", e);
-      setIsModalOpen(false);
-    }
-  };
-
-  const replicateDiagnostico = async (
-    sourceDiagId: string, 
-    targetEmpresaId: string, 
-    options: { 
-      includeAnswers: boolean; 
-      includeConsultoria: boolean; 
-      customName?: string;
-      customDate?: string;
-    } = { includeAnswers: true, includeConsultoria: true }
-  ) => {
-    try {
-      const sourceDiag = diagnosticos.find(d => d.id === sourceDiagId);
-      const targetEmpresa = empresas.find(e => e.id === targetEmpresaId);
-      if (!sourceDiag || !targetEmpresa) {
-        alert("DiagnÃ³stico de origem ou empresa de destino nÃ£o encontrados.");
-        return;
-      }
-
-      const diagDate = options.customDate ? new Date(options.customDate + 'T12:00:00') : new Date();
-      const newDiagId = user ? doc(collection(db, 'diagnosticos')).id : 'diag_' + Date.now();
-      const finalProjName = (options.customName || '').trim() || `${targetEmpresa.nome} - DiagnÃ³stico Replicado (${sourceDiag.tipoEmpresa || 'Geral'})`;
-
-      const newDiagObj: Diagnostico = {
-        id: newDiagId,
-        empresaId: targetEmpresaId,
-        dataDiagnostico: Timestamp.fromDate(diagDate),
-        ownerId: user?.uid || 'local',
-        areasDiagnostico: sourceDiag.areasDiagnostico && sourceDiag.areasDiagnostico.length > 0
-          ? sourceDiag.areasDiagnostico 
-          : ['EstratÃ©gia', 'Processos', 'Marketing & Vendas', 'Financeiro', 'Recursos Humanos', 'Tecnologia & IA'],
-        status: 'Planejamento',
-        tipoEmpresa: sourceDiag.tipoEmpresa || targetEmpresa.tipoEmpresa || 'Geral',
-        nomeProjeto: finalProjName,
-        nome: finalProjName
-      };
-
-      if (options.includeConsultoria && (sourceDiag as any).dadosConsultoria) {
-        (newDiagObj as any).dadosConsultoria = { ...(sourceDiag as any).dadosConsultoria };
-      }
-
-      // Load source answers
-      let sourceAnswers = respostas.filter(r => r.diagnosticoId === sourceDiagId);
-      if (sourceAnswers.length === 0) {
-        const allLocal = loadAllLocalRespostas();
-        sourceAnswers = allLocal.filter(r => r.diagnosticoId === sourceDiagId);
-      }
-      if (sourceAnswers.length === 0 && user) {
-        try {
-          const qSnap = await getDocs(query(collection(db, 'respostas'), where('diagnosticoId', '==', sourceDiagId)));
-          sourceAnswers = qSnap.docs.map(d => ({ id: d.id, ...d.data() } as Resposta));
-        } catch (e) {
-          console.warn("Could not query source answers from cloud:", e);
-        }
-      }
-
-      const localRespostasToInsert: Resposta[] = [];
-      const respostasToInsertCloud: { ref: any, data: any }[] = [];
-      const createdPremissaIds = new Set<string>();
-      const createdQuestions = new Set<string>();
-
-      const areas = newDiagObj.areasDiagnostico || [];
-      const companyTypeFilter = newDiagObj.tipoEmpresa || 'Geral';
-
-      for (const p of premissas) {
-        const normQ = (p.pergunta || '').trim().toLowerCase();
-        if (createdPremissaIds.has(p.id) || (normQ && createdQuestions.has(normQ))) {
-          continue;
-        }
-
-        const prob = problemas.find(prob => prob.id === p.idProblema || prob.descricao_problemas === p.problema);
-        const pType = p.tipoEmpresa || prob?.tipoEmpresa || 'Geral';
-        const normPType = (pType || 'Geral').trim().toLowerCase();
-        const normFilter = (companyTypeFilter || 'Geral').trim().toLowerCase();
-
-        if (normFilter !== 'geral' && normFilter !== '') {
-          if (normPType !== normFilter && normPType !== 'geral' && normPType !== '') {
-            continue;
-          }
-        } else {
-          if (normPType !== 'geral' && normPType !== '') {
-            continue;
-          }
-        }
-
-        const area = prob?.area || 'Geral';
-        const normArea = normalizeAndFormatArea(area).toLowerCase();
-
-        if (areas.length > 0) {
-          const isAreaSelected = areas.some(a => normalizeAndFormatArea(a).toLowerCase() === normArea);
-          if (!isAreaSelected) {
-            continue;
-          }
-        }
-
-        createdPremissaIds.add(p.id);
-        if (normQ) createdQuestions.add(normQ);
-
-        // Find matching source answer
-        const sourceMatch = sourceAnswers.find(sa => sa.premissaId === p.id || (normQ && (sa.pergunta || '').trim().toLowerCase() === normQ));
-        const val = options.includeAnswers && sourceMatch ? sourceMatch.resposta : '';
-        const obs = options.includeAnswers && sourceMatch ? sourceMatch.observacao : '';
-        const peso = p?.peso !== undefined ? p.peso : 1;
-        const pts = val === 'Sim' ? 2 : val === 'Parcial' ? 1 : 0;
-
-        const respId = user ? doc(collection(db, 'respostas')).id : 'resp_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
-        const respItem: Resposta = {
-          id: respId,
-          diagnosticoId: newDiagId,
-          premissaId: p.id,
-          idProblema: p.idProblema || '',
-          problema: p.problema || '',
-          pergunta: p.pergunta || '',
-          peso,
-          area,
-          observacao: obs,
-          score: pts * peso,
-          resposta: val,
-          ownerId: user?.uid || 'local'
-        };
-
-        localRespostasToInsert.push(respItem);
-
-        if (user) {
-          const respDocRef = doc(db, 'respostas', respId);
-          const respData = sanitizeForFirestore({
-            diagnosticoId: newDiagId,
-            premissaId: p.id,
-            idProblema: p.idProblema || '',
-            problema: p.problema || '',
-            pergunta: p.pergunta || '',
-            peso,
-            area,
-            observacao: obs,
-            score: pts * peso,
-            resposta: val,
-            ownerId: user.uid
-          });
-          respostasToInsertCloud.push({ ref: respDocRef, data: respData });
-        }
-      }
-
-      // Update state and persistence
-      setDiagnosticos(prev => [newDiagObj, ...prev]);
-      saveAllLocalRespostas(localRespostasToInsert);
-
-      setSelectedEmpresa(targetEmpresa);
-      setSelectedDiagnostico(newDiagObj as any);
-      setRespostas(localRespostasToInsert);
-      setRespostasLoaded(true);
-      setView('diagnosis');
-      playSuccessSound();
-
-      if (user) {
-        (async () => {
-          try {
-            const diagData = sanitizeForFirestore({
-              empresaId: targetEmpresaId,
-              dataDiagnostico: Timestamp.fromDate(diagDate),
-              ownerId: user.uid,
-              areasDiagnostico: areas,
-              status: 'Planejamento',
-              tipoEmpresa: companyTypeFilter,
-              nomeProjeto: finalProjName,
-              nome: finalProjName
-            });
-            await setDoc(doc(db, 'diagnosticos', newDiagId), diagData);
-
-            for (let i = 0; i < respostasToInsertCloud.length; i += 400) {
-              const batch = writeBatch(db);
-              const chunk = respostasToInsertCloud.slice(i, i + 400);
-              for (const item of chunk) {
-                batch.set(item.ref, item.data);
-              }
-              await batch.commit();
-            }
-          } catch (cloudErr) {
-            console.warn("Could not save replicated diagnostic to cloud, saved locally:", cloudErr);
-          }
-        })();
-      }
-
-      alert(`DiagnÃ³stico replicado com sucesso para ${targetEmpresa.nome}! O novo diagnÃ³stico estÃ¡ pronto para revisÃ£o e ajustes.`);
-      return newDiagObj;
-    } catch (err: any) {
-      console.error("Erro ao replicar diagnÃ³stico:", err);
-      alert("Ocorreu um erro ao replicar o diagnÃ³stico.");
-    }
-  };
-
-  const handleManualSaveDiagnostico = async () => {
-    if (!selectedDiagnostico) return;
-    setIsManualSaving(true);
-    try {
-      await flushPendingResponses();
-      saveAllLocalRespostas(respostas);
-      if (user) {
-        const batch = writeBatch(db);
-        respostas.forEach(r => {
-          batch.set(doc(db, 'respostas', r.id), sanitizeForFirestore({
-            ...r,
-            ownerId: user.uid
-          }), { merge: true });
-        });
-        await batch.commit();
-      }
-      setSaveStatus('saved');
-      setLastSavedTime(new Date());
-      setManualSaveSuccess(true);
-      playSuccessSound();
-      setTimeout(() => setManualSaveSuccess(false), 3500);
-    } catch (err) {
-      console.error("Erro ao salvar diagnÃ³stico manualmente:", err);
-      setManualSaveSuccess(true);
-      setTimeout(() => setManualSaveSuccess(false), 3500);
-    } finally {
-      setIsManualSaving(false);
-    }
-  };
-
-  const generateActionPlan = async () => {
-    if (!selectedDiagnostico || !user) return;
-    setGeneratingPlan(true);
-    try {
-      // 1. Fetch answers 'respostas' related to this diagnosis
-      const q = query(collection(db, 'respostas'), where('diagnosticoId', '==', selectedDiagnostico.id));
-      const snap = await getDocs(q);
-      const allRespostas = snap.docs.map(d => d.data());
-      
-      // Filter answers that belong to chosen areas and have been answered
-      const diagnosticoAreas = selectedDiagnostico.areasDiagnostico || [];
-      const relevantRespostas = allRespostas.filter(r => {
-        if (!r.resposta) return false;
-        const normRespArea = normalizeAndFormatArea(r.area).toLowerCase();
-        return diagnosticoAreas.length === 0 || 
-          diagnosticoAreas.some(a => normalizeAndFormatArea(a).toLowerCase() === normRespArea);
-      });
-
-      if (relevantRespostas.length === 0) {
-        alert("NÃ£o foram encontradas respostas nas Ã¡reas diagnosticadas para gerar o plano.");
-        setGeneratingPlan(false);
-        return;
-      }
-
-      // 2. Call Gemini
-      const ai = getAI();
-      if (!ai) {
-        alert("Chave API do Gemini nÃ£o configurada. Por favor, adicione sua Chave API nas ConfiguraÃ§Ãµes para habilitar a geraÃ§Ã£o de Planos de AÃ§Ã£o por InteligÃªncia Artificial.");
-        setGeneratingPlan(false);
-        return;
-      }
-
-      const prompt = `Com base nestas respostas do diagnÃ³stico: ${JSON.stringify(relevantRespostas)}, e considerando as seguintes soluÃ§Ãµes registradas: ${JSON.stringify(solucoes.slice(0, 8))}, gere um plano de aÃ§Ã£o estruturado.
-
-ORIENTAÃ‡ÃƒO CRÃTICA DE ANÃLISE SEMÃ‚NTICA DAS PERGUNTAS E RESPOSTAS:
-Analise o significado de cada pergunta (premissa) e a resposta dada:
-1. Para perguntas sobre ocorrÃªncia de problemas, falhas ou rejeiÃ§Ãµes (ex: "O produtor jÃ¡ tentou acessar crÃ©dito rural e foi rejeitado por falta de documentaÃ§Ã£o?", "Possui inadimplÃªncia?"):
-   - A resposta "Sim" ou "Parcial" representa um PROBLEMA / GARGALO REAL. VocÃª DEVE incluir tarefas no plano de aÃ§Ã£o para resolver e sanar este problema.
-   - A resposta "NÃ£o" indica que o problema nÃ£o ocorre (situaÃ§Ã£o positiva). NÃ£o crie tarefas de correÃ§Ã£o para respostas "NÃ£o" neste tipo de pergunta.
-2. Para perguntas sobre controles, planejamentos e boas prÃ¡ticas (ex: "Possui controle financeiro?", "Tem licenÃ§a ambiental?"):
-   - A resposta "NÃ£o" ou "Parcial" representa uma LACUNA / GARGALO REAL. Crie tarefas de aÃ§Ã£o para implementar a prÃ¡tica.
-   - A resposta "Sim" representa conformidade (ponto forte).
-3. IMPORTANTE: Gere APENAS tarefas para os itens que efetivamente representem gargalos ou problemas segundo a anÃ¡lise semÃ¢ntica acima. Se as respostas selecionadas forem de Ã¡reas especÃ­ficas, limite as tarefas a essas Ã¡reas.
-      
-      Cada tarefa precisa de:
-      - solucaoSugerida (string)
-      - problema (string)
-      - area (string)
-      - acoes (detalhado, string)
-      - status: 'Pendente'
-      - prioridade: 'MÃ©dia'
-      - responsavel: 'Consultor'
-      - idProblema: (ID do problema/premissa relacionado)
-      `;
-      
-      const response = await ai.models.generateContent({
-        model: "gemini-3.6-flash",
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    solucaoSugerida: { type: Type.STRING },
-                    problema: { type: Type.STRING },
-                    area: { type: Type.STRING },
-                    acoes: { type: Type.STRING },
-                    status: { type: Type.STRING },
-                    prioridade: { type: Type.STRING },
-                    responsavel: { type: Type.STRING },
-                    idProblema: { type: Type.STRING },
-                  }
-                }
-            }
-        }
-      });
-      const tasks = extractAndParseJSON(response.text, []);
-
-      // 3. Save tasks
-      for (let i = 0; i < tasks.length; i++) {
-        const t = tasks[i];
-        const defaultDate = getActivityDateStr(selectedDiagnostico.dataDiagnostico, i);
-        const startStr = t.dataInicio || defaultDate;
-        const endStr = t.dataFim || startStr;
-        await createTarefa({
-            ...t,
-            diagnosticoId: selectedDiagnostico.id,
-            empresaId: selectedEmpresa?.id,
-            dataInicio: startStr,
-            dataFim: endStr,
-            dataVencimento: endStr,
-            ownerId: user.uid
-        });
-      }
-      playSuccessSound();
-      alert("Plano de AÃ§Ã£o gerado com sucesso por InteligÃªncia Artificial!");
-    } catch(e: any) {
-      console.error("Error generating or saving action plan:", e);
-      alert("Houve um erro ao gerar o plano de aÃ§Ã£o pela IA. Por favor, verifique se seu modelo, sua conexÃ£o ou a chave API do Gemini nas configuraÃ§Ãµes estÃ£o corretos.\n\nDetalhes:\n" + (e.message || e));
-    } finally {
-      setGeneratingPlan(false);
-    }
-  };
-
-  const replicateActionPlanFromSameActivity = async (targetTipoParam?: string) => {
-    if (!selectedDiagnostico || !user) {
-      alert("Selecione um diagnÃ³stico para replicar o plano de aÃ§Ã£o.");
-      return;
-    }
-
-    const currentType = (targetTipoParam || selectedDiagnostico.tipoEmpresa || selectedEmpresa?.tipoEmpresa || 'Carcinicultura').trim();
-    const totalCargaHoraria = selectedDiagnostico.dadosConsultoria?.cargaHoraria || selectedEmpresa?.cargaHoraria || '16h';
-
-    setGeneratingPlan(true);
-    try {
-      // 1. Fetch all diagnostics for current user
-      const diagsSnap = await getDocs(query(collection(db, 'diagnosticos'), where('ownerId', '==', user.uid)));
-      const allDiags = diagsSnap.docs.map(d => ({ id: d.id, ...d.data() })) as Diagnostico[];
-
-      // Filter diagnostics of the same activity (excluding current one if possible)
-      const sameActivityDiags = allDiags.filter(d => {
-        const dTipo = (d.tipoEmpresa || '').trim().toLowerCase();
-        const matchTipo = currentType.toLowerCase();
-        return dTipo === matchTipo && d.cronograma && d.cronograma.length > 0;
-      });
-
-      let sourceActivities: AtividadeCronograma[] = [];
-
-      if (sameActivityDiags.length > 0) {
-        // Pick the most complete cronograma from another diagnostic of the same activity
-        const otherDiags = sameActivityDiags.filter(d => d.id !== selectedDiagnostico.id);
-        const targetDiag = otherDiags.length > 0 
-          ? otherDiags.sort((a, b) => (b.cronograma?.length || 0) - (a.cronograma?.length || 0))[0]
-          : sameActivityDiags[0];
-        sourceActivities = targetDiag.cronograma || [];
-      } else {
-        // Check if there are tasks in tarefas_plano for other diagnostics of the same activity
-        const tasksSnap = await getDocs(query(collection(db, 'tarefas_plano'), where('ownerId', '==', user.uid)));
-        const allTasks = tasksSnap.docs.map(d => d.data()) as TarefaPlanoAcao[];
-        
-        const sameActivityTasks = allTasks.filter(t => {
-          const diag = allDiags.find(d => d.id === t.diagnosticoId);
-          if (!diag) return false;
-          return (diag.tipoEmpresa || '').trim().toLowerCase() === currentType.toLowerCase();
-        });
-
-        if (sameActivityTasks.length > 0) {
-          sourceActivities = sameActivityTasks.map(t => ({
-            nome: t.problema || t.solucaoSugerida,
-            descricao: t.acoes,
-            cargaHoraria: "4h",
-            solucaoProposta: t.solucaoSugerida,
-            responsavel: t.responsavel || "Consultor",
-            status: t.status || "Pendente",
-            prioridade: t.prioridade || "MÃ©dia",
-            idProblema: t.idProblema
-          }));
-        } else {
-          // Fallback to solutions registered for this tipoEmpresa
-          const solucoesDoTipo = solucoes.filter(s => (s.tipoEmpresa || '').trim().toLowerCase() === currentType.toLowerCase());
-          if (solucoesDoTipo.length > 0) {
-            sourceActivities = solucoesDoTipo.map(s => ({
-              nome: s.problema,
-              descricao: s.acoes_sugeridas || s.solucao_recomendada,
-              cargaHoraria: "4h",
-              solucaoProposta: s.solucao_recomendada,
-              responsavel: s.responsavel_sugerido || "Consultor",
-              status: "Pendente",
-              prioridade: "MÃ©dia",
-              resultadoEsperado: s.resultado_esperado
-            }));
-          } else {
-            // Default fallback template
-            sourceActivities = PLANO_DE_ACAO_PADRAO;
-          }
-        }
-      }
-
-      // 2. Adjust activities to respect max 4h per activity and total consultancy hours
-      const adjustedActivities = adjustActivitiesMax4Hours(sourceActivities, totalCargaHoraria);
-
-      // 3. Clear existing tasks for current diagnostic
-      const currentTasksQ = query(collection(db, 'tarefas_plano'), where('diagnosticoId', '==', selectedDiagnostico.id));
-      const currentTasksSnap = await getDocs(currentTasksQ);
-      const ops: { type: 'set' | 'update' | 'delete', ref: any, data?: any }[] = [];
-      
-      currentTasksSnap.docs.forEach(docSnap => ops.push({ type: 'delete', ref: docSnap.ref }));
-
-      // 4. Create new tasks for current diagnostic with max 4h
-      for (let index = 0; index < adjustedActivities.length; index++) {
-        const atv = adjustedActivities[index];
-        const newTaskRef = doc(collection(db, 'tarefas_plano'));
-        const defaultDate = getActivityDateStr(selectedDiagnostico.dataDiagnostico, index);
-
-        const taskData = sanitizeForFirestore({
-          diagnosticoId: selectedDiagnostico.id,
-          empresaId: selectedEmpresa?.id || '',
-          idProblema: atv.idProblema || '',
-          problema: atv.nome,
-          solucaoSugerida: atv.solucaoProposta || atv.nome,
-          acoes: atv.descricao || '',
-          status: atv.status || 'Pendente',
-          prioridade: atv.prioridade || 'MÃ©dia',
-          responsavel: atv.responsavel || 'Consultor',
-          cargaHoraria: atv.cargaHoraria || '4h',
-          dataInicio: atv.dataInicio || defaultDate,
-          dataFim: atv.dataFim || defaultDate,
-          dataVencimento: atv.dataFim || defaultDate,
-          ownerId: user.uid,
-          ordem: index,
-          dataCadastro: new Date()
-        });
-        ops.push({ type: 'set', ref: newTaskRef, data: taskData });
-      }
-
-      // 5. Build summary strings for Report
-      const solucoesTexto = adjustedActivities.map(a => `â€¢ ${a.solucaoProposta || a.nome}`).join('\n');
-      const resultadosTexto = adjustedActivities.map(a => `â€¢ ${a.resultadoEsperado || a.descricao || 'Atividade concluÃ­da'}`).join('\n');
-
-      const updatedDadosConsultoria = {
-        ...(selectedDiagnostico.dadosConsultoria || {}),
-        cargaHoraria: totalCargaHoraria,
-        solucoesIndicadas: `AÃ‡Ã•ES REPLICADAS DO SEGMENTO (${currentType.toUpperCase()}):\n${solucoesTexto}`,
-        resultadosEsperados: resultadosTexto
-      };
-
-      // 6. Update current diagnostic doc
-      const diagRef = doc(db, 'diagnosticos', selectedDiagnostico.id);
-      ops.push({
-        type: 'update',
-        ref: diagRef,
-        data: sanitizeForFirestore({
-          cronograma: adjustedActivities,
-          dadosConsultoria: updatedDadosConsultoria,
-          tipoEmpresa: currentType
-        })
-      });
-
-      // 7. Commit operations in batches
-      for (let i = 0; i < ops.length; i += 400) {
-        const batch = writeBatch(db);
-        const chunk = ops.slice(i, i + 400);
-        for (const op of chunk) {
-          if (op.type === 'delete') batch.delete(op.ref);
-          else if (op.type === 'update') batch.update(op.ref, op.data);
-          else batch.set(op.ref, op.data);
-        }
-        await batch.commit();
-      }
-
-      // 8. Update local React state
-      setSelectedDiagnostico({
-        ...selectedDiagnostico,
-        cronograma: adjustedActivities,
-        dadosConsultoria: updatedDadosConsultoria,
-        tipoEmpresa: currentType
-      });
-
-      playSuccessSound();
-      alert(`Plano de aÃ§Ã£o e relatÃ³rio de consultoria replicados com sucesso do segmento "${currentType}"!\n\n` +
-            `â€¢ Quantidade de atividades: ${adjustedActivities.length}\n` +
-            `â€¢ Carga horÃ¡ria mÃ¡xima por atividade: 4h\n` +
-            `â€¢ Carga horÃ¡ria total da consultoria: ${totalCargaHoraria}`);
-
-    } catch (error: any) {
-      console.error("Erro ao replicar plano de aÃ§Ã£o por segmento:", error);
-      alert("Erro ao replicar plano de aÃ§Ã£o: " + (error.message || error));
-    } finally {
-      setGeneratingPlan(false);
-    }
-  };
-
-  const createTarefa = async (data: Partial<TarefaPlanoAcao>) => {
-    try {
-      const diagTasks = tarefasPlano.filter(t => t.diagnosticoId === data.diagnosticoId);
-      const targetOrdem = data.ordem !== undefined && data.ordem !== null ? data.ordem : diagTasks.length;
-      const tempId = 'task_' + Date.now();
-
-      const newTarefa: TarefaPlanoAcao = {
-        id: tempId,
-        ordem: targetOrdem,
-        ownerId: user?.uid || 'local',
-        status: data.status || 'Pendente',
-        prioridade: data.prioridade || 'MÃ©dia',
-        diagnosticoId: data.diagnosticoId || '',
-        empresaId: data.empresaId || '',
-        idProblema: data.idProblema || '',
-        problema: data.problema || 'Nova Tarefa',
-        area: data.area || 'Geral',
-        responsavel: data.responsavel || 'Consultor',
-        solucaoSugerida: data.solucaoSugerida || '',
-        acoes: data.acoes || '',
-        dataInicio: data.dataInicio || new Date().toISOString().split('T')[0],
-        dataFim: data.dataFim || new Date().toISOString().split('T')[0],
-        dataVencimento: data.dataVencimento || new Date().toISOString().split('T')[0],
-        ...data
-      };
-
-      setTarefasPlano(prev => [newTarefa, ...prev]);
-
-      if (user) {
-        try {
-          const sanitized = sanitizeForFirestore({
-            ...data,
-            ordem: targetOrdem,
-            ownerId: user.uid,
-            status: data.status || 'Pendente',
-            prioridade: data.prioridade || 'MÃ©dia',
-            diagnosticoId: data.diagnosticoId,
-            empresaId: data.empresaId
-          });
-          const ref = await addDoc(collection(db, 'tarefas_plano'), sanitized);
-          setTarefasPlano(prev => prev.map(t => t.id === tempId ? { ...t, id: ref.id } : t));
-        } catch (error) {
-          console.error("Error creating tarefa in cloud:", error);
-        }
-      }
-
-      setIsModalOpen(false);
-      setModalType(null);
-      setModalData(null);
-      setTarefaForm({});
-      playSuccessSound();
-      showToast("Tarefa do Plano de AÃ§Ã£o salva com sucesso!", "success");
-    } catch (error) {
-      console.error("Error creating tarefa:", error);
-      setIsModalOpen(false);
-      setModalType(null);
-      setModalData(null);
-      playSuccessSound();
-      showToast("Tarefa salva localmente com sucesso!", "success");
-    }
-  };
-
-  const updateTarefa = async (id: string, data: Partial<TarefaPlanoAcao>) => {
-    try {
-      setTarefasPlano(prev => prev.map(t => t.id === id ? { ...t, ...data } : t));
-
-      if (user) {
-        try {
-          if (data.ordem !== undefined && data.ordem !== null) {
-            const diagId = data.diagnosticoId || modalData?.diagnosticoId;
-            const diagTasks = tarefasPlano.filter(t => t.diagnosticoId === diagId);
-
-            diagTasks.sort((a, b) => {
-              const oA = a.ordem !== undefined && a.ordem !== null ? a.ordem : 999999;
-              const oB = b.ordem !== undefined && b.ordem !== null ? b.ordem : 999999;
-              return oA - oB;
-            });
-
-            const currIdx = diagTasks.findIndex(t => t.id === id);
-            if (currIdx !== -1) {
-              diagTasks.splice(currIdx, 1);
-            }
-            const targetIdx = Math.max(0, Math.min(diagTasks.length, data.ordem));
-            const currentTask = modalData || tarefasPlano.find(t => t.id === id) || {};
-            diagTasks.splice(targetIdx, 0, { ...currentTask, ...data, id });
-
-            const batch = writeBatch(db);
-            diagTasks.forEach((t, idx) => {
-              batch.update(doc(db, 'tarefas_plano', t.id), sanitizeForFirestore({ ...t, ordem: idx }));
-            });
-            await batch.commit();
-          } else {
-            await updateDoc(doc(db, 'tarefas_plano', id), sanitizeForFirestore(data));
-          }
-        } catch (cloudErr) {
-          console.error("Error updating tarefa in cloud:", cloudErr);
-        }
-      }
-
-      setIsModalOpen(false);
-      setModalType(null);
-      setModalData(null);
-      setTarefaForm({});
-      playSuccessSound();
-      showToast("Tarefa do Plano de AÃ§Ã£o alterada e salva com sucesso!", "success");
-    } catch (error) {
-      console.error("Error updating tarefa:", error);
-      setIsModalOpen(false);
-      setModalType(null);
-      setModalData(null);
-      playSuccessSound();
-      showToast("Tarefa salva localmente com sucesso!", "success");
-    }
-  };
-
-  const updateTarefaStatus = async (id: string, newStatus: string) => {
-    try {
-      setTarefasPlano(prev => prev.map(t => t.id === id ? { ...t, status: newStatus as any } : t));
-
-      if (user) {
-        try {
-          await updateDoc(doc(db, 'tarefas_plano', id), { status: newStatus });
-        } catch (cloudErr) {
-          console.error("Error updating tarefa status in cloud:", cloudErr);
-        }
-      }
-
-      const targetTask = tarefasPlano.find(t => t.id === id);
-      if (targetTask && targetTask.diagnosticoId) {
-        const diagId = targetTask.diagnosticoId;
-        const diag = diagnosticos.find(d => d.id === diagId) || (selectedDiagnostico?.id === diagId ? selectedDiagnostico : null);
-        
-        if (diag && diag.cronograma && diag.cronograma.length > 0) {
-          const updatedCronograma = diag.cronograma.map((atv, idx) => {
-            const isMatchByOrdem = targetTask.ordem !== undefined && targetTask.ordem !== null && idx === targetTask.ordem;
-            const isMatchByName = atv.nome === targetTask.problema || (atv.solucaoProposta && atv.solucaoProposta === targetTask.solucaoSugerida);
-            if (isMatchByOrdem || isMatchByName) {
-              return { ...atv, status: newStatus };
-            }
-            return atv;
-          });
-
-          const sanitizedCronograma = sanitizeForFirestore(updatedCronograma);
-          setDiagnosticos(prev => prev.map(d => d.id === diagId ? { ...d, cronograma: sanitizedCronograma } : d));
-          if (selectedDiagnostico && selectedDiagnostico.id === diagId) {
-            setSelectedDiagnostico({ ...selectedDiagnostico, cronograma: sanitizedCronograma });
-          }
-
-          if (user) {
-            try {
-              await updateDoc(doc(db, 'diagnosticos', diagId), { cronograma: sanitizedCronograma });
-            } catch (cloudErr) {
-              console.error("Error updating cronograma in cloud:", cloudErr);
-            }
-          }
-        }
-      }
-
-      playSuccessSound();
-    } catch (error) {
-      console.error("Error updating tarefa status:", error);
-    }
-  };
-
-  const updateTarefaPrioridade = async (id: string, newPrioridade: string) => {
-    try {
-      setTarefasPlano(prev => prev.map(t => t.id === id ? { ...t, prioridade: newPrioridade as any } : t));
-      if (user) {
-        try {
-          await updateDoc(doc(db, 'tarefas_plano', id), { prioridade: newPrioridade });
-        } catch (cloudErr) {
-          console.error("Error updating tarefa prioridade in cloud:", cloudErr);
-        }
-      }
-      playSuccessSound();
-    } catch (error) {
-      console.error("Error updating tarefa prioridade:", error);
-    }
-  };
-
-  const deleteTarefa = async (id: string) => {
-    try {
-      setTarefasPlano(prev => prev.filter(t => t.id !== id));
-      if (user) {
-        try {
-          await deleteDoc(doc(db, 'tarefas_plano', id));
-        } catch (cloudErr) {
-          console.error("Error deleting tarefa from cloud:", cloudErr);
-        }
-      }
-      setIsModalOpen(false);
-      setModalType(null);
-      setModalData(null);
-      playSuccessSound();
-      showToast("Tarefa excluÃ­da com sucesso!", "success");
-    } catch (error) {
-      console.error("Error deleting tarefa:", error);
-      setIsModalOpen(false);
-      setModalType(null);
-      setModalData(null);
-      playSuccessSound();
-      showToast("Tarefa excluÃ­da com sucesso!", "success");
-    }
-  };
-
-  const downloadTemplate = () => {
-    const wb = XLSX.utils.book_new();
-    
-    // Problemas Template
-    const wsProblemas = XLSX.utils.json_to_sheet([
-      {
-        descricao_problemas: 'Exemplo de Problema 1',
-        area: 'TI',
-        impacto: 'Alto'
-      },
-      {
-        descricao_problemas: 'Exemplo de Problema 2',
-        area: 'RH',
-        impacto: 'MÃ©dio'
-      }
-    ]);
-    XLSX.utils.book_append_sheet(wb, wsProblemas, 'Problemas');
-
-    // Premissas Template
-    const wsPremissas = XLSX.utils.json_to_sheet([
-      {
-        problema: 'Exemplo de Problema 1',
-        pergunta: 'A empresa possui backup em nuvem?',
-        peso: 3
-      }
-    ]);
-    XLSX.utils.book_append_sheet(wb, wsPremissas, 'Premissas');
-
-    // SoluÃ§Ãµes Template
-    const wsSolucoes = XLSX.utils.json_to_sheet([
-      {
-        'Problema': 'Exemplo de Problema 1',
-        'Ãrea': 'Financeiro',
-        'SoluÃ§Ã£o Recomendada': 'Implementar backup automÃ¡tico',
-        'AÃ§Ãµes Sugeridas': '1. Contratar serviÃ§o de nuvem; 2. Configurar rotina diÃ¡ria',
-        'ResponsÃ¡vel': 'Gestor de TI',
-        'KPIs': 'Disponibilidade de backup 100%',
-        'ComentÃ¡rio de Sucesso': 'ParabÃ©ns pela maturidade na gestÃ£o de dados e seguranÃ§a da informaÃ§Ã£o!'
-      }
-    ]);
-    XLSX.utils.book_append_sheet(wb, wsSolucoes, 'SoluÃ§Ãµes');
-
-    XLSX.writeFile(wb, 'modelo_importacao.xlsx');
-  };
-
-  const downloadRegistros = () => {
-    const wb = XLSX.utils.book_new();
-    
-    // Problemas Registrados
-    const wsProblemas = XLSX.utils.json_to_sheet(problemas.map(p => ({
-        'DescriÃ§Ã£o': p.descricao_problemas,
-        'Ãrea': p.area,
-        'Impacto': p.impacto
-    })));
-    XLSX.utils.book_append_sheet(wb, wsProblemas, 'Problemas');
-
-    // Premissas Registradas
-    const wsPremissas = XLSX.utils.json_to_sheet(premissas.map(p => ({
-        'Problema': p.problema,
-        'Pergunta': p.pergunta,
-        'Peso': p.peso
-    })));
-    XLSX.utils.book_append_sheet(wb, wsPremissas, 'Premissas');
-
-    // SoluÃ§Ãµes Registradas
-    const wsSolucoes = XLSX.utils.json_to_sheet(solucoes.map(s => ({
-        'Problema': s.problema,
-        'Ãrea': s.area,
-        'SoluÃ§Ã£o Recomendada': s.solucao_recomendada,
-        'AÃ§Ãµes Sugeridas': s.acoes_sugeridas,
-        'ResponsÃ¡vel': s.responsavel_sugerido,
-        'KPIs': s.kpis_sugeridos,
-        'ComentÃ¡rio de Sucesso': s.comentario_sucesso
-    })));
-    XLSX.utils.book_append_sheet(wb, wsSolucoes, 'SoluÃ§Ãµes');
-
-    XLSX.writeFile(wb, 'dados_registrados.xlsx');
-  };
-
-  const handleImportExcel = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setPendingImportFile(file);
-    setImportCompanyType('Geral');
-    setCustomImportCompanyType('');
-    setModalType('confirmImportCompanyType');
-    setIsModalOpen(true);
-    e.target.value = ''; // Reset input
-  };
-
-  const processImportExcel = async (file: File, finalType: string) => {
-    setIsModalOpen(false); // Close the confirmation modal
-    
-    const reader = new FileReader();
-    reader.onload = async (evt) => {
-      try {
-        const data = evt.target?.result;
-        const wb = XLSX.read(data, { type: 'array' });
-
-        let problemasImported = 0;
-        let premissasImported = 0;
-        let solucoesImported = 0;
-        let problemasSkipped = 0;
-        let premissasSkipped = 0;
-        let solucoesSkipped = 0;
-        let errors: string[] = [];
-
-        const newProblemsList: Problema[] = [];
-        const newPremissasList: Premissa[] = [];
-        const newSolucoesList: Solucao[] = [];
-        const detectedAreas = new Set<string>();
-        const detectedSegments = new Set<string>();
-
-        const selectedGlobalType = (finalType && finalType.trim()) ? finalType.trim().slice(0, 90) : 'Geral';
-        if (selectedGlobalType && selectedGlobalType !== 'Geral') {
-          detectedSegments.add(selectedGlobalType);
-        }
-
-        // Normalize text for flexible comparisons
-        const clean = (str: any): string => {
-          if (str === null || str === undefined) return '';
-          return String(str)
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "")
-            .replace(/[^a-z0-9]/g, "");
-        };
-
-        // Helper to find value in row by multiple possible key variations
-        const getValue = (row: any, keys: string[]) => {
-          if (!row || typeof row !== 'object') return undefined;
-          const targetKeys = keys.map(k => clean(k));
-          
-          for (const rowKey of Object.keys(row)) {
-            const cleanedRowKey = clean(rowKey);
-            if (targetKeys.some(tk => cleanedRowKey === tk || cleanedRowKey.includes(tk) || (tk.length > 3 && cleanedRowKey.startsWith(tk)))) {
-              const val = row[rowKey];
-              if (val !== undefined && val !== null && String(val).trim() !== '') {
-                return val;
-              }
-            }
-          }
-          return undefined;
-        };
-
-        const probKeys = ['descricaoproblemas', 'descricaodoproblema', 'descricao', 'descricaoproblema', 'problema', 'problemas', 'itemproblema', 'titulodoproblema', 'pontocritico', 'gargalo', 'desafio', 'falha', 'diagnostico'];
-        const areaKeys = ['areadegestao', 'area', 'setor', 'departamento', 'gestao', 'modulo', 'eixo', 'categoria', 'dimensao', 'areadeatuacao'];
-        const impactoKeys = ['impacto', 'criticidade', 'importancia', 'gravidade', 'prioridade', 'graudeimpacto'];
-        const nivelKeys = ['nivelmaturidade', 'nivel', 'maturidade', 'estagio', 'fase', 'graudematuridade'];
-        const perguntaKeys = ['pergunta', 'premissa', 'questao', 'perguntadiagnostico', 'perguntapremissa', 'perguntas', 'criterio', 'itemavaliacao', 'avaliacao', 'verificacao', 'item'];
-        const pesoKeys = ['peso', 'pesopergunta', 'valor', 'pontos', 'pontuacao', 'grau', 'pesodapergunta'];
-        const solucaoKeys = ['solucaorecomendada', 'solucao', 'recomendacao', 'solucaosugerida', 'solucoes', 'orientacao', 'proposta', 'intervencao'];
-        const acoesKeys = ['acoessugeridas', 'acoes', 'atividades', 'planodeacao', 'planoacao', 'etapas', 'passoapasso', 'tarefas', 'acao'];
-        const prazoKeys = ['prazosugerido', 'prazo', 'tempo', 'duracao', 'dias', 'cronograma', 'prazoestimado'];
-        const respKeys = ['responsavelsugerido', 'responsavel', 'cargo', 'executor', 'quem', 'encarregado'];
-        const kpiKeys = ['kpissugeridos', 'kpis', 'indicadores', 'kpi', 'indicador', 'metricas', 'metasdeindicador'];
-        const resKeys = ['resultadoesperado', 'resultado', 'meta', 'resultados', 'impactoesperado', 'entregavel'];
-        const comKeys = ['comentariosucesso', 'comentario', 'elogio', 'reconhecimento', 'sucesso', 'feedback'];
-        const tipoEmpresaKeys = ['tipoempresa', 'segmento', 'tiponegocio', 'ramo', 'categoriaempresa', 'publicoalvo'];
-
-        // Helper to find sheet by name key
-        const findSheetByName = (nameKeywords: string[]) => {
-          const sheetName = wb.SheetNames.find(n => {
-            const cleaned = clean(n);
-            return nameKeywords.some(kw => cleaned.includes(clean(kw)));
-          });
-          return sheetName ? wb.Sheets[sheetName] : null;
-        };
-
-        const nameToIdMap: Record<string, string> = {}; // Map normalized problem description to ID
-
-        // Helper to get or auto-create a Problem ID
-        const getOrCreateProblemId = (probName: string, areaHint: string = 'Geral', typeHint: string = 'Geral'): string => {
-          if (!probName || !probName.trim()) probName = 'Geral';
-          const normName = clean(probName);
-          const cleanArea = normalizeAndFormatArea((areaHint && areaHint.trim()) ? areaHint.trim() : 'Geral') || 'Geral';
-          detectedAreas.add(cleanArea);
-
-          const strType = (typeHint && typeHint.trim() && typeHint !== 'Geral') 
-            ? typeHint.trim().slice(0, 90) 
-            : selectedGlobalType;
-          if (strType && strType !== 'Geral') detectedSegments.add(strType);
-
-          if (nameToIdMap[normName]) {
-            return nameToIdMap[normName];
-          }
-
-          // Search in newly created list
-          const newlyAdded = newProblemsList.find(p => clean(p.descricao_problemas) === normName);
-          if (newlyAdded) {
-            nameToIdMap[normName] = newlyAdded.id;
-            return newlyAdded.id;
-          }
-
-          // Search in existing problemas state
-          const existingProb = problemas.find(p => clean(p.descricao_problemas) === normName);
-          if (existingProb) {
-            nameToIdMap[normName] = existingProb.id;
-            return existingProb.id;
-          }
-
-          // Generate ID and create new problem
-          const newId = (user ? doc(collection(db, 'problemas')).id : 'prob_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
-          const autoProb: Problema = {
-            id: newId,
-            descricao_problemas: String(probName).trim().slice(0, 950),
-            area: cleanArea,
-            impacto: 'MÃ©dio',
-            tipoEmpresa: strType,
-            NivelMaturidade: 'NÃ­vel 1',
-            ownerId: user?.uid || 'local'
-          };
-
-          newProblemsList.push(autoProb);
-          nameToIdMap[normName] = newId;
-          problemasImported++;
-          return newId;
-        };
-
-        // Function to extract rows with intelligent header identification
-        const extractSheetRows = (sheet: any): any[] => {
-          if (!sheet) return [];
-          const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[][];
-          if (!rawData || rawData.length === 0) return [];
-
-          // Find which row is the header row by looking for known column keywords
-          let headerRowIndex = 0;
-          let maxScore = 0;
-          const allKeywords = [...probKeys, ...areaKeys, ...perguntaKeys, ...solucaoKeys, ...acoesKeys, ...pesoKeys, ...respKeys, ...prazoKeys, ...kpiKeys];
-
-          for (let i = 0; i < Math.min(15, rawData.length); i++) {
-            const row = rawData[i];
-            if (!Array.isArray(row)) continue;
-            let score = 0;
-            for (const cell of row) {
-              const cleanedCell = clean(cell);
-              if (cleanedCell && allKeywords.some(kw => cleanedCell.includes(clean(kw)))) {
-                score++;
-              }
-            }
-            if (score > maxScore) {
-              maxScore = score;
-              headerRowIndex = i;
-            }
-          }
-
-          // If no scoring header found, standard sheet_to_json
-          if (maxScore === 0) {
-            return XLSX.utils.sheet_to_json(sheet);
-          }
-
-          // Build objects using headerRowIndex
-          const headers = (rawData[headerRowIndex] || []).map(h => String(h || '').trim());
-          const rows: any[] = [];
-          for (let r = headerRowIndex + 1; r < rawData.length; r++) {
-            const rowValues = rawData[r];
-            if (!Array.isArray(rowValues) || rowValues.every(val => val === null || val === undefined || String(val).trim() === '')) {
-              continue;
-            }
-            const obj: Record<string, any> = {};
-            headers.forEach((h, colIdx) => {
-              if (h) {
-                obj[h] = rowValues[colIdx];
-              }
-            });
-            rows.push(obj);
-          }
-          return rows;
-        };
-
-        const wsProblemas = findSheetByName(['problema', 'prob', 'problemas']);
-        const wsPremissas = findSheetByName(['premissa', 'prem', 'perg', 'quest', 'perguntas', 'diagnostico']);
-        const wsSolucoes = findSheetByName(['solucao', 'soluÃ§Ã£o', 'solu', 'rec', 'acao', 'aÃ§Ã£o', 'solucoes', 'soluÃ§Ãµes', 'planodeacao']);
-
-        const hasDedicatedSheets = (wsProblemas || wsPremissas || wsSolucoes);
-
-        if (hasDedicatedSheets) {
-          // 1. Process Dedicated Problemas
-          if (wsProblemas) {
-            const rows = extractSheetRows(wsProblemas);
-            for (const row of rows) {
-              const desc = getValue(row, probKeys);
-              if (!desc) continue;
-              const strDesc = String(desc).trim();
-              const normDesc = clean(strDesc);
-              const area = getValue(row, areaKeys);
-              const impacto = getValue(row, impactoKeys);
-              const nivel = getValue(row, nivelKeys);
-              const rowType = getValue(row, tipoEmpresaKeys);
-
-              const cleanArea = normalizeAndFormatArea((area && String(area).trim()) ? String(area).trim().slice(0, 90) : 'Geral') || 'Geral';
-              detectedAreas.add(cleanArea);
-
-              const strImpacto = (impacto && String(impacto).trim()) ? String(impacto).trim().slice(0, 90) : 'MÃ©dio';
-              const strNivel = (nivel && String(nivel).trim()) ? String(nivel).trim().slice(0, 90) : 'NÃ­vel 1';
-              const strType = (rowType && String(rowType).trim() && String(rowType).trim() !== 'Geral')
-                ? String(rowType).trim().slice(0, 90)
-                : selectedGlobalType;
-              if (strType && strType !== 'Geral') detectedSegments.add(strType);
-
-              if (nameToIdMap[normDesc]) {
-                problemasSkipped++;
-                continue;
-              }
-
-              const existingProb = problemas.find(p => clean(p.descricao_problemas) === normDesc);
-              if (existingProb) {
-                nameToIdMap[normDesc] = existingProb.id;
-                problemasSkipped++;
-                continue;
-              }
-
-              const docId = (user ? doc(collection(db, 'problemas')).id : 'prob_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
-              const newProbObj: Problema = {
-                id: docId,
-                descricao_problemas: strDesc.slice(0, 950),
-                area: cleanArea,
-                impacto: strImpacto,
-                tipoEmpresa: strType,
-                NivelMaturidade: strNivel,
-                ownerId: user?.uid || 'local'
-              };
-
-              newProblemsList.push(newProbObj);
-              nameToIdMap[normDesc] = docId;
-              problemasImported++;
-            }
-          }
-
-          // 2. Process Dedicated Premissas
-          if (wsPremissas) {
-            const rows = extractSheetRows(wsPremissas);
-            let lastProbName = '';
-            let lastAreaName = 'Geral';
-
-            for (const row of rows) {
-              const pergunta = getValue(row, perguntaKeys);
-              const probNome = getValue(row, probKeys) || lastProbName;
-              const area = getValue(row, areaKeys) || lastAreaName;
-              const peso = getValue(row, pesoKeys);
-              const rowType = getValue(row, tipoEmpresaKeys);
-
-              if (getValue(row, probKeys)) lastProbName = String(getValue(row, probKeys)).trim();
-              if (getValue(row, areaKeys)) lastAreaName = String(getValue(row, areaKeys)).trim();
-
-              if (!pergunta) continue;
-              const strPergunta = String(pergunta).trim();
-              const strProb = probNome ? String(probNome).trim() : (area ? `Melhoria em ${String(area).trim()}` : 'Geral');
-              const numPeso = Math.max(1, Math.min(10, Math.round(Number(peso) || 1)));
-              const strType = (rowType && String(rowType).trim() && String(rowType).trim() !== 'Geral')
-                ? String(rowType).trim().slice(0, 90)
-                : selectedGlobalType;
-              if (strType && strType !== 'Geral') detectedSegments.add(strType);
-
-              const probId = getOrCreateProblemId(strProb, area ? String(area) : 'Geral', strType);
-
-              const isDuplicate = premissas.some(p => 
-                p.idProblema === probId && clean(p.pergunta) === clean(strPergunta)
-              ) || newPremissasList.some(p => 
-                p.idProblema === probId && clean(p.pergunta) === clean(strPergunta)
-              );
-
-              if (isDuplicate) {
-                premissasSkipped++;
-                continue;
-              }
-
-              const premDocId = (user ? doc(collection(db, 'premissas')).id : 'prem_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
-              const newPremObj: Premissa = {
-                id: premDocId,
-                idProblema: probId,
-                problema: strProb.slice(0, 490),
-                pergunta: strPergunta.slice(0, 950),
-                peso: numPeso,
-                tipoEmpresa: strType,
-                ownerId: user?.uid || 'local'
-              };
-
-              newPremissasList.push(newPremObj);
-              premissasImported++;
-            }
-          }
-
-          // 3. Process Dedicated SoluÃ§Ãµes
-          if (wsSolucoes) {
-            const rows = extractSheetRows(wsSolucoes);
-            let lastProbName = '';
-            let lastAreaName = 'Geral';
-
-            for (const row of rows) {
-              const solucao = getValue(row, solucaoKeys);
-              const probNome = getValue(row, probKeys) || lastProbName;
-              const acoes = getValue(row, acoesKeys);
-              const prazo = getValue(row, prazoKeys);
-              const responsavel = getValue(row, respKeys);
-              const kpis = getValue(row, kpiKeys);
-              const area = getValue(row, areaKeys) || lastAreaName;
-              const comentarioSucesso = getValue(row, comKeys);
-              const resultadoEsperado = getValue(row, resKeys);
-              const rowType = getValue(row, tipoEmpresaKeys);
-
-              if (getValue(row, probKeys)) lastProbName = String(getValue(row, probKeys)).trim();
-              if (getValue(row, areaKeys)) lastAreaName = String(getValue(row, areaKeys)).trim();
-
-              if (!solucao) continue;
-              const strSolucao = String(solucao).trim();
-              const strProb = probNome ? String(probNome).trim() : (area ? `Melhoria em ${String(area).trim()}` : 'Geral');
-              const rawArea = (area && String(area).trim()) ? String(area).trim().slice(0, 90) : 'Geral';
-              const cleanArea = normalizeAndFormatArea(rawArea) || 'Geral';
-              detectedAreas.add(cleanArea);
-
-              const strType = (rowType && String(rowType).trim() && String(rowType).trim() !== 'Geral')
-                ? String(rowType).trim().slice(0, 90)
-                : selectedGlobalType;
-              if (strType && strType !== 'Geral') detectedSegments.add(strType);
-
-              const probId = getOrCreateProblemId(strProb, cleanArea, strType);
-
-              const isDuplicate = solucoes.some(s => 
-                s.idProblema === probId && clean(s.solucao_recomendada) === clean(strSolucao)
-              ) || newSolucoesList.some(s => 
-                s.idProblema === probId && clean(s.solucao_recomendada) === clean(strSolucao)
-              );
-
-              if (isDuplicate) {
-                solucoesSkipped++;
-                continue;
-              }
-
-              const solDocId = (user ? doc(collection(db, 'solucoes')).id : 'sol_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
-              const newSolObj: Solucao = {
-                id: solDocId,
-                idProblema: probId,
-                problema: strProb.slice(0, 490),
-                area: cleanArea,
-                solucao_recomendada: strSolucao.slice(0, 1950),
-                acoes_sugeridas: String(acoes || '').trim().slice(0, 4950),
-                prazo_sugerido: String(prazo || '').trim().slice(0, 90),
-                responsavel_sugerido: String(responsavel || '').trim().slice(0, 90),
-                kpis_sugeridos: String(kpis || '').trim().slice(0, 950),
-                comentario_sucesso: String(comentarioSucesso || '').trim().slice(0, 4950),
-                resultado_esperado: String(resultadoEsperado || '').trim().slice(0, 1950),
-                tipoEmpresa: strType,
-                ownerId: user?.uid || 'local'
-              };
-
-              newSolucoesList.push(newSolObj);
-              solucoesImported++;
-            }
-          }
-        } else {
-          // Unified Sheet(s) processing with merged cell forward-filling
-          for (const sName of wb.SheetNames) {
-            const sheet = wb.Sheets[sName];
-            const rows = extractSheetRows(sheet);
-
-            let currentArea = 'Geral';
-            let currentProblem = '';
-            let currentImpacto = 'MÃ©dio';
-            let currentNivel = 'NÃ­vel 1';
-            let currentTipoEmpresa = selectedGlobalType;
-
-            for (const row of rows) {
-              const rowArea = getValue(row, areaKeys);
-              const rowProb = getValue(row, probKeys);
-              const rowPergunta = getValue(row, perguntaKeys);
-              const rowSolucao = getValue(row, solucaoKeys);
-              const rowImpacto = getValue(row, impactoKeys);
-              const rowNivel = getValue(row, nivelKeys);
-              const rowPeso = getValue(row, pesoKeys);
-              const rowAcoes = getValue(row, acoesKeys);
-              const rowPrazo = getValue(row, prazoKeys);
-              const rowResp = getValue(row, respKeys);
-              const rowKpi = getValue(row, kpiKeys);
-              const rowRes = getValue(row, resKeys);
-              const rowCom = getValue(row, comKeys);
-              const rowType = getValue(row, tipoEmpresaKeys);
-
-              // Update forward-filled context
-              if (rowArea && String(rowArea).trim()) {
-                currentArea = normalizeAndFormatArea(String(rowArea).trim()) || 'Geral';
-                detectedAreas.add(currentArea);
-              }
-              if (rowImpacto && String(rowImpacto).trim()) currentImpacto = String(rowImpacto).trim().slice(0, 90);
-              if (rowNivel && String(rowNivel).trim()) currentNivel = String(rowNivel).trim().slice(0, 90);
-              if (rowType && String(rowType).trim() && String(rowType).trim() !== 'Geral') {
-                currentTipoEmpresa = String(rowType).trim().slice(0, 90);
-                detectedSegments.add(currentTipoEmpresa);
-              }
-
-              // Handle Problem
-              let activeProblemName = '';
-              if (rowProb && String(rowProb).trim()) {
-                activeProblemName = String(rowProb).trim();
-                currentProblem = activeProblemName;
-              } else if (currentProblem) {
-                activeProblemName = currentProblem;
-              } else if (rowPergunta || rowSolucao) {
-                activeProblemName = `DiagnÃ³stico de ${currentArea}`;
-                currentProblem = activeProblemName;
-              }
-
-              let problemId: string | null = null;
-              if (activeProblemName) {
-                problemId = getOrCreateProblemId(activeProblemName, currentArea, currentTipoEmpresa);
-              }
-
-              // Handle Pergunta / Premissa
-              if (rowPergunta && String(rowPergunta).trim() && problemId) {
-                const strPergunta = String(rowPergunta).trim();
-                const numPeso = Math.max(1, Math.min(10, Math.round(Number(rowPeso) || 1)));
-
-                const isDup = premissas.some(p => 
-                  p.idProblema === problemId && clean(p.pergunta) === clean(strPergunta)
-                ) || newPremissasList.some(p => 
-                  p.idProblema === problemId && clean(p.pergunta) === clean(strPergunta)
-                );
-
-                if (!isDup) {
-                  const premDocId = (user ? doc(collection(db, 'premissas')).id : 'prem_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
-                  newPremissasList.push({
-                    id: premDocId,
-                    idProblema: problemId,
-                    problema: activeProblemName.slice(0, 490),
-                    pergunta: strPergunta.slice(0, 950),
-                    peso: numPeso,
-                    tipoEmpresa: currentTipoEmpresa,
-                    ownerId: user?.uid || 'local'
-                  });
-                  premissasImported++;
-                } else {
-                  premissasSkipped++;
-                }
-              }
-
-              // Handle SoluÃ§Ã£o
-              if (rowSolucao && String(rowSolucao).trim() && problemId) {
-                const strSolucao = String(rowSolucao).trim();
-                const isDup = solucoes.some(s => 
-                  s.idProblema === problemId && clean(s.solucao_recomendada) === clean(strSolucao)
-                ) || newSolucoesList.some(s => 
-                  s.idProblema === problemId && clean(s.solucao_recomendada) === clean(strSolucao)
-                );
-
-                if (!isDup) {
-                  const solDocId = (user ? doc(collection(db, 'solucoes')).id : 'sol_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
-                  newSolucoesList.push({
-                    id: solDocId,
-                    idProblema: problemId,
-                    problema: activeProblemName.slice(0, 490),
-                    area: currentArea,
-                    solucao_recomendada: strSolucao.slice(0, 1950),
-                    acoes_sugeridas: String(rowAcoes || '').trim().slice(0, 4950),
-                    prazo_sugerido: String(rowPrazo || '').trim().slice(0, 90),
-                    responsavel_sugerido: String(rowResp || '').trim().slice(0, 90),
-                    kpis_sugeridos: String(rowKpi || '').trim().slice(0, 950),
-                    comentario_sucesso: String(rowCom || '').trim().slice(0, 4950),
-                    resultado_esperado: String(rowRes || '').trim().slice(0, 1950),
-                    tipoEmpresa: currentTipoEmpresa,
-                    ownerId: user?.uid || 'local'
-                  });
-                  solucoesImported++;
-                } else {
-                  solucoesSkipped++;
-                }
-              }
-            }
-          }
-        }
-
-        // Fast Batch Save to Firestore
-        if (user) {
-          try {
-            const allItemsToSave: { col: string; docId: string; data: any }[] = [
-              ...newProblemsList.map(p => ({ col: 'problemas', docId: p.id, data: sanitizeForFirestore(p) })),
-              ...newPremissasList.map(p => ({ col: 'premissas', docId: p.id, data: sanitizeForFirestore(p) })),
-              ...newSolucoesList.map(s => ({ col: 'solucoes', docId: s.id, data: sanitizeForFirestore(s) }))
-            ];
-
-            for (let i = 0; i < allItemsToSave.length; i += 400) {
-              const batch = writeBatch(db);
-              const slice = allItemsToSave.slice(i, i + 400);
-              for (const item of slice) {
-                batch.set(doc(db, item.col, item.docId), item.data);
-              }
-              await batch.commit();
-            }
-          } catch (err: any) {
-            console.error("Aviso ao persistir batch no Firestore:", err);
-            errors.push("Aviso de sincronizaÃ§Ã£o na nuvem: " + err.message);
-          }
-        }
-
-        // Apply newly created items into local state and localStorage
-        if (newProblemsList.length > 0) {
-          try { localStorage.removeItem('user_cleared_problemas'); } catch {}
-          setProblemas(prev => {
-            const updated = [...newProblemsList, ...prev.filter(p => !newProblemsList.some(np => np.id === p.id))];
-            try { localStorage.setItem('local_problemas', JSON.stringify(updated)); } catch {}
-            return updated;
-          });
-        }
-        if (newPremissasList.length > 0) {
-          try { localStorage.removeItem('user_cleared_premissas'); } catch {}
-          setPremissas(prev => {
-            const updated = [...newPremissasList, ...prev.filter(p => !newPremissasList.some(np => np.id === p.id))];
-            try { localStorage.setItem('local_premissas', JSON.stringify(updated)); } catch {}
-            return updated;
-          });
-        }
-        if (newSolucoesList.length > 0) {
-          try { localStorage.removeItem('user_cleared_solucoes'); } catch {}
-          setSolucoes(prev => {
-            const updated = [...newSolucoesList, ...prev.filter(s => !newSolucoesList.some(ns => ns.id === s.id))];
-            try { localStorage.setItem('local_solucoes', JSON.stringify(updated)); } catch {}
-            return updated;
-          });
-        }
-
-        // Register any new detected areas
-        const areasToRegister = Array.from(detectedAreas).filter(a => a && a !== 'Geral');
-        if (areasToRegister.length > 0) {
-          setSessionCustomAreas(prev => Array.from(new Set([...prev, ...areasToRegister])));
-          setDbAreas(prev => {
-            const combined = [...prev];
-            areasToRegister.forEach(a => {
-              if (!combined.some(existing => existing.nome?.toLowerCase() === a.toLowerCase())) {
-                const areaId = (user ? doc(collection(db, 'areas')).id : 'area_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
-                combined.push({ id: areaId, nome: a });
-                if (user) {
-                  setDoc(doc(db, 'areas', areaId), sanitizeForFirestore({ nome: a, ownerId: user.uid })).catch(() => {});
-                }
-              }
-            });
-            try { localStorage.setItem('local_db_areas', JSON.stringify(combined)); } catch {}
-            return combined;
-          });
-        }
-
-        // Register any new detected business types / segments
-        const segmentsToRegister = Array.from(detectedSegments).filter(s => s && !TIPOS_EMPRESA.includes(s));
-        if (segmentsToRegister.length > 0) {
-          setSessionCustomSegments(prev => Array.from(new Set([...prev, ...segmentsToRegister])));
-          setDbSegmentos(prev => {
-            const combined = [...prev];
-            segmentsToRegister.forEach(s => {
-              if (!combined.some(existing => existing.nome?.toLowerCase() === s.toLowerCase())) {
-                const segId = (user ? doc(collection(db, 'segmentos')).id : 'seg_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6));
-                combined.push({ id: segId, nome: s });
-                if (user) {
-                  setDoc(doc(db, 'segmentos', segId), sanitizeForFirestore({ nome: s, ownerId: user.uid })).catch(() => {});
-                }
-              }
-            });
-            try { localStorage.setItem('local_db_segmentos', JSON.stringify(combined)); } catch {}
-            return combined;
-          });
-        }
-        
-        const result = {
-          problemas: { imported: problemasImported, skipped: problemasSkipped },
-          premissas: { imported: premissasImported, skipped: premissasSkipped },
-          solucoes: { imported: solucoesImported, skipped: solucoesSkipped },
-          errors: errors
-        };
-
-        setModalData(result);
-        setModalType('importSuccess');
-        setIsModalOpen(true);
-        playSuccessSound();
-        setPendingImportFile(null);
-      } catch (err: any) {
-        console.error("Error reading excel:", err);
-        alert("ERRO CRÃTICO ao ler o arquivo Excel: " + err.message);
-      }
-    };
-    reader.readAsArrayBuffer(file);
-  };
-
-  const calculateAndSaveMaturity = async (diag: Diagnostico, currentRespostas: Resposta[]) => {
-    if (calculatingMaturity || !diag) return;
-    setCalculatingMaturity(true);
-    try {
-      const scoreGeral = (currentRespostas.reduce((acc, r) => acc + r.score, 0) / (currentRespostas.reduce((acc, r) => acc + (2 * r.peso), 0) || 1)) * 100;
-      const result = await generateAIMaturityLevel(currentRespostas, Math.round(scoreGeral), diag.tipoEmpresa);
-      if (result && result.nivel) {
-        const updatedDiag = {
-          ...diag,
-          nivelMaturidadeAI: result.nivel,
-          justificativaMaturidadeAI: result.justificativa
-        };
-        setSelectedDiagnostico(updatedDiag);
-        setDiagnosticos(prev => prev.map(d => d.id === diag.id ? updatedDiag : d));
-
-        if (user) {
-          try {
-            await updateDoc(doc(db, 'diagnosticos', diag.id), {
-              nivelMaturidadeAI: result.nivel,
-              justificativaMaturidadeAI: result.justificativa
-            });
-          } catch (cloudErr) {
-            console.error("Error updating maturity in cloud:", cloudErr);
-          }
-        }
-      }
-    } catch (e) {
-      console.error("Erro ao calcular maturidade com IA:", e);
-    } finally {
-      setCalculatingMaturity(false);
-    }
-  };
-
-  const createDiagnostico = async (empresaId: string, areas: string[] = [], dateStr?: string, companyTypeFilter: string = 'Geral', projectName: string = '', stayOnProjectsView: boolean = false) => {
-    if (!empresaId) return;
-    if (isCreatingDiagRef.current) {
-      console.warn("createDiagnostico jÃ¡ estÃ¡ em execuÃ§Ã£o, bloqueando criaÃ§Ã£o duplicada.");
-      return;
-    }
-    isCreatingDiagRef.current = true;
-    setCreatingDiagnosis(true);
-    
-    try {
-      const diagDate = dateStr ? new Date(dateStr + 'T12:00:00') : new Date();
-      const newDiagId = user ? doc(collection(db, 'diagnosticos')).id : 'diag_' + Date.now();
-      
-      const emp = empresas.find(e => e.id === empresaId);
-      const finalProjName = (projectName || '').trim() || `Projeto - ${emp?.nome || 'Novo Cliente'}`;
-
-      const newDiagObj: Diagnostico = {
-        id: newDiagId,
-        empresaId,
-        dataDiagnostico: Timestamp.fromDate(diagDate),
-        ownerId: user?.uid || 'local',
-        areasDiagnostico: areas,
-        status: 'Planejamento',
-        tipoEmpresa: companyTypeFilter,
-        nomeProjeto: finalProjName,
-        nome: finalProjName
-      };
-
-      // Generate local Respostas for Premissas in selected areas (or all if none selected)
-      const localRespostasToInsert: Resposta[] = [];
-      const respostasToInsertCloud: { ref: any, data: any }[] = [];
-      const createdPremissaIds = new Set<string>();
-      const createdQuestions = new Set<string>();
-
-      for (const p of premissas) {
-        const normQ = (p.pergunta || '').trim().toLowerCase();
-        if (createdPremissaIds.has(p.id) || (normQ && createdQuestions.has(normQ))) {
-          continue;
-        }
-
-        const prob = problemas.find(prob => prob.id === p.idProblema || prob.descricao_problemas === p.problema);
-        const pType = p.tipoEmpresa || prob?.tipoEmpresa || 'Geral';
-        const normPType = (pType || 'Geral').trim().toLowerCase();
-        const normFilter = (companyTypeFilter || 'Geral').trim().toLowerCase();
-
-        if (normFilter !== 'geral' && normFilter !== '') {
-          if (normPType !== normFilter && normPType !== 'geral' && normPType !== '') {
-            continue;
-          }
-        } else {
-          if (normPType !== 'geral' && normPType !== '') {
-            continue;
-          }
-        }
-
-        const area = prob?.area || 'Geral';
-        const normArea = normalizeAndFormatArea(area).toLowerCase();
-
-        if (areas.length > 0) {
-          const isAreaSelected = areas.some(a => normalizeAndFormatArea(a).toLowerCase() === normArea);
-          if (!isAreaSelected) {
-            continue;
-          }
-        }
-
-        createdPremissaIds.add(p.id);
-        if (normQ) createdQuestions.add(normQ);
-
-        const respId = user ? doc(collection(db, 'respostas')).id : 'resp_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
-        const respItem: Resposta = {
-          id: respId,
-          diagnosticoId: newDiagId,
-          premissaId: p.id,
-          idProblema: p.idProblema || '',
-          problema: p.problema || '',
-          pergunta: p.pergunta || '',
-          peso: p?.peso !== undefined ? p.peso : 1,
-          area: area,
-          observacao: '',
-          score: 0,
-          resposta: '',
-          ownerId: user?.uid || 'local'
-        };
-
-        localRespostasToInsert.push(respItem);
-
-        if (user) {
-          const respDocRef = doc(db, 'respostas', respId);
-          const respData = sanitizeForFirestore({
-            diagnosticoId: newDiagId,
-            premissaId: p.id,
-            idProblema: p.idProblema || '',
-            problema: p.problema || '',
-            pergunta: p.pergunta || '',
-            peso: p?.peso !== undefined ? p.peso : 1,
-            area: area,
-            observacao: '',
-            score: 0,
-            ownerId: user.uid
-          });
-          respostasToInsertCloud.push({ ref: respDocRef, data: respData });
-        }
-      }
-
-      // Optimistically update local state immediately (ensuring no duplicate IDs)
-      setDiagnosticos(prev => [newDiagObj, ...prev.filter(d => d.id !== newDiagId)]);
-      setRespostas(prev => [...localRespostasToInsert, ...prev]);
-
-      if (emp) {
-        setSelectedEmpresa(emp);
-      }
-      setSelectedDiagnostico(newDiagObj as any);
-      if (stayOnProjectsView) {
-        setView('projects');
-      } else {
-        setView('diagnosis');
-      }
-      setIsModalOpen(false);
-      playSuccessSound();
-
-      // Save to Cloud asynchronously in background so UI never freezes or hangs on 'Criando...'
-      if (user) {
-        (async () => {
-          try {
-            const diagData = sanitizeForFirestore({
-              empresaId,
-              dataDiagnostico: Timestamp.fromDate(diagDate),
-              ownerId: user.uid,
-              areasDiagnostico: areas,
-              status: 'Planejamento',
-              tipoEmpresa: companyTypeFilter,
-              nomeProjeto: finalProjName,
-              nome: finalProjName
-            });
-            await setDoc(doc(db, 'diagnosticos', newDiagId), diagData);
-
-            for (let i = 0; i < respostasToInsertCloud.length; i += 400) {
-              const batch = writeBatch(db);
-              const chunk = respostasToInsertCloud.slice(i, i + 400);
-              for (const item of chunk) {
-                batch.set(item.ref, item.data);
-              }
-              await batch.commit();
-            }
-          } catch (cloudErr) {
-            console.error("Cloud save failed for new diagnostico, keeping local copy:", cloudErr);
-          }
-        })();
-      }
-
-      return newDiagObj;
-    } catch (err: any) {
-      console.error("Error creating diagnosis:", err);
-      alert("Erro ao criar diagnÃ³stico: " + (err?.message || "Por favor, tente novamente."));
-    } finally {
-      setCreatingDiagnosis(false);
-      isCreatingDiagRef.current = false;
-    }
-  };
-
-  const updateSegment = async () => {
-    if (!selectedSegmentForEdit) return;
-    const finalSegment = selectedSegmentForEdit.trim();
-    if (!finalSegment) return;
-
-    try {
-      if (!TIPOS_EMPRESA.includes(finalSegment)) {
-        setSessionCustomSegments(prev => Array.from(new Set([...prev, finalSegment])));
-      }
-
-      if (editSegmentTarget === 'diagnostico' && selectedDiagnostico) {
-        const updatedDiag = {
-          ...selectedDiagnostico,
-          tipoEmpresa: finalSegment
-        };
-        setSelectedDiagnostico(updatedDiag);
-        setDiagnosticos(prev => prev.map(d => d.id === selectedDiagnostico.id ? updatedDiag : d));
-
-        if (user) {
-          try {
-            await updateDoc(doc(db, 'diagnosticos', selectedDiagnostico.id), {
-              tipoEmpresa: finalSegment
-            });
-          } catch (cloudErr) {
-            console.error("Error updating diagnostico segment in cloud:", cloudErr);
-          }
-        }
-      }
-
-      const targetEmpresaId = selectedEmpresa?.id || modalData?.id;
-      if (targetEmpresaId) {
-        if (selectedEmpresa && selectedEmpresa.id === targetEmpresaId) {
-          setSelectedEmpresa({
-            ...selectedEmpresa,
-            tipoEmpresa: finalSegment
-          });
-        }
-        
-        // Always update local list of companies
-        setEmpresas(prev => prev.map(emp => emp.id === targetEmpresaId ? { ...emp, tipoEmpresa: finalSegment } : emp));
-
-        if (user) {
-          try {
-            await updateDoc(doc(db, 'empresas', targetEmpresaId), {
-              tipoEmpresa: finalSegment
-            });
-          } catch (cloudErr) {
-            console.error("Error updating empresa segment in cloud:", cloudErr);
-          }
-        }
-      }
-
-      playSuccessSound();
-      setIsEditSegmentModalOpen(false);
-    } catch (e) {
-      console.error("Erro ao atualizar segmento:", e);
-    }
-  };
-
-  const handleFileUpload = async (file: File, type: 'resposta' | 'tarefa', id: string) => {
-    if (!file) return;
-    try {
-      // Compress automatically to standard ~30-50KB representation
-      const dataUrl = await compressImageToDataUrl(file, 520, 0.58);
-
-      if (type === 'resposta') {
-        setRespostas(prev => prev.map(r => r.id === id ? { ...r, evidenciaUrl: dataUrl, evidenciaNome: file.name } : r));
-      } else {
-        setTarefasPlano(prev => prev.map(t => t.id === id ? { ...t, evidenciaUrl: dataUrl, evidenciaNome: file.name } : t));
-      }
-
-      // Save locally in IndexedDB store
-      saveLocalIndividualEvidence(type, id, dataUrl, file.name);
-
-      if (user) {
-        try {
-          if (type === 'resposta') {
-            await updateDoc(doc(db, 'respostas', id), { 
-              evidenciaUrl: dataUrl,
-              evidenciaNome: file.name
-            });
-          } else {
-            await updateDoc(doc(db, 'tarefas_plano', id), { 
-              evidenciaUrl: dataUrl,
-              evidenciaNome: file.name
-            });
-          }
-        } catch (cloudErr) {
-          console.error("Error saving evidence in cloud:", cloudErr);
-        }
-      }
-      playSuccessSound();
-    } catch (error) {
-      console.error("Error saving evidence:", error);
-    }
-  };
-
-  const handleRemoveEvidence = async (type: 'resposta' | 'tarefa', id: string) => {
-    try {
-      if (type === 'resposta') {
-        setRespostas(prev => prev.map(r => r.id === id ? { ...r, evidenciaUrl: undefined, evidenciaNome: undefined } : r));
-      } else {
-        setTarefasPlano(prev => prev.map(t => t.id === id ? { ...t, evidenciaUrl: undefined, evidenciaNome: undefined } : t));
-      }
-
-      // Delete from local IndexedDB store
-      deleteLocalIndividualEvidence(type, id);
-
-      if (user) {
-        try {
-          if (type === 'resposta') {
-            await updateDoc(doc(db, 'respostas', id), {
-              evidenciaUrl: deleteField(),
-              evidenciaNome: deleteField()
-            });
-          } else {
-            await updateDoc(doc(db, 'tarefas_plano', id), {
-              evidenciaUrl: deleteField(),
-              evidenciaNome: deleteField()
-            });
-          }
-        } catch (cloudErr) {
-          console.error("Error removing evidence from cloud:", cloudErr);
-        }
-      }
-      playSuccessSound();
-    } catch (err) {
-      console.error("Error removing evidence:", err);
-    }
-  };
-
-  const flushPendingResponses = async () => {
-    if (saveDebounceTimerRef.current) {
-      clearTimeout(saveDebounceTimerRef.current);
-      saveDebounceTimerRef.current = null;
-    }
-    if (pendingResponsesBuffer.current.size === 0) return;
-
-    const itemsToSave: Resposta[] = Array.from(pendingResponsesBuffer.current.values());
-    pendingResponsesBuffer.current.clear();
-
-    // 1. Efficient batched write to localStorage
-    saveAllLocalRespostas(itemsToSave);
-
-    // 2. Batched write to Firestore if logged in
-    if (user && itemsToSave.length > 0) {
-      try {
-        for (let i = 0; i < itemsToSave.length; i += 400) {
-          const batch = writeBatch(db);
-          const chunk = itemsToSave.slice(i, i + 400);
-          chunk.forEach((resp: Resposta) => {
-            const respRef = doc(db, 'respostas', resp.id);
-            batch.set(respRef, sanitizeForFirestore({
-              resposta: resp.resposta,
-              observacao: resp.observacao,
-              score: resp.score,
-              peso: resp.peso,
-              ownerId: user.uid,
-              diagnosticoId: resp.diagnosticoId || selectedDiagnostico?.id || '',
-              premissaId: resp.premissaId || resp.id,
-              pergunta: resp.pergunta,
-              area: resp.area
-            }), { merge: true });
-          });
-          await batch.commit();
-        }
-      } catch (err) {
-        console.warn("Aviso ao sincronizar lote de respostas no Firestore:", err);
-      }
-    }
-
-    setSaveStatus('saved');
-    setLastSavedTime(new Date());
-  };
-
-  const updateResposta = (id: string, val: 'Sim' | 'NÃ£o' | 'Parcial' | '' = '', obs: string = '', peso: number = 1) => {
-    // Score calculation: Sim=2, Parcial=1, NÃ£o=0
-    const points = val === 'Sim' ? 2 : val === 'Parcial' ? 1 : 0;
-    const score = points * peso;
-
-    const targetItem = respostas.find(r => r.id === id);
-    const updatedResp: Resposta = targetItem ? {
-      ...targetItem,
-      resposta: val,
-      observacao: obs,
-      score,
-      peso,
-      ownerId: user?.uid || targetItem.ownerId || 'local'
-    } : {
-      id,
-      diagnosticoId: selectedDiagnostico?.id || '',
-      premissaId: id,
-      pergunta: '',
-      area: 'Geral',
-      resposta: val,
-      observacao: obs,
-      score,
-      peso,
-      ownerId: user?.uid || 'local'
-    };
-
-    // 1. Immediate in-memory React state update (0ms UI latency, instantaneous feedback)
-    setRespostas(prev => prev.map(r => r.id === id ? updatedResp : r));
-
-    // 2. Buffer change into debounce queue
-    pendingResponsesBuffer.current.set(id, updatedResp);
-    setSaveStatus('saving');
-
-    // 3. Reset debounce timer (500ms) to minimize disk/network I/O on low-memory devices
-    if (saveDebounceTimerRef.current) {
-      clearTimeout(saveDebounceTimerRef.current);
-    }
-    saveDebounceTimerRef.current = setTimeout(() => {
-      flushPendingResponses();
-    }, 500);
-  };
-
-  const handleUpdateDiagnosticoDate = async (diagId: string, newDateString: string) => {
-    if (!diagId || !newDateString) return;
-    try {
-      const parts = newDateString.split('-');
-      let parsedDate: Date;
-      if (parts.length === 3) {
-        parsedDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10), 12, 0, 0);
-      } else {
-        parsedDate = new Date(newDateString);
-      }
-
-      if (isNaN(parsedDate.getTime())) {
-        showToast("Data invÃ¡lida.", "error");
-        return;
-      }
-      const newTimestamp = Timestamp.fromDate(parsedDate);
-
-      // 1. Update React state
-      setDiagnosticos(prev => prev.map(d => {
-        if (d.id === diagId) {
-          return { ...d, dataDiagnostico: newTimestamp };
-        }
-        return d;
-      }));
-
-      if (selectedDiagnostico && selectedDiagnostico.id === diagId) {
-        setSelectedDiagnostico(prev => prev ? { ...prev, dataDiagnostico: newTimestamp } : prev);
-      }
-
-      // 2. Update localStorage
-      try {
-        const saved = localStorage.getItem('local_diagnosticos');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
-            const updated = parsed.map((d: any) => d.id === diagId ? { ...d, dataDiagnostico: newTimestamp } : d);
-            localStorage.setItem('local_diagnosticos', JSON.stringify(updated));
-          }
-        }
-      } catch (e) {
-        console.warn("Erro ao atualizar data no localStorage:", e);
-      }
-
-      // 3. Update Firestore if user is authenticated
-      if (user) {
-        await updateDoc(doc(db, 'diagnosticos', diagId), {
-          dataDiagnostico: newTimestamp,
-          updatedAt: new Date().toISOString()
-        }).catch(err => {
-          console.warn("Aviso ao sincronizar nova data no Firestore:", err);
-        });
-      }
-
-      setIsModalOpen(false);
-      setModalType(null);
-      setModalData(null);
-      playSuccessSound();
-      showToast("Data do diagnÃ³stico alterada com sucesso!", "success");
-    } catch (err) {
-      console.error("Erro ao alterar data do diagnÃ³stico:", err);
-      showToast("Erro ao alterar data do diagnÃ³stico.", "error");
-    }
-  };
-
-  const generatePDF = () => {
-    const cleanResps = deduplicateRespostas(respostas);
-    if (!selectedEmpresa || !selectedDiagnostico || cleanResps.length === 0) return;
-
-    const doc = new jsPDF();
-    const dateStr = formatFirestoreDate(selectedDiagnostico.dataDiagnostico, "dd/MM/yyyy HH:mm");
-
-    doc.setFontSize(20);
-    doc.setTextColor(5, 150, 105); // Emerald 600
-    doc.text('RelatÃ³rio de DiagnÃ³stico', 105, 20, { align: 'center' });
-    
-    doc.setFontSize(12);
-    doc.setTextColor(100);
-    doc.text(`Data: ${dateStr}`, 20, 35);
-    if (selectedDiagnostico.areasDiagnostico && selectedDiagnostico.areasDiagnostico.length > 0) {
-      doc.setFontSize(10);
-      doc.text(`Ãreas Diagnosticadas: ${selectedDiagnostico.areasDiagnostico.join(', ')}`, 20, 42);
-    }
-
-    // Summary
-    const answeredRespostas = cleanResps.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'NÃ£o');
-    const totalScore = answeredRespostas.reduce((acc, r) => acc + (r.score || 0), 0);
-    const maxScore = answeredRespostas.reduce((acc, r) => acc + (2 * (r.peso || 1)), 0);
-    const performance = answeredRespostas.length > 0 ? ((totalScore / (maxScore || 1)) * 100).toFixed(1) : '0';
-
-    doc.setFontSize(14);
-    doc.setTextColor(0);
-    doc.text(`Desempenho Geral: ${performance}%`, 20, 50);
-
-    // Identified Problems
-    const problems = [...cleanResps]
-      .filter(r => r.resposta !== 'Sim')
-      .map(r => {
-        if (r.area) return r;
-        const prob = problemas.find(p => p.id === r.idProblema || p.descricao_problemas === r.problema);
-        return { ...r, area: prob?.area || 'Geral' };
-      })
-      .sort((a, b) => (a.area || '').localeCompare(b.area || ''));
-    
-    doc.setFontSize(16);
-    doc.text('Problemas Identificados e SugestÃµes', 20, 70);
-
-    const tableData = problems.map(p => [
-      p.area || 'Geral',
-      p.pergunta,
-      p.resposta,
-      p.observacao || 'Sem observaÃ§Ãµes'
-    ]);
-
-    if (tableData.length === 0) {
-      doc.setFontSize(12);
-      doc.text('Nenhum problema crÃ­tico identificado.', 20, 75);
-    } else {
-      autoTable(doc, {
-        startY: 75,
-        head: [['Ãrea', 'Pergunta', 'Resposta', 'ObservaÃ§Ã£o']],
-        body: tableData,
-        theme: 'grid',
-        headStyles: { fillColor: [5, 150, 105] }
-      });
-    }
-
-    // Cronograma
-    if (selectedDiagnostico.cronograma && selectedDiagnostico.cronograma.length > 0) {
-      const cronogramaData = selectedDiagnostico.cronograma
-        .filter(atv => atv.nome || atv.descricao)
-        .map(atv => [
-          atv.nome || '',
-          atv.descricao || '',
-          atv.solucaoProposta || '',
-          atv.responsavel || '',
-          atv.cargaHoraria || ''
-        ]);
-
-      if (cronogramaData.length > 0) {
-        doc.addPage();
-        doc.setFontSize(16);
-        doc.setTextColor(0);
-        doc.text('Plano de AÃ§Ã£o (RelatÃ³rio de Consultoria)', 20, 20);
-
-        autoTable(doc, {
-          startY: 25,
-          head: [['Atividade', 'DescriÃ§Ã£o', 'SoluÃ§Ã£o', 'ResponsÃ¡vel', 'Prazo']],
-          body: cronogramaData,
-          theme: 'grid',
-          headStyles: { fillColor: [5, 150, 105] }
-        });
-      }
-    }
-
-    setPdfUrl(doc.output('bloburl').toString());
-  };
-
-  const PremisesView = () => {
-    const normalizedMatch = (val1: string | undefined | null, val2: string | undefined | null) => {
-      if (!val1 && !val2) return true;
-      if (!val1 || !val2) return false;
-      return val1.trim().toLowerCase() === val2.trim().toLowerCase();
-    };
-
-    const findAssociatedProblem = (idProblema: string | undefined | null, probName: string | undefined | null) => {
-      if (!idProblema && !probName) return undefined;
-      if (idProblema) {
-        const found = problemas.find(prob => prob.id === idProblema);
-        if (found) return found;
-      }
-      if (probName) {
-        const normalizedName = probName.trim().toLowerCase();
-        const found = problemas.find(prob => prob.descricao_problemas && prob.descricao_problemas.trim().toLowerCase() === normalizedName);
-        if (found) return found;
-      }
-      return undefined;
-    };
-
-    const allCompanyTypes = useMemo(() => {
-      const uniqueTypes = new Set<string>();
-      
-      availableSegments.forEach(s => {
-        if (s && s.trim() && s.trim().toLowerCase() !== 'geral') {
-          uniqueTypes.add(s.trim());
-        }
-      });
-
-      const addTypes = (arr: (string | undefined | null)[]) => {
-        arr.forEach(t => {
-          if (t && t.trim() && t.trim().toLowerCase() !== 'geral' && t.trim().toLowerCase() !== 'outro') {
-            uniqueTypes.add(t.trim());
-          }
-        });
-      };
-      
-      addTypes(problemas.map(p => p.tipoEmpresa));
-      addTypes(premissas.map(p => p.tipoEmpresa));
-      addTypes(solucoes.map(p => p.tipoEmpresa));
-
-      return Array.from(uniqueTypes).sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
-    }, [availableSegments, problemas, premissas, solucoes]);
-
-    const uniqueLibraryAreas = useMemo(() => {
-      const areasSet = new Set<string>();
-
-      const addNormalized = (rawArea: string | undefined | null) => {
-        if (!rawArea) return;
-        const normalized = normalizeAndFormatArea(rawArea);
-        if (normalized) {
-          areasSet.add(normalized);
-        }
-      };
-
-      if (libraryTab === 'problemas') {
-        problemas.forEach(p => {
-          if (p.area && p.area.trim()) {
-            if (!selectedTipoEmpresaFilter) {
-              addNormalized(p.area);
-            } else {
-              const pType = p.tipoEmpresa || 'Geral';
-              if (selectedTipoEmpresaFilter === 'Geral') {
-                if (normalizedMatch(pType, 'Geral')) {
-                  addNormalized(p.area);
-                }
-              } else {
-                if (normalizedMatch(pType, selectedTipoEmpresaFilter)) {
-                  addNormalized(p.area);
-                }
-              }
-            }
-          }
-        });
-      } else if (libraryTab === 'premissas') {
-        premissas.forEach(p => {
-          const prob = findAssociatedProblem(p.idProblema, p.problema);
-          if (prob && prob.area && prob.area.trim()) {
-            if (!selectedTipoEmpresaFilter) {
-              addNormalized(prob.area);
-            } else {
-              const pType = p.tipoEmpresa || prob.tipoEmpresa || 'Geral';
-              if (selectedTipoEmpresaFilter === 'Geral') {
-                if (normalizedMatch(pType, 'Geral')) {
-                  addNormalized(prob.area);
-                }
-              } else {
-                if (normalizedMatch(pType, selectedTipoEmpresaFilter)) {
-                  addNormalized(prob.area);
-                }
-              }
-            }
-          }
-        });
-      } else if (libraryTab === 'solucoes') {
-        solucoes.forEach(s => {
-          if (s.area && s.area.trim()) {
-            if (!selectedTipoEmpresaFilter) {
-              addNormalized(s.area);
-            } else {
-              const prob = findAssociatedProblem(s.idProblema, s.problema);
-              const sType = s.tipoEmpresa || prob?.tipoEmpresa || 'Geral';
-              if (selectedTipoEmpresaFilter === 'Geral') {
-                if (normalizedMatch(sType, 'Geral')) {
-                  addNormalized(s.area);
-                }
-              } else {
-                if (normalizedMatch(sType, selectedTipoEmpresaFilter)) {
-                  addNormalized(s.area);
-                }
-              }
-            }
-          }
-        });
-      }
-
-      if (areasSet.size === 0 && !selectedTipoEmpresaFilter) {
-        allAvailableAreas.forEach(a => areasSet.add(a));
-      }
-
-      return Array.from(areasSet).sort((a, b) => a.localeCompare(b));
-    }, [problemas, premissas, solucoes, libraryTab, selectedTipoEmpresaFilter, allAvailableAreas]);
-
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-black text-slate-800 tracking-tight">Biblioteca de Conhecimento</h1>
-            <p className="text-slate-500 font-medium">GestÃ£o de Problemas e Perguntas</p>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            <input 
-              type="file" 
-              id="excel-import" 
-              className="hidden" 
-              accept=".xlsx, .xls"
-              onChange={handleImportExcel}
-            />
-            <Button variant="outline" onClick={downloadTemplate} title="Baixar modelo Excel">
-              <Download size={18} /> Modelo
-            </Button>
-            <Button variant="outline" onClick={downloadRegistros} title="Baixar dados registrados">
-              <Download size={18} /> Baixar Dados
-            </Button>
-            <Button variant="outline" onClick={() => document.getElementById('excel-import')?.click()}>
-              <Upload size={18} /> Importar Excel
-            </Button>
-            <div className="flex gap-2 flex-wrap items-center">
-              {(problemas.length > 0 || premissas.length > 0 || solucoes.length > 0) && (
-                <Button 
-                  variant="outline" 
-                  className="text-rose-700 bg-rose-50/50 border-rose-200 hover:bg-rose-100 hover:border-rose-300 transition-colors" 
-                  onClick={() => {
-                    setModalType('deleteAllBiblioteca');
-                    setIsModalOpen(true);
-                  }}
-                  title="Excluir todos os problemas, perguntas e soluÃ§Ãµes da biblioteca de uma sÃ³ vez"
-                >
-                  <Trash2 size={16} /> Limpar Toda a Biblioteca
-                </Button>
-              )}
-              {libraryTab === 'problemas' ? (
-                <>
-                  <Button variant="outline" className="text-rose-600 border-rose-100 hover:bg-rose-50" onClick={() => {
-                    setModalType('deleteAllProblemas');
-                    setIsModalOpen(true);
-                  }}>
-                    <Trash2 size={18} /> Excluir Problemas
-                  </Button>
-                  <Button onClick={() => {
-                    setModalType('createProblema');
-                    setProblemaForm({ descricao_problemas: '', area: '', impacto: '', tipoEmpresa: '', tags: [] });
-                    setIsModalOpen(true);
-                  }}>
-                    <Plus size={18} /> Novo Problema
-                  </Button>
-                </>
-                ) : libraryTab === 'premissas' ? (
-                  <>
-                    <Button variant="outline" className="text-rose-600 border-rose-100 hover:bg-rose-50" onClick={() => {
-                      setModalType('deleteAllPremissas');
-                      setIsModalOpen(true);
-                    }}>
-                      <Trash2 size={18} /> Excluir Perguntas
-                    </Button>
-                    <Button onClick={() => {
-                      setModalType('createPremissa');
-                      setPremissaForm({ idProblema: '', problema: '', pergunta: '', peso: 1, tipoEmpresa: '' });
-                      setSelectedAreaFilter('');
-                      setIsModalOpen(true);
-                    }}>
-                      <Plus size={18} /> Nova Pergunta
-                    </Button>
-                  </>
-                ) : libraryTab === 'solucoes' ? (
-                  <>
-                    <Button variant="outline" className="text-rose-600 border-rose-100 hover:bg-rose-50" onClick={() => {
-                      setModalType('deleteAllSolucoes');
-                      setIsModalOpen(true);
-                    }}>
-                      <Trash2 size={18} /> Excluir SoluÃ§Ãµes
-                    </Button>
-                    <Button onClick={() => {
-                      setModalType('createSolucao');
-                      setSolucaoForm({ idProblema: '', problema: '', area: '', solucao_recomendada: '', acoes_sugeridas: '', prazo_sugerido: '', responsavel_sugerido: '', kpis_sugeridos: '', resultado_esperado: '', comentario_sucesso: '', tipoEmpresa: '', tags: [] });
-                      setSelectedAreaFilter('');
-                      setIsModalOpen(true);
-                    }}>
-                      <Plus size={18} /> Nova SoluÃ§Ã£o
-                    </Button>
-                  </>
-                ) : libraryTab === 'areas' ? (
-                  <Button onClick={() => {
-                    setNewAreaInput('');
-                    setModalType('createArea');
-                    setIsModalOpen(true);
-                  }}>
-                    <Plus size={18} /> Nova Ãrea
-                  </Button>
-                ) : (
-                  <Button onClick={() => {
-                    setNewSegmentInput('');
-                    setModalType('createSegmento');
-                    setIsModalOpen(true);
-                  }}>
-                    <Plus size={18} /> Novo Tipo de NegÃ³cio
-                  </Button>
-                )}
-              </div>
-          </div>
-        </div>
-
-        <div className="flex border-b border-slate-200 mb-6 overflow-x-auto">
-          <button 
-            onClick={() => setLibraryTab('problemas')}
-            className={cn(
-              "px-6 py-3 font-bold text-sm transition-all border-b-2 whitespace-nowrap",
-              libraryTab === 'problemas' ? "border-emerald-600 text-emerald-600" : "border-transparent text-slate-400 hover:text-slate-600"
-            )}
-          >
-            Problemas
-          </button>
-          <button 
-            onClick={() => setLibraryTab('premissas')}
-            className={cn(
-              "px-6 py-3 font-bold text-sm transition-all border-b-2 whitespace-nowrap",
-              libraryTab === 'premissas' ? "border-emerald-600 text-emerald-600" : "border-transparent text-slate-400 hover:text-slate-600"
-            )}
-          >
-            Perguntas
-          </button>
-          <button 
-            onClick={() => setLibraryTab('solucoes')}
-            className={cn(
-              "px-6 py-3 font-bold text-sm transition-all border-b-2 whitespace-nowrap",
-              libraryTab === 'solucoes' ? "border-emerald-600 text-emerald-600" : "border-transparent text-slate-400 hover:text-slate-600"
-            )}
-          >
-            SoluÃ§Ãµes
-          </button>
-          <button 
-            onClick={() => setLibraryTab('areas')}
-            className={cn(
-              "px-6 py-3 font-bold text-sm transition-all border-b-2 whitespace-nowrap",
-              libraryTab === 'areas' ? "border-emerald-600 text-emerald-600" : "border-transparent text-slate-400 hover:text-slate-600"
-            )}
-          >
-            Ãreas
-          </button>
-          <button 
-            onClick={() => setLibraryTab('segmentos')}
-            className={cn(
-              "px-6 py-3 font-bold text-sm transition-all border-b-2 whitespace-nowrap",
-              libraryTab === 'segmentos' ? "border-emerald-600 text-emerald-600" : "border-transparent text-slate-400 hover:text-slate-600"
-            )}
-          >
-            Tipos de NegÃ³cio
-          </button>
-        </div>
-
-        {libraryTab !== 'areas' && libraryTab !== 'segmentos' && (
-          <div id="library-filter-panel" className="space-y-3 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Filtrar por Ãrea</label>
-                <select 
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-white"
-                  value={selectedAreaFilter}
-                  onChange={(e) => setSelectedAreaFilter(e.target.value)}
-                >
-                  <option value="">Todas as Ãreas</option>
-                  {uniqueLibraryAreas.map(nome => <option key={nome} value={nome}>{nome}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Filtrar por Tipo de Empresa</label>
-                <select 
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-white"
-                  value={selectedTipoEmpresaFilter}
-                  onChange={(e) => setSelectedTipoEmpresaFilter(e.target.value)}
-                >
-                  <option value="">Todos os Tipos</option>
-                  <option value="Geral">Geral (Comum a todas)</option>
-                  {allCompanyTypes.map(tipo => (
-                    <option key={tipo} value={tipo}>{tipo}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {libraryTab === 'problemas' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {problemas
-              .filter(p => !selectedAreaFilter || normalizedMatch(p.area, selectedAreaFilter))
-              .filter(p => {
-                if (!selectedTipoEmpresaFilter) return true;
-                const pType = p.tipoEmpresa || 'Geral';
-                if (selectedTipoEmpresaFilter === 'Geral') {
-                  return normalizedMatch(pType, 'Geral');
-                }
-                return normalizedMatch(pType, selectedTipoEmpresaFilter);
-              })
-              .filter(p => {
-                if (!selectedTagFilter) return true;
-                return p.tags?.some(t => normalizedMatch(t, selectedTagFilter));
-              })
-              .map((p) => (
-              <div key={p.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200 group relative flex flex-col justify-between">
-                <div>
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex flex-wrap gap-1">
-                      <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-full uppercase tracking-wider w-fit">
-                        {p.area}
-                      </span>
-                      {p.tipoEmpresa && p.tipoEmpresa !== 'Geral' && (
-                        <span className="px-3 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-full uppercase tracking-wider w-fit">
-                          {p.tipoEmpresa}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 opacity-80 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0">
-                      <button 
-                        onClick={() => {
-                          setModalType('editProblema');
-                          setModalData(p);
-                          setProblemaForm({ 
-                            descricao_problemas: p.descricao_problemas, 
-                            area: p.area, 
-                            impacto: p.impacto, 
-                            tipoEmpresa: p.tipoEmpresa || 'Geral',
-                            tags: p.tags || []
-                          });
-                          setIsModalOpen(true);
-                        }}
-                        className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-emerald-600 transition-colors cursor-pointer"
-                        title="Editar Problema"
-                      >
-                        <FileText size={15} />
-                      </button>
-                      <button 
-                        onClick={() => {
-                          setModalType('deleteProblema');
-                          setModalData(p);
-                          setIsModalOpen(true);
-                        }}
-                        className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-                        title="Excluir Problema"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                  </div>
-                  <h3 className="font-bold text-slate-800 mb-2">{p.descricao_problemas}</h3>
-                  <div className="space-y-1">
-                    <p className="text-xs text-slate-500 font-medium uppercase tracking-tight">Impacto: <span className="text-rose-500">{p.impacto}</span></p>
-                  </div>
-                </div>
-
-                {p.tags && p.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-4 pt-2.5 border-t border-slate-100">
-                    {p.tags.map(tag => (
-                      <span key={tag} className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200/60 rounded-md text-[10px] font-bold flex items-center gap-1">
-                        <Tag size={10} className="text-emerald-600" />
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-            {problemas
-              .filter(p => !selectedAreaFilter || normalizedMatch(p.area, selectedAreaFilter))
-              .filter(p => {
-                if (!selectedTipoEmpresaFilter) return true;
-                const pType = p.tipoEmpresa || 'Geral';
-                if (selectedTipoEmpresaFilter === 'Geral') return normalizedMatch(pType, 'Geral');
-                return normalizedMatch(pType, selectedTipoEmpresaFilter);
-              })
-              .filter(p => {
-                if (!selectedTagFilter) return true;
-                return p.tags?.some(t => normalizedMatch(t, selectedTagFilter));
-              }).length === 0 && (
-              <div className="col-span-full py-12 text-center border-2 border-dashed border-slate-100 rounded-2xl">
-                <p className="text-slate-400">Nenhum problema encontrado para os filtros selecionados.</p>
-              </div>
-            )}
-          </div>
-        ) : libraryTab === 'premissas' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {(() => {
-              const seenQuestions = new Set<string>();
-              const filteredPremissas = premissas
-                .filter(p => {
-                  if (!selectedAreaFilter) return true;
-                  const prob = findAssociatedProblem(p.idProblema, p.problema);
-                  return normalizedMatch(prob?.area, selectedAreaFilter);
-                })
-                .filter(p => {
-                  if (!selectedTipoEmpresaFilter) return true;
-                  const prob = findAssociatedProblem(p.idProblema, p.problema);
-                  const pType = p.tipoEmpresa || prob?.tipoEmpresa || 'Geral';
-                  if (selectedTipoEmpresaFilter === 'Geral') {
-                    return normalizedMatch(pType, 'Geral');
-                  }
-                  return normalizedMatch(pType, selectedTipoEmpresaFilter);
-                })
-                .filter(p => {
-                  if (!selectedTagFilter) return true;
-                  const prob = findAssociatedProblem(p.idProblema, p.problema);
-                  return prob?.tags?.some(t => normalizedMatch(t, selectedTagFilter));
-                })
-                .filter(p => {
-                  const normQ = (p.pergunta || '').trim().toLowerCase();
-                  if (normQ && seenQuestions.has(normQ)) return false;
-                  if (normQ) seenQuestions.add(normQ);
-                  return true;
-                });
-
-              return filteredPremissas.map((p) => {
-                const associatedProb = findAssociatedProblem(p.idProblema, p.problema);
-                return (
-                  <div key={p.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200 group relative flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex gap-1 flex-wrap">
-                            {associatedProb && (
-                              <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-full uppercase tracking-wider w-fit">
-                                {associatedProb.area}
-                              </span>
-                            )}
-                            {(p.tipoEmpresa || associatedProb?.tipoEmpresa) && (p.tipoEmpresa || associatedProb?.tipoEmpresa) !== 'Geral' && (
-                              <span className="px-3 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-full uppercase tracking-wider w-fit">
-                                {p.tipoEmpresa || associatedProb?.tipoEmpresa}
-                              </span>
-                            )}
-                            <span 
-                              className="px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-bold rounded-full uppercase tracking-wider w-fit cursor-pointer hover:bg-emerald-100 transition-all flex items-center gap-1"
-                              title="Ver detalhes do problema"
-                              onClick={() => {
-                                const prob = findAssociatedProblem(p.idProblema, p.problema);
-                                if (prob) {
-                                  setLibraryTab('problemas');
-                                  setModalType('editProblema');
-                                  setModalData(prob);
-                                  setProblemaForm({ 
-                                    descricao_problemas: prob.descricao_problemas, 
-                                    area: prob.area, 
-                                    impacto: prob.impacto, 
-                                    tipoEmpresa: prob.tipoEmpresa || 'Geral',
-                                    tags: prob.tags || []
-                                  });
-                                  setIsModalOpen(true);
-                                }
-                              }}
-                            >
-                              {p.problema}
-                              <ExternalLink size={8} />
-                            </span>
-                          </div>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase">Peso: {p.peso}</span>
-                        </div>
-                        <div className="flex items-center gap-1 opacity-80 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0">
-                          <button 
-                            onClick={() => {
-                              setModalType('editPremissa');
-                              setModalData(p);
-                              
-                              // Handle potential ID mismatch from Excel imports
-                              let finalIdProblema = p.idProblema;
-                              let finalArea = '';
-                              
-                              const prob = findAssociatedProblem(p.idProblema, p.problema);
-                              if (prob) {
-                                finalIdProblema = prob.id;
-                                finalArea = prob.area;
-                              }
-
-                              setPremissaForm({ 
-                                idProblema: finalIdProblema, 
-                                problema: p.problema, 
-                                pergunta: p.pergunta, 
-                                peso: p.peso,
-                                tipoEmpresa: p.tipoEmpresa || 'Geral'
-                              });
-                              setSelectedAreaFilter(finalArea);
-                              setIsModalOpen(true);
-                            }}
-                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-emerald-600 transition-colors cursor-pointer"
-                            title="Editar Pergunta"
-                          >
-                            <FileText size={15} />
-                          </button>
-                          <button 
-                            onClick={() => {
-                              setModalType('deletePremissa');
-                              setModalData(p);
-                              setIsModalOpen(true);
-                            }}
-                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-                            title="Excluir Pergunta"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                      </div>
-                      <h3 className="font-bold text-slate-800 mb-2 line-clamp-2">{p.pergunta}</h3>
-                    </div>
-
-                    {associatedProb?.tags && associatedProb.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-3 pt-2.5 border-t border-slate-100">
-                        {associatedProb.tags.map(tag => (
-                          <span key={tag} className="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200/50 rounded-md text-[10px] font-bold flex items-center gap-1">
-                            <Tag size={10} className="text-emerald-600" />
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              });
-            })()}
-            {(() => {
-              const seenQuestions = new Set<string>();
-              const count = premissas.filter(p => {
-                if (!selectedAreaFilter) return true;
-                const prob = findAssociatedProblem(p.idProblema, p.problema);
-                return normalizedMatch(prob?.area, selectedAreaFilter);
-              }).filter(p => {
-                if (!selectedTipoEmpresaFilter) return true;
-                const prob = findAssociatedProblem(p.idProblema, p.problema);
-                const pType = p.tipoEmpresa || prob?.tipoEmpresa || 'Geral';
-                if (selectedTipoEmpresaFilter === 'Geral') return normalizedMatch(pType, 'Geral');
-                return normalizedMatch(pType, selectedTipoEmpresaFilter);
-              }).filter(p => {
-                if (!selectedTagFilter) return true;
-                const prob = findAssociatedProblem(p.idProblema, p.problema);
-                return prob?.tags?.some(t => normalizedMatch(t, selectedTagFilter));
-              }).filter(p => {
-                const normQ = (p.pergunta || '').trim().toLowerCase();
-                if (normQ && seenQuestions.has(normQ)) return false;
-                if (normQ) seenQuestions.add(normQ);
-                return true;
-              }).length;
-
-              return count === 0 ? (
-                <div className="col-span-full py-12 text-center border-2 border-dashed border-slate-100 rounded-2xl">
-                  <p className="text-slate-400">Nenhuma pergunta encontrada para os filtros selecionados.</p>
-                </div>
-              ) : null;
-            })()}
-          </div>
-        ) : libraryTab === 'solucoes' ? (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4">
-              {solucoes
-                .filter(s => !selectedAreaFilter || normalizedMatch(s.area, selectedAreaFilter))
-                .filter(s => {
-                  if (!selectedTipoEmpresaFilter) return true;
-                  const prob = findAssociatedProblem(s.idProblema, s.problema);
-                  const sType = s.tipoEmpresa || prob?.tipoEmpresa || 'Geral';
-                  if (selectedTipoEmpresaFilter === 'Geral') {
-                    return normalizedMatch(sType, 'Geral');
-                  }
-                  return normalizedMatch(sType, selectedTipoEmpresaFilter);
-                })
-                .filter(s => {
-                  if (!selectedTagFilter) return true;
-                  const prob = findAssociatedProblem(s.idProblema, s.problema);
-                  return s.tags?.some(t => normalizedMatch(t, selectedTagFilter)) || prob?.tags?.some(t => normalizedMatch(t, selectedTagFilter));
-                })
-                .map((s) => {
-                  const associatedProb = findAssociatedProblem(s.idProblema, s.problema);
-                  return (
-                    <div key={s.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200 group relative">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex flex-col gap-1">
-                          <div className="flex gap-1 flex-wrap">
-                            <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-full uppercase tracking-wider w-fit">
-                              {s.area}
-                            </span>
-                            {(s.tipoEmpresa || associatedProb?.tipoEmpresa) && (s.tipoEmpresa || associatedProb?.tipoEmpresa) !== 'Geral' && (
-                              <span className="px-3 py-1 bg-indigo-50 text-indigo-600 text-[10px] font-bold rounded-full uppercase tracking-wider w-fit">
-                                {s.tipoEmpresa || associatedProb?.tipoEmpresa}
-                              </span>
-                            )}
-                            <span 
-                              className="text-xs font-bold text-slate-800 uppercase cursor-pointer hover:text-emerald-600 hover:underline transition-all flex items-center gap-1"
-                              title="Ver detalhes do problema"
-                              onClick={() => {
-                                const prob = findAssociatedProblem(s.idProblema, s.problema);
-                                if (prob) {
-                                  setLibraryTab('problemas');
-                                  setModalType('editProblema');
-                                  setModalData(prob);
-                                  setProblemaForm({ 
-                                    descricao_problemas: prob.descricao_problemas, 
-                                    area: prob.area, 
-                                    impacto: prob.impacto, 
-                                    tipoEmpresa: prob.tipoEmpresa || 'Geral',
-                                    tags: prob.tags || []
-                                  });
-                                  setIsModalOpen(true);
-                                }
-                              }}
-                            >
-                              {s.problema}
-                              <ExternalLink size={10} className="opacity-50" />
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1 opacity-80 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0">
-                          <button 
-                            onClick={() => {
-                              setModalType('editSolucao');
-                              setModalData(s);
-                              setSolucaoForm({ 
-                                idProblema: s.idProblema, 
-                                problema: s.problema, 
-                                area: s.area, 
-                                solucao_recomendada: s.solucao_recomendada,
-                                acoes_sugeridas: s.acoes_sugeridas,
-                                prazo_sugerido: s.prazo_sugerido,
-                                responsavel_sugerido: s.responsavel_sugerido,
-                                kpis_sugeridos: s.kpis_sugeridos,
-                                comentario_sucesso: s.comentario_sucesso || '',
-                                tipoEmpresa: s.tipoEmpresa || 'Geral',
-                                tags: s.tags || []
-                              });
-                              setIsModalOpen(true);
-                            }}
-                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-emerald-600 transition-colors cursor-pointer"
-                            title="Editar SoluÃ§Ã£o"
-                          >
-                            <FileText size={15} />
-                          </button>
-                          <button 
-                            onClick={() => {
-                              setModalType('deleteSolucao');
-                              setModalData(s);
-                              setIsModalOpen(true);
-                            }}
-                            className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-                            title="Excluir SoluÃ§Ã£o"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">SoluÃ§Ã£o Recomendada</h4>
-                          <p className="text-sm text-slate-700 font-medium">{s.solucao_recomendada}</p>
-                          
-                          <h4 className="text-xs font-bold text-slate-400 uppercase mt-4 mb-2">AÃ§Ãµes Sugeridas</h4>
-                          <p className="text-sm text-slate-600 whitespace-pre-wrap">{s.acoes_sugeridas}</p>
-                        </div>
-                        
-                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-4">
-                          <div>
-                            <h4 className="text-[10px] font-bold text-slate-400 uppercase">ResponsÃ¡vel</h4>
-                            <p className="text-xs font-bold text-slate-700">{s.responsavel_sugerido || 'N/A'}</p>
-                          </div>
-                          <div>
-                            <h4 className="text-[10px] font-bold text-slate-400 uppercase">KPIs Sugeridos</h4>
-                            <p className="text-xs font-bold text-slate-700">{s.kpis_sugeridos || 'N/A'}</p>
-                            {s.kpis_sugeridos && (
-                              (() => {
-                                const probAnswers = respostas.filter(r => {
-                                  if (s.idProblema && r.idProblema) {
-                                    return r.idProblema === s.idProblema;
-                                  }
-                                  return normalizedMatch(r.problema, s.problema);
-                                });
-                                const totalMax = probAnswers.reduce((sum, r) => sum + (2 * (r.peso || 1)), 0);
-                                const earned = probAnswers.reduce((sum, r) => sum + (r.score || 0), 0);
-                                const pct = totalMax > 0 ? Math.round((earned / totalMax) * 100) : 0;
-                                return (
-                                  <KpiProgressBar 
-                                    percentage={pct} 
-                                    label={selectedDiagnostico ? "Atingimento Baseado nas Respostas" : "Atendimento Mapeado"} 
-                                  />
-                                );
-                              })()
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {(() => {
-                        const sTags = s.tags || [];
-                        const pTags = associatedProb?.tags || [];
-                        const combined = Array.from(new Set([...sTags, ...pTags]));
-                        if (combined.length === 0) return null;
-                        return (
-                          <div className="flex flex-wrap gap-1 mt-4 pt-3 border-t border-slate-100">
-                            {combined.map(tag => (
-                              <span key={tag} className="px-2.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200/60 rounded-md text-[10px] font-bold flex items-center gap-1">
-                                <Tag size={10} className="text-emerald-600" />
-                                #{tag}
-                              </span>
-                            ))}
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  );
-                })}
-              {solucoes.filter(s => !selectedAreaFilter || normalizedMatch(s.area, selectedAreaFilter)).filter(s => {
-                if (!selectedTipoEmpresaFilter) return true;
-                const prob = findAssociatedProblem(s.idProblema, s.problema);
-                const sType = s.tipoEmpresa || prob?.tipoEmpresa || 'Geral';
-                if (selectedTipoEmpresaFilter === 'Geral') return normalizedMatch(sType, 'Geral');
-                return normalizedMatch(sType, selectedTipoEmpresaFilter);
-              }).filter(s => {
-                if (!selectedTagFilter) return true;
-                const prob = findAssociatedProblem(s.idProblema, s.problema);
-                return s.tags?.some(t => normalizedMatch(t, selectedTagFilter)) || prob?.tags?.some(t => normalizedMatch(t, selectedTagFilter));
-              }).length === 0 && (
-                <div className="py-12 text-center border-2 border-dashed border-slate-100 rounded-2xl">
-                  <p className="text-slate-400">Nenhuma soluÃ§Ã£o encontrada para os filtros selecionados.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        ) : libraryTab === 'areas' ? (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 mb-2">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
-                  <Layers size={20} />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-800">GestÃ£o de Ãreas da Biblioteca</h3>
-                  <p className="text-xs text-slate-500">Cadastre, edite ou remova Ã¡reas organizacionais da biblioteca.</p>
-                </div>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                {allAvailableAreas.length === 0 && (
-                  <Button variant="outline" onClick={restoreDefaultAreas} title="Restaurar as 10 Ã¡reas padrÃ£o do sistema no banco de dados">
-                    <RotateCcw size={18} /> Restaurar Ãreas PadrÃ£o
-                  </Button>
-                )}
-                <Button onClick={() => {
-                  setNewAreaInput('');
-                  setModalType('createArea');
-                  setIsModalOpen(true);
-                }}>
-                  <Plus size={18} /> Nova Ãrea
-                </Button>
-              </div>
-            </div>
-
-            {allAvailableAreas.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {allAvailableAreas.map((nomeArea) => {
-                  const norm = normalizeAndFormatArea(nomeArea).toLowerCase();
-                  const probCount = problemas.filter(p => normalizeAndFormatArea(p.area).toLowerCase() === norm).length;
-                  const solCount = solucoes.filter(s => normalizeAndFormatArea(s.area).toLowerCase() === norm).length;
-
-                  return (
-                    <div key={nomeArea} className="bg-white p-5 rounded-2xl border border-slate-200/80 hover:border-slate-300 transition-all shadow-sm space-y-4">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex items-center gap-2.5">
-                          <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0">
-                            <Building2 size={16} />
-                          </div>
-                          <div>
-                            <h4 className="font-bold text-slate-800 text-sm">{nomeArea}</h4>
-                            <div className="flex items-center gap-2 text-[11px] font-medium text-slate-400 mt-0.5">
-                              <span>{probCount} problema(s)</span>
-                              <span>â€¢</span>
-                              <span>{solCount} soluÃ§Ã£o(Ãµes)</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-slate-600 border-slate-200 hover:bg-slate-50 text-xs py-1.5 px-3 font-semibold"
-                          onClick={() => {
-                            setAreaToRename(nomeArea);
-                            setNewAreaName(nomeArea);
-                            setModalType('renameArea');
-                            setIsModalOpen(true);
-                          }}
-                        >
-                          <Edit size={14} /> Editar
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-xs py-1.5 px-3 text-rose-600 border-rose-200 hover:bg-rose-50 font-semibold"
-                          onClick={() => {
-                            setAreaToDelete(nomeArea);
-                            setModalType('deleteArea');
-                            setIsModalOpen(true);
-                          }}
-                        >
-                          <Trash2 size={14} /> Excluir
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="py-12 px-6 text-center border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50 space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto">
-                  <Layers size={24} />
-                </div>
-                <div className="max-w-md mx-auto space-y-1">
-                  <h4 className="font-bold text-slate-800 text-base">Nenhuma Ã¡rea cadastrada</h4>
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    A biblioteca estÃ¡ limpa. VocÃª pode cadastrar suas prÃ³prias Ã¡reas personalizadas ou restaurar as Ã¡reas padrÃ£o a qualquer momento.
-                  </p>
-                </div>
-                <div className="flex items-center justify-center gap-3 pt-2">
-                  <Button variant="outline" onClick={restoreDefaultAreas}>
-                    <RotateCcw size={18} /> Restaurar Ãreas PadrÃ£o
-                  </Button>
-                  <Button onClick={() => {
-                    setNewAreaInput('');
-                    setModalType('createArea');
-                    setIsModalOpen(true);
-                  }}>
-                    <Plus size={18} /> Criar Primeira Ãrea
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 mb-2">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
-                  <Building2 size={20} />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-slate-800">GestÃ£o de Tipos de NegÃ³cio e Segmentos</h3>
-                  <p className="text-xs text-slate-500">Cadastre, edite ou remova tipos de negÃ³cio para categorizar empresas, diagnÃ³sticos e a biblioteca.</p>
-                </div>
-              </div>
-              <Button onClick={() => {
-                setNewSegmentInput('');
-                setModalType('createSegmento');
-                setIsModalOpen(true);
-              }}>
-                <Plus size={18} /> Novo Tipo de NegÃ³cio
-              </Button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {availableSegments.map((segmento) => {
-                const isStandard = TIPOS_EMPRESA.includes(segmento);
-                const empCount = empresas.filter(e => (e.tipoEmpresa || 'Geral').trim().toLowerCase() === segmento.trim().toLowerCase()).length;
-                const diagCount = diagnosticos.filter(d => (d.tipoEmpresa || 'Geral').trim().toLowerCase() === segmento.trim().toLowerCase()).length;
-                const probCount = problemas.filter(p => (p.tipoEmpresa || 'Geral').trim().toLowerCase() === segmento.trim().toLowerCase()).length;
-
-                return (
-                  <div key={segmento} className="bg-white p-5 rounded-2xl border border-slate-200/80 hover:border-slate-300 transition-all shadow-sm space-y-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs shrink-0">
-                          <Building2 size={16} />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-slate-800 text-sm">{segmento}</h4>
-                            {isStandard && (
-                              <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full uppercase">PadrÃ£o</span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2 text-[11px] font-medium text-slate-400 mt-0.5">
-                            <span>{empCount} empresa(s)</span>
-                            <span>â€¢</span>
-                            <span>{diagCount} diagnÃ³stico(s)</span>
-                            <span>â€¢</span>
-                            <span>{probCount} problema(s)</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {!isStandard && (
-                      <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-slate-600 border-slate-200 hover:bg-slate-50 text-xs py-1.5 px-3 font-semibold"
-                          onClick={() => {
-                            setSegmentToRename(segmento);
-                            setNewSegmentName(segmento);
-                            setModalType('renameSegmento');
-                            setIsModalOpen(true);
-                          }}
-                        >
-                          <Edit size={14} /> Editar
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-xs py-1.5 px-3 text-rose-600 border-rose-200 hover:bg-rose-50 font-semibold"
-                          onClick={() => {
-                            setSegmentToDelete(segmento);
-                            setModalType('deleteSegmento');
-                            setIsModalOpen(true);
-                          }}
-                        >
-                          <Trash2 size={14} /> Excluir
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  const updateCredenciadaStatus = async (id: string, status: 'Ativa' | 'Bloqueada') => {
-    try {
-      setEmpresasCredenciadas(prev => prev.map(c => c.id === id ? { ...c, status } : c));
-      if (user) {
-        try {
-          await updateDoc(doc(db, 'empresas_credenciadas', id), { status });
-        } catch (cloudErr) {
-          console.error("Error updating status in cloud:", cloudErr);
-        }
-      }
-      playSuccessSound();
-    } catch (error) {
-      console.error("Error updating status:", error);
-    }
-  };
-
-  const updateCredenciadaPlano = async (id: string, tipoPlano: 'Teste' | 'Mensal' | 'Anual' | 'Definitiva') => {
-    try {
-      setEmpresasCredenciadas(prev => prev.map(c => c.id === id ? { ...c, tipoPlano } : c));
-      if (user) {
-        try {
-          await updateDoc(doc(db, 'empresas_credenciadas', id), { tipoPlano });
-        } catch (cloudErr) {
-          console.error("Error updating plan in cloud:", cloudErr);
-        }
-      }
-      playSuccessSound();
-    } catch (error) {
-      console.error("Error updating plan:", error);
-    }
-  };
-
-  const updateCredenciadaDiasTeste = async (id: string, diasTeste: number) => {
-    try {
-      setEmpresasCredenciadas(prev => prev.map(c => c.id === id ? { ...c, diasTeste } : c));
-      if (user) {
-        try {
-          await updateDoc(doc(db, 'empresas_credenciadas', id), { diasTeste });
-        } catch (cloudErr) {
-          console.error("Error updating trial days in cloud:", cloudErr);
-        }
-      }
-      playSuccessSound();
-      alert(`Tempo de teste atualizado para ${diasTeste} dias com sucesso!`);
-    } catch (error) {
-      console.error("Error updating trial days:", error);
-    }
-  };
-
-  const updateCredenciadaValidade = async (id: string, validadeLicenca: string) => {
-    try {
-      setEmpresasCredenciadas(prev => prev.map(c => c.id === id ? { ...c, validadeLicenca } : c));
-      if (user) {
-        try {
-          await updateDoc(doc(db, 'empresas_credenciadas', id), { validadeLicenca });
-        } catch (cloudErr) {
-          console.error("Error updating license validity in cloud:", cloudErr);
-        }
-      }
-      playSuccessSound();
-      alert("Data de validade da licenÃ§a atualizada com sucesso!");
-    } catch (error) {
-      console.error("Error updating license validity:", error);
-    }
-  };
-
-  const handleInitializeAdminCredenciada = async () => {
-    if (!user) {
-      alert("VocÃª precisa estar autenticado no sistema.");
-      return;
-    }
-    try {
-      const q = query(collection(db, 'empresas_credenciadas'), where('ownerId', '==', user.uid));
-      const snap = await getDocs(q);
-      if (!snap.empty) {
-        alert("O registro do seu perfil jÃ¡ existe na base de dados!");
-        return;
-      }
-      const adminDoc = {
-        razaoSocial: user.displayName ? `${user.displayName} (Admin)` : 'Itamar Trairi Consultoria (Admin)',
-        consultor: user.displayName || 'Itamar Trairi',
-        email: user.email || 'itamartrairi@gmail.com',
-        dataCadastro: serverTimestamp(),
-        ownerId: user.uid,
-        status: 'Ativa',
-        tipoPlano: 'Definitiva',
-        diasTeste: 99999,
-        role: 'admin'
-      };
-      await addDoc(collection(db, 'empresas_credenciadas'), sanitizeForFirestore(adminDoc));
-      playSuccessSound();
-      alert("Registro de Administrador com LicenÃ§a Definitiva criado com sucesso na nuvem!");
-    } catch (err: any) {
-      console.error("Erro ao inicializar administrador:", err);
-      alert("Erro ao salvar no banco de dados: " + (err.message || err));
-    }
-  };
-
-  if (view === 'landing' && !user) return <LandingPage setView={setView} />;
-  if (view === 'checkout') {
-    const selectedPlan = (localStorage.getItem('selected_plan') as 'monthly' | 'annual') || 'annual';
-    return <CheckoutPage setView={setView} plan={selectedPlan} />;
-  }
-
-  // Subscription check logic
-  const checkSubscriptionExpiration = () => {
-    if (isAdmin) return { expired: false, daysLeft: 99999, plan: 'Admin' };
-    if (empresasCredenciadas.length === 0) return { expired: false, daysLeft: 99999, plan: 'Nenhum' };
-    
-    const myCredenciada = empresasCredenciadas.find(e => e.ownerId === user?.uid);
-    if (!myCredenciada) return { expired: false, daysLeft: 99999, plan: 'Nenhum' };
-
-    const plano = myCredenciada.tipoPlano || 'Teste';
-    if (plano === 'Definitiva') {
-      return { expired: false, daysLeft: 99999, plan: 'Definitiva' };
-    }
-
-    // 1. If an explicit license expiration date is set, check against it
-    if (myCredenciada.validadeLicenca) {
-      const validadeDate = myCredenciada.validadeLicenca.toDate ? myCredenciada.validadeLicenca.toDate() : new Date(myCredenciada.validadeLicenca);
-      const diffTime = validadeDate.getTime() - new Date().getTime();
-      const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return { 
-        expired: daysLeft <= 0, 
-        daysLeft: Math.max(0, daysLeft), 
-        plan: plano 
-      };
-    }
-
-    // 2. Otherwise calculate based on configured test days or standard plan limits
-    let limitDays = myCredenciada.diasTeste || (plano === 'Mensal' ? 30 : plano === 'Anual' ? 365 : 30);
-    
-    if (myCredenciada.dataCadastro) {
-      const cadastroDate = myCredenciada.dataCadastro.toDate ? myCredenciada.dataCadastro.toDate() : new Date(myCredenciada.dataCadastro);
-      const diffTime = new Date().getTime() - cadastroDate.getTime();
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      
-      const daysLeft = limitDays - diffDays;
-      return { 
-        expired: diffDays >= limitDays, 
-        daysLeft, 
-        plan: plano 
-      };
-    }
-    return { expired: false, daysLeft: 99999, plan: plano };
-  };
-
-  const subStatus = checkSubscriptionExpiration();
-  const isUserBlocked = !isAdmin && empresasCredenciadas.length > 0 && empresasCredenciadas.some(e => e.ownerId === user?.uid && e.status === 'Bloqueada');
-  const isPlanExpired = subStatus.expired;
-
-  if (isUserBlocked || isPlanExpired) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-center">
-        <Card className="max-w-md w-full p-12 shadow-2xl border-rose-100">
-          <div className="w-20 h-20 bg-rose-100 text-rose-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-inner">
-            <Lock size={40} />
-          </div>
-          <h1 className="text-3xl font-bold text-slate-800 mb-4">
-            {isPlanExpired ? `Plano ${subStatus.plan} Expirado` : "Acesso Bloqueado"}
-          </h1>
-          <p className="text-slate-500 mb-8 leading-relaxed">
-            {isPlanExpired 
-              ? `Seu plano ${subStatus.plan} expirou. Para continuar utilizando todas as funcionalidades, por favor, realize a renovaÃ§Ã£o ou assine um novo plano.`
-              : "Sua licenÃ§a de uso estÃ¡ temporariamente suspensa pelo administrador. Entre em contato com o suporte para regularizar sua situaÃ§Ã£o."}
-          </p>
-          <div className="space-y-4">
-            {isPlanExpired && (
-              <Button 
-                onClick={() => setView('checkout')}
-                className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 font-bold shadow-lg shadow-emerald-200"
-              >
-                Renovar Assinatura
-              </Button>
-            )}
-            <Button 
-              variant="outline"
-              onClick={() => signOut(auth)}
-              className="w-full h-12 border-slate-200 text-slate-600 font-bold"
-            >
-              Sair da Conta
-            </Button>
-          </div>
-        </Card>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600"></div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full p-8 text-center shadow-xl border-emerald-100">
-          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <Building2 size={32} />
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">DiagnÃ³stico Empresarial</h1>
-          <p className="text-slate-500 mb-6">
-            {authMode === 'login' ? 'FaÃ§a login para gerenciar seus clientes.' : 'Crie sua conta para comeÃ§ar.'}
-          </p>
-
-          {authError && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
-              {authError}
-            </div>
-          )}
-
-          <form onSubmit={handleEmailAuth} className="space-y-4 mb-6">
-            <div>
-              <input
-                type="email"
-                placeholder="Seu e-mail"
-                value={authEmail}
-                onChange={(e) => setAuthEmail(e.target.value)}
-                className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-left"
-                required
-              />
-            </div>
-            <div>
-              <input
-                type="password"
-                placeholder="Sua senha"
-                value={authPassword}
-                onChange={(e) => setAuthPassword(e.target.value)}
-                className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-left"
-                required
-                minLength={6}
-              />
-            </div>
-            <Button type="submit" className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-colors">
-              {authMode === 'login' ? 'Entrar' : 'Criar Conta'}
-            </Button>
-          </form>
-
-          {authMode === 'login' ? (
-            <div className="space-y-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => {
-                  setAuthMode('register');
-                  setAuthError('');
-                }} 
-                className="w-full py-3 border-emerald-200 text-emerald-700 hover:bg-emerald-50 font-semibold"
-              >
-                Cadastro de UsuÃ¡rio
-              </Button>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-slate-500">Ou continue com</span>
-                </div>
-              </div>
-
-              <Button onClick={handleGoogleLogin} variant="outline" className="w-full py-3 flex items-center justify-center gap-2">
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                </svg>
-                Google
-              </Button>
-            </div>
-          ) : (
-            <Button 
-              type="button" 
-              variant="ghost" 
-              onClick={() => {
-                setAuthMode('login');
-                setAuthError('');
-              }} 
-              className="w-full py-3 text-slate-500 hover:text-slate-800"
-            >
-              Voltar para o Login
-            </Button>
-          )}
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex min-h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden print:bg-white print:overflow-visible print:block print:h-auto print:min-h-0">
-        {/* Sidebar Overlay */}
-        {isSidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm z-40 lg:hidden"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-        )}
-
-        <Sidebar />
-
-        <main className="flex-1 h-screen overflow-y-auto relative print:h-auto print:overflow-visible print:block print:static">
-          {/* Mobile Header */}
-          <header className="lg:hidden sticky top-0 z-40 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between print:hidden">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-emerald-600 text-white rounded-lg flex items-center justify-center shadow-lg shadow-emerald-200">
-                <BarChart3 size={18} />
-              </div>
-              <div className="flex flex-col">
-                <span className="font-black text-lg tracking-tight text-slate-800 leading-none">Consultoria Pro</span>
-                <span className="text-[10px] font-bold text-emerald-600 tracking-wide mt-0.5">by ItÃ mar Gomes</span>
-              </div>
-            </div>
-            <button 
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-2 text-slate-500 hover:bg-slate-50 rounded-lg transition-colors"
-            >
-              {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </header>
-
-          <div className="max-w-7xl mx-auto p-6 lg:p-10 print:p-0 print:max-w-none">
-            {/* Top Bar - Modo de Salvamento (Nuvem vs. Local) */}
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200/60 print:hidden">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-1.5 bg-slate-200/70 p-1 rounded-xl text-xs font-bold">
-                  <button
-                    onClick={() => handleSetStorageMode('cloud')}
-                    className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer border-0 select-none",
-                      storageMode === 'cloud'
-                        ? "bg-white text-emerald-700 shadow-sm font-black"
-                        : "text-slate-600 hover:text-slate-900"
-                    )}
-                    title="Salvar e sincronizar dados online na nuvem (Firestore)"
-                  >
-                    <Cloud size={14} className={storageMode === 'cloud' ? "text-emerald-600" : "text-slate-400"} />
-                    <span>Salvar na Nuvem</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleSetStorageMode('local')}
-                    className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all cursor-pointer border-0 select-none",
-                      storageMode === 'local'
-                        ? "bg-white text-indigo-700 shadow-sm font-black"
-                        : "text-slate-600 hover:text-slate-900"
-                    )}
-                    title="Salvar dados diretamente em seu computador/navegador"
-                  >
-                    <HardDrive size={14} className={storageMode === 'local' ? "text-indigo-600" : "text-slate-400"} />
-                    <span>Salvar Localmente</span>
-                  </button>
-                </div>
-
-                {storageMode === 'local' ? (
-                  <span className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-full flex items-center gap-1.5">
-                    <HardDrive size={12} className="text-amber-600" />
-                    Modo Local (Dispositivo)
-                  </span>
-                ) : user ? (
-                  <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full flex items-center gap-1.5" title={`Sincronizado com ${user.email}`}>
-                    <Cloud size={12} className="text-emerald-600 animate-pulse" />
-                    Nuvem Conectada ({user.email})
-                  </span>
-                ) : (
-                  <span className="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2.5 py-1 rounded-full flex items-center gap-1.5">
-                    <Cloud size={12} className="text-amber-600" />
-                    Aguardando Login para Sincronizar
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleExportLocalBackup}
-                  className="text-xs font-bold border-slate-200 text-slate-700 hover:bg-slate-100 flex items-center gap-1.5 h-8 py-1 px-3"
-                  title="Baixar cÃ³pia de seguranÃ§a local (.JSON)"
-                >
-                  <Download size={13} className="text-emerald-600" />
-                  <span>Exportar Backup</span>
-                </Button>
-
-                <label className="cursor-pointer">
-                  <div className="px-3 py-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs rounded-xl flex items-center gap-1.5 h-8 transition-colors shadow-none">
-                    <Upload size={13} className="text-indigo-600" />
-                    <span>Importar Backup</span>
-                  </div>
-                  <input
-                    type="file"
-                    accept=".json"
-                    onChange={handleImportLocalBackup}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-            </div>
-            {/* Warning Banner for Client */}
-            {!isAdmin && subStatus.daysLeft <= 3 && subStatus.daysLeft >= 0 && (
-              <motion.div 
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-4 shadow-sm"
-              >
-                <div className="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <ShieldCheck size={20} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-amber-900">Sua licenÃ§a {subStatus.plan} expira em breve!</p>
-                  <p className="text-xs text-amber-700">Restam apenas {subStatus.daysLeft} dias. Renove agora para evitar o bloqueio do sistema.</p>
-                </div>
-                <Button 
-                  size="sm" 
-                  onClick={() => setView('checkout')}
-                  className="bg-amber-600 hover:bg-amber-700 text-white border-none shadow-none text-xs font-bold"
-                >
-                  Renovar Agora
-                </Button>
-              </motion.div>
-            )}
-
-            {/* Warning Banner for Admin */}
-            {isAdmin && (
-              (() => {
-                const expiringSoon = empresasCredenciadas.filter(emp => {
-                  if (emp.tipoPlano === 'Definitiva') return false;
-                  let limitDays = emp.diasTeste || (emp.tipoPlano === 'Mensal' ? 30 : emp.tipoPlano === 'Anual' ? 365 : 30);
-                  
-                  if (emp.validadeLicenca) {
-                    const validadeDate = emp.validadeLicenca.toDate ? emp.validadeLicenca.toDate() : new Date(emp.validadeLicenca);
-                    const diffDays = Math.ceil((validadeDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                    return diffDays <= 3;
-                  }
-
-                  if (emp.dataCadastro) {
-                    const cadastroDate = emp.dataCadastro.toDate ? emp.dataCadastro.toDate() : new Date(emp.dataCadastro);
-                    const diffDays = Math.floor((new Date().getTime() - cadastroDate.getTime()) / (1000 * 60 * 60 * 24));
-                    const daysLeft = limitDays - diffDays;
-                    return daysLeft <= 3;
-                  }
-                  return false;
-                });
-
-                if (expiringSoon.length > 0) {
-                  return (
-                    <motion.div 
-                      initial={{ opacity: 0, y: -20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="mb-8 p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-center gap-4 shadow-sm"
-                    >
-                      <div className="w-10 h-10 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Lock size={20} />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-bold text-rose-900">AtenÃ§Ã£o Admin: LicenÃ§as CrÃ­ticas</p>
-                        <p className="text-xs text-rose-700">Existem {expiringSoon.length} {expiringSoon.length === 1 ? 'empresa' : 'empresas'} com licenÃ§a expirada ou prestes a expirar nas prÃ³ximas 72 horas.</p>
-                      </div>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => setView('licenses')}
-                        className="text-rose-600 border-rose-200 hover:bg-rose-100 text-xs font-bold"
-                      >
-                        Gerenciar LicenÃ§as
-                      </Button>
-                    </motion.div>
-                  );
-                }
-                return null;
-              })()
-            )}
-
-            <AnimatePresence mode="wait">
-                {view === 'kanban' && (
-                <motion.div 
-                  key="kanban"
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                >
-                  <GestaoPlanoView 
-                    tarefas={tarefasPlano.filter(t => selectedDiagnostico && t.diagnosticoId === selectedDiagnostico.id)}
-                    empresas={empresas}
-                    onEdit={(t) => {
-                      setModalType('editTarefa');
-                      setModalData(t);
-                      setTarefaForm(t);
-                      setIsModalOpen(true);
-                    }}
-                    onDelete={(t) => {
-                      setModalType('deleteTarefa');
-                      setModalData(t);
-                      setIsModalOpen(true);
-                    }}
-                    onUpdateStatus={updateTarefaStatus}
-                    onUpdatePrioridade={updateTarefaPrioridade}
-                    onUploadEvidence={handleFileUpload}
-                    setTarefaForm={setTarefaForm}
-                    setModalType={setModalType}
-                    setIsModalOpen={setIsModalOpen}
-                    setModalData={setModalData}
-                    onGenerateActionPlan={generateActionPlan}
-                    generatingPlan={generatingPlan}
-                    onGeneratePDF={generatePlanoAcaoPDF}
-                    selectedDiagnostico={selectedDiagnostico}
-                    selectedEmpresa={selectedEmpresa}
-                    logoChoice={logoChoice}
-                    setLogoChoice={setLogoChoice}
-                    customLogo={customLogo}
-                    customConsultoraLogo={customConsultoraLogo}
-                    onReplicateActionPlan={replicateActionPlanFromSameActivity}
-                  />
-                </motion.div>
-              )}
-              {view === 'home' && (
-                  <motion.div 
-                    key="home"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                  >
-                    <HomeView 
-                      empresas={empresas} 
-                      diagnosticos={diagnosticos} 
-                      tarefas={tarefasPlano}
-                      problemas={problemas}
-                      setView={setView} 
-                      isAdmin={isAdmin}
-                      empresasCredenciadas={empresasCredenciadas}
-                      user={user}
-                    />
-                  </motion.div>
-                )}
-              {view === 'projects' && (
-                <motion.div 
-                  key="projects"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  <ProjectsView 
-                    empresas={empresas} 
-                    diagnosticos={diagnosticos} 
-                    tarefas={tarefasPlano}
-                    respostas={respostas}
-                    user={user}
-                    onCreateDiagnostico={createDiagnostico}
-                    onDeleteDiagnostico={deleteDiagnostico}
-                    onReplicateDiagnostico={replicateDiagnostico}
-                    setDiagnosticos={setDiagnosticos}
-                    setView={setView}
-                    setSelectedEmpresa={setSelectedEmpresa}
-                    setSelectedDiagnostico={setSelectedDiagnostico}
-                  />
-                </motion.div>
-              )}
-              {view === 'agenda' && (
-                <motion.div 
-                  key="agenda"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  <AgendaView 
-                    empresas={empresas} 
-                    diagnosticos={diagnosticos} 
-                    user={user}
-                  />
-                </motion.div>
-              )}
-              {view === 'macro-dashboard' && (
-                <motion.div 
-                  key="macro-dashboard"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  <MacroDashboardView 
-                    empresas={empresas} 
-                    diagnosticos={diagnosticos} 
-                    lastSyncSummary={lastSyncSummary}
-                    isSyncingCloud={isSyncingCloud}
-                    onOpenSmartSync={() => setIsSmartSyncModalOpen(true)}
-                    onStartSync={performSmartCloudSync}
-                    userEmail={user?.email}
-                    storageMode={storageMode}
-                  />
-                </motion.div>
-              )}
-              {view === 'disc-assessment' && (
-                <motion.div 
-                  key="disc-assessment"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  <DiscAvaliacaoView 
-                    empresas={empresas} 
-                    setView={setView}
-                  />
-                </motion.div>
-              )}
-              {view === 'maturity-assessment' && (
-                <motion.div 
-                  key="maturity-assessment"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  <MaturidadeView 
-                    empresas={empresas} 
-                    setView={setView}
-                  />
-                </motion.div>
-              )}
-              {view === 'settings' && (
-                <motion.div 
-                  key="settings"
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                >
-                  <SettingsView 
-                    customLogo={customLogo} 
-                    setCustomLogo={setCustomLogo} 
-                    customConsultoraLogo={customConsultoraLogo}
-                    setCustomConsultoraLogo={setCustomConsultoraLogo}
-                    isSystemKeyActive={isSystemKeyActive}
-                    storageMode={storageMode}
-                    setStorageMode={handleSetStorageMode}
-                    onExportLocalBackup={handleExportLocalBackup}
-                    onImportLocalBackup={handleImportLocalBackup}
-                    onOpenSmartSync={() => {
-                      if (!user) {
-                        alert("Por favor, faÃ§a login com sua conta para sincronizar seus dados com a Nuvem.");
-                        return;
-                      }
-                      setIsSmartSyncModalOpen(true);
-                    }}
-                    isSyncingCloud={isSyncingCloud}
-                    lastSyncSummary={lastSyncSummary}
-                    userEmail={user?.email}
-                  />
-                </motion.div>
-              )}
-              {view === 'licenses' && isAdmin && (
-                <motion.div 
-                  key="licenses"
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                >
-                  <LicenseManagementView 
-                    empresasCredenciadas={empresasCredenciadas}
-                    onUpdateCredenciadaStatus={updateCredenciadaStatus}
-                    onUpdateCredenciadaPlano={updateCredenciadaPlano}
-                    onUpdateCredenciadaDiasTeste={updateCredenciadaDiasTeste}
-                    onUpdateCredenciadaValidade={updateCredenciadaValidade}
-                    currentUser={user}
-                    onSyncWithAuth={async () => {
-                      if (user) {
-                        await syncUserWithCredenciada(user);
-                        alert("SincronizaÃ§Ã£o com Firebase Auth realizada com sucesso!");
-                      } else {
-                        alert("Nenhum usuÃ¡rio logado no momento.");
-                      }
-                    }}
-                    onOpenCreateModal={() => {
-                      setInputValue('');
-                      setCredenciadaForm({ tipoPlano: 'Teste', status: 'Ativa', diasTeste: 30 });
-                      setModalType('createCredenciada');
-                      setIsModalOpen(true);
-                    }}
-                    onOpenEditModal={(emp) => {
-                      setModalType('editCredenciada');
-                      setModalData(emp);
-                      setCredenciadaForm(emp);
-                      setIsModalOpen(true);
-                    }}
-                    onOpenDeleteModal={(emp) => {
-                      setModalType('deleteCredenciada');
-                      setModalData(emp);
-                      setIsModalOpen(true);
-                    }}
-                    onInitializeAdmin={handleInitializeAdminCredenciada}
-                  />
-                </motion.div>
-              )}
-              {view === 'licensing' && isAdmin && (
-                <motion.div 
-                  key="licensing-data"
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                >
-                  <LicensingDataView setView={setView} />
-                </motion.div>
-              )}
-              {view === 'credenciadas' && (
-                <motion.div 
-                  key="credenciadas"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-                    <div>
-                      <h2 className="text-2xl font-bold">Empresas Credenciadas</h2>
-                      <p className="text-slate-500">Gerencie as empresas credenciadas para consultoria</p>
-                    </div>
-                    <Button onClick={() => {
-                      setInputValue('');
-                      setCredenciadaForm({});
-                      setModalType('createCredenciada');
-                      setIsModalOpen(true);
-                    }}>
-                      <Plus size={18} /> Nova Credenciada
-                    </Button>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {empresasCredenciadas.map(emp => (
-                      <Card key={emp.id} className="hover:border-emerald-200 transition-colors group">
-                        <div className="p-5">
-                          <div className="flex items-start justify-between mb-4">
-                            <div className="w-10 h-10 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
-                              <Building2 size={20} />
-                            </div>
-                            <div className="flex gap-1">
-                              <Button variant="ghost" className="p-1 text-slate-400 hover:text-emerald-500" onClick={(e: any) => {
-                                e.stopPropagation();
-                                setModalType('editCredenciada');
-                                setModalData(emp);
-                                setCredenciadaForm(emp);
-                                setIsModalOpen(true);
-                              }}>
-                                <FileText size={16} />
-                              </Button>
-                              <Button variant="ghost" className="p-1 text-slate-400 hover:text-rose-500" onClick={(e: any) => {
-                                e.stopPropagation();
-                                setModalType('deleteCredenciada');
-                                setModalData(emp);
-                                setIsModalOpen(true);
-                              }}>
-                                <Trash2 size={16} />
-                              </Button>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-bold text-lg">{emp.razaoSocial}</h3>
-                            <span className={`px-2 py-0.5 rounded-full text-[8px] font-bold uppercase ${
-                              emp.status === 'Ativa' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'
-                            }`}>
-                              {emp.status || 'Ativa'}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-400 mb-4">
-                            Cadastrada em {formatFirestoreDate(emp.dataCadastro)}
-                          </p>
-                        </div>
-                      </Card>
-                    ))}
-                    {empresasCredenciadas.length === 0 && (
-                      <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 rounded-xl">
-                        <Building2 size={48} className="mx-auto text-slate-200 mb-4" />
-                        <p className="text-slate-400">Nenhuma empresa credenciada cadastrada ainda.</p>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-              {view === 'companies' && (
-                <motion.div 
-                  key="companies"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-                    <div>
-                      <h2 className="text-2xl font-bold">Empresas</h2>
-                      <p className="text-slate-500">Gerencie sua carteira de clientes</p>
-                    </div>
-                    <Button onClick={() => {
-                      setInputValue('');
-                      setModalType('create');
-                      setCustomEmpresaType('');
-                      setEmpresaForm({ tipoEmpresa: 'Geral' });
-                      setIsModalOpen(true);
-                    }}>
-                      <Plus size={18} /> Nova Empresa
-                    </Button>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {empresas.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(emp => (
-                      <motion.div
-                        key={emp.id}
-                        whileHover={{ y: -4, boxShadow: "0 12px 24px -6px rgba(0, 0, 0, 0.08), 0 4px 8px -4px rgba(0, 0, 0, 0.04)" }}
-                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                        className="rounded-2xl h-full flex flex-col"
-                      >
-                        <Card className="hover:border-emerald-200 transition-colors cursor-pointer group h-full flex flex-col justify-between" onClick={() => { setSelectedEmpresa(emp); }}>
-                          <div className="p-5">
-                            <div className="flex items-start justify-between mb-4">
-                              <div className="w-10 h-10 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
-                                <Building2 size={20} />
-                              </div>
-                              <div className="flex gap-1">
-                                <Button variant="ghost" className="p-1 text-slate-400 hover:text-emerald-500" onClick={(e: any) => {
-                                  e.stopPropagation();
-                                  setModalType('edit');
-                                  setModalData(emp);
-                                  setEmpresaForm({ ...emp, razaoSocial: emp.razaoSocial || emp.nome, tipoEmpresa: emp.tipoEmpresa || 'Geral', cafNumero: emp.cafNumero || '' });
-                                  if (emp.tipoEmpresa && !TIPOS_EMPRESA.includes(emp.tipoEmpresa)) {
-                                    setCustomEmpresaType(emp.tipoEmpresa);
-                                  } else {
-                                    setCustomEmpresaType('');
-                                  }
-                                  setIsModalOpen(true);
-                                }}>
-                                  <FileText size={16} />
-                                </Button>
-                                <Button variant="ghost" className="p-1 text-slate-400 hover:text-rose-500" onClick={(e: any) => {
-                                  e.stopPropagation();
-                                  setModalType('delete');
-                                  setModalData(emp);
-                                  setIsModalOpen(true);
-                                }}>
-                                  <Trash2 size={16} />
-                                </Button>
-                              </div>
-                            </div>
-                            <h3 className="font-bold text-lg mb-1">{emp.nome}</h3>
-                            <div className="flex items-center gap-2 mb-4 flex-wrap">
-                              <p className="text-xs text-slate-400">
-                                Cadastrada em {formatFirestoreDate(emp.dataCadastro)}
-                              </p>
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-50 text-slate-500 rounded text-[10px] font-bold uppercase tracking-wider border border-slate-150">
-                                {emp.tipoEmpresa || 'Geral'}
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setModalData(emp);
-                                    setSelectedEmpresa(emp);
-                                    const seg = emp.tipoEmpresa || 'Geral';
-                                    setSelectedSegmentForEdit(seg);
-                                    setCustomSegmentForEdit(!TIPOS_EMPRESA.includes(seg) ? seg : '');
-                                    setEditSegmentTarget('empresa');
-                                    setIsEditSegmentModalOpen(true);
-                                  }}
-                                  className="hover:text-emerald-600 hover:bg-slate-250/30 p-0.5 rounded cursor-pointer border-none flex items-center justify-center transition-all"
-                                  title="Editar Tipo de NegÃ³cio"
-                                >
-                                  <Edit2 size={10} />
-                                </button>
-                              </span>
-                            </div>
-
-                            <div className="space-y-1 mb-2">
-                              {emp.cnpj && (
-                                <p className="text-xs font-medium text-slate-500 flex items-center gap-1">
-                                  <span className="font-bold text-slate-400 uppercase text-[9px]">CNPJ:</span> {emp.cnpj}
-                                </p>
-                              )}
-                              {emp.cafNumero && (
-                                <p className="text-xs font-medium text-slate-500 flex items-center gap-1">
-                                  <span className="font-bold text-slate-400 uppercase text-[9px]">CAF:</span> {emp.cafNumero}
-                                </p>
-                              )}
-                            </div>
-                            
-                            <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                              <Button variant="secondary" size="sm" onClick={(e: any) => {
-                                e.stopPropagation();
-                                setSelectedEmpresa(emp);
-                                setModalType('selectAreas');
-                                setModalData(emp);
-                                setDiagnosisCompanyType(emp.tipoEmpresa || 'Geral');
-                                setDiagnosisProjectName(`Projeto - ${emp.nome || ''}`);
-                                setSelectedAreasForDiagnosis([]); // Reset selection
-                                setIsModalOpen(true);
-                              }}>
-                                Novo DiagnÃ³stico
-                              </Button>
-                              <ChevronRight size={18} className="text-slate-300 group-hover:text-emerald-500 transition-colors" />
-                            </div>
-                          </div>
-                        </Card>
-                      </motion.div>
-                    ))}
-                    {empresas.length === 0 && (
-                      <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 rounded-xl">
-                        <Building2 size={48} className="mx-auto text-slate-200 mb-4" />
-                        <p className="text-slate-400">Nenhuma empresa cadastrada ainda.</p>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {empresas.length > itemsPerPage && (
-                    <div className="flex items-center justify-center gap-2 mt-8">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        disabled={currentPage === 1}
-                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                      >
-                        Anterior
-                      </Button>
-                      <span className="text-sm font-medium text-slate-500 mx-4">
-                        PÃ¡gina {currentPage} de {Math.ceil(empresas.length / itemsPerPage)}
-                      </span>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        disabled={currentPage === Math.ceil(empresas.length / itemsPerPage)}
-                        onClick={() => setCurrentPage(prev => Math.min(Math.ceil(empresas.length / itemsPerPage), prev + 1))}
-                      >
-                        PrÃ³xima
-                      </Button>
-                    </div>
-                  )}
-
-                  {selectedEmpresa && (
-                    <div className="mt-12">
-                      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-                        <div>
-                          <h3 className="text-xl font-bold text-slate-800">HistÃ³rico: {selectedEmpresa.nome}</h3>
-                          <p className="text-xs text-slate-500 mt-0.5">
-                            {diagnosticos.filter(d => d.empresaId === selectedEmpresa.id).length} diagnÃ³stico(s) registrado(s)
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {diagnosticos.filter(d => d.empresaId === selectedEmpresa.id).length > 1 && (
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="text-amber-700 bg-amber-50 hover:bg-amber-100 border-amber-200"
-                              onClick={() => {
-                                if (confirm(`Deseja remover as repetiÃ§Ãµes e manter apenas o diagnÃ³stico principal mais recente de ${selectedEmpresa.nome}?`)) {
-                                  cleanDuplicateDiagnosticosForEmpresa(selectedEmpresa.id);
-                                }
-                              }}
-                              title="Remove diagnÃ³sticos duplicados deste cliente mantendo o principal"
-                            >
-                              <RefreshCw size={14} className="mr-1.5" /> Limpar DiagnÃ³sticos Repetidos
-                            </Button>
-                          )}
-                          <Button variant="outline" onClick={() => setSelectedEmpresa(null)}>Fechar</Button>
-                        </div>
-                      </div>
-                      <div className="space-y-3">
-                        {diagnosticos.filter(d => d.empresaId === selectedEmpresa.id).map((diag, diagIdx) => (
-                          <motion.div
-                            key={diag.id || `diag-${diagIdx}`}
-                            whileHover={{ y: -3, boxShadow: "0 8px 16px -4px rgba(0, 0, 0, 0.08)" }}
-                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                            className="rounded-xl overflow-hidden"
-                          >
-                            <Card className="flex items-center justify-between p-4 hover:bg-slate-50 cursor-pointer transition-colors hover:border-emerald-200" onClick={() => { setSelectedDiagnostico(diag); setView('diagnosis'); }}>
-                              <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center shrink-0">
-                                  <History size={18} />
-                                </div>
-                                <div>
-                                  <p className="font-medium text-slate-800 flex items-center gap-2">
-                                    <span>{diag.nomeProjeto || diag.nome || 'DiagnÃ³stico Realizado'}</span>
-                                    {diagIdx === 0 && diagnosticos.filter(d => d.empresaId === selectedEmpresa.id).length > 1 && (
-                                      <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">Principal</span>
-                                    )}
-                                  </p>
-                                  <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
-                                    <span>{formatFirestoreDate(diag.dataDiagnostico, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setDiagToEditDate(diag);
-                                        setIsEditDateModalOpen(true);
-                                      }}
-                                      className="text-slate-400 hover:text-emerald-600 p-0.5 rounded transition-colors inline-flex items-center"
-                                      title="Alterar data deste diagnÃ³stico"
-                                    >
-                                      <Calendar size={12} />
-                                    </button>
-                                    {diag.areasDiagnostico && diag.areasDiagnostico.length > 0 && <span>â€¢ {diag.areasDiagnostico.length} Ã¡rea(s)</span>}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2" onClick={(e: any) => e.stopPropagation()}>
-                                <Button 
-                                  variant="outline" 
-                                  size="sm" 
-                                  className="text-emerald-600 border-emerald-100 hover:bg-emerald-50"
-                                  onClick={(e: any) => {
-                                    e.stopPropagation();
-                                    setSelectedDiagnostico(diag);
-                                    setView('dashboard');
-                                  }}
-                                >
-                                  <ExternalLink size={16} /> Abrir
-                                </Button>
-                                <Button variant="ghost" size="sm" onClick={(e: any) => {
-                                  e.stopPropagation();
-                                  setSelectedDiagnostico(diag);
-                                  setView('dashboard');
-                                }}>
-                                  <BarChart3 size={16} /> Dashboard
-                                </Button>
-                                {(isAdmin || !diag.ownerId || diag.ownerId === user?.uid || diag.ownerId === 'local') && (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="text-rose-500 hover:text-rose-600 hover:bg-rose-50"
-                                    onClick={(e: any) => {
-                                      e.stopPropagation();
-                                      setModalType('deleteDiagnostico');
-                                      setModalData(diag);
-                                      setIsModalOpen(true);
-                                    }}
-                                    title="Excluir este diagnÃ³stico permanentemente"
-                                  >
-                                    <Trash2 size={16} />
-                                  </Button>
-                                )}
-                                <ChevronRight size={18} className="text-slate-300" />
-                              </div>
-                            </Card>
-                          </motion.div>
-                        ))}
-                        {diagnosticos.filter(d => d.empresaId === selectedEmpresa.id).length === 0 && (
-                          <p className="text-center py-8 text-slate-400 italic">Nenhum diagnÃ³stico encontrado para esta empresa.</p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </motion.div>
-              )}
-
-              {view === 'diagnosis' && selectedDiagnostico && (
-            <motion.div 
-              key="diagnosis"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-            >
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
-                  <Button variant="ghost" onClick={() => setView('companies')}>
-                    <ArrowLeft size={18} /> Voltar
-                  </Button>
-                  <div>
-                    <h2 className="text-2xl font-bold">Realizando DiagnÃ³stico</h2>
-                    <div className="flex flex-wrap items-center gap-2 text-slate-500 mt-1">
-                      <span className="text-sm font-semibold">{selectedEmpresa?.nome}</span>
-                      <span className="text-slate-300 text-xs">â€¢</span>
-                      <span className="inline-flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 transition-colors">
-                        <Calendar size={13} className="text-emerald-600" />
-                        <span>{formatFirestoreDate(selectedDiagnostico.dataDiagnostico)}</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDiagToEditDate(selectedDiagnostico);
-                            setIsEditDateModalOpen(true);
-                          }}
-                          className="text-slate-400 hover:text-emerald-600 ml-0.5 p-0.5 rounded hover:bg-slate-200 transition-colors"
-                          title="Alterar Data do DiagnÃ³stico"
-                        >
-                          <Edit2 size={11} />
-                        </button>
-                      </span>
-                      <span className="text-slate-300 text-xs">â€¢</span>
-                      <span className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
-                        Segmento: {selectedDiagnostico.tipoEmpresa || 'Geral'}
-                        <button
-                          onClick={() => {
-                            const seg = selectedDiagnostico.tipoEmpresa || 'Geral';
-                            setSelectedSegmentForEdit(seg);
-                            setCustomSegmentForEdit(!TIPOS_EMPRESA.includes(seg) ? seg : '');
-                            setEditSegmentTarget('diagnostico');
-                            setIsEditSegmentModalOpen(true);
-                          }}
-                          className="hover:text-emerald-600 transition-colors p-0.5 rounded bg-slate-200/50 cursor-pointer flex items-center justify-center border-none"
-                          title="Editar Tipo de NegÃ³cio para este DiagnÃ³stico"
-                        >
-                          <Edit2 size={10} />
-                        </button>
-                      </span>
-                    </div>
-                    {selectedDiagnostico.areasDiagnostico && selectedDiagnostico.areasDiagnostico.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {selectedDiagnostico.areasDiagnostico.map(area => (
-                          <span key={area} className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[10px] font-bold uppercase tracking-wider border border-emerald-100">
-                            {area}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Status and Action Buttons */}
-                <div className="flex flex-wrap items-center gap-3">
-                  {/* Save Status Feedback */}
-                  <div className={cn(
-                    "flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-xs font-semibold",
-                    saveStatus === 'saved' || manualSaveSuccess
-                      ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                      : "bg-amber-50 text-amber-800 border-amber-200 animate-pulse"
-                  )}>
-                    {saveStatus === 'saving' ? (
-                      <>
-                        <RefreshCw size={14} className="animate-spin text-amber-600" />
-                        <span>Salvando alteraÃ§Ãµes...</span>
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 size={14} className="text-emerald-600" />
-                        <span>Salvamento ConcluÃ­do {lastSavedTime ? `(${lastSavedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })})` : ''}</span>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Manual Save Button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                    disabled={isManualSaving}
-                    onClick={handleManualSaveDiagnostico}
-                    title="ForÃ§ar salvamento de todas as respostas"
-                  >
-                    {isManualSaving ? (
-                      <RefreshCw size={15} className="animate-spin mr-1.5" />
-                    ) : (
-                      <Save size={15} className="mr-1.5 text-emerald-600" />
-                    )}
-                    {isManualSaving ? "Salvando..." : "Salvar Agora"}
-                  </Button>
-
-                  {/* Replicate Button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-indigo-200 text-indigo-700 hover:bg-indigo-50"
-                    onClick={() => {
-                      setReplicateSourceDiagId(selectedDiagnostico.id);
-                      setIsReplicateModalOpen(true);
-                    }}
-                    title="Replicar este diagnÃ³stico para clientes do mesmo segmento ou outros segmentos"
-                  >
-                    <Copy size={15} className="mr-1.5 text-indigo-600" /> Replicar DiagnÃ³stico
-                  </Button>
-
-                  {/* Delete Button */}
-                  {(isAdmin || selectedDiagnostico.ownerId === user?.uid) && (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="text-rose-600 border-rose-200 hover:bg-rose-50"
-                      onClick={() => {
-                        setModalType('deleteDiagnostico');
-                        setModalData(selectedDiagnostico);
-                        setIsModalOpen(true);
-                      }}
-                      title="Excluir este diagnÃ³stico e todas as suas respostas"
-                    >
-                      <Trash2 size={15} className="mr-1.5" /> Excluir DiagnÃ³stico
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              <div className="space-y-12">
-                {(() => {
-                  // 1. Deduplicate responses so every question appears only once, prioritizing answered ones
-                  const uniqueRespostas = deduplicateRespostas(respostas);
-
-                  // 2. Group deduplicated answers by Area
-                  const groupedByAreaDiag: Record<string, Resposta[]> = {};
-
-                  uniqueRespostas.forEach(resp => {
-                    const rawArea = resp.area || 'Geral';
-                    const normArea = normalizeAndFormatArea(rawArea) || rawArea;
-
-                    let matchKey = Object.keys(groupedByAreaDiag).find(
-                      k => normalizeAndFormatArea(k).toLowerCase() === normArea.toLowerCase()
-                    );
-
-                    if (!matchKey) {
-                      matchKey = normArea;
-                      groupedByAreaDiag[matchKey] = [];
-                    }
-                    groupedByAreaDiag[matchKey].push(resp);
-                  });
-
-                  // 3. Keep ONLY areas that actually have questions (resps.length > 0)
-                  const sortedAreaGroups = Object.entries(groupedByAreaDiag)
-                    .filter(([_, resps]) => resps.length > 0)
-                    .sort((a, b) => a[0].localeCompare(b[0], 'pt-BR', { sensitivity: 'base' })) as [string, Resposta[]][];
-
-                  if (sortedAreaGroups.length === 0) {
-                    return (
-                      <div className="py-12 text-center text-slate-500 font-sans">
-                        Nenhuma pergunta encontrada para este diagnÃ³stico.
-                      </div>
-                    );
-                  }
-
-                  const totalOverall = uniqueRespostas.length;
-                  const answeredOverall = uniqueRespostas.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'NÃ£o').length;
-                  const isAllPremissasAnswered = totalOverall > 0 && answeredOverall === totalOverall;
-                  const pctOverall = totalOverall > 0 ? (isAllPremissasAnswered ? 100 : Math.min(99, Math.floor((answeredOverall / totalOverall) * 100))) : 0;
-
-                  const getAreaProgress = (resps: Resposta[]) => {
-                    const total = resps.length;
-                    const answered = resps.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'NÃ£o').length;
-                    const isComplete = total > 0 && answered === total;
-                    const pct = total > 0 ? (isComplete ? 100 : Math.min(99, Math.floor((answered / total) * 100))) : 0;
-                    return { answered, total, pct, isComplete };
-                  };
-
-                  // 3. Select active area
-                  const availableAreas = sortedAreaGroups.map(group => group[0]);
-                  const currentSelectedArea = availableAreas.find(a => normalizeAndFormatArea(a).toLowerCase() === normalizeAndFormatArea(activeDiagArea).toLowerCase())
-                    || availableAreas[0] 
-                    || 'Geral';
-
-                  // 4. Get responses for active area
-                  const activeGroup = sortedAreaGroups.find(g => normalizeAndFormatArea(g[0]).toLowerCase() === normalizeAndFormatArea(currentSelectedArea).toLowerCase());
-                  const activeRespostas = activeGroup ? activeGroup[1] : [];
-
-                  // 5. Group active area responses by problema and sort them by impact
-                  const groupedByProblem = activeRespostas.reduce((acc: Record<string, Resposta[]>, resp) => {
-                    const probName = resp.problema || 'Geral';
-                    if (!acc[probName]) acc[probName] = [];
-                    acc[probName].push(resp);
-                    return acc;
-                  }, {} as Record<string, Resposta[]>);
-
-                  const sortedProblems = Object.entries(groupedByProblem).sort((a, b) => {
-                    const probA = problemas.find(p => p.descricao_problemas === a[0] || p.id === a[1][0].idProblema);
-                    const probB = problemas.find(p => p.descricao_problemas === b[0] || p.id === b[1][0].idProblema);
-                    const impA = IMPACTO_ORDER[probA?.impacto as string] || 0;
-                    const impB = IMPACTO_ORDER[probB?.impacto as string] || 0;
-                    return impB - impA;
-                  });
-
-                  return (
-                    <div className="space-y-6">
-                      {/* Overall Progress Banner */}
-                      <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-black uppercase tracking-wider text-slate-500">Progresso Geral do DiagnÃ³stico</span>
-                            {isAllPremissasAnswered ? (
-                              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
-                                <CheckCircle2 size={12} /> 100% Preenchido
-                              </span>
-                            ) : (
-                              <span className="bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200">
-                                Faltam {totalOverall - answeredOverall} de {totalOverall} premissas
-                              </span>
-                            )}
-                          </div>
-                          <div className="w-full bg-slate-100 rounded-full h-2.5 mt-2 overflow-hidden border border-slate-200/50">
-                            <div 
-                              className={cn("h-full transition-all duration-500 rounded-full", isAllPremissasAnswered ? "bg-emerald-600" : "bg-emerald-500")}
-                              style={{ width: `${pctOverall}%` }}
-                            />
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4 text-right justify-between md:justify-end">
-                          <div>
-                            <span className="text-2xl font-black text-slate-800 font-mono">{pctOverall}%</span>
-                            <span className="text-xs text-slate-400 block font-semibold">
-                              {answeredOverall} de {totalOverall} respondidas
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                      {/* Sidebar Tabs */}
-                      <div className="lg:col-span-1 space-y-3">
-                        <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl">
-                          <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Progresso por Ãrea</h4>
-                          <div className="space-y-1.5">
-                            {sortedAreaGroups.map(([area, areaResps]) => {
-                              const prog = getAreaProgress(areaResps);
-                              const isActive = area === currentSelectedArea;
-                              return (
-                                <button
-                                  key={area}
-                                  onClick={() => setActiveDiagArea(area)}
-                                  className={cn(
-                                    "w-full text-left p-3 rounded-xl border transition-all flex flex-col gap-1.5 group cursor-pointer",
-                                    isActive
-                                      ? "bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-600/10 font-sans"
-                                      : "bg-white border-slate-100 text-slate-700 hover:bg-slate-50 hover:border-slate-200 font-sans"
-                                  )}
-                                >
-                                  <div className="flex items-center justify-between w-full">
-                                    <span className="font-bold text-sm tracking-tight">{area}</span>
-                                    <span className={cn(
-                                      "text-[10px] px-1.5 py-0.5 rounded-md font-bold font-mono",
-                                      isActive ? "bg-emerald-700 text-emerald-100" : "bg-slate-50 text-slate-500"
-                                    )}>
-                                      {prog.answered}/{prog.total}
-                                    </span>
-                                  </div>
-                                  {/* Minimalist Progress Bar */}
-                                  <div className="w-full bg-slate-200/50 rounded-full h-1 overflow-hidden">
-                                    <div 
-                                      className={cn("h-full transition-all duration-300", isActive ? "bg-white" : "bg-emerald-500")}
-                                      style={{ width: `${prog.pct}%` }}
-                                    />
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Questions Content */}
-                      <div className="lg:col-span-3 space-y-8">
-                        <div className="p-5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl flex items-center justify-between">
-                          <div>
-                            <h3 className="text-xl font-bold text-slate-800">{currentSelectedArea}</h3>
-                            <p className="text-xs text-slate-500 mt-1 font-sans">
-                              Responda as perguntas desta Ã¡rea para diagnosticar o negÃ³cio do cliente.
-                            </p>
-                          </div>
-                          {(() => {
-                            const activeResps = groupedByAreaDiag[currentSelectedArea] 
-                              || Object.entries(groupedByAreaDiag).find(([k]) => normalizeAndFormatArea(k).toLowerCase() === normalizeAndFormatArea(currentSelectedArea).toLowerCase())?.[1]
-                              || [];
-                            const prog = getAreaProgress(activeResps);
-                            return (
-                              <div className="text-right">
-                                <span className="text-2xl font-black text-emerald-600 font-mono">{prog.pct}%</span>
-                                <span className="text-xs text-slate-400 block font-semibold">ConcluÃ­do</span>
-                              </div>
-                            );
-                          })()}
-                        </div>
-
-                        <div className="space-y-12">
-                          {sortedProblems.length === 0 ? (
-                            <div className="p-8 text-center bg-slate-50 border border-slate-200/80 rounded-2xl text-slate-500 font-sans">
-                              Nenhuma pergunta vinculada para a Ã¡rea "{currentSelectedArea}".
-                            </div>
-                          ) : (
-                            sortedProblems.map(([problema, probRespostas]) => {
-                            const probData = problemas.find(p => p.descricao_problemas === problema || p.id === probRespostas[0].idProblema);
-                            const impacto = probData?.impacto || 'Baixo';
-
-                            return (
-                              <div key={problema} className="space-y-6">
-                                <div className="flex flex-col gap-2">
-                                  <div className="flex items-center gap-4">
-                                    <div className="h-px flex-1 bg-slate-200" />
-                                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">{problema}</h3>
-                                    <div className="h-px flex-1 bg-slate-200" />
-                                  </div>
-                                  <div className="flex justify-center gap-3">
-                                    <span className={cn(
-                                      "px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border",
-                                      impacto === 'Alto' ? "bg-rose-50 text-rose-600 border-rose-100" :
-                                      impacto === 'MÃ©dio' ? "bg-amber-50 text-amber-600 border-amber-100" :
-                                      "bg-emerald-50 text-emerald-600 border-emerald-100"
-                                    )}>
-                                      Impacto: {impacto}
-                                    </span>
-                                  </div>
-                                </div>
-                                
-                                <div className="grid grid-cols-1 gap-6">
-                                  {probRespostas.map(resp => (
-                                    <Card key={resp.id} className="p-6 hover:border-emerald-100 transition-colors">
-                                      <div className="flex flex-col md:flex-row md:items-start gap-6">
-                                        <div className="flex-1">
-                                          <h4 className="text-lg font-medium text-slate-800 mb-4">{resp.pergunta}</h4>
-                                          
-                                          <div className="flex flex-wrap gap-2">
-                                            <button 
-                                              onClick={async () => {
-                                                await updateResposta(resp.id, 'Sim', resp.observacao, resp.peso);
-                                                if (!resp.observacao || resp.observacao.trim() === '') {
-                                                  setGeneratingAction(resp.id);
-                                                  try {
-                                                    const feedback = await generateAIFeedback('Sim', resp.pergunta, resp.problema);
-                                                    if (feedback) {
-                                                      await updateResposta(resp.id, 'Sim', feedback, resp.peso);
-                                                      setCompletedAction(resp.id);
-                                                      setTimeout(() => {
-                                                        setCompletedAction(prev => prev === resp.id ? null : prev);
-                                                      }, 3500);
-                                                    }
-                                                  } catch (e) {
-                                                    console.warn("Erro na geraÃ§Ã£o automÃ¡tica de sugestÃ£o:", e);
-                                                  } finally {
-                                                    setGeneratingAction(null);
-                                                  }
-                                                }
-                                              }}
-                                              className={cn(
-                                                "flex-1 min-w-[100px] py-3 rounded-lg border-2 font-bold transition-all flex items-center justify-center gap-2 cursor-pointer",
-                                                resp.resposta === 'Sim' 
-                                                  ? "bg-emerald-50 border-emerald-500 text-emerald-700" 
-                                                  : "bg-white border-slate-100 text-slate-400 hover:border-emerald-200"
-                                              )}
-                                            >
-                                              <CheckCircle2 size={18} /> Sim
-                                            </button>
-                                            <button 
-                                              onClick={async () => {
-                                                await updateResposta(resp.id, 'Parcial', resp.observacao, resp.peso);
-                                                if (!resp.observacao || resp.observacao.trim() === '') {
-                                                  setGeneratingAction(resp.id);
-                                                  try {
-                                                    const feedback = await generateAIFeedback('Parcial', resp.pergunta, resp.problema);
-                                                    if (feedback) {
-                                                      await updateResposta(resp.id, 'Parcial', feedback, resp.peso);
-                                                      setCompletedAction(resp.id);
-                                                      setTimeout(() => {
-                                                        setCompletedAction(prev => prev === resp.id ? null : prev);
-                                                      }, 3500);
-                                                    }
-                                                  } catch (e) {
-                                                    console.warn("Erro na geraÃ§Ã£o automÃ¡tica de sugestÃ£o:", e);
-                                                  } finally {
-                                                    setGeneratingAction(null);
-                                                  }
-                                                }
-                                              }}
-                                              className={cn(
-                                                "flex-1 min-w-[100px] py-3 rounded-lg border-2 font-bold transition-all flex items-center justify-center gap-2 cursor-pointer",
-                                                resp.resposta === 'Parcial' 
-                                                  ? "bg-amber-50 border-amber-500 text-amber-700" 
-                                                  : "bg-white border-slate-100 text-slate-400 hover:border-amber-200"
-                                              )}
-                                            >
-                                              <AlertCircle size={18} /> Parcial
-                                            </button>
-                                            <button 
-                                              onClick={async () => {
-                                                await updateResposta(resp.id, 'NÃ£o', resp.observacao, resp.peso);
-                                                if (!resp.observacao || resp.observacao.trim() === '') {
-                                                  setGeneratingAction(resp.id);
-                                                  try {
-                                                    const feedback = await generateAIFeedback('NÃ£o', resp.pergunta, resp.problema);
-                                                    if (feedback) {
-                                                      await updateResposta(resp.id, 'NÃ£o', feedback, resp.peso);
-                                                      setCompletedAction(resp.id);
-                                                      setTimeout(() => {
-                                                        setCompletedAction(prev => prev === resp.id ? null : prev);
-                                                      }, 3500);
-                                                    }
-                                                  } catch (e) {
-                                                    console.warn("Erro na geraÃ§Ã£o automÃ¡tica de sugestÃ£o:", e);
-                                                  } finally {
-                                                    setGeneratingAction(null);
-                                                  }
-                                                }
-                                              }}
-                                              className={cn(
-                                                "flex-1 min-w-[100px] py-3 rounded-lg border-2 font-bold transition-all flex items-center justify-center gap-2 cursor-pointer",
-                                                resp.resposta === 'NÃ£o' 
-                                                  ? "bg-rose-50 border-rose-500 text-rose-700" 
-                                                  : "bg-white border-slate-100 text-slate-400 hover:border-rose-200"
-                                              )}
-                                            >
-                                              <XCircle size={18} /> NÃ£o
-                                            </button>
-                                          </div>
-                                        </div>
-
-                                        <div className="md:w-1/3">
-                                          <div className="flex items-center justify-between mb-2">
-                                            <label className="text-xs font-bold text-slate-400 uppercase block">ObservaÃ§Ãµes / SugestÃµes</label>
-                                            <button
-                                              type="button"
-                                              disabled={generatingAction === resp.id}
-                                              onClick={async () => {
-                                                setGeneratingAction(resp.id);
-                                                try {
-                                                  const ai = getAI();
-                                                  if (!ai) {
-                                                    alert("Chave API do Gemini nÃ£o configurada. Por favor, adicione sua Chave API nas ConfiguraÃ§Ãµes para usar os recursos de InteligÃªncia Artificial.");
-                                                    return;
-                                                  }
-                                                  const feedback = await generateAIFeedback(resp.resposta || 'NÃ£o', resp.pergunta, resp.problema);
-                                                  if (feedback) {
-                                                    await updateResposta(resp.id, resp.resposta || 'NÃ£o', feedback, resp.peso);
-                                                    setCompletedAction(resp.id);
-                                                    setTimeout(() => {
-                                                      setCompletedAction(prev => prev === resp.id ? null : prev);
-                                                    }, 3500);
-                                                  } else {
-                                                    alert("Falha ao gerar sugestÃ£o: Resposta vazia recebida do Gemini.");
-                                                  }
-                                                } catch (err: any) {
-                                                  alert("Falha ao gerar sugestÃ£o:\n" + (err.message || err));
-                                                } finally {
-                                                  setGeneratingAction(null);
-                                                }
-                                              }}
-                                              className={cn(
-                                                "flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-md transition-all cursor-pointer border shadow-2xs",
-                                                completedAction === resp.id
-                                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                                  : generatingAction === resp.id
-                                                  ? "bg-indigo-50 text-indigo-600 border-indigo-200"
-                                                  : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border-indigo-100"
-                                              )}
-                                              title="Gerar sugestÃµes com IA"
-                                            >
-                                              {generatingAction === resp.id ? (
-                                                <>
-                                                  <Loader2 size={10} className="animate-spin text-indigo-600" />
-                                                  <span>Gerando...</span>
-                                                </>
-                                              ) : completedAction === resp.id ? (
-                                                <>
-                                                  <CheckCircle2 size={11} className="text-emerald-600" />
-                                                  <span>SugestÃ£o Gerada!</span>
-                                                </>
-                                              ) : (
-                                                <>
-                                                  <Sparkles size={11} />
-                                                  <span>{resp.observacao ? "Regerar com IA" : "Gerar com IA"}</span>
-                                                </>
-                                              )}
-                                            </button>
-                                          </div>
-                                          <textarea 
-                                            className="w-full h-24 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all font-sans"
-                                            placeholder="Digite aqui pontos de melhoria ou use o botÃ£o 'Gerar com IA' acima..."
-                                            value={resp.observacao || ''}
-                                            onChange={(e) => updateResposta(resp.id, resp.resposta, e.target.value, resp.peso)}
-                                          />
-                                          <div className="mt-2 flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                              <label className="cursor-pointer p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-emerald-600 transition-all flex items-center gap-2 group">
-                                                <Paperclip size={16} />
-                                                <span className="text-[10px] font-bold uppercase tracking-wider hidden group-hover:block">Anexar</span>
-                                                <input 
-                                                  type="file" 
-                                                  className="hidden" 
-                                                  onChange={(e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (file) handleFileUpload(file, 'resposta', resp.id);
-                                                  }}
-                                                />
-                                              </label>
-                                              {resp.evidenciaUrl && (
-                                                <div className="flex items-center gap-1.5 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
-                                                  <ImageIcon size={12} className="text-emerald-600" />
-                                                  <span className="text-[9px] font-bold text-emerald-700 truncate max-w-[80px]">{resp.evidenciaNome || 'Img'}</span>
-                                                  <button 
-                                                    onClick={() => window.open(resp.evidenciaUrl, '_blank')}
-                                                    className="text-emerald-500 hover:text-emerald-700 cursor-pointer border-none bg-transparent"
-                                                  >
-                                                    <ExternalLink size={10} />
-                                                  </button>
-                                                  <button 
-                                                    onClick={() => handleRemoveEvidence('resposta', resp.id)}
-                                                    className="text-rose-500 hover:text-rose-700 ml-1 cursor-pointer border-none bg-transparent"
-                                                  >
-                                                    <X size={10} />
-                                                  </button>
-                                                </div>
-                                              )}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </Card>
-                                  ))}
-                                </div>
-                              </div>
-                            );
-                          })
-                        )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  );
-                })()}
-              </div>
-
-              <div className="mt-12 flex flex-col items-center justify-center gap-2">
-                <Button className="px-12 py-4 text-lg font-bold shadow-lg shadow-emerald-500/20 cursor-pointer" onClick={() => setView('dashboard')}>
-                  Finalizar e Ver Dashboard
-                </Button>
-                <p className="text-xs text-slate-400 font-medium">VocÃª pode alternar entre o DiagnÃ³stico e o Dashboard a qualquer momento.</p>
-              </div>
-            </motion.div>
-          )}
-
-          {view === 'dashboard' && selectedDiagnostico && (
-            <motion.div 
-              key="dashboard"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-                <div className="flex items-center gap-4">
-                  <Button variant="ghost" onClick={() => setView('diagnosis')}>
-                    <ArrowLeft size={18} /> Voltar
-                  </Button>
-                  <div>
-                    <h2 className="text-2xl font-bold">Dashboard de Resultados</h2>
-                    <div className="flex flex-wrap items-center gap-2 mt-1">
-                      <span className="text-sm font-semibold text-slate-700">{selectedEmpresa?.nome}</span>
-                      <span className="text-slate-300 text-xs">â€¢</span>
-                      <span className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
-                        Segmento: {selectedDiagnostico.tipoEmpresa || 'Geral'}
-                        <button
-                          onClick={() => {
-                            const seg = selectedDiagnostico.tipoEmpresa || 'Geral';
-                            setSelectedSegmentForEdit(seg);
-                            setCustomSegmentForEdit(!TIPOS_EMPRESA.includes(seg) ? seg : '');
-                            setEditSegmentTarget('diagnostico');
-                            setIsEditSegmentModalOpen(true);
-                          }}
-                          className="hover:text-emerald-600 transition-colors p-0.5 rounded bg-slate-200/50 cursor-pointer flex items-center justify-center border-none"
-                          title="Editar Tipo de NegÃ³cio para este DiagnÃ³stico"
-                        >
-                          <Edit2 size={10} />
-                        </button>
-                      </span>
-                    </div>
-                    {selectedDiagnostico.areasDiagnostico && selectedDiagnostico.areasDiagnostico.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1.5">
-                        {selectedDiagnostico.areasDiagnostico.map(area => (
-                          <span key={area} className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[10px] font-bold uppercase tracking-wider border border-emerald-100">
-                            {area}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {(isAdmin || selectedDiagnostico.ownerId === user?.uid) && (
-                    <Button 
-                      variant="outline" 
-                      className="text-rose-600 border-rose-100 hover:bg-rose-50"
-                      onClick={() => {
-                        setModalType('deleteDiagnostico');
-                        setModalData(selectedDiagnostico);
-                        setIsModalOpen(true);
-                      }}
-                    >
-                      <Trash2 size={18} /> Excluir
-                    </Button>
-                  )}
-                  <Button variant="outline" onClick={() => setView('plan')}>
-                    <Target size={18} /> Plano de AÃ§Ã£o
-                  </Button>
-                  <Button variant="outline" onClick={() => setView('cronograma')}>
-                    <Calendar size={18} /> RelatÃ³rio de Consultoria
-                  </Button>
-                  <Button variant="primary" onClick={generatePDF}>
-                    <Download size={18} /> Exportar PDF
-                  </Button>
-                </div>
-              </div>
-
-              {/* Stats Grid */}
-              {(() => {
-                const seenQ = new Set<string>();
-                const uniqueRespsDash: Resposta[] = [];
-                respostas.forEach(resp => {
-                  const normQ = (resp.pergunta || '').trim().toLowerCase();
-                  if (normQ && seenQ.has(normQ)) return;
-                  if (normQ) seenQ.add(normQ);
-                  uniqueRespsDash.push(resp);
-                });
-
-                const answeredDash = uniqueRespsDash.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'NÃ£o');
-                const totalScoreDash = answeredDash.reduce((acc, r) => acc + (r.score || 0), 0);
-                const maxScoreDash = answeredDash.reduce((acc, r) => acc + (2 * (r.peso || 1)), 0);
-                const scoreGeralPct = answeredDash.length > 0 ? Math.round((totalScoreDash / (maxScoreDash || 1)) * 100) : 0;
-
-                const countSim = uniqueRespsDash.filter(r => r.resposta === 'Sim').length;
-                const countParcial = uniqueRespsDash.filter(r => r.resposta === 'Parcial').length;
-                const countNao = uniqueRespsDash.filter(r => r.resposta === 'NÃ£o').length;
-                const countPendente = uniqueRespsDash.length - answeredDash.length;
-
-                return (
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                      <Card className="p-6 bg-emerald-600 text-white">
-                        <p className="text-emerald-100 text-sm font-medium mb-1 uppercase tracking-wider">Score Geral (Velocidade)</p>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-end gap-2">
-                            <span className="text-4xl font-bold">{scoreGeralPct}%</span>
-                            <span className="text-emerald-200 text-sm mb-1">de conformidade</span>
-                          </div>
-                          <div className="w-16 h-16 rounded-full border-4 border-emerald-300 border-l-transparent flex items-center justify-center animate-spin-slow">
-                            <div className="w-12 h-12 rounded-full border-4 border-emerald-400 border-r-transparent"></div>
-                          </div>
-                        </div>
-                      </Card>
-
-                      <Card className="p-6">
-                        <p className="text-slate-400 text-sm font-medium mb-1 uppercase tracking-wider">Total de Perguntas</p>
-                        <div className="flex items-baseline gap-2">
-                          <p className="text-4xl font-bold">{uniqueRespsDash.length}</p>
-                          <span className="text-xs text-slate-500 font-medium">({answeredDash.length} respondidas)</span>
-                        </div>
-                      </Card>
-
-                      <Card className="p-6">
-                        <p className="text-slate-400 text-sm font-medium mb-1 uppercase tracking-wider">Pontos CrÃ­ticos</p>
-                        <div className="flex items-baseline gap-2">
-                          <p className="text-4xl font-bold text-rose-500">{countNao}</p>
-                          <span className="text-xs text-slate-400 font-medium">urgÃªncias</span>
-                        </div>
-                      </Card>
-
-                      <Card className="p-6 border border-slate-100 flex flex-col justify-between bg-white shadow-sm rounded-2xl">
-                        <div>
-                          <div className="flex justify-between items-start mb-1">
-                            <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider flex items-center gap-1">
-                              <Sparkles size={12} className="text-emerald-500 animate-pulse" /> Maturidade (IA)
-                            </p>
-                          </div>
-                          {calculatingMaturity ? (
-                            <div className="flex items-center gap-2 py-2">
-                              <Loader2 className="animate-spin text-emerald-500" size={16} />
-                              <span className="text-[11px] text-slate-400">Analisando respostas com IA...</span>
-                            </div>
-                          ) : selectedDiagnostico?.nivelMaturidadeAI ? (
-                            <div className="mt-1">
-                              <p className="text-[15px] font-extrabold text-emerald-700 leading-tight">
-                                {selectedDiagnostico.nivelMaturidadeAI}
-                              </p>
-                              <p className="text-[10px] text-slate-500 mt-1 leading-snug line-clamp-2" title={selectedDiagnostico.justificativaMaturidadeAI}>
-                                {selectedDiagnostico.justificativaMaturidadeAI}
-                              </p>
-                            </div>
-                          ) : (
-                            <p className="text-[12px] font-semibold text-slate-400 mt-2">
-                              {answeredDash.length === 0 ? "Aguardando preenchimento" : "NÃ£o calculado ainda"}
-                            </p>
-                          )}
-                        </div>
-                        <div className="mt-3 pt-2 border-t border-slate-50 flex items-center justify-between gap-1">
-                          {selectedDiagnostico?.nivelMaturidadeAI && !calculatingMaturity && (
-                            <span 
-                              className="text-[9px] font-extrabold text-emerald-600 hover:underline cursor-pointer flex items-center gap-0.5"
-                              onClick={() => {
-                                setModalType('viewMaturityDetails');
-                                setModalData({
-                                  nivel: selectedDiagnostico.nivelMaturidadeAI,
-                                  justificativa: selectedDiagnostico.justificativaMaturidadeAI
-                                });
-                                setIsModalOpen(true);
-                              }}
-                            >
-                              Ver Justificativa
-                            </span>
-                          )}
-                          <button
-                            className="p-1 px-2 rounded bg-slate-50 border border-slate-200 text-[9px] font-bold flex items-center gap-1 active:scale-95 ml-auto text-slate-600 hover:text-emerald-600 hover:bg-emerald-50/50 hover:border-emerald-200"
-                            disabled={calculatingMaturity}
-                            onClick={() => calculateAndSaveMaturity(selectedDiagnostico!, uniqueRespsDash)}
-                          >
-                            <RefreshCw size={8} className={calculatingMaturity ? "animate-spin" : ""} />
-                            {selectedDiagnostico?.nivelMaturidadeAI ? "Recalcular" : "Calcular com IA"}
-                          </button>
-                        </div>
-                      </Card>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <Card className="p-6 bg-white border border-slate-100 shadow-sm rounded-2xl">
-                        <h4 className="font-bold text-slate-800 mb-6 flex items-center gap-2.5">
-                          <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
-                            <BarChart3 size={16} />
-                          </div>
-                          <span>Velocidade de ExecuÃ§Ã£o (Score por Ãrea)</span>
-                        </h4>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                          {Object.values(uniqueRespsDash.reduce((acc: any, r) => {
-                            let area = r.area;
-                            if (!area) {
-                              const prob = problemas.find(p => p.id === r.idProblema || p.descricao_problemas === r.problema);
-                              area = prob?.area || 'Geral';
-                            }
-                            const normArea = normalizeAndFormatArea(area) || area;
-                            if (!acc[normArea]) acc[normArea] = { name: normArea, score: 0, totalPeso: 0 };
-                            if (r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'NÃ£o') {
-                              acc[normArea].score += (r.score || 0);
-                              acc[normArea].totalPeso += (2 * (r.peso || 1));
-                            }
-                            return acc;
-                          }, {})).map((item: any) => {
-                            const value = item.totalPeso > 0 ? Math.round((item.score / item.totalPeso) * 100) : 0;
-                            
-                            let strokeColor = "#10b981";
-                            let badgeBg = "bg-emerald-50 text-emerald-700 border border-emerald-100/50";
-                            let levelText = "Excelente";
-
-                            if (value < 40) {
-                              strokeColor = "#f43f5e";
-                              badgeBg = "bg-rose-50 text-rose-700 border border-rose-100/50";
-                              levelText = "CrÃ­tico";
-                            } else if (value < 70) {
-                              strokeColor = "#f59e0b";
-                              badgeBg = "bg-amber-50 text-amber-700 border border-amber-100/50";
-                              levelText = "Regular";
-                            }
-
-                            return (
-                              <div key={item.name} className="flex flex-col items-center justify-between p-3.5 bg-slate-50/40 border border-slate-100 rounded-xl hover:shadow-sm hover:border-slate-200 transition-all duration-300">
-                                <div className="relative w-full max-w-[120px] aspect-[5/3] flex items-center justify-center mb-2.5">
-                                  <svg className="w-full h-full overflow-visible" viewBox="0 0 100 55">
-                                    <path 
-                                      d="M 12,48 A 38,38 0 0,1 88,48" 
-                                      stroke="#f1f5f9" 
-                                      strokeWidth="8" 
-                                      strokeLinecap="round" 
-                                      fill="none" 
-                                    />
-                                    <path 
-                                      d="M 12,48 A 38,38 0 0,1 88,48" 
-                                      stroke={strokeColor} 
-                                      strokeWidth="9.5" 
-                                      strokeLinecap="round" 
-                                      fill="none" 
-                                      strokeDasharray="119.38"
-                                      strokeDashoffset={119.38 - (value / 100) * 119.38}
-                                      style={{ transition: 'stroke-dashoffset 1s ease-out' }}
-                                    />
-                                  </svg>
-                                  <div className="absolute bottom-0 text-center flex flex-col items-center">
-                                    <span className="text-xl font-black text-slate-800 leading-none">{value}%</span>
-                                  </div>
-                                </div>
-
-                                <div className="text-center mt-1 w-full flex flex-col items-center gap-1.5">
-                                  <span className="text-xs font-bold text-slate-700 line-clamp-2 min-h-[32px] flex items-center justify-center leading-tight">{item.name}</span>
-                                  <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider", badgeBg)}>
-                                    {levelText}
-                                  </span>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </Card>
-
-                      <Card className="p-6">
-                        <h4 className="font-bold mb-6 flex items-center gap-2">
-                          <Info size={18} className="text-emerald-600" />
-                          DistribuiÃ§Ã£o de Respostas
-                        </h4>
-                        <div className="h-80">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                              <Pie
-                                data={[
-                                  { name: 'Sim', value: countSim, color: '#10b981' },
-                                  { name: 'Parcial', value: countParcial, color: '#f59e0b' },
-                                  { name: 'NÃ£o', value: countNao, color: '#ef4444' },
-                                  ...(countPendente > 0 ? [{ name: 'Pendente', value: countPendente, color: '#94a3b8' }] : [])
-                                ]}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={60}
-                                outerRadius={80}
-                                paddingAngle={5}
-                                dataKey="value"
-                              >
-                                {[
-                                  { color: '#10b981' },
-                                  { color: '#f59e0b' },
-                                  { color: '#ef4444' },
-                                  ...(countPendente > 0 ? [{ color: '#94a3b8' }] : [])
-                                ].map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={entry.color} />
-                                ))}
-                              </Pie>
-                              <Tooltip 
-                                contentStyle={{ backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid #f1f5f9' }}
-                                formatter={(value: any, name: any) => [`${value} respostas`, name]}
-                              />
-                            </PieChart>
-                          </ResponsiveContainer>
-                        </div>
-                        <div className="flex justify-center flex-wrap gap-4 mt-4">
-                          <div className="flex items-center gap-1.5 text-xs font-medium"><div className="w-3 h-3 rounded-full bg-emerald-500" /> Sim ({countSim})</div>
-                          <div className="flex items-center gap-1.5 text-xs font-medium"><div className="w-3 h-3 rounded-full bg-amber-500" /> Parcial ({countParcial})</div>
-                          <div className="flex items-center gap-1.5 text-xs font-medium"><div className="w-3 h-3 rounded-full bg-rose-500" /> NÃ£o ({countNao})</div>
-                          {countPendente > 0 && (
-                            <div className="flex items-center gap-1.5 text-xs font-medium"><div className="w-3 h-3 rounded-full bg-slate-400" /> Pendentes ({countPendente})</div>
-                          )}
-                        </div>
-                      </Card>
-                    </div>
-                  </>
-                );
-              })()}
-              {historicalData.length > 0 && (
-                <div className="mt-8">
-                  <Card className="p-6 bg-white border border-slate-100 shadow-sm rounded-2xl">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5 mb-6">
-                      <div>
-                        <h4 className="font-bold text-lg text-slate-800 flex items-center gap-2">
-                          <HistoryIcon size={20} className="text-emerald-500" />
-                          EvoluÃ§Ã£o HistÃ³rica da Maturidade
-                        </h4>
-                        <p className="text-slate-400 text-xs mt-1 font-sans">
-                          Acompanhe a trajetÃ³ria de conformidade geral da empresa com base nos diagnÃ³sticos consecutivos realizados
-                        </p>
-                      </div>
-
-                      {/* Toggle Controls */}
-                      <div className="flex bg-slate-100 p-1 rounded-xl self-start md:self-auto">
-                        <button
-                          onClick={() => setDashboardChartType('line')}
-                          className={cn(
-                            "px-4 py-1.5 rounded-lg text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-1.5",
-                            dashboardChartType === 'line' ? "bg-white text-emerald-700 shadow-sm font-extrabold" : "text-slate-500 hover:text-slate-800"
-                          )}
-                        >
-                          <span>Linha de TendÃªncia</span>
-                        </button>
-                        <button
-                          onClick={() => setDashboardChartType('bar')}
-                          className={cn(
-                            "px-4 py-1.5 rounded-lg text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-1.5",
-                            dashboardChartType === 'bar' ? "bg-white text-emerald-700 shadow-sm font-extrabold" : "text-slate-500 hover:text-slate-800"
-                          )}
-                        >
-                          <span>GrÃ¡fico de Barras</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                      {/* Metric Side Card */}
-                      <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100 flex flex-col justify-between space-y-4">
-                        <div>
-                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">MÃ©tricas de Progresso</span>
-                          
-                          <div className="space-y-4">
-                            <div>
-                              <p className="text-xs text-slate-400 font-medium font-sans">Ponto de Partida</p>
-                              <div className="flex items-baseline gap-1 mt-0.5">
-                                <span className="text-xl font-black text-slate-700">{historicalData[0]?.score}%</span>
-                                <span className="text-xs text-slate-400 font-sans">({historicalData[0]?.date})</span>
-                              </div>
-                            </div>
-
-                            <div>
-                              <p className="text-xs text-slate-400 font-medium font-sans">Ãšltima AvaliaÃ§Ã£o</p>
-                              <div className="flex items-baseline gap-1 mt-0.5">
-                                <span className="text-xl font-black text-emerald-600">{historicalData[historicalData.length - 1]?.score}%</span>
-                                <span className="text-xs text-slate-400 font-sans">({historicalData[historicalData.length - 1]?.date})</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="pt-4 border-t border-slate-200/60">
-                          <p className="text-xs text-slate-400 font-medium font-sans mb-1.5">Melhoria Obtida</p>
-                          {(() => {
-                            const growthValue = (historicalData[historicalData.length - 1]?.score || 0) - (historicalData[0]?.score || 0);
-                            if (growthValue > 0) {
-                              return (
-                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full font-black text-xs">
-                                  +{growthValue}% de evoluÃ§Ã£o
-                                </span>
-                              );
-                            } else if (growthValue < 0) {
-                              return (
-                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-rose-100 text-rose-800 rounded-full font-black text-xs">
-                                  {growthValue}% de variaÃ§Ã£o
-                                </span>
-                              );
-                            } else {
-                              return (
-                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-slate-100 text-slate-600 rounded-full font-black text-xs">
-                                  Sem variaÃ§Ã£o
-                                </span>
-                              );
-                            }
-                          })()}
-                        </div>
-                      </div>
-
-                      {/* Active Chart Component */}
-                      <div className="lg:col-span-3 h-72">
-                        <ResponsiveContainer width="100%" height="100%">
-                          {dashboardChartType === 'line' ? (
-                            <LineChart data={historicalData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
-                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                              <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
-                              <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} unit="%" domain={[0, 100]} />
-                              <Tooltip 
-                                contentStyle={{ borderRadius: '1rem', border: '1px solid #f1f5f9', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)' }}
-                                formatter={(value: any) => [`${value}%`, 'Maturidade Geral']}
-                                labelStyle={{ fontWeight: 'bold' }}
-                              />
-                              <Line 
-                                type="monotone" 
-                                dataKey="score" 
-                                name="Maturidade" 
-                                stroke="#10b981" 
-                                strokeWidth={3} 
-                                dot={{ r: 5, strokeWidth: 0, fill: '#10b981' }} 
-                                activeDot={{ r: 7, strokeWidth: 0, fill: '#059669' }} 
-                              />
-                            </LineChart>
-                          ) : (
-                            <BarChart data={historicalData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
-                              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                              <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
-                              <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} unit="%" domain={[0, 100]} />
-                              <Tooltip 
-                                cursor={{ fill: '#f8fafc' }}
-                                contentStyle={{ borderRadius: '1rem', border: '1px solid #f1f5f9', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.05)' }}
-                                formatter={(value: any) => [`${value}%`, 'Maturidade Geral']}
-                                labelStyle={{ fontWeight: 'bold' }}
-                              />
-                              <Bar dataKey="score" name="Maturidade" fill="#10b981" radius={[6, 6, 0, 0]} barSize={40} />
-                            </BarChart>
-                          )}
-                        </ResponsiveContainer>
-                      </div>
-                    </div>
-                  </Card>
-                </div>
-              )}
-
-              <div className="mt-8">
-                <h4 className="font-bold mb-4">Problemas Identificados no DiagnÃ³stico</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {(() => {
-                    const cleanResps = deduplicateRespostas(respostas);
-                    const sortedGroups = (Object.entries(cleanResps.reduce((acc: Record<string, Resposta[]>, resp) => {
-                      if (resp.resposta === 'Sim') return acc;
-                      const probName = resp.problema || 'Geral';
-                      if (!acc[probName]) acc[probName] = [];
-                      acc[probName].push(resp);
-                      return acc;
-                    }, {})) as [string, Resposta[]][]).sort((a, b) => {
-                      const probA = problemas.find(p => p.descricao_problemas === a[0] || p.id === a[1][0].idProblema);
-                      const probB = problemas.find(p => p.descricao_problemas === b[0] || p.id === b[1][0].idProblema);
-                      const impA = IMPACTO_ORDER[probA?.impacto as string] || 0;
-                      const impB = IMPACTO_ORDER[probB?.impacto as string] || 0;
-                      return impB - impA;
-                    });
-
-                    return sortedGroups.map(([problema, probRespostas]) => {
-                      const probData = problemas.find(p => p.descricao_problemas === problema || p.id === probRespostas[0].idProblema);
-                      const impacto = probData?.impacto || 'Baixo';
-                      return (
-                        <Card 
-                          key={problema} 
-                          className={cn(
-                            "p-4 border-l-4 cursor-pointer hover:shadow-md transition-all group",
-                            impacto === 'Alto' ? "border-rose-500 bg-rose-50/30" :
-                            impacto === 'MÃ©dio' ? "border-amber-500 bg-amber-50/30" :
-                            "border-emerald-500 bg-emerald-50/30"
-                          )}
-                          onClick={() => setView('kanban')}
-                        >
-                          <div className="flex items-start justify-between mb-2">
-                            <span className="font-bold text-slate-800 text-sm uppercase group-hover:text-emerald-600 transition-colors">{problema}</span>
-                            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-white border border-slate-200">
-                              {impacto}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-500 font-medium">
-                            {probRespostas.length} {probRespostas.length === 1 ? 'pergunta nÃ£o atendida' : 'perguntas nÃ£o atendidas'}
-                          </p>
-                          <div className="mt-2 text-[10px] text-emerald-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                            Ver Plano de AÃ§Ã£o <ArrowRight size={10} />
-                          </div>
-                        </Card>
-                      );
-                    });
-                  })()}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {view === 'dados-consultoria' && (
-            <motion.div 
-              key="dados-consultoria"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-            >
-              <div className="flex items-center gap-4 mb-6">
-                <Button variant="ghost" onClick={() => setView(selectedDiagnostico ? 'cronograma' : 'companies')}>
-                  <ArrowLeft size={18} /> Voltar
-                </Button>
-                <div>
-                  <h2 className="text-2xl font-bold">Dados da Consultoria Gerencial</h2>
-                  <p className="text-slate-500">{selectedEmpresa?.nome || selectedDiagnostico?.nomeEmpresa || 'Cliente'}</p>
-                </div>
-              </div>
-              <DadosConsultoriaView 
-                selectedDiagnostico={selectedDiagnostico}
-                selectedEmpresa={selectedEmpresa}
-                empresas={empresas}
-                diagnosticos={diagnosticos}
-                respostas={respostas}
-                setSelectedEmpresa={setSelectedEmpresa}
-                setSelectedDiagnostico={setSelectedDiagnostico}
-                setDiagnosticos={setDiagnosticos}
-                setView={setView}
-                playSuccessSound={playSuccessSound}
-              />
-            </motion.div>
-          )}
-
-          {view === 'cronograma' && selectedDiagnostico && (
-            <motion.div 
-              key="cronograma"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-            >
-              <div className="flex items-center gap-4 mb-8">
-                <Button variant="ghost" onClick={() => setView('dashboard')}>
-                  <ArrowLeft size={18} /> Voltar
-                </Button>
-                <div>
-                  <h2 className="text-2xl font-bold">RelatÃ³rio de Consultoria</h2>
-                  <p className="text-slate-500">{selectedEmpresa?.nome}</p>
-                </div>
-              </div>
-              <CronogramaView 
-                selectedDiagnostico={selectedDiagnostico}
-                selectedEmpresa={selectedEmpresa}
-                respostas={respostas}
-                solucoes={solucoes}
-                setSelectedDiagnostico={setSelectedDiagnostico}
-                setDiagnosticos={setDiagnosticos}
-                playSuccessSound={playSuccessSound}
-                setPdfUrl={setPdfUrl}
-                empresasCredenciadas={empresasCredenciadas}
-                setCredenciadaForm={setCredenciadaForm}
-                setModalType={setModalType}
-                setIsModalOpen={setIsModalOpen}
-                customLogo={customLogo}
-                customConsultoraLogo={customConsultoraLogo}
-                logoChoice={logoChoice}
-                setLogoChoice={setLogoChoice}
-                problemas={problemas}
-                historicalData={historicalData}
-                onGenerateActionPlan={generateActionPlan}
-                onReplicateActionPlan={replicateActionPlanFromSameActivity}
-                tarefasPlano={tarefasPlano}
-                setTarefasPlano={setTarefasPlano}
-                setView={setView}
-              />
-            </motion.div>
-          )}
-
-          {view === 'relatorio' && selectedDiagnostico && (
-            <motion.div 
-              key="relatorio"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-            >
-              <div className="flex items-center gap-4 mb-8 print:hidden">
-                <Button variant="ghost" onClick={() => setView('dashboard')}>
-                  <ArrowLeft size={18} /> Voltar
-                </Button>
-                <div>
-                  <h2 className="text-2xl font-bold">RelatÃ³rio Final</h2>
-                  <p className="text-slate-500">{selectedEmpresa?.nome}</p>
-                </div>
-              </div>
-              <RelatorioView 
-                selectedDiagnostico={selectedDiagnostico}
-                selectedEmpresa={selectedEmpresa}
-                respostas={respostas}
-                solucoes={solucoes}
-                setPdfUrl={setPdfUrl}
-                problemas={problemas}
-                tarefasPlano={tarefasPlano}
-                customLogo={customLogo}
-                customConsultoraLogo={customConsultoraLogo}
-                logoChoice={logoChoice}
-                setLogoChoice={setLogoChoice}
-                historicalData={historicalData}
-                onUpdateCronograma={async (atvs) => {
-                  try {
-                    const updatedDiag = { ...selectedDiagnostico, cronograma: atvs };
-                    setSelectedDiagnostico(updatedDiag);
-                    setDiagnosticos(prev => prev.map(d => d.id === selectedDiagnostico.id ? updatedDiag : d));
-
-                    if (user) {
-                      try {
-                        await updateDoc(doc(db, 'diagnosticos', selectedDiagnostico.id), {
-                          cronograma: atvs
-                        });
-                      } catch (cloudErr) {
-                        console.error("Error updating cronograma in cloud:", cloudErr);
-                      }
-                    }
-                  } catch (e) {
-                    console.error("Error updating kpi targets:", e);
-                  }
-                }}
-              />
-            </motion.div>
-          )}
-
-          {view === 'plan' && (
-            <motion.div 
-              key="plan"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-            >
-              <GestaoPlanoView 
-                tarefas={tarefasPlano.filter(t => selectedDiagnostico && t.diagnosticoId === selectedDiagnostico.id)}
-                empresas={empresas}
-                onEdit={(t) => { setModalData(t); setModalType('editTarefa'); setTarefaForm(t); setIsModalOpen(true); }}
-                onDelete={(t) => { setModalData(t); setModalType('deleteTarefa'); setIsModalOpen(true); }}
-                onUpdateStatus={updateTarefaStatus}
-                onUpdatePrioridade={updateTarefaPrioridade}
-                onUploadEvidence={handleFileUpload}
-                setTarefaForm={setTarefaForm}
-                setModalType={setModalType}
-                setIsModalOpen={setIsModalOpen}
-                setModalData={setModalData}
-                onGenerateActionPlan={generateActionPlan}
-                generatingPlan={generatingPlan}
-                onGeneratePDF={generatePlanoAcaoPDF}
-                selectedDiagnostico={selectedDiagnostico}
-                selectedEmpresa={selectedEmpresa}
-                logoChoice={logoChoice}
-                setLogoChoice={setLogoChoice}
-                customLogo={customLogo}
-                customConsultoraLogo={customConsultoraLogo}
-                onReplicateActionPlan={replicateActionPlanFromSameActivity}
-              />
-            </motion.div>
-          )}
-
-          {view === 'premises' && (
-            <motion.div 
-              key="premises"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-            >
-              <PremisesView />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {isModalOpen && modalType === 'confirmImportCompanyType' && (
-        <Modal
-          title="Selecionar Tipo de Empresa para ImportaÃ§Ã£o"
-          onClose={() => {
-            setIsModalOpen(false);
-            setPendingImportFile(null);
-          }}
-          onConfirm={() => {
-            if (pendingImportFile) {
-              const actualCompanyType = importCompanyType.trim();
-              processImportExcel(pendingImportFile, actualCompanyType);
-            }
-            setIsModalOpen(false);
-          }}
-          confirmText="Importar Dados"
-          disabled={!importCompanyType.trim()}
-        >
-          <div className="space-y-4">
-            <p className="text-sm text-slate-600">
-              Para qual tipo de empresa vocÃª estÃ¡ importando estes diagnÃ³sticos e perguntas?
-            </p>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Tipo de Empresa</label>
-              <select
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white"
-                value={availableSegments.includes(importCompanyType) ? importCompanyType : 'Outro'}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === 'Outro') {
-                    setImportCompanyType(customImportCompanyType || '');
-                  } else {
-                    setImportCompanyType(val);
-                  }
-                }}
-              >
-                {availableSegments.map((tipo) => (
-                  <option key={tipo} value={tipo}>{tipo}</option>
-                ))}
-                <option value="Outro">Outro...</option>
-              </select>
-              {(importCompanyType === 'Outro' || (!availableSegments.includes(importCompanyType) && importCompanyType !== '')) && (
-                <input
-                  type="text"
-                  placeholder="Especifique o tipo de empresa"
-                  className="w-full mt-2 px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-sans"
-                  value={customImportCompanyType}
-                  onChange={(e) => {
-                    const cVal = e.target.value;
-                    setCustomImportCompanyType(cVal);
-                    setImportCompanyType(cVal);
-                  }}
-                />
-              )}
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {isEditSegmentModalOpen && (
-        <Modal
-          title="Editar Tipo de NegÃ³cio / Segmento"
-          onClose={() => setIsEditSegmentModalOpen(false)}
-          onConfirm={updateSegment}
-          confirmText="Salvar AlteraÃ§Ãµes"
-          disabled={!selectedSegmentForEdit.trim()}
-        >
-          <div className="space-y-4">
-            <p className="text-sm text-slate-600">
-              Selecione o tipo de negÃ³cio / segmento deste cliente e do diagnÃ³stico. Isso facilita a categorizaÃ§Ã£o e geraÃ§Ã£o de relatÃ³rios precisos.
-            </p>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Tipo de NegÃ³cio / Segmento</label>
-              <select
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white"
-                value={availableSegments.includes(selectedSegmentForEdit) ? selectedSegmentForEdit : 'Outro'}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === 'Outro') {
-                    setSelectedSegmentForEdit(customSegmentForEdit || '');
-                  } else {
-                    setSelectedSegmentForEdit(val);
-                  }
-                }}
-              >
-                {availableSegments.map((tipo) => (
-                  <option key={tipo} value={tipo}>{tipo}</option>
-                ))}
-                <option value="Outro">Outro...</option>
-              </select>
-              {(selectedSegmentForEdit === 'Outro' || (!availableSegments.includes(selectedSegmentForEdit) && selectedSegmentForEdit !== '')) && (
-                <input
-                  type="text"
-                  placeholder="Especifique o tipo de negÃ³cio / segmento"
-                  className="w-full mt-2 px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-sans"
-                  value={customSegmentForEdit}
-                  onChange={(e) => {
-                    const cVal = e.target.value;
-                    setCustomSegmentForEdit(cVal);
-                    setSelectedSegmentForEdit(cVal);
-                  }}
-                />
-              )}
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {isModalOpen && modalType === 'selectAreas' && (
-        <Modal 
-          title="Escolher Ãreas para DiagnÃ³stico" 
-          onClose={() => !creatingDiagnosis && setIsModalOpen(false)}
-          onConfirm={async () => {
-            if (modalData?.id && !creatingDiagnosis) {
-              await createDiagnostico(modalData.id, selectedAreasForDiagnosis, diagnosisDate, diagnosisCompanyType, diagnosisProjectName);
-              setIsModalOpen(false);
-            }
-          }}
-          confirmText={creatingDiagnosis ? "Criando..." : "Iniciar DiagnÃ³stico"}
-          disabled={selectedAreasForDiagnosis.length === 0 || !diagnosisDate || !diagnosisProjectName.trim() || creatingDiagnosis}
-        >
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                <Briefcase size={16} className="text-emerald-600" />
-                Nome do Projeto
-              </label>
-              <input 
-                type="text"
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium"
-                value={diagnosisProjectName}
-                onChange={(e) => setDiagnosisProjectName(e.target.value)}
-                placeholder="Ex: DiagnÃ³stico Operacional, Projeto - Empresa X"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                <Calendar size={16} className="text-emerald-600" />
-                Data do DiagnÃ³stico
-              </label>
-              <input 
-                type="date"
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium"
-                value={diagnosisDate}
-                onChange={(e) => setDiagnosisDate(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
-                <Building2 size={16} className="text-emerald-600" />
-                Tipo de Empresa para DiagnÃ³stico (Bloqueado)
-              </label>
-              <input
-                type="text"
-                disabled
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 font-semibold cursor-not-allowed"
-                value={diagnosisCompanyType || 'Geral'}
-              />
-              <p className="text-xs text-indigo-600 mt-2 font-medium bg-indigo-50 border border-indigo-100 p-2.5 rounded-lg flex items-center gap-1.5 font-sans">
-                ðŸ’¡ <span className="font-semibold">VÃ­nculo AutomÃ¡tico:</span> O diagnÃ³stico foi travado na biblioteca do Tipo de NegÃ³cio registrado para este cliente (<span className="font-bold underline">{diagnosisCompanyType || 'Geral'}</span>).
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
-                <CheckCircle2 size={16} className="text-emerald-600" />
-                Ãreas para DiagnÃ³stico
-              </label>
-              <p className="text-xs text-slate-500 mb-4">
-                Selecione as Ã¡reas que deseja incluir neste diagnÃ³stico para a empresa <span className="font-bold text-slate-800">{modalData?.nome}</span>.
-              </p>
-              <div className="grid grid-cols-2 gap-3 font-sans">
-                {availableAreasForSelectedType.map(area => (
-                  <label 
-                    key={area.id} 
-                    className={cn(
-                      "flex items-center gap-3 p-3 rounded-xl border-2 transition-all cursor-pointer",
-                      selectedAreasForDiagnosis.includes(area.nome)
-                        ? "bg-emerald-50 border-emerald-500 text-emerald-700 font-semibold"
-                        : "bg-white border-slate-100 text-slate-600 hover:border-emerald-250 hover:bg-slate-50/30"
-                    )}
-                  >
-                    <input 
-                      type="checkbox"
-                      className="hidden"
-                      checked={selectedAreasForDiagnosis.includes(area.nome)}
-                      onChange={() => {
-                        if (selectedAreasForDiagnosis.includes(area.nome)) {
-                          setSelectedAreasForDiagnosis(selectedAreasForDiagnosis.filter(a => a !== area.nome));
-                        } else {
-                          setSelectedAreasForDiagnosis([...selectedAreasForDiagnosis, area.nome]);
-                        }
-                      }}
-                    />
-                    <div className={cn(
-                      "w-5 h-5 rounded flex items-center justify-center border transition-all duration-200",
-                      selectedAreasForDiagnosis.includes(area.nome) ? "bg-emerald-500 border-emerald-500 text-white" : "border-slate-300 bg-white"
-                    )}>
-                      {selectedAreasForDiagnosis.includes(area.nome) && <CheckCircle2 size={14} />}
-                    </div>
-                    <span className="text-sm font-medium tracking-tight text-slate-700">{area.nome}</span>
-                  </label>
-                ))}
-              </div>
-              <div className="pt-4 flex justify-between items-center">
-                <button 
-                  className="text-xs text-emerald-600 font-bold hover:underline"
-                  onClick={() => setSelectedAreasForDiagnosis(availableAreasForSelectedType.map(a => a.nome))}
-                >
-                  Selecionar Todas
-                </button>
-                <button 
-                  className="text-xs text-slate-400 font-bold hover:underline"
-                  onClick={() => setSelectedAreasForDiagnosis([])}
-                >
-                  Limpar SeleÃ§Ã£o
-                </button>
-              </div>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {isModalOpen && (modalType === 'create' || modalType === 'edit') && (
-        <Modal 
-          title={modalType === 'create' ? "Nova Empresa" : "Editar Empresa"} 
-          onClose={() => {
-            setIsModalOpen(false);
-            setEmpresaForm({});
-          }}
-          onConfirm={modalType === 'create' ? createEmpresa : editEmpresa}
-          confirmText={modalType === 'create' ? "Criar Empresa" : "Salvar AlteraÃ§Ãµes"}
-          disabled={!empresaForm.razaoSocial?.trim()}
-          size="4xl"
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-slate-700">
-            {/* LADO ESQUERDO: IdentificaÃ§Ã£o do Cliente */}
-            <div className="lg:col-span-7 space-y-4">
-              <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100/80 space-y-4">
-                <h4 className="text-xs font-black text-indigo-600 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="flex items-center justify-center w-5 h-5 bg-indigo-50 rounded-full text-indigo-600 text-[10px]">1</span>
-                  IdentificaÃ§Ã£o da Empresa
-                </h4>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">RazÃ£o Social (ObrigatÃ³rio)</label>
-                    <input 
-                      type="text" 
-                      className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
-                      value={empresaForm.razaoSocial || ''}
-                      onChange={(e) => setEmpresaForm({...empresaForm, razaoSocial: e.target.value})}
-                      autoFocus
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nome Fantasia</label>
-                      <input 
-                        type="text" 
-                        className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
-                        value={empresaForm.nomeFantasia || ''}
-                        onChange={(e) => setEmpresaForm({...empresaForm, nomeFantasia: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">CNPJ</label>
-                        {empresaForm.cnpj && cleanDigits(empresaForm.cnpj).length === 14 && (
-                          isValidCNPJ(empresaForm.cnpj) ? (
-                            <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
-                              âœ“ VÃ¡lido
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1">
-                              âœ— InvÃ¡lido
-                            </span>
-                          )
-                        )}
-                      </div>
-                      <input 
-                        type="text" 
-                        placeholder="00.000.000/0000-00"
-                        maxLength={18}
-                        className={cn(
-                          "w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 bg-white text-sm transition-all font-mono",
-                          empresaForm.cnpj && cleanDigits(empresaForm.cnpj).length === 14
-                            ? (isValidCNPJ(empresaForm.cnpj) 
-                                ? "border-emerald-300 focus:ring-emerald-500/20 focus:border-emerald-500 text-emerald-900" 
-                                : "border-rose-300 focus:ring-rose-500/20 focus:border-rose-500 text-rose-900 bg-rose-50/20")
-                            : "border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500"
-                        )}
-                        value={empresaForm.cnpj || ''}
-                        onChange={(e) => setEmpresaForm({...empresaForm, cnpj: formatCNPJ(e.target.value)})}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">NÃºmero da CAF</label>
-                      <input 
-                        type="text" 
-                        placeholder="Cadastro Atividade Florestal / Familiar"
-                        className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white placeholder-slate-300"
-                        value={empresaForm.cafNumero || ''}
-                        onChange={(e) => setEmpresaForm({...empresaForm, cafNumero: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">MÃªs/Ano de Abertura</label>
-                      <input 
-                        type="text" 
-                        className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
-                        placeholder="Ex: 05/2010"
-                        value={empresaForm.mesAnoAbertura || ''}
-                        onChange={(e) => setEmpresaForm({...empresaForm, mesAnoAbertura: e.target.value})}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tipo de NegÃ³cio / Segmento</label>
-                    <select
-                      className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
-                      value={availableSegments.includes(empresaForm.tipoEmpresa || 'Geral') ? (empresaForm.tipoEmpresa || 'Geral') : 'Outro'}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === 'Outro') {
-                          setEmpresaForm({ ...empresaForm, tipoEmpresa: customEmpresaType || '' });
-                        } else {
-                          setEmpresaForm({ ...empresaForm, tipoEmpresa: val });
-                        }
-                      }}
-                    >
-                      {availableSegments.map((tipo) => (
-                        <option key={tipo} value={tipo}>{tipo}</option>
-                      ))}
-                      <option value="Outro">Outro...</option>
-                    </select>
-                    {(empresaForm.tipoEmpresa === 'Outro' || (!availableSegments.includes(empresaForm.tipoEmpresa || 'Geral') && (empresaForm.tipoEmpresa || 'Geral') !== 'Geral')) && (
-                      <input 
-                        type="text" 
-                        className="w-full mt-2 px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-sans bg-white"
-                        placeholder="Especifique o tipo de negÃ³cio / segmento"
-                        value={customEmpresaType}
-                        onChange={(e) => {
-                          const cVal = e.target.value;
-                          setCustomEmpresaType(cVal);
-                          setEmpresaForm({ ...empresaForm, tipoEmpresa: cVal });
-                        }}
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* LADO DIREITO: Contato, EndereÃ§o e RepresentaÃ§Ã£o */}
-            <div className="lg:col-span-5 space-y-4">
-              <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100/80 space-y-4">
-                <h4 className="text-xs font-black text-indigo-600 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="flex items-center justify-center w-5 h-5 bg-indigo-50 rounded-full text-indigo-600 text-[10px]">2</span>
-                  Contato & LocalizaÃ§Ã£o
-                </h4>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">EndereÃ§o Comercial</label>
-                    <input 
-                      type="text" 
-                      className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
-                      value={empresaForm.enderecoComercial || ''}
-                      onChange={(e) => setEmpresaForm({...empresaForm, enderecoComercial: e.target.value})}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Telefone Fixo</label>
-                      <input 
-                        type="text" 
-                        className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
-                        value={empresaForm.telefoneFixo || ''}
-                        onChange={(e) => setEmpresaForm({...empresaForm, telefoneFixo: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Celular</label>
-                      <input 
-                        type="text" 
-                        className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
-                        value={empresaForm.celular || ''}
-                        onChange={(e) => setEmpresaForm({...empresaForm, celular: e.target.value})}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Email de Contato</label>
-                    <input 
-                      type="email" 
-                      className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
-                      value={empresaForm.email || ''}
-                      onChange={(e) => setEmpresaForm({...empresaForm, email: e.target.value})}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100/80 space-y-4">
-                <h4 className="text-xs font-black text-indigo-600 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="flex items-center justify-center w-5 h-5 bg-indigo-50 rounded-full text-indigo-600 text-[10px]">3</span>
-                  Representante Legal
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nome do Representante</label>
-                    <input 
-                      type="text" 
-                      className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white"
-                      value={empresaForm.representante || ''}
-                      onChange={(e) => setEmpresaForm({...empresaForm, representante: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">CPF do Representante</label>
-                      {empresaForm.cpfRepresentante && cleanDigits(empresaForm.cpfRepresentante).length === 11 && (
-                        isValidCPF(empresaForm.cpfRepresentante) ? (
-                          <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
-                            âœ“ VÃ¡lido
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1">
-                            âœ— InvÃ¡lido
-                          </span>
-                        )
-                      )}
-                    </div>
-                    <input 
-                      type="text" 
-                      placeholder="000.000.000-00"
-                      maxLength={14}
-                      className={cn(
-                        "w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 bg-white text-sm transition-all font-mono",
-                        empresaForm.cpfRepresentante && cleanDigits(empresaForm.cpfRepresentante).length === 11
-                          ? (isValidCPF(empresaForm.cpfRepresentante) 
-                              ? "border-emerald-300 focus:ring-emerald-500/20 focus:border-emerald-500 text-emerald-900" 
-                              : "border-rose-300 focus:ring-rose-500/20 focus:border-rose-500 text-rose-900 bg-rose-50/20")
-                          : "border-slate-200 focus:ring-indigo-500/20 focus:border-indigo-500"
-                      )}
-                      value={empresaForm.cpfRepresentante || ''}
-                      onChange={(e) => setEmpresaForm({...empresaForm, cpfRepresentante: formatCPF(e.target.value)})}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {isModalOpen && (modalType === 'createCredenciada' || modalType === 'editCredenciada') && (
-        <Modal 
-          title={modalType === 'createCredenciada' ? "Nova Empresa Credenciada" : "Editar Empresa Credenciada"} 
-          onClose={() => {
-            setIsModalOpen(false);
-            setCredenciadaForm({});
-          }}
-          onConfirm={modalType === 'createCredenciada' ? createCredenciada : editCredenciada}
-          confirmText={modalType === 'createCredenciada' ? "Criar Credenciada" : "Salvar AlteraÃ§Ãµes"}
-          disabled={!credenciadaForm.razaoSocial?.trim()}
-        >
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label className="block text-sm font-bold text-slate-700 mb-1">RazÃ£o Social (ObrigatÃ³rio)</label>
-                <input 
-                  type="text" 
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                  value={credenciadaForm.razaoSocial || ''}
-                  onChange={(e) => setCredenciadaForm({...credenciadaForm, razaoSocial: e.target.value})}
-                  autoFocus
-                />
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-sm font-bold text-slate-700">CNPJ</label>
-                  {credenciadaForm.cnpj && cleanDigits(credenciadaForm.cnpj).length === 14 && (
-                    isValidCNPJ(credenciadaForm.cnpj) ? (
-                      <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                        âœ“ CNPJ VÃ¡lido
-                      </span>
-                    ) : (
-                      <span className="text-xs font-bold text-rose-500 flex items-center gap-1">
-                        âœ— CNPJ InvÃ¡lido
-                      </span>
-                    )
-                  )}
-                </div>
-                <input 
-                  type="text" 
-                  placeholder="00.000.000/0000-00"
-                  maxLength={18}
-                  className={cn(
-                    "w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 font-mono text-sm transition-all",
-                    credenciadaForm.cnpj && cleanDigits(credenciadaForm.cnpj).length === 14
-                      ? (isValidCNPJ(credenciadaForm.cnpj)
-                          ? "border-emerald-300 focus:ring-emerald-500/20 focus:border-emerald-500 text-emerald-900 bg-emerald-50/10"
-                          : "border-rose-300 focus:ring-rose-500/20 focus:border-rose-500 text-rose-900 bg-rose-50/20")
-                      : "border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500"
-                  )}
-                  value={credenciadaForm.cnpj || ''}
-                  onChange={(e) => setCredenciadaForm({...credenciadaForm, cnpj: formatCNPJ(e.target.value)})}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Email</label>
-                <input 
-                  type="email" 
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                  value={credenciadaForm.email || ''}
-                  onChange={(e) => setCredenciadaForm({...credenciadaForm, email: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Telefone Fixo</label>
-                <input 
-                  type="text" 
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                  value={credenciadaForm.telefoneFixo || ''}
-                  onChange={(e) => setCredenciadaForm({...credenciadaForm, telefoneFixo: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Celular</label>
-                <input 
-                  type="text" 
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                  value={credenciadaForm.celular || ''}
-                  onChange={(e) => setCredenciadaForm({...credenciadaForm, celular: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Nome do Consultor</label>
-                <input 
-                  type="text" 
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                  value={credenciadaForm.consultor || ''}
-                  onChange={(e) => setCredenciadaForm({...credenciadaForm, consultor: e.target.value})}
-                />
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-sm font-bold text-slate-700">CPF do Consultor</label>
-                  {credenciadaForm.cpfConsultor && cleanDigits(credenciadaForm.cpfConsultor).length === 11 && (
-                    isValidCPF(credenciadaForm.cpfConsultor) ? (
-                      <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                        âœ“ CPF VÃ¡lido
-                      </span>
-                    ) : (
-                      <span className="text-xs font-bold text-rose-500 flex items-center gap-1">
-                        âœ— CPF InvÃ¡lido
-                      </span>
-                    )
-                  )}
-                </div>
-                <input 
-                  type="text" 
-                  placeholder="000.000.000-00"
-                  maxLength={14}
-                  className={cn(
-                    "w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 font-mono text-sm transition-all",
-                    credenciadaForm.cpfConsultor && cleanDigits(credenciadaForm.cpfConsultor).length === 11
-                      ? (isValidCPF(credenciadaForm.cpfConsultor)
-                          ? "border-emerald-300 focus:ring-emerald-500/20 focus:border-emerald-500 text-emerald-900 bg-emerald-50/10"
-                          : "border-rose-300 focus:ring-rose-500/20 focus:border-rose-500 text-rose-900 bg-rose-50/20")
-                      : "border-slate-200 focus:ring-emerald-500/20 focus:border-emerald-500"
-                  )}
-                  value={credenciadaForm.cpfConsultor || ''}
-                  onChange={(e) => setCredenciadaForm({...credenciadaForm, cpfConsultor: formatCPF(e.target.value)})}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Tipo de Plano</label>
-                <select 
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white"
-                  value={credenciadaForm.tipoPlano || 'Teste'}
-                  onChange={(e) => setCredenciadaForm({...credenciadaForm, tipoPlano: e.target.value as 'Teste' | 'Mensal' | 'Anual' | 'Definitiva'})}
-                >
-                  <option value="Teste">Teste Gratuito</option>
-                  <option value="Mensal">Mensal (30 dias)</option>
-                  <option value="Anual">Anual (365 dias)</option>
-                  <option value="Definitiva">â­ Definitiva (VitalÃ­cia / Ilimitada)</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">PerÃ­odo de Teste (Dias)</label>
-                <input 
-                  type="number" 
-                  min="1"
-                  max="999"
-                  placeholder="Ex: 30, 45, 60, 90"
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                  value={credenciadaForm.diasTeste !== undefined ? credenciadaForm.diasTeste : 30}
-                  onChange={(e) => setCredenciadaForm({...credenciadaForm, diasTeste: parseInt(e.target.value, 10) || 30})}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">Status do Acesso</label>
-                <select 
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white"
-                  value={credenciadaForm.status || 'Ativa'}
-                  onChange={(e) => setCredenciadaForm({...credenciadaForm, status: e.target.value as 'Ativa' | 'Bloqueada'})}
-                >
-                  <option value="Ativa">Ativa (Acesso Liberado)</option>
-                  <option value="Bloqueada">Bloqueada (Acesso Suspenso)</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {isModalOpen && modalType === 'deleteCredenciada' && (
-        <Modal 
-          title="Excluir Empresa Credenciada" 
-          onClose={() => {
-            setIsModalOpen(false);
-            setModalType(null);
-            setModalData(null);
-          }}
-          onConfirm={async () => {
-            if (modalData?.id) {
-              const targetId = modalData.id;
-              setEmpresasCredenciadas(prev => prev.filter(c => c.id !== targetId));
-              setIsModalOpen(false);
-              setModalType(null);
-              setModalData(null);
-              playSuccessSound();
-              showToast("Empresa Credenciada excluÃ­da com sucesso!", "success");
-
-              if (user) {
-                try {
-                  await deleteDoc(doc(db, 'empresas_credenciadas', targetId));
-                } catch (e) {
-                  console.error("Error deleting credenciada from cloud:", e);
-                  handleFirestoreError(e, OperationType.WRITE, `empresas_credenciadas/${targetId}`);
-                }
-              }
-            }
-          }}
-          confirmText="Excluir"
-          variant="danger"
-        >
-          <p className="text-slate-600">
-            Tem certeza que deseja excluir a empresa credenciada <span className="font-bold text-slate-900">{modalData?.razaoSocial}</span>? 
-            Esta aÃ§Ã£o Ã© irreversÃ­vel.
-          </p>
-        </Modal>
-      )}
-
-      {isModalOpen && modalType === 'deleteArea' && (
-        (() => {
-          const normArea = areaToDelete ? normalizeAndFormatArea(areaToDelete).toLowerCase() : '';
-          const linkedProblemsCount = areaToDelete ? problemas.filter(p => normalizeAndFormatArea(p.area).toLowerCase() === normArea).length : 0;
-          const linkedSolucoesCount = areaToDelete ? solucoes.filter(s => normalizeAndFormatArea(s.area).toLowerCase() === normArea).length : 0;
-
-          return (
-            <Modal 
-              title="Excluir Ãrea da Biblioteca" 
-              onClose={() => setIsModalOpen(false)}
-              onConfirm={() => deleteArea(areaToDelete)}
-              confirmText="Excluir Ãrea"
-              variant="danger"
-              disabled={!areaToDelete}
-            >
-              <div className="space-y-4">
-                <p className="text-sm text-slate-600">
-                  Selecione a Ã¡rea que deseja excluir da biblioteca.
-                </p>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Ãrea a ser excluÃ­da</label>
-                  <select
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 bg-white text-sm font-semibold text-slate-800"
-                    value={areaToDelete}
-                    onChange={(e) => setAreaToDelete(e.target.value)}
-                  >
-                    <option value="">Selecione uma Ã¡rea...</option>
-                    {allAvailableAreas.map(nome => (
-                      <option key={nome} value={nome}>{nome}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {areaToDelete && (
-                  (linkedProblemsCount > 0 || linkedSolucoesCount > 0) ? (
-                    <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1.5">
-                      <p className="font-bold flex items-center gap-1.5 text-amber-800">
-                        <AlertTriangle size={15} /> AtenÃ§Ã£o ao Excluir
-                      </p>
-                      <p className="font-medium">
-                        Esta Ã¡rea possui <span className="font-bold underline">{linkedProblemsCount} problema(s)</span> e <span className="font-bold underline">{linkedSolucoesCount} soluÃ§Ã£o(Ãµes)</span> vinculados.
-                      </p>
-                      <p className="text-[11px] text-amber-700">
-                        Ao confirmar a exclusÃ£o, esta Ã¡rea e todos os seus problemas e soluÃ§Ãµes associados serÃ£o permanentemente removidos da biblioteca.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-xs text-emerald-800 space-y-1">
-                      <p className="font-bold flex items-center gap-1.5 text-emerald-700">
-                        <CheckCircle size={14} /> Ãrea liberada para exclusÃ£o
-                      </p>
-                      <p className="text-emerald-700 font-medium">
-                        Esta Ã¡rea nÃ£o possui nenhum problema vinculado e pode ser removida com seguranÃ§a.
-                      </p>
-                    </div>
-                  )
-                )}
-              </div>
-            </Modal>
-          );
-        })()
-      )}
-
-      {isModalOpen && modalType === 'createSegmento' && (
-        <Modal 
-          title="Cadastrar Novo Tipo de NegÃ³cio / Segmento" 
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={() => createSegmento(newSegmentInput)}
-          confirmText="Salvar Tipo de NegÃ³cio"
-          disabled={!newSegmentInput.trim()}
-        >
-          <div className="space-y-4">
-            <p className="text-sm text-slate-600">
-              Digite o nome do novo tipo de negÃ³cio / segmento. Ele estarÃ¡ disponÃ­vel para categorizar empresas, diagnÃ³sticos, problemas, perguntas e soluÃ§Ãµes no sistema.
-            </p>
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome do Segmento / Tipo de NegÃ³cio</label>
-              <input
-                type="text"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-sm font-semibold text-slate-800"
-                placeholder="Ex: Tecnologia, Varejo, SaÃºde, EducaÃ§Ã£o, RestauraÃ§Ã£o..."
-                value={newSegmentInput}
-                onChange={(e) => setNewSegmentInput(e.target.value)}
-                autoFocus
-              />
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {isModalOpen && modalType === 'renameSegmento' && (
-        <Modal 
-          title="Editar / Renomear Tipo de NegÃ³cio" 
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={() => renameSegmento(segmentToRename, newSegmentName)}
-          confirmText="Salvar AlteraÃ§Ã£o"
-          disabled={!segmentToRename || !newSegmentName.trim() || segmentToRename.trim().toLowerCase() === newSegmentName.trim().toLowerCase()}
-        >
-          <div className="space-y-4">
-            <p className="text-sm text-slate-600">
-              Insira o novo nome para o tipo de negÃ³cio / segmento.
-            </p>
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Segmento Selecionado</label>
-              <input
-                type="text"
-                readOnly
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-600 cursor-not-allowed"
-                value={segmentToRename}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Novo Nome do Segmento</label>
-              <input
-                type="text"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-sm font-semibold text-slate-800"
-                placeholder="Digite o novo nome para o segmento"
-                value={newSegmentName}
-                onChange={(e) => setNewSegmentName(e.target.value)}
-                autoFocus
-              />
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {isModalOpen && modalType === 'deleteSegmento' && (
-        <Modal 
-          title="Excluir Tipo de NegÃ³cio" 
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={() => deleteSegmento(segmentToDelete)}
-          confirmText="Confirmar ExclusÃ£o"
-          variant="danger"
-        >
-          <div className="space-y-3">
-            <p className="text-slate-600 text-sm">
-              Tem certeza que deseja excluir o segmento <span className="font-bold text-slate-900">"{segmentToDelete}"</span>?
-            </p>
-            <p className="text-xs text-slate-500">
-              Ele deixarÃ¡ de ser exibido na lista de segmentos personalizados do sistema.
-            </p>
-          </div>
-        </Modal>
-      )}
-
-      {isModalOpen && modalType === 'clearExperimentalData' && (
-        <Modal
-          title="Limpar Todos os Dados Experimentais"
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={clearAllExperimentalData}
-          confirmText="Limpar Dados do Sistema"
-          variant="danger"
-        >
-          <div className="space-y-3">
-            <p className="text-sm text-slate-700 font-medium">
-              Tem certeza que deseja <span className="font-bold text-rose-600">limpar todos os dados experimentais</span>?
-            </p>
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 space-y-1.5">
-              <p className="font-bold flex items-center gap-1.5">
-                <AlertTriangle size={15} /> AÃ§Ã£o IrreversÃ­vel!
-              </p>
-              <p>
-                Esta aÃ§Ã£o apagarÃ¡ permanentemente do banco de dados:
-              </p>
-              <ul className="list-disc pl-4 space-y-0.5 font-medium">
-                <li>Todos os diagnÃ³sticos e histÃ³rico de respostas</li>
-                <li>Todas as empresas registradas</li>
-                <li>Todas as perguntas, problemas e soluÃ§Ãµes de teste</li>
-                <li>Todas as tarefas do plano de aÃ§Ã£o</li>
-              </ul>
-              <p className="text-[11px] pt-1 text-rose-700 font-semibold">
-                O sistema serÃ¡ zerado e ficarÃ¡ pronto para o uso real.
-              </p>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {isModalOpen && modalType === 'renameArea' && (
-        <Modal 
-          title="Editar / Renomear Ãrea" 
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={() => renameArea(areaToRename, newAreaName)}
-          confirmText="Salvar AlteraÃ§Ã£o"
-          disabled={!areaToRename || !newAreaName.trim() || areaToRename.trim().toLowerCase() === newAreaName.trim().toLowerCase()}
-        >
-          <div className="space-y-4">
-            <p className="text-sm text-slate-600">
-              Insira o novo nome para a Ã¡rea. Esta alteraÃ§Ã£o atualizarÃ¡ automaticamente o nome da Ã¡rea em todos os problemas, soluÃ§Ãµes, perguntas e diagnÃ³sticos no banco de dados.
-            </p>
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Ãrea Selecionada</label>
-              <input
-                type="text"
-                readOnly
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-600 cursor-not-allowed"
-                value={areaToRename}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Novo Nome da Ãrea</label>
-              <input
-                type="text"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-sm font-semibold text-slate-800"
-                placeholder="Digite o novo nome para a Ã¡rea"
-                value={newAreaName}
-                onChange={(e) => setNewAreaName(e.target.value)}
-                autoFocus
-              />
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {isModalOpen && modalType === 'createArea' && (
-        <Modal 
-          title="Cadastrar Nova Ãrea" 
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={() => createArea(newAreaInput)}
-          confirmText="Salvar Ãrea"
-          disabled={!newAreaInput.trim()}
-        >
-          <div className="space-y-4">
-            <p className="text-sm text-slate-600">
-              Digite o nome da nova Ã¡rea organizacional para a biblioteca. Esta Ã¡rea ficarÃ¡ disponÃ­vel para seleÃ§Ã£o em todas as telas e cadastros do sistema.
-            </p>
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome da Ãrea</label>
-              <input
-                type="text"
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-sm font-semibold text-slate-800"
-                placeholder="Ex: Recursos Humanos, Financeiro, Vendas"
-                value={newAreaInput}
-                onChange={(e) => setNewAreaInput(e.target.value)}
-                autoFocus
-              />
-            </div>
-          </div>
-        </Modal>
-      )}
-
-       {isModalOpen && modalType === 'deleteAllProblemas' && (
-        <Modal 
-          title="Excluir Todos os Problemas" 
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={deleteAllProblemas}
-          confirmText="Excluir Tudo"
-          variant="danger"
-        >
-          <div className="space-y-3">
-            <p className="text-slate-700 font-medium">
-              Tem certeza que deseja excluir <span className="font-bold text-rose-600">TODOS</span> os problemas cadastrados?
-            </p>
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 space-y-1">
-              <p className="font-semibold text-slate-800">â€¢ Os problemas da biblioteca serÃ£o removidos.</p>
-              <p className="font-semibold text-emerald-700">â€¢ Suas Ãreas e Tipos de NegÃ³cio cadastrados serÃ£o preservados intactos.</p>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {isModalOpen && modalType === 'deleteAllPremissas' && (
-        <Modal 
-          title="Excluir Todas as Perguntas" 
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={deleteAllPremissas}
-          confirmText="Excluir Tudo"
-          variant="danger"
-        >
-          <div className="space-y-3">
-            <p className="text-slate-700 font-medium">
-              Tem certeza que deseja excluir <span className="font-bold text-rose-600">TODAS</span> as perguntas cadastradas?
-            </p>
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 space-y-1">
-              <p className="font-semibold text-slate-800">â€¢ As perguntas da biblioteca serÃ£o removidas.</p>
-              <p className="font-semibold text-emerald-700">â€¢ Suas Ãreas e Tipos de NegÃ³cio cadastrados serÃ£o preservados intactos.</p>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {isModalOpen && modalType === 'deleteAllSolucoes' && (
-        <Modal 
-          title="Excluir Todas as SoluÃ§Ãµes" 
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={deleteAllSolucoes}
-          confirmText="Excluir Tudo"
-          variant="danger"
-        >
-          <div className="space-y-3">
-            <p className="text-slate-700 font-medium">
-              Tem certeza que deseja excluir <span className="font-bold text-rose-600">TODAS</span> as soluÃ§Ãµes cadastradas?
-            </p>
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 space-y-1">
-              <p className="font-semibold text-slate-800">â€¢ As soluÃ§Ãµes da biblioteca serÃ£o removidas.</p>
-              <p className="font-semibold text-emerald-700">â€¢ Suas Ãreas e Tipos de NegÃ³cio cadastrados serÃ£o preservados intactos.</p>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {isModalOpen && modalType === 'deleteAllBiblioteca' && (
-        <Modal 
-          title="Excluir Toda a Biblioteca de Conhecimento" 
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={deleteAllBiblioteca}
-          confirmText="Excluir Biblioteca Completa"
-          variant="danger"
-        >
-          <div className="space-y-3">
-            <p className="text-slate-700 font-medium">
-              Tem certeza que deseja excluir <span className="font-bold text-rose-600">TODOS</span> os Problemas, Perguntas e SoluÃ§Ãµes cadastrados?
-            </p>
-            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 space-y-1">
-              <p className="font-bold">â€¢ {problemas.length} problemas serÃ£o excluÃ­dos.</p>
-              <p className="font-bold">â€¢ {premissas.length} perguntas serÃ£o excluÃ­das.</p>
-              <p className="font-bold">â€¢ {solucoes.length} soluÃ§Ãµes serÃ£o excluÃ­das.</p>
-              <p className="font-medium text-slate-700 mt-2">â€¢ Suas Ãreas e Tipos de NegÃ³cio cadastrados serÃ£o preservados intactos.</p>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {isModalOpen && modalType === 'delete' && (
-        <Modal 
-          title="Excluir Empresa" 
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={() => deleteEmpresa(modalData?.id)}
-          confirmText="Excluir"
-          variant="danger"
-        >
-          <p className="text-slate-600">
-            Tem certeza que deseja excluir a empresa <span className="font-bold text-slate-800">{modalData?.nome}</span>? 
-            Esta aÃ§Ã£o nÃ£o pode ser desfeita e removerÃ¡ todos os diagnÃ³sticos, respostas e planos de aÃ§Ã£o vinculados.
-          </p>
-        </Modal>
-      )}
-
-      {isModalOpen && modalType === 'deleteDiagnostico' && (
-        <Modal 
-          title="Excluir DiagnÃ³stico" 
-          onClose={() => !isDeletingDiagnostico && setIsModalOpen(false)}
-          onConfirm={() => deleteDiagnostico(modalData?.id)}
-          confirmText={isDeletingDiagnostico ? "Excluindo..." : "Excluir"}
-          disabled={isDeletingDiagnostico}
-          variant="danger"
-        >
-          <p className="text-slate-600">
-            Tem certeza que deseja excluir este diagnÃ³stico? 
-            Todas as respostas e o cronograma associado serÃ£o removidos permanentemente.
-          </p>
-        </Modal>
-      )}
-
-      {isModalOpen && modalType === 'deletePlanoAcao' && (
-        <Modal 
-          title="Excluir Plano de AÃ§Ã£o" 
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={() => deletePlanoAcao()}
-          confirmText="Excluir Plano de AÃ§Ã£o"
-          variant="danger"
-        >
-          <p className="text-slate-600">Tem certeza que deseja excluir este plano de aÃ§Ã£o? Esta aÃ§Ã£o nÃ£o pode ser desfeita.</p>
-        </Modal>
-      )}
-
-      {isModalOpen && modalType === 'importSuccess' && (
-        <Modal 
-          title="ImportaÃ§Ã£o ConcluÃ­da" 
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={() => setIsModalOpen(false)}
-          confirmText="Entendido"
-        >
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 p-4 bg-emerald-50 rounded-lg border border-emerald-100">
-              <div className="w-10 h-10 bg-emerald-500 text-white rounded-full flex items-center justify-center">
-                <CheckCircle2 size={24} />
-              </div>
-              <div>
-                <p className="font-bold text-emerald-900">Sucesso!</p>
-                <p className="text-sm text-emerald-700">Os dados foram importados corretamente.</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-2">
-              <div className="flex justify-between p-2 bg-slate-50 rounded border border-slate-100">
-                <span className="text-sm text-slate-600">Problemas:</span>
-                <span className="text-sm font-bold text-slate-800">{modalData?.problemas?.imported} novos / {modalData?.problemas?.skipped} duplicados</span>
-              </div>
-              <div className="flex justify-between p-2 bg-slate-50 rounded border border-slate-100">
-                <span className="text-sm text-slate-600">Perguntas:</span>
-                <span className="text-sm font-bold text-slate-800">{modalData?.premissas?.imported} novas / {modalData?.premissas?.skipped} duplicados</span>
-              </div>
-              <div className="flex justify-between p-2 bg-slate-50 rounded border border-slate-100">
-                <span className="text-sm text-slate-600">SoluÃ§Ãµes:</span>
-                <span className="text-sm font-bold text-slate-800">{modalData?.solucoes?.imported} novas / {modalData?.solucoes?.skipped} duplicados</span>
-              </div>
-            </div>
-
-            {modalData?.errors?.length > 0 && (
-              <div className="mt-4">
-                <p className="text-xs font-bold text-rose-500 uppercase mb-1">Avisos/Erros:</p>
-                <div className="max-h-32 overflow-y-auto p-2 bg-rose-50 rounded border border-rose-100 text-[10px] text-rose-700 font-mono">
-                  {modalData.errors.map((err: string, i: number) => (
-                    <div key={i} className="mb-1">â€¢ {err}</div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </Modal>
-      )}
-
-      {isModalOpen && modalType === 'viewMaturityDetails' && (
-        <Modal 
-          title="NÃ­vel de Maturidade com IA" 
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={() => setIsModalOpen(false)}
-          confirmText="Entendido"
-        >
-          <div className="space-y-4">
-            <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex flex-col gap-2 items-center text-center">
-              <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-1">
-                <Sparkles size={24} className="text-emerald-500 animate-pulse" />
-              </div>
-              <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">NÃ­vel de Maturidade Detectado</p>
-              <h4 className="text-xl font-extrabold text-emerald-900 leading-tight">
-                {modalData?.nivel}
-              </h4>
-            </div>
-
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2 text-left">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Justificativa da InteligÃªncia Artificial:</p>
-              <p className="text-sm text-slate-700 leading-relaxed font-semibold">
-                {modalData?.justificativa}
-              </p>
-            </div>
-            
-            <p className="text-[10px] text-slate-400 text-center leading-relaxed">
-              *Este nÃ­vel de maturidade Ã© recalculado automaticamente se as perguntas do diagnÃ³stico forem alteradas ou novas respostas forem inseridas.
-            </p>
-          </div>
-        </Modal>
-      )}
-
-      {isModalOpen && (modalType === 'createPremissa' || modalType === 'editPremissa') && (
-        <Modal 
-          title={modalType === 'createPremissa' ? "Nova Pergunta" : "Editar Pergunta"} 
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={() => {
-            if (modalType === 'createPremissa') {
-              createPremissa(premissaForm);
-            } else {
-              updatePremissa(modalData.id, premissaForm);
-            }
-          }}
-          confirmText={modalType === 'createPremissa' ? "Criar" : "Salvar"}
-          disabled={!(premissaForm.idProblema?.trim()) || !(premissaForm.problema?.trim()) || !(premissaForm.pergunta?.trim())}
-        >
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Filtrar por Ãrea</label>
-              <select 
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white"
-                value={selectedAreaFilter}
-                onChange={(e) => {
-                  const newArea = e.target.value;
-                  setSelectedAreaFilter(newArea);
-                  // Reset selected problem if it doesn't belong to the new area
-                  if (newArea) {
-                    const currentProb = problemas.find(p => p.id === premissaForm.idProblema);
-                    if (currentProb && currentProb.area !== newArea) {
-                      setPremissaForm({ ...premissaForm, idProblema: '', problema: '' });
-                    }
-                  }
-                }}
-              >
-                <option value="">Todas as Ã¡reas</option>
-                {allAvailableAreas.map(nome => (
-                  <option key={nome} value={nome}>{nome}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Problema Relacionado</label>
-              <select 
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white"
-                value={premissaForm.idProblema}
-                onChange={(e) => {
-                  const selectedProb = problemas.find(p => p.id === e.target.value);
-                  if (selectedProb) {
-                    setPremissaForm({ 
-                      ...premissaForm, 
-                      idProblema: selectedProb.id,
-                      problema: selectedProb.descricao_problemas
-                    });
-                    // Update area filter to match selected problem if not already set
-                    if (!selectedAreaFilter) {
-                      setSelectedAreaFilter(selectedProb.area);
-                    }
-                  } else {
-                    setPremissaForm({ ...premissaForm, idProblema: '', problema: '' });
-                  }
-                }}
-              >
-                <option value="">Selecione um problema...</option>
-                {problemas
-                  .filter(prob => !selectedAreaFilter || globalNormalizedMatch(prob.area, selectedAreaFilter))
-                  .map(prob => (
-                    <option key={prob.id} value={prob.id}>{prob.descricao_problemas} ({prob.area})</option>
-                  ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Texto da Pergunta</label>
-              <textarea 
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 h-24"
-                placeholder="Digite a pergunta para o diagnÃ³stico..."
-                value={premissaForm.pergunta}
-                onChange={(e) => setPremissaForm({ ...premissaForm, pergunta: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Peso (ImportÃ¢ncia)</label>
-              <input 
-                type="number" 
-                min="1"
-                max="10"
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                value={premissaForm.peso}
-                onChange={(e) => setPremissaForm({ ...premissaForm, peso: Number(e.target.value) })}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Tipo de Empresa (Herdado ou Customizado)</label>
-              <select 
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white"
-                value={availableSegments.includes(premissaForm.tipoEmpresa || '') ? (premissaForm.tipoEmpresa || '') : (premissaForm.tipoEmpresa ? 'Outro' : '')}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === 'Outro') {
-                    setPremissaForm({ ...premissaForm, tipoEmpresa: customPremissaEmpresaType || '' });
-                  } else {
-                    setPremissaForm({ ...premissaForm, tipoEmpresa: val });
-                  }
-                }}
-              >
-                <option value="">Herdar do problema associado (Recomendado)</option>
-                <option value="Geral">Geral (Comum a todas)</option>
-                {availableSegments.filter(tipo => tipo !== 'Geral').map((tipo) => (
-                  <option key={tipo} value={tipo}>{tipo}</option>
-                ))}
-                <option value="Outro">Outro...</option>
-              </select>
-              {(premissaForm.tipoEmpresa === 'Outro' || (premissaForm.tipoEmpresa && !availableSegments.includes(premissaForm.tipoEmpresa) && premissaForm.tipoEmpresa !== 'Geral')) && (
-                <input 
-                  type="text" 
-                  className="w-full mt-2 px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-sans"
-                  placeholder="Especifique o tipo de empresa"
-                  value={customPremissaEmpresaType}
-                  onChange={(e) => {
-                    const cVal = e.target.value;
-                    setCustomPremissaEmpresaType(cVal);
-                    setPremissaForm({ ...premissaForm, tipoEmpresa: cVal });
-                  }}
-                />
-              )}
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {isModalOpen && (modalType === 'createTarefa' || modalType === 'editTarefa') && (
-        <Modal 
-          title={modalType === 'createTarefa' ? "Nova Tarefa no Plano" : "Editar Tarefa"} 
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={() => {
-            if (modalType === 'createTarefa') {
-              createTarefa(tarefaForm);
-            } else {
-              updateTarefa(modalData.id, tarefaForm);
-            }
-          }}
-          confirmText={modalType === 'createTarefa' ? "Criar Tarefa" : "Salvar AlteraÃ§Ãµes"}
-          disabled={!tarefaForm.problema || !tarefaForm.empresaId}
-          size="4xl"
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-slate-700">
-            {/* LADO ESQUERDO: Escopo e IdentificaÃ§Ã£o */}
-            <div className="lg:col-span-7 space-y-4">
-              <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100/80 space-y-4">
-                <h4 className="text-xs font-black text-indigo-600 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="flex items-center justify-center w-5 h-5 bg-indigo-50 rounded-full text-indigo-600 text-[10px]">1</span>
-                  Escopo & IdentificaÃ§Ã£o
-                </h4>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Empresa</label>
-                    <select 
-                      className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-white"
-                      value={tarefaForm.empresaId || ''}
-                      onChange={(e) => setTarefaForm({...tarefaForm, empresaId: e.target.value})}
-                    >
-                      <option value="">Selecione...</option>
-                      {empresas.map(emp => (
-                        <option key={emp.id} value={emp.id}>{emp.nome}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">SoluÃ§Ã£o Associada</label>
-                    <select 
-                      className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-white"
-                      value={tarefaForm.solucaoId || ''}
-                      onChange={(e) => {
-                        const solId = e.target.value;
-                        const sol = solucoes.find(s => s.id === solId);
-                        setTarefaForm({
-                          ...tarefaForm, 
-                          solucaoId: solId,
-                          problema: sol ? sol.problema : (tarefaForm.problema || ''),
-                          solucaoSugerida: sol ? sol.solucao_recomendada : (tarefaForm.solucaoSugerida || ''),
-                          area: sol ? sol.area : (tarefaForm.area || '')
-                        });
-                      }}
-                    >
-                      <option value="">Selecione (opcional)...</option>
-                      {solucoes.filter(sol => {
-                        if (!tarefaForm.empresaId) return true;
-                        
-                        const companyDiagnosticos = diagnosticos.filter(d => d.empresaId === tarefaForm.empresaId);
-                        
-                        const hasNegativeResponse = companyDiagnosticos.some(diag => {
-                          return respostas.some(resp => 
-                            resp.diagnosticoId === diag.id && 
-                            (resp.idProblema === sol.idProblema || resp.problema === sol.problema) && 
-                            (resp.resposta === 'NÃ£o' || resp.resposta === 'Parcial')
-                          );
-                        });
-                        return hasNegativeResponse;
-                      }).map(sol => (
-                        <option key={sol.id} value={sol.id}>{sol.problema} - {sol.solucao_recomendada}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">TÃ­tulo / Problema</label>
-                    <input 
-                      type="text" 
-                      className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-white"
-                      placeholder="Ex: Falha no controle de estoque"
-                      value={tarefaForm.problema || ''}
-                      onChange={(e) => setTarefaForm({...tarefaForm, problema: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ãrea de Consultoria</label>
-                    <input 
-                      type="text" 
-                      list="areas-sugeridas-form"
-                      className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-white"
-                      placeholder="Ex: FINANÃ‡AS, ESTRATÃ‰GIA..."
-                      value={tarefaForm.area || ''}
-                      onChange={(e) => setTarefaForm({...tarefaForm, area: e.target.value.toUpperCase()})}
-                    />
-                    <datalist id="areas-sugeridas-form">
-                      <option value="ESTRATÃ‰GIA" />
-                      <option value="FINANÃ‡AS" />
-                      <option value="MARKETING & VENDAS" />
-                      <option value="OPERAÃ‡Ã•ES & PROCESSOS" />
-                      <option value="RECURSOS HUMANOS" />
-                      <option value="TECNOLOGIA & IA" />
-                    </datalist>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100/80 space-y-4">
-                <h4 className="text-xs font-black text-emerald-600 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="flex items-center justify-center w-5 h-5 bg-emerald-50 rounded-full text-emerald-600 text-[10px]">2</span>
-                  Detalhamento TÃ©cnico
-                </h4>
-
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">SoluÃ§Ã£o Sugerida</label>
-                  <textarea 
-                    className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all h-20 resize-none bg-white"
-                    placeholder="Detalhamento da soluÃ§Ã£o..."
-                    value={tarefaForm.solucaoSugerida || ''}
-                    onChange={(e) => setTarefaForm({...tarefaForm, solucaoSugerida: e.target.value})}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">AÃ§Ãµes Recomendadas</label>
-                  <textarea 
-                    className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all h-24 resize-none bg-white"
-                    placeholder="Quais aÃ§Ãµes devem ser tomadas?"
-                    value={tarefaForm.acoes || ''}
-                    onChange={(e) => setTarefaForm({...tarefaForm, acoes: e.target.value})}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* LADO DIREITO: Planejamento, Datas e Alertas */}
-            <div className="lg:col-span-5 space-y-4">
-              <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100/80 space-y-4">
-                <h4 className="text-xs font-black text-amber-600 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="flex items-center justify-center w-5 h-5 bg-amber-50 rounded-full text-amber-600 text-[10px]">3</span>
-                  Planejamento & Prazos
-                </h4>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Prioridade</label>
-                    <select 
-                      className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-white"
-                      value={tarefaForm.prioridade || 'MÃ©dia'}
-                      onChange={(e) => setTarefaForm({...tarefaForm, prioridade: e.target.value})}
-                    >
-                      <option value="Alta">Alta</option>
-                      <option value="MÃ©dia">MÃ©dia</option>
-                      <option value="Baixa">Baixa</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</label>
-                    <select 
-                      className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-white"
-                      value={tarefaForm.status || 'Pendente'}
-                      onChange={(e) => setTarefaForm({...tarefaForm, status: e.target.value})}
-                    >
-                      <option value="Pendente">Pendente</option>
-                      <option value="Em Andamento">Em Andamento</option>
-                      <option value="ConcluÃ­do">ConcluÃ­do</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-1 flex items-center gap-1">
-                    <ListOrdered size={12} className="text-indigo-500" />
-                    Ordem / Posicionamento da AÃ§Ã£o
-                  </label>
-                  <input 
-                    type="number" 
-                    min={1}
-                    className="w-full px-3 py-2 text-sm font-bold text-indigo-700 bg-indigo-50/50 rounded-xl border border-indigo-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
-                    placeholder="Ex: 1, 2, 3..."
-                    value={tarefaForm.ordem !== undefined && tarefaForm.ordem !== null ? (tarefaForm.ordem + 1) : ''}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value, 10);
-                      setTarefaForm({...tarefaForm, ordem: isNaN(val) ? undefined : Math.max(0, val - 1)});
-                    }}
-                  />
-                  <p className="text-[9px] text-slate-400 mt-0.5">Define a posiÃ§Ã£o desta aÃ§Ã£o na lista e nos relatÃ³rios gerados.</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Data InÃ­cio</label>
-                    <input 
-                      type="date"
-                      className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-white"
-                      value={tarefaForm.dataInicio || ''}
-                      onChange={(e) => setTarefaForm({...tarefaForm, dataInicio: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Data Fim</label>
-                    <input 
-                      type="date"
-                      className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-white"
-                      value={tarefaForm.dataFim || ''}
-                      onChange={(e) => setTarefaForm({...tarefaForm, dataFim: e.target.value, dataVencimento: e.target.value})}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">ResponsÃ¡vel</label>
-                    <input 
-                      type="text" 
-                      className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-white"
-                      placeholder="ResponsÃ¡vel"
-                      value={tarefaForm.responsavel || ''}
-                      onChange={(e) => setTarefaForm({...tarefaForm, responsavel: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Vencimento</label>
-                    <input 
-                      type="date"
-                      className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all bg-white"
-                      value={tarefaForm.dataVencimento || tarefaForm.dataFim || ''}
-                      onChange={(e) => setTarefaForm({...tarefaForm, dataVencimento: e.target.value})}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* SeÃ§Ã£o de Lembretes */}
-              <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100/80 space-y-3">
-                <h4 className="text-xs font-black text-purple-600 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <Bell size={13} className="text-purple-600" />
-                  Lembretes & Alertas
-                </h4>
-                
-                <div className="flex flex-wrap gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setTarefaForm({ ...tarefaForm, lembreteEmail: !tarefaForm.lembreteEmail })}
-                    className={cn(
-                      "flex items-center gap-1.5 px-2.5 rounded-xl text-[11px] font-bold transition-all border cursor-pointer h-9 select-none flex-1 justify-center",
-                      tarefaForm.lembreteEmail 
-                        ? "bg-indigo-600 text-white border-indigo-600 shadow-sm" 
-                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                    )}
-                  >
-                    <Mail size={12} />
-                    E-mail
-                  </button>
-                  
-                  <button
-                    type="button"
-                    onClick={() => setTarefaForm({ ...tarefaForm, lembreteWhatsapp: !tarefaForm.lembreteWhatsapp })}
-                    className={cn(
-                      "flex items-center gap-1.5 px-2.5 rounded-xl text-[11px] font-bold transition-all border cursor-pointer h-9 select-none flex-1 justify-center",
-                      tarefaForm.lembreteWhatsapp 
-                        ? "bg-emerald-600 text-white border-emerald-600 shadow-sm" 
-                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                    )}
-                  >
-                    <MessageSquare size={12} />
-                    WhatsApp
-                  </button>
-                  
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      const nextVal = !tarefaForm.lembretePush;
-                      if (nextVal && 'Notification' in window) {
-                        const perm = await Notification.requestPermission();
-                        if (perm !== 'granted') {
-                          alert("Por favor, habilite as notificaÃ§Ãµes no seu navegador para receber alertas de tarefas.");
-                        }
-                      }
-                      setTarefaForm({ ...tarefaForm, lembretePush: nextVal });
-                    }}
-                    className={cn(
-                      "flex items-center gap-1.5 px-2.5 rounded-xl text-[11px] font-bold transition-all border cursor-pointer h-9 select-none flex-1 justify-center",
-                      tarefaForm.lembretePush 
-                        ? "bg-purple-600 text-white border-purple-600 shadow-sm" 
-                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                    )}
-                  >
-                    <Smartphone size={12} />
-                    Push
-                  </button>
-                </div>
-
-                {(tarefaForm.lembreteEmail || tarefaForm.lembreteWhatsapp || tarefaForm.lembretePush) && (
-                  <div className="space-y-2 pt-1 border-t border-slate-100">
-                    <div>
-                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Alertar quanto tempo antes?</label>
-                      <select
-                        className="w-full px-3 py-1.5 h-8 text-xs font-bold rounded-lg border border-slate-200 bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
-                        value={tarefaForm.lembreteDiasAntes || 1}
-                        onChange={(e) => setTarefaForm({ ...tarefaForm, lembreteDiasAntes: Number(e.target.value) })}
-                      >
-                        <option value={1}>1 dia antes</option>
-                        <option value={2}>2 dias antes</option>
-                        <option value={3}>3 dias antes</option>
-                        <option value={5}>5 dias antes</option>
-                        <option value={7}>7 dias antes</option>
-                      </select>
-                    </div>
-                    
-                    <div>
-                      <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Contato de Destino (E-mail / WhatsApp)</label>
-                      <input
-                        type="text"
-                        className="w-full px-3 py-1.5 h-8 text-xs rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none font-medium"
-                        placeholder="Ex: joao@email.com ou +5584999999999"
-                        value={tarefaForm.lembreteContato || ''}
-                        onChange={(e) => setTarefaForm({ ...tarefaForm, lembreteContato: e.target.value })}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {isModalOpen && modalType === 'deleteTarefa' && (
-        <Modal 
-          title="Excluir Tarefa" 
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={() => deleteTarefa(modalData.id)}
-          confirmText="Excluir"
-          variant="danger"
-        >
-          <p className="text-slate-600">Tem certeza que deseja remover esta tarefa do plano de aÃ§Ã£o?</p>
-        </Modal>
-      )}
-
-      {isModalOpen && (modalType === 'createProblema' || modalType === 'editProblema') && (
-        <Modal 
-          title={modalType === 'createProblema' ? "Novo Problema" : "Editar Problema"} 
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={() => {
-            if (modalType === 'createProblema') {
-              createProblema(problemaForm);
-            } else {
-              updateProblema(modalData.id, problemaForm);
-            }
-          }}
-          confirmText={modalType === 'createProblema' ? "Criar" : "Salvar"}
-          disabled={!problemaForm.descricao_problemas.trim() || !problemaForm.area.trim()}
-        >
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">DescriÃ§Ã£o do Problema</label>
-              <textarea 
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                placeholder="Ex: Falta de controle financeiro"
-                rows={3}
-                value={problemaForm.descricao_problemas}
-                onChange={(e) => setProblemaForm({ ...problemaForm, descricao_problemas: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Ãrea</label>
-              <select 
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-sans"
-                value={normalizeAndFormatArea(problemaForm.area)}
-                onChange={(e) => setProblemaForm({ ...problemaForm, area: e.target.value })}
-              >
-                <option value="">Selecione uma Ã¡rea...</option>
-                {allAvailableAreas.map(nome => (
-                  <option key={nome} value={nome}>{nome}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Impacto</label>
-              <input 
-                type="text" 
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                placeholder="Ex: Alto, MÃ©dio, Baixo"
-                value={problemaForm.impacto}
-                onChange={(e) => setProblemaForm({ ...problemaForm, impacto: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Tipo de Empresa</label>
-              <select 
-                className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white"
-                value={availableSegments.includes(problemaForm.tipoEmpresa || 'Geral') ? (problemaForm.tipoEmpresa || 'Geral') : 'Outro'}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === 'Outro') {
-                    setProblemaForm({ ...problemaForm, tipoEmpresa: customProblemaEmpresaType || '' });
-                  } else {
-                    setProblemaForm({ ...problemaForm, tipoEmpresa: val });
-                  }
-                }}
-              >
-                <option value="Geral">Geral (Comum a todas)</option>
-                {availableSegments.filter(tipo => tipo !== 'Geral').map((tipo) => (
-                  <option key={tipo} value={tipo}>{tipo}</option>
-                ))}
-                <option value="Outro">Outro...</option>
-              </select>
-              {(problemaForm.tipoEmpresa === 'Outro' || (!availableSegments.includes(problemaForm.tipoEmpresa || 'Geral') && (problemaForm.tipoEmpresa || 'Geral') !== 'Geral')) && (
-                <input 
-                  type="text" 
-                  className="w-full mt-2 px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                  placeholder="Especifique o tipo de empresa"
-                  value={customProblemaEmpresaType}
-                  onChange={(e) => {
-                    const cVal = e.target.value;
-                    setCustomProblemaEmpresaType(cVal);
-                    setProblemaForm({ ...problemaForm, tipoEmpresa: cVal });
-                  }}
-                />
-              )}
-            </div>
-
-            <TagInputManager 
-              tags={problemaForm.tags || []} 
-              onChange={(newTags) => setProblemaForm({ ...problemaForm, tags: newTags })} 
-              allAvailableTags={allAvailableTags}
-            />
-          </div>
-        </Modal>
-      )}
-
-      {isModalOpen && modalType === 'deleteProblema' && (
-        <Modal 
-          title="Excluir Problema" 
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={() => deleteProblema(modalData.id)}
-          confirmText="Excluir"
-          variant="danger"
-        >
-          <p className="text-slate-600">
-            Tem certeza que deseja excluir o problema <span className="font-bold text-slate-800">{modalData?.descricao_problemas}</span>? 
-            Esta aÃ§Ã£o nÃ£o pode ser desfeita e pode afetar perguntas relacionadas.
-          </p>
-        </Modal>
-      )}
-
-      {isModalOpen && modalType === 'deletePremissa' && (
-        <Modal 
-          title="Excluir Pergunta" 
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={() => deletePremissa(modalData.id)}
-          confirmText="Excluir"
-          variant="danger"
-        >
-          <p className="text-slate-600">
-            Tem certeza que deseja excluir esta pergunta? 
-            Esta aÃ§Ã£o nÃ£o pode ser desfeita.
-          </p>
-          <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-100">
-            <p className="text-xs font-bold text-slate-400 uppercase mb-1">{modalData?.problema}</p>
-            <p className="text-sm font-medium text-slate-700 italic">"{modalData?.pergunta}"</p>
-          </div>
-        </Modal>
-      )}
-
-      {isModalOpen && modalType === 'deleteSolucao' && (
-        <Modal 
-          title="Excluir SoluÃ§Ã£o" 
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={() => deleteSolucao(modalData.id)}
-          confirmText="Excluir"
-          variant="danger"
-        >
-          <p className="text-slate-600">
-            Tem certeza que deseja excluir esta soluÃ§Ã£o? 
-            Esta aÃ§Ã£o nÃ£o pode ser desfeita.
-          </p>
-          <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-100">
-            <p className="text-xs font-bold text-slate-400 uppercase mb-1">{modalData?.problema}</p>
-            <p className="text-sm font-medium text-slate-700 italic">"{modalData?.solucao_recomendada}"</p>
-          </div>
-        </Modal>
-      )}
-
-      {isModalOpen && (modalType === 'createSolucao' || modalType === 'editSolucao') && (
-        <Modal 
-          title={modalType === 'createSolucao' ? "Nova SoluÃ§Ã£o" : "Editar SoluÃ§Ã£o"} 
-          size="3xl"
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={() => {
-            if (modalType === 'createSolucao') {
-              createSolucao(solucaoForm);
-            } else {
-              updateSolucao(modalData.id, solucaoForm);
-            }
-          }}
-          confirmText={modalType === 'createSolucao' ? "Criar" : "Salvar"}
-          disabled={!solucaoForm.idProblema || !solucaoForm.solucao_recomendada}
-        >
-          <div className="space-y-5 py-1">
-            {/* Contexto e ClassificaÃ§Ã£o */}
-            <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Ãrea de AtuaÃ§Ã£o</label>
-                <select 
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-sm font-medium text-slate-800 shadow-sm"
-                  value={normalizeAndFormatArea(solucaoForm.area)}
-                  onChange={(e) => {
-                    const newArea = e.target.value;
-                    setSolucaoForm({ ...solucaoForm, area: newArea, idProblema: '', problema: '' });
-                  }}
-                >
-                  <option value="">Selecione a Ã¡rea...</option>
-                  {allAvailableAreas.map(nome => (
-                    <option key={nome} value={nome}>{nome}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Problema Identificado</label>
-                <select 
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-sm font-medium text-slate-800 shadow-sm truncate"
-                  value={solucaoForm.idProblema}
-                  onChange={(e) => {
-                    const prob = problemas.find(p => p.id === e.target.value);
-                    if (prob) {
-                      setSolucaoForm({ ...solucaoForm, idProblema: prob.id, problema: prob.descricao_problemas, area: prob.area });
-                    }
-                  }}
-                >
-                  <option value="">Selecione o problema...</option>
-                  {problemas
-                    .filter(p => !solucaoForm.area || globalNormalizedMatch(p.area, solucaoForm.area))
-                    .map(p => <option key={p.id} value={p.id}>{p.descricao_problemas}</option>)}
-                </select>
-              </div>
-            </div>
-
-            {/* SoluÃ§Ã£o Recomendada */}
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-bold text-slate-800">SoluÃ§Ã£o Recomendada <span className="text-rose-500">*</span></label>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!solucaoForm.idProblema) {
-                      alert("Selecione um problema primeiro.");
-                      return;
-                    }
-                    try {
-                      const result = await generateAISuggestions(solucaoForm.problema, [], []);
-                      if (result) {
-                        setSolucaoForm({
-                          ...solucaoForm,
-                          solucao_recomendada: result.solucao_recomendada || '',
-                          acoes_sugeridas: result.acoes_sugeridas || '',
-                          prazo_sugerido: result.prazo_sugerido || '',
-                          responsavel_sugerido: result.responsavel_sugerido || '',
-                          kpis_sugeridos: result.kpis_sugeridos || '',
-                          comentario_sucesso: result.comentario_sucesso || ''
-                        });
-                      } else {
-                        alert("Falha ao gerar sugestÃµes de soluÃ§Ã£o: Resposta invÃ¡lida da InteligÃªncia Artificial.");
-                      }
-                    } catch (err: any) {
-                      alert("Falha ao gerar sugestÃµes de soluÃ§Ã£o:\n" + (err.message || err));
-                    }
-                  }}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100/80 border border-indigo-100 px-3 py-1.5 rounded-xl transition-all shadow-sm"
-                  title="Usar IA para gerar sugestÃµes baseadas no problema"
-                >
-                  <Sparkles size={14} className="text-indigo-500" />
-                  Gerar com InteligÃªncia Artificial
-                </button>
-              </div>
-              <textarea 
-                rows={3}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm font-medium text-slate-800 shadow-sm leading-relaxed"
-                placeholder="Descreva detalhadamente a soluÃ§Ã£o recomendada..."
-                value={solucaoForm.solucao_recomendada}
-                onChange={(e) => setSolucaoForm({ ...solucaoForm, solucao_recomendada: e.target.value })}
-              />
-            </div>
-
-            {/* AÃ§Ãµes Sugeridas */}
-            <div className="space-y-1.5">
-              <label className="block text-sm font-bold text-slate-800">AÃ§Ãµes Sugeridas</label>
-              <textarea 
-                rows={3}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm font-medium text-slate-800 shadow-sm leading-relaxed"
-                placeholder="Liste as etapas prÃ¡ticas ou aÃ§Ãµes necessÃ¡rias para implementar..."
-                value={solucaoForm.acoes_sugeridas}
-                onChange={(e) => setSolucaoForm({ ...solucaoForm, acoes_sugeridas: e.target.value })}
-              />
-            </div>
-
-            {/* ExecuÃ§Ã£o (ResponsÃ¡vel, KPIs) em 2 colunas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">ResponsÃ¡vel Sugerido</label>
-                <input 
-                  type="text"
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm font-medium text-slate-800 shadow-sm"
-                  placeholder="Ex: Consultor / Produtor"
-                  value={solucaoForm.responsavel_sugerido}
-                  onChange={(e) => setSolucaoForm({ ...solucaoForm, responsavel_sugerido: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">KPIs Sugeridos</label>
-                <input 
-                  type="text"
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm font-medium text-slate-800 shadow-sm"
-                  placeholder="Ex: DAP/CAF atualizada"
-                  value={solucaoForm.kpis_sugeridos}
-                  onChange={(e) => setSolucaoForm({ ...solucaoForm, kpis_sugeridos: e.target.value })}
-                />
-              </div>
-            </div>
-
-            {/* ComentÃ¡rio de Sucesso e Tipo de Empresa */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">ComentÃ¡rio de Sucesso (Reconhecimento)</label>
-                <textarea 
-                  rows={2}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm font-medium text-slate-800 shadow-sm"
-                  placeholder="Mensagem motivacional de reconhecimento para o produtor..."
-                  value={solucaoForm.comentario_sucesso}
-                  onChange={(e) => setSolucaoForm({ ...solucaoForm, comentario_sucesso: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Tipo de Empresa (SegmentaÃ§Ã£o)</label>
-                <select 
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-sm font-medium text-slate-800 shadow-sm"
-                  value={availableSegments.includes(solucaoForm.tipoEmpresa || '') ? (solucaoForm.tipoEmpresa || '') : (solucaoForm.tipoEmpresa ? 'Outro' : '')}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === 'Outro') {
-                      setSolucaoForm({ ...solucaoForm, tipoEmpresa: customSolucaoEmpresaType || '' });
-                    } else {
-                      setSolucaoForm({ ...solucaoForm, tipoEmpresa: val });
-                    }
-                  }}
-                >
-                  <option value="">Herdar do problema associado (Recomendado)</option>
-                  <option value="Geral">Geral (Comum a todas)</option>
-                  {availableSegments.filter(tipo => tipo !== 'Geral').map((tipo) => (
-                    <option key={tipo} value={tipo}>{tipo}</option>
-                  ))}
-                  <option value="Outro">Outro...</option>
-                </select>
-                {(solucaoForm.tipoEmpresa === 'Outro' || (solucaoForm.tipoEmpresa && !availableSegments.includes(solucaoForm.tipoEmpresa) && solucaoForm.tipoEmpresa !== 'Geral')) && (
-                  <input 
-                    type="text" 
-                    className="w-full mt-2 px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm font-medium text-slate-800 shadow-sm"
-                    placeholder="Especifique o tipo de empresa"
-                    value={customSolucaoEmpresaType}
-                    onChange={(e) => {
-                      const cVal = e.target.value;
-                      setCustomSolucaoEmpresaType(cVal);
-                      setSolucaoForm({ ...solucaoForm, tipoEmpresa: cVal });
-                    }}
-                  />
-                )}
-              </div>
-            </div>
-
-            <TagInputManager 
-              tags={solucaoForm.tags || []} 
-              onChange={(newTags) => setSolucaoForm({ ...solucaoForm, tags: newTags })} 
-              allAvailableTags={allAvailableTags}
-            />
-          </div>
-        </Modal>
-      )}
-
-      {/* Modal to replicate diagnostic */}
-      <ReplicateDiagnosticoModal
-        isOpen={isReplicateModalOpen}
-        onClose={() => setIsReplicateModalOpen(false)}
-        empresas={empresas}
-        diagnosticos={diagnosticos}
-        respostas={respostas}
-        defaultSourceDiagId={replicateSourceDiagId}
-        onReplicate={replicateDiagnostico}
-      />
-
-      {/* Modal to edit diagnostic date */}
-      <EditDiagnosisDateModal
-        isOpen={isEditDateModalOpen}
-        onClose={() => {
-          setIsEditDateModalOpen(false);
-          setDiagToEditDate(null);
-        }}
-        currentDate={diagToEditDate?.dataDiagnostico}
-        empresaNome={
-          empresas.find(e => e.id === diagToEditDate?.empresaId)?.nome || 
-          selectedEmpresa?.nome || 
-          diagToEditDate?.nomeEmpresa || 
-          diagToEditDate?.tipoEmpresa
-        }
-        projectName={diagToEditDate?.nomeProjeto || diagToEditDate?.nome}
-        onSaveDate={(newDateStr) => {
-          if (diagToEditDate) {
-            return handleUpdateDiagnosticoDate(diagToEditDate.id, newDateStr);
-          }
-        }}
-      />
-
-      <SmartSyncModal
-        isOpen={isSmartSyncModalOpen}
-        onClose={() => setIsSmartSyncModalOpen(false)}
-        isSyncing={isSyncingCloud}
-        onStartSync={performSmartCloudSync}
-        lastSummary={lastSyncSummary}
-        userEmail={user?.email}
-        error={syncError}
-      />
-
-      <BackupExportModal
-        isOpen={isBackupModalOpen}
-        onClose={() => setIsBackupModalOpen(false)}
-        isExporting={isExportingBackup}
-        stats={backupStats}
-        fileName={backupFileName}
-        backupJsonString={backupJsonString}
-        onDownloadFile={() => {
-          if (backupJsonString) {
-            triggerDownloadBackupFile(backupJsonString, backupFileName);
-          }
-        }}
-      />
-
-      {pdfUrl && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-6xl h-[92vh] flex flex-col overflow-hidden border border-slate-200">
-            <div className="flex items-center justify-between p-4 bg-slate-50 border-b border-slate-200">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center">
-                  <FileText size={18} />
-                </div>
-                <h3 className="text-lg font-bold text-slate-800">VisualizaÃ§Ã£o do RelatÃ³rio</h3>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => window.open(pdfUrl, '_blank')}>
-                  <ExternalLink size={18} className="mr-2" /> Abrir em Nova Aba
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => {
-                  const iframe = document.querySelector('iframe[title="PDF Preview"]') as HTMLIFrameElement;
-                  if (iframe && iframe.contentWindow) {
-                    iframe.contentWindow.print();
-                  } else {
-                    window.open(pdfUrl, '_blank');
-                  }
-                }}>
-                  <Printer size={18} className="mr-2" /> Imprimir
-                </Button>
-                <Button variant="primary" size="sm" onClick={() => {
-                  const a = document.createElement('a');
-                  a.href = pdfUrl;
-                  a.download = 'Relatorio_Consultoria.pdf';
-                  a.click();
-                }}>
-                  <Download size={18} className="mr-2" /> Baixar PDF
-                </Button>
-                <div className="w-px h-8 bg-slate-200 mx-1" />
-                <Button variant="ghost" size="sm" onClick={() => setPdfUrl(null)} className="text-slate-400 hover:text-slate-600">
-                  <X size={24} />
-                </Button>
-              </div>
-            </div>
-            <div className="flex-1 bg-slate-100 p-4 overflow-hidden flex justify-center">
-              <iframe src={pdfUrl} className="w-full h-full bg-white shadow-lg rounded-lg border border-slate-200" title="PDF Preview" />
-            </div>
-          </div>
-        </div>
-      )}
-
-      <ToastContainer toasts={toasts} onDismiss={removeToast} />
-    </main>
-  </div>
-);
-}
+      anchor.setAttribute('download', fileNaxœì½MwäF’ x¯_áÉÑ*"Jd$I)UªH19T’YÅîü`‘TõÛÉÍÍ 	e¤(ýæ0osš·÷©C¿=Ô©_ÿ‚ückfþeîp $SRu‹OO ÜÍÝÍÍÍÍÌÍÍ¦ÉàñoýEÙø</†q~™Mò([â4$/£iâ•(««I2ŒÓr6‰® X/Ë³¤§Åùx>M²jx’ÇWÃh6K²øéy:‰û²ºßÞx’Žß÷á­z]&Õq:MòyÕïÄÖq­>QWìIˆôT( ÃYT@›/ó88EL3¶À°H¦ùEìþÝ°ßß>‡âùûäÕÉwÉ¸‚çþ¼˜°ò7bUãsÑÇ†uÕ›U±¹¾¾nŠI5/2èÿ\áÒÖ*
+Ûáqž•9 ö2*²þÊ7“üD˜Ù8&““hü~´²*°’íâ!T"ŽªèÛ"Å©ÁŸ#˜@rT¥yöð»2ÏÏ£ð¼5¯N×¾Zí‰ÏD’5ßî?Í§3˜Î¬êcÉ£ªH³36\Ù€ÄÀ7“=.’¨Jö&	>õ{QÕQ3p^$§XEv®öú³SAs'ó*é÷ô¸{«†
+ë[Hµ#±.A®u‚Õï[(¶‘F—¤JŸ $Å‰jsàÑRPM^ôWöà‘å–²â`åDW›õ€îJÛÂoôÿoh½Jj˜ÏÎ7@œóÙqþt’ÏqF¢ò*‹> ÷jUÌÓx$JIQM~šO&°Æ€Jmõ´J¦%ÕýfÊNp’P$¢Pqñ—¿ˆ;E]Ó’þ•`ø~'IvV‹­­-±>PCÕƒ<ÊîO’JàZÿ|íÔÂ7Ÿm‰Ïa:j+ï„&`K\Pã|èÇ'µå3>Ÿgï¡”„Z=%ýtÁT[œº"ë`Y‘ŸÊº.³öcu˜Æ8X n¨®±
+]1( ÈãµD¡+»ª`;\’FŠ‹¶uVEei•þ˜<Ë‹g@Oe•IÿZ‡C¬»*€Ø’bæˆ@ÜVÅµ˜&ÅL%R0¼a´nÜe”*œÇùtšVvÙ)RTÛN>RÚ0™Î õæZVvéÊ-³*zú§fWNœFgY^Vé8o…ÅË<þXƒ	-Íà[{çL!€f~×@UÀ7N£ò`ey4^ ªÇ·3|®ÕÈxZ$1ìiwÃ#/ÏpúvÌÞ×ƒ2Ó´\0S¦€5¿ òØxR…”ú]Œr>Î“VHº Ò?ëäs²b;åÈ" %Â Ž’3Ü™ -†Ò¿kà¢3ØØ¢½úJ¼Á¾}›\,l§K}‹ó"°¬ÊñÎE4I#D›ƒ¯ßFæ}û‚ë–¢ó¦Ö•iL?£8	€³;vkyhÐÅà{ÙQ¾¿žGY<Iö~˜åEõ<G¹ÕÚM’íƒÀ÷KùýEG“W Ïô‘ÅªáÓw	
+6PYP§\ž|øPlÅ¢ê<)ÈŸÂî%¥8-ò©H³µ)È-PØT•À>‹	vD‘ñybYè§0Œ(«
+.n®	õaOñŠ‘P¿^¿a½†mCs‘7k•v“	öd*s6 pÌ¸âHÈ'zØGç ;|A(	k;Ìi¶½ì‹ !µ×àì×à‘½¬¡”WÀ;ÐŒv$ôOÂ0á`=ÅU±žüÉê©ozGŠ‰Žýb3 Ùk¥’{êù–OÁr†=š²æÍ£t¥ïXJÏÊË¤P.©Y9#j¦²U²ÐŽª¶%PÞ™Lh­ê=ÜŠ.²Î4š™oP'K.Å‹höµ”lW…þöÄÖã­A4ÜƒÞôZûÄÖŠmé`) ÁëUê³Œhq{@u4P2°!· £°¶è©r@²øª ÅÕ¬Jbw$¡Ï€aÙïQá·áýE3v0$"ÏPëEùŽ^½Ò“S…Ë·ÎÕ!díÁ ´þ¦ü\c=ÅÚæP<KðË)LÆ¹“ÞT$ã¼ˆK`¬â`çpçùó½çâ2U%"g\AµGk%”N[I­„ïÓäl1S…æeRÔõ¥tU³}|}¼ú¤?£Ek;ùúøÉª†ü¶ùh}}ÕÚÄñ€—õõ]¥6ªÃ"Ýæµc™­:Hø\Ô	Xö	íi5ÍZ}ìëÞXW÷W(­j4 'üÓ<)Ð ³OÛ¬î¶ø?úšS¼øhañUq	|%é÷”Ôƒ¯[[ðœ¤!hDƒA­‹¸…y}ìÐEWÿtè¥[ã6=EV²|O™n³*&)êvdáèÒg§îòVûò}öÔ§.]õªÜ¦»’å-ß[ŸUvé®_çv”[ŽoC¹ž¸Þx½J·é/HáËw·AtïÒé†ª·é:jØË÷½AAïÒ÷†ªËõÝ7ãË±¸›D™E3eWk/QÜ¯¿E9¥þVÉùõrï/Çõ· ’×_¢Í÷ÜNI;Ô;ìPÞÆÇ6ß>ˆ5»ù¸ìëh0$)AmsÙ|2H“ïªzXÉlwe8úÝAq^{whŒÞÂŸº;(ÍBîÉ¬èE <YÇ“\ÕòŸ~*¨ß¨þUWþé˜‘‡@÷h!J›|ÒwdcáiïF‡H°¯)	)ÉÀ«­{ÃˆMÝØ«S]PHâ‘¿Qy¢AprÂ«îÞíŒJÊñ¨ÎõUÀwç	¨dÞÁ_ ‹Èoñ¡¸ÃˆdVŠdr«†‹•a%a”:WGi½v+NY7Âxåýtq«[êŽ\dÛ¹øF®ùZ[PÔuÖCÖ¼áÞ,î¿Ú`ÌÔs‰@¿Þ‡IÄ³C5	·]TTˆ
+™F]ÑH«™è>ÖqÉt@›×ß0µðîºÔ¢[ëN-ÊR ‘-Ã¸«è¬ˆEŽ¼ß8ÐN¢3QŽÛºäšUŸ¨Ò=öÓ!øÝÖŸ¹Qõ
+kÞc§P`2½Â‡¶U‚Û`ëŽÄl˜…[9q
+8Ñù˜Æ2-êc}•ðÚÝ÷(Ö›ðBáÝuŠn°a¡˜_ÚÎD†¤½¢¨[À¬oÉËùE‚Ö{ô‹È³»H&è0ÍÉ0*â\œÐÑ žOg)¬^x?P
+,%4š¥¥(“³y‘—è:`À45(Yƒ†ËMŸl¬û®XÈòËgy"WE¶<$Ý¨Júƒa•ï½’.+ðT$ t“þÃ×£á›‡@:½µÞ@¶ƒµñ{.ê*À­Ò *>l…Féô(RcèaXÎ&iÕïýçÞàõúÖÆÿ­ý¸³ö_Ö×~ÿvM¶ö¶7Ÿá? Mõzn[À„ž)hì¾œOª¼H£·ño?¹¶ý¹ùäšúfˆ®9ï»x•õ hKµ3ÍfÐüSÛ *(bMí}s¸³×³éER” çAáÍá:{/ç+‰wªQ#®miìôÈ!<BÛÈAè_þ"z;ã¤,si:îq¹˜¼Ddé¹ôb@y——ð5ÝûqšT‘ô8á]¨ò*šØ£&Ox•^«~y÷”) £5Ô3ô;òI½©†{Øæêy'P=¯ylåxÜ‘šjØ}bÔ²s4Õv¨ü¹¡;ŠòÎ¦šk˜C(ïTª©†=~r£Tù•%¤dKÄˆÇ–,ÉÅ–©ˆ--$	ÞG÷T2DleÏ%›I¡Ž­ED`kÌ§—išh[¦l˜Z†yph¯|2ØwsXhËX‡kŽ›—U>}žŸåþ;Ãy#üª·Dw+WK}2%eôôªo™ºTûW…uÑDžßÿƒqÔÔ>›õ2z·é³Çš\‹\ø ®tâÔ6…Ì¶·*üv‰Êê­ÞZ° œðá™rLLþñpäw>,òy÷qƒB¿ÙþkéìøPN<ë›_<¼£ÓL¬D‘ôŠ8ÂWÎºÜîq»½cÙãvûÆmwe÷Œ»ìËòýe¹~žï•^z÷ÂEqM£ì<ÿÇ“‘"Ô°DeøÐ¾vÅ©½  Ô¢a–ÄœÝÍ‹q"K‚ÐÚËPÈ›¼¥KR¨\ºy6¹êÕ8‘a´ú´48©»‘k°ãp\¤ggèA1Î©‹“"¿ÄîhocÃp¨à®zky”æ`«"È¨Ð‰ûh>FÙñˆ¼íáy~yœWé¿SîQ¨¹LÐf ¡H©/åœÄÎ¢ÿÉµœ–ñßÞ¡ëœ‹G
+ j:»¨ïh7îµO>9u×}îdÉ¦5É¾ç~+NýAˆJ3@Å
+(Ø¡íáº@+Ç°’P•."Üª’•ÁªX¡¾A'VžE“óõ=ÙèŠÞoB~gûÓºßY¨ì0‰ÆÕð):Kˆq|ýÇãÏ÷³Ù¼R× žÔ¼¼ÑK==Ð·ê,©†ø\nA“²Îyð¥õÉfµS›AyÌŠÀî'…Ò
+‘|é…¹^"¿s}m@9ÐÑy§ãMrWÿWªi,¯šßF—]ØáQÙ—·ë“ò@WC¯tõ{å¦ ØºZÊ9¬êøž$¢âûyz‘‹‹èÇ4_q4k¯g±Ôú˜[‹jˆŸÀú|‰*ä÷ÃYŽŸÓhÐA)”.}i¦¨J¼O®J¯t*Ù³«;^ÀÆÛ)4ÊRéÿhÖ|8ž¹æMÍ\;õË¹MÁõ¥¶þªÊG«Žg³¬9RhhÂ\ k/ üú˜s¾µB3Û a$eÓ'ùfòÍþhé½Y HïœŽ¹|!©«Œ?wŽ¶ó¦ŸÚ pO?ß7Úö§éÍð¾-¹³S´yÍžÛV…g^Âé¹rƒ¥÷–ÞËº-‡Õywn¼%0@ë¯ÿRßÄy"Ö]n»£.S‡Ä- Ä©»é,Æ#kÕ×³j- £Úí¯™µÃpw›#lÈ 8l^.õ–Ãw\½Qà´t{4ÚË.¾FD€u™­ãC/£‹¤îfÛV§KÇ9÷wúP­‚ÝçåÂPo9®/Yã:MÝ~C;Wp	T¡ÖåÌË··vÇeî:)-\óNÓ·ÇÛ½ØÄå+°A™B`5\°çŽ&{ƒª¶=ÿ*Ø€¼³*Û@­óíx’ õÅ¬)÷´ê¶(5¼”º:~JU¡ °{A©¾IÖ‚RÝÞ]Qê]Z»JÌE7†QÏD¨.S‡tè4÷é±iZ»2ý‹{wÂå®¾ìÇ7{ù®uŸ—Ej`n»»Ÿ¼•	›wvÕÀd~'Ñ­yß>bS,òö#·÷[Foº=5ÀÁAÈ„ZÇÂÃò|±æv©ËÐ¤šnŽ,jóôÔ|ª]zŠÊä¤ˆ’·ÄÛ	À€‘Ô .Õg÷H¥¡÷n¡–êKÈÖGÍ£òÛï7Kµ:w1fÞ€ƒ7ÿPˆ7KÇå@‡¾ï^gO>}éiÕ+éž€†”¿;	­Éð~Y÷D4$ùú5Â§m2 JÖÄ¥zYs Q“ü²ö”Òßäj8Õ§•G¯—c§–þç—÷NƒŒ¥>¿îéqØ€á×
+Ÿ"·™( 7ìFç°Õlþ—Ðñ e
+k,ÏÒõ@$Èêw „WEó"úð/þw.`5'ó‹£°¼ÐàrÕx*`{¡Íøª/tbÓàNe¡:
+Ã!þ@Ö~ç¨G–f§y}XÒ÷¦Ñ,™”‰Ë[k­ËË±¬~ÃK¢Ô6ß|ÐÔˆk5ûM‡0Á3–	a)ãûw]'ªþPü9)ÒÓôûy"rŒÏW§+‘''rÀ+¬ÿ§iM&œ	#£æ§.ñ/Ò)ãõêh31QðuÔÿì”ÇÉUŸV›Cž‡ÅîUMÓ1õ×Ëhgçùs]Dé$v%¤áµOñ\b< ØýF|»l‰¾bðk’ÂöŠ°cŽŽ âŽ†¡»°r_€<îÄHR¥±ÄQR©sø¥Ü=Ÿ˜ƒU0ŽñO  Û:>bõp@PÈî£¢¸¡>ÙÉbéc‡=ÆÌœÉs)]'2“3¥†Uþ<¿LŠ§Q™Xê¤½OgxxHÃÕyT‰K@PòéJ+˜Š8Æ•ðÛ¼êÔ)Ê|šH_Ô†®Ç·qŠs„e'wš†ô\×};äÇš´~£F±ë–vˆ£"ÆíQHKTpçpoçÈøÏFØg5‡ýh˜åÓÄ\c %ÍY’3…t¨‡‚êª}qÙv¤¨¦šƒâ²5EÛTXý–e[ÍÃ  ;C¯CÃeXAI_þ&@F‚0-Îx‹3:ÑZ°!LÙ’—-²7ÿuáÂ)7^Jáë,–ç3L¸CÅÈU êeb¬nÁ´Ãí\1IËÊu)Ö=ÀÓæ*)úßä°MD™AÝWÇz°°ŠªßVÅ	±’hHû[‚!ñ J/@Îªµo{èó]&Y™VéEZ]DïZOûÁƒ˜òÚ„÷a‡lä åÉ U§¸UÁ¿ºë¥Ø¡f±Gú«ËJr8aG¸Z,&'y}kX¥³\_­ò‘fO¹õI“Ü?×ådnÄwl„„¹œÀÓ*™Ý¼=µñÞÀ³CS³r8­Úò®øG—8¦pÈÄ	ƒä;îd"i£§¨…7ë´´úR÷œ5Êûê©LÎW_Kr[>a¯E¥×
+}®xž¡lgÆÌ‰Múz£Ô˜1<ŒaZlã<’“yÿÛëšûªðÉR<€í¹÷‡¤@/-¼!s¼ðêèíÞ‹ƒÃ½£a*÷“²¯#\’SXçÃ 7Nmº‘ÂÇôF3(Ïå@,æZu9Ç‚˜uy“£³vUAF9°eWä›‘´eˆ0­F¾rïÎù7e*ôP›NI>¬¶ÕLrE	[REºÛ$2é—L:ìXøoxÓnJYJùŠ¢>çvß™Üt;ï©vë]xÛ£äÞ£%ª$>¾š%wP4l9¹FQÍPk#-©ÃÙ5÷Wär(|úÂ¾"V½1‰UÅ$‚Á:»ˆÐq_¾}B¯1–'
+ð3ø¡9"v¾_ Áåö|HÖÏÞ-§™BRßÙÄ4¼mÿ¥7ÎºÊs àÜ Xœñ9mz}…_â{g†ïñ·=bg[ôYK[[º ^rÞkXõŒ|hmµÌp‘¨Ô£*!Y©«\‰¤Ù!Jé—ëh
+Ãˆõï ? £‰5hz ?»©-Ñ&Ö©ˆìº@¾~%‡Eä€]%TÑ¤ó‡À¬v™SS¿QÕ%ó™
+€…=Á‹›Ø´„(¥Mf¿áGÒMóX÷©f©±z—$é'n§r»áªWI6\ü\6i`÷¥`™‡µIÒW?“ñŠ³8ùaP§íäPó M8Pì£´N Ã•J&	È!ÛIä¿fô¨#Ì–Üv¶Gäæ#ñ.¾ÊÞ~rMý¼yg­äØþˆšÓ3ÿ˜m´¸9Öæ«Ibí\júÁ{m–ÏæŒÚYªýÓPOÁ­—çI&¦LTä3˜ŸMuð*ÆäŽB5ì¾{§§ðÕÙÉÂYš¤¸N¤]]äŽŒ…kð‰ª-½Ûïêõ[¢6­–f•‚ÀPŽíãªíáj»ÌaÑúÇd2VTå$öœŒü‰4öÍ«sô¸Gˆ6º¢Aqý¬q+è¶d„„÷-Ôú'¨ÄN©¬û|$¾¥³>çæ®µ’þÙkÏtÅä)jƒÈŽçìšnÏm‚Œ?-±eº”KÔýig8­¢iTTE”é>£ÛÔã|jìØÖBúô<Îvr¥£†"n~Oá¶î+L•ŽQÅ›0Atd'£‡ÚxÝ–!Gå:‡R*†‚s l mÔ°öØæêÿ>òôJrq† ÂI	”•DÅøßÓ4±éï ¬05‘uå{=M·CAeÈ“­0Ä"P7äa^\Áè)ŠQÇ­,ê!±1ì pÆ‹4&jêêG¼yEP¶‡¬P¾YÛ°'Eey™1Ý¡:Ëó³IB”ëÊûu”ÇÉi4ŸTJL¬­6Òml[%¬ âÛâÝ'×Î«Ð±îàöhŸÖ•8¦…%øUUªç†vóÀãe29Öm7º1€—ùEna²!©/¹Dj–óÂg¬ˆ~Œò£¨g2âÃçgÂÆ—b$–èT¿†¾m4S¬×¼M€s9þ]+ž"ÅWE«5).’Ãt•ÐÀ¬ï€èéØãYš-(ió «á_,ÙØo§Äy^åß>ÇÊúw½Ûxao^Â°w@fŠœO(ÄkW‰ ævñØ&¥Zˆ¶cèâb$Jz¬ÿ{üƒŠŸ¯ó:E>	ïEøD-')W÷ìÚµËX28wë9,šT0…¥P&QûÇÛÎE*¶’U0Ÿ·Ígð^EæöèþãEOäãcÉÍ‡òúŽzãrQÕm[~‹ÑTè^‚—+ÅÀ®í*p¢÷ù«$_ì ¸ÿ@ÝSK–Ý&ÓoH†°kº©„dXŠ²á^²*.ßiêoŽ¡Ëò
+˜^ZROeK)Ü²-ï–~(k–”¥E*„ëaÉUê¿öîÂò¸˜tv—†U´êP?ˆE«Ju ¦¤òûl®e Š˜Œô	‰sçþZ¤9ŠËRZVN%Á¾’3Gíò*Æra[<‡Q$°Àumð/ç'hD;A<æÖÅ+Ð‰¼Ú
+ª!¼X’uôIÐK"àícûæyÅ…Á»Ä*ŒôåÃûqŽ…(¸ÍHú-è’aÀizV@wv&“ã|O—è»²ÇœS›‘ á))oOév'Æ?Ï3¹Šþž×ÒLkÚ‰•îA7¸_í@Ý—&0µåÈÚ\¸l¨!H?´yûs&ë[CŽè	œ@9N* %$Í~¸×ƒ¡PñÒ×K‘VHÆÙ8‰Ó86Üå•„›¯iòÐ7 HÎˆÁ¨^y	HÃÕ9ÄURYT…•EF­µýa×%ß ¥Ÿ-m˜°J°$¾òªÄ”U;ûâ“+%žHw4\%0<ÀÈiz†ô8U§j\¨§&¿¿ò0š¥Ïœ‰‡²êŠ&Ø!*×·V‰§YýûYnîü„D;#]T Èç§’«ŸGåu{NÔy"K{5oã}[rgŒk¨_ƒ²ÍšžÉ(¯ÀÝž5x³å'H
+—@ãóè"!ÇèVˆF¾‹›µÙ):J€¼ÏòËIŸ%Ä’K å‘¶Àš#•Æ™CìþéBè{FUÉvDGŒØÙÒû4åç	†£8Fóú™‘	
+7tòöÎ~’ËtÍý»H“K9w¦<™•µéÊóV)Zo&Jý´^s˜ÁŒ³P'0d1¦ïÙ™•£ªÏhø=‚	Ôeú˜¯ˆ¿$Nq «¡amËtÞÀ,î)VœÞ%ÛMw¤¹”ÈH’\9ž´*Ç;ìèÍ¦öëÇ0Ø’x_U+5E¡ÛðÙ†ü=sOqC½uHÌ JÞgN&&°žåÙQÍJû¦Ã«2ÒeÀðŒV
+e¶èS3á˜*{ftåâ¦÷dÏ¦Î¿q™ÄÜ®FŽ§#µ¾ÀÂÌ±ª~þJzù ?h’53«H¡QF†ÚDc¼òCÒçž gè9|ëmHUÞ”jKJ‡õþFŒ¨zË	ö*9çÒn*#žWÆá Ï«âÕ,)ˆ‘qùùþÑ±Kyµ|ïÅ{ð²ŒÜ22ÿÇˆÊp}2÷:ÏIÝÍõ×HîR¾-¹ƒ¥ªh>å3+SÓ¨	­çZ26¦·®û¡J-ý&=™¤9H”†¯Ìã|òá_Ï@ó!l-ÓÉ9Š}}ë+%¬cåÌõéßÐ5çÃ?Ë!{Ñ“$÷™Ó»µë¸CQðêœ"X·î›ûiÐÎ|ÙKÒuÎØ|YEU2%™8)»Â\¡ð-/,xú	•Ýu.tñr;‰½«[·5L™üJ±)åÜE~À‡ú ƒ|ô	%2(×@Šª(5ög^kÌ³»¥ºXÛo\AïÎëRKAÖ-²‰‚Ì%åÙê.j¾
+RN0.é;áu
+ú•$Â$Á§•“seS„½i]'V™Óƒqì¼wrP	j0ÚBb(%1”œÊŽÄPþÜÄàÌ(§¡«ØÞNë>Siyg{ÈéM§	ºwrkÌàG‰a"ø'ÇÇ©;Cú*VCò/é{QG›®Æ‘¦|Oîeò£ö/ÝaÔ%¯:zÂý¡Îßap,¨X‡³9—,ŽUwxœõ¡þQhÃ1Ü]tp£aß¤£P[«qMñ>YñÏ¯7u÷½aïîkµü¼·’¤< Göœ4¼ £Y5“ÙpÉ'G^¥«‘è¤„R´e‘Y~’ŸQÌÅ2—
+h¤µRµÉúYå§§“4KÐ‚/¯ç'íF/ÏNc‰	ûC»}Ôí~J íÇ@+‹Öf¼½Ž>†n©ýŽú	ßî’àvg·5tBë+¯½éá6Jïª©p`Á#+2 ´Uvòª6/ÛŽ&zj\WœDóÃg×TÁM-ZÄ Y€Ý¸R– †?•5½Ñ ‡Ð	Zç.ÃVéyþ6L¿áš:4Ö.k©¹#Žó æswŸ;„h&š¹ýÌ!¬ÅS§r´“§‘=ëôbßá£{¶Y›4'_mâŒàG(PàôÌ5ÎVÜi¶ŒÅ64U§Š]ã”óD
+>OE÷yBpfž¨ÛÏÂºí<™aõ¤åzÁ$Ù°µ"|z†,=CEÓfÈóÐ¬Mî_œº¹ˆä|Q*¢c>_ãîó…=0óEÍÝ~¾ÖG`‰Î9üÑÙök*s7é	EàlBÇ]˜å¸Óä*:4¯VàhôŒÒõ«ŸÑªûŒVf:U+·ŸÐêg³¦u5Î¢£ÑÔf¥ |ÿê9¬Øâû.sˆå‚·]„‘ú¾lFr—Í²¸}R;?µRŸÊQ}sÀjÒ±NØÿ&ÉY4¾rceˆ¾÷N’Stÿ¦á‚ —Ë3Ï´^ŽçEþõ¹WŠo÷wo'ÿ'Q*O³Å»¼˜Tëß%±J5…Ý¾y÷Ø€
+;£œ©hTÞ ©¾¾¢fÈï®ì$jªº6>â áÕcf‚rL”Üat8GyæŸù„\Ï`ÍÕ®¼ŒÒÑ¹~ÌÞbQ@•¦pîèsž€%u8Í08
+Bcd95<ôCO¡™õÇðÏ×Â­…ï>Û_¬×êê~žÐ"Ú—Pé7ä›Ÿ8}a3u>ÏÞ£^«Ú©ÕÒUl„Úð«q¹0£2LøG0õþÙu–×W@¸8ÅËA‹ø›]¸öOÎ„:Î§˜rÞ«ÃkÔÑuc1Gùi%¤Ïº.HžBC÷Ø å)óyM 8P{X8½‘Uó¤f[µÙÊ³“6”1t?2ô˜ôïŒ’ÿÅ‘xeèè&fQ‰?æt[©™)‘²ûé§ÂzdLd}yÛ}"½æœ;?†¢ýÞ9@6¹7¥[ú<¨š¶ãÒ™úÎd"œH8Õy"5oXL“E»¼º0UÝ=Î\o¸©¨³áÓQFÚ=ÝÒÝý”Õ…[îßØLrRðÙ|[Ï2Tçx­”	‰1†Bí£ùö[±±¾¾.XJÂZY”¿Ö¸c¡ûuÝ/{ðôà¤­µ-=¨•mîšÙ…5‰ßL_×BOõOw‡êc8m¸ñOè´Ñà*'ÝŒÔMÆÿª"QJ~›‡ÿ¬x–•Ø´"§üæ#ŸgÕf˜@³¤T/$\®Ñ­5q~Ë­ Ç„ÜÒ0cLÈé,fi•`òð«¿N†CÏ¯Óecô{c(ö1èC
+S»ì|"Ý6¥È\Ê­–:›
+H]âåÞŸ÷¡Œ˜,œ%àD^Iæù[¬I“1N©ÃFãs¢¨3Öq{Û“¨¶Vfe‚ëÁA+Ü†5ÜUõä:Í.@±Bj`io¥ij6‡˜si²†Ì‚]E±ÚÛ…Âûˆ5­ØM„í-l+iÀ³ëÜm_!Åj÷–›‹F’ÝY™d3Ë³“l
+3NÎQ/©¦»au ­›n$æ°6ŽËg#çöÖ‘ ltEÊm þ…«»rGÎÅPÈÊ®ÜKæâ*hF›[šCb‰Kîe8/ã‚
+|Àå&§“r2M&§C¥pË£ö†uàÀh¨±ù[¯¸õùj¨|-²O¼£×XeO•¡ ¶ä$žc(IàÛ–"}'b7‚>TÛËý+1_Vg¦Î óOs`P¨Tw„ØIq6ÏªÈÜ.	ÄÖqS$z;SF R€‚¸M×òd@î‘á"âæõ4%hä1m”ôPC0‡ý\!z–ŠÐã‚Û˜Ït,£u5Áâì¶
+”¶úKÃŒ³E„ Çƒ‚°ìg½xè>žfóÄãÌMÍt‡ãÞdX7†O¿ºEi‰ÌEŒôUÒ•¼4VÃ,3ð"Â–3PÇñ¶’5³<[“QÈ–ÈU¡a›ÒW²°ŒVÔÁ.µ—õGe‚ËâW¶ËÏvZ8æO28U^À¥‚¼ÌºÐÉ‹¦²Ü5XU RçþhsÈìg®ºƒ}’0š8¢‰ô§AíR=²k©@ær–y&ÏdTzõ¶'>#}t˜å—0=Ÿ‰½’Y’£,Î%UÆèÏ¿ñ.—|Ú\¿«)ÊÔ 3ÆJÝÏÒj=ön[ÙrÔ Tº—ž5^GÄIW&4_Õ¸¬{~ÆÊÍšK)ò¢R©¹¥ÊJlñq“v&e&_Ä¯ƒkyDÿw®zŸàMðv‘oRüH¸—çžý²ŽÕ“ŒvÔgy¬dÕe/-_=„Wxé¨ñÖ3E{;îp6/Ïû´ëŽ@½÷jÒq¬³ÐòPÛ€¸«kù B|Ðœ¡F•uÐô+¢dBGVÓ!»Ðpìüš[28`¦‘‡ÕVvàÞéõ¦Í:ò¼P‚søPÿê9>B‡aT}œC¿­eèì°í¤€î#âÁ"aè»>K€©3å®µ›ÃHšôðAj­¯õ³†;ž=4œ4h´z§êŒÁË,a5³,·ö‚zç¨ƒiÉ–Ðúž«mñJcðƒ¯É4c"©ÚÌSñœXgþF³¾
+LÔ¾/’I„ásrï="6?+¢i$Ý²K÷"\»HYw¡kU¬ó +',—*˜8N`oÛuNA·¦ÿ˜â¬_µ°
+YøÜ”{°÷N¢²ÒANÇ;ñÓERP  ¹¨×“	j‰G°„Š8Aw•:óJtö3ä3¦[-J|Ørí »±K»‚yË±åÔ–.”oVÀÐ¥[ÁzU^E“#””cW	8ç€Ê~4éËh‰ã1¦z/†$1È³…Uá3Nñ ¥“Å 7Åo¥ò]’qacÐ•>HŠ±44H‰’²³ôÙŠ¾m^”‡%LçAÑŸÚø=æ“j/“QFFG.4yÞ©™Å_¼p£>áŸµø0\ÜÀiÏ—+)U®}Õa.‘0G¶ôxæšzÌ*3àëp*¾É¹©Fø:¸á¤œÿÈ*Ò¢wdv@³:ÞåÑ&AXt¼œh^å0Ð¼Ì4 1ÌÿŠ‡Ä­¼7Èî©QÕ'¶ëšÀfƒ>t-B´+íÒXÂF¿IWµ—a]ãfï= wåŠÆ{J>i¬mÿÖ©q\ë;=ÄÛòÙÕ`ÈP¾ï2|ÕŸ:-U†¨[ŒRðn<%´€ £AÖ¿þå/Í²Ùwa ìCK}6Æà|iëA2™O¢†‘¸ßZ T@§y–<KÈƒ BZàÕ/»àêß=íÌLcHE³­.O¤\¶.£sï5ô£}.<C&šG9^y VÔÐ‡[J…áPMN-ÈçÚ-ËçÎV¨Ï(çò§ÛÈ2ñ2ƒD 0‡ÏGFfº Gð¬•»¸ž‡Í*aŠ¢æyÎÿÕGˆÝµÄYž››mGó/¼Yô
+§IÑò‚B*×d5KÞAêYW'#}A«FZ+Ó³l?ÃHùl>Sa¼ðB6‰Th=&—)rÀ¢nÁù±jK5µ8Ü’ÚÌ­Z‡«	9¿b†ÞÃâŠULdìóCÓ<[Oò2‰×N®ÖÈÔ‹÷…­Y„¼œ¨^þ‚ã«œÒÜ‰dt=£vœí5ÊI~Ö_‘3Aõ5@Û±Mµ*œ;¬qóÿ‚ø†ƒ  1§,=M@Å;£8€Î›ú¤‚àZg]âxbËôÃß²41†^‰É@sþÞ~ø+É3…L©´dŠ…ôT¢D:¸M%i¤(g(¾­R4Œ‹\}Ëç0³2b( ®{kÄÍq”dçÐöI¬gØ[ˆ@ïœWÎÅ)€JâÐÉ®¯‹GÀ¬9#>~”WÍ ÒSCXáR#Ë­!%K£ zfI&hýÆÕ('([¤	Ù¾p?‘a^µÌ^°|IS|z(òÂŒŽyÖ«K<H…r}U$r©å'MhzÊ¾gñ
+Ú«>þŸ>ÉŸúkÍØ‚Ó–×šÃ”y_õ²6´r]%À‹ÃI†l™Û­‡«MŒÞ—M¨zã.ÓÆû<º'Êk ûFCÄZ4Á„—Wki†|²×Ì ö0®f"×éwÀ$;H¦€ñ|(`ŸFôÿÿ±õSÎ#ÌLp±åÌE‚]K3Lg¯®ˆûË^‚2v¶f#N7•Cd¯eyµFQÂÛ*Ç,Šº-€§æ ûaf°î#¸L¢÷¶SÍí¨FbàÏwgÉ$ *‚ªó%P@$Áø|Ý›þé÷Ž]½sÐ>Ñ¾CÅNœ¢§4nfËÉ@­S„B™ðöß
+vf*ïØd PµŽŒÆ¹T‘SMtTÚÏxNÚ2¡À€±;»-¬ó“ÏQj’B2–WóŠ¸È€>ÃqÀeM0ƒƒÝgå5e‡$c§ÉÎí]ž2#unQ5é«†Ž¯E f	×‘ÍÝé‡ŒfÊ©wÈ‡9zØŠà¿m^dX^'.¯)‹@žÔAž´€¤Û;T:ÿÆ8çÂ›5x®·ãp@p)}QI;GïgHªƒmë‘LVÄ ˆoê Nº‚ÐÎÃØ¿˜õÏZ×+àªšG0žÿ¾'	ÌìÊK\¥çÀ¼Yá2¥Ûj˜µYI|À@i¤à„‚B*s·`)æaÞŸV±5gÛD^‡ÆcŠ~ÊÅw%¬fÁÞK•ÖùHô&Lagi¯¦SöNÚ8ámô…VRo¬Á@¨
+©,m|áùÛû§4&©-ÆØÍ03ƒ?÷ÃI£µdL….E^ âÝAŒÂ°ååOÏs<XRùYNŠ(é­Ê,‹XÈÕ/f,‘-jÂHUB¢wûŽ`þŒ›$]¢ _Xö(Ÿc _¯{~÷ÉÞüG€_êØÚ>9æï*x#á\Óü~üø±ÍÂ#„Ž)Làcå?1 Ð@m ûáÿµûðl•ÂËykB­io?7$$ÍìyJ	ÒÓøNCJ-äðÕPEŽFo¶æ˜*õ<a‘™ª>úšÈMô¶D½”›¢‹sJÑãR«˜ño$×0à4­&&vŠ‡_é¬i·	ŸDœÇ«	šž9Åt·r
+Kß gKa*„_‚ýÐëþóÍ¦LÒ³sÚèu£Ãsùê·Â@<4}^â\ŒNKÔÉZ×`ê^þ¡·ÊØÐšæUk¶…U±±¾ÊmßVí.	Àží÷œñ†BËÛQÚ3ñ§ù|B—yqbÕÄP3h9Ð;ÃŽÜ`¦YyŸ¬®*è=›	º=úPC#ÿ©´šÓ…?™Må§VÓw¥{Ú£3Â³t2yšO@´ÛøóÕ#øßæïåéi2E¿ÃxíÑúºSÜ’øOX‚¨þü‘Ä1ý»¹*ä½g.2©ýãä‡J¶¿ùèQýó³<«pßèo¬‡?öW`5]$(‰WNòI¼â•¬ 	˜’W/¾}~üêpG¾Zi ’ß±ÓôÿkØßAÅ4!ù¹ç¹ÿü¦¡«ŸKôwü1ÕÞ>ŽNŒÛ.7Xqï@~Æã-PøàEùá_Å$ÍÅ…jñ³=Úü|U|±)Á—¾yí÷lnº"E¡„˜Ëª:ÀænÚï‡8nóÕ¦ÎHŸÎ@wÞ©Œ#ñÉµï€!¤ž¾¢R2ðÐ÷ñAû–›Ä‡¿a~ Ö¸£ÝœÃò9Æ¯n1õñÅÍçëþî¡_,`¬lnàÉ-£¿â£Úbt~Ùñá•áÒ(Éº¥‘þÎAø òÛ\‹Ó³´‚WÓ4›#ŠÌ+ ÉÞÑ/'q·ˆ.ÕJÛüI	Wåëœ˜6bÂ;R}ø‹ÍÐ‚‘Ô¨·;³Õ™ÝïÂÂ?Ü{¾süáî¿‰ƒç;/_‰Ý=à~ÿíÃ}%öŽŽáãÿÃþÓW½š0‚ùîve(__ø d‹U(Ó¢‰¥)PM„¼ØEòÓêJ½l:öŽóe¾¡*•T(™nBŠœ¶5ŸQTYc°/ ÀÛÛT7m«m‹¾y ÊÂºðÎE	Á	ª¤l,$j)ÊÛÑ¶¾•Ï`_äÑÅ÷xcs´¾ÿab%óe0ð„m;€SÂ€B…ì:ürúmŸ›:Mhôkº‹Å}…×Žšè´ˆ©p$õ6b–„\Þõd`Nö"-_F/Í7«®œ¯Pš}
+‰µqzzŠŸµ¿KtRúõPÏ­·ÐªÔntUjPã$ôü‡¢OŠ+¾4ÿÛüb€ÜÎ–jPñî“kò&~ÜupPnMÀÕ„@aä·Óýílf<ûQX_s3‰¹.ÕþÇˆ¢¹†¾?V†.°“Àw>…-3·­ôcóQ»ú<¼ºê!ÕÀúÔàÎ7_A“ˆ÷Ñ‘æ2õCäIõ+\Òtâµjž>¯òcdÇ’§3û`Õÿ9˜ÿø9pÿ‘xýº÷ŸÐÉíÃ?îíàÝý?¼üð?Ž×µöÍó½ô	wƒÿgïHì‰{ÏÿˆRÚ~?xut¼sÔ£=äè D¸ÿüç½çø¼ÿòÃÿxºÿ
+îüú±ûíáP¾Ø%í+7šÞ›7¶'y|5²»‹ý ·5¼Ä5IN«‘Ùæ
+Ôìc•ÏFâ‹¯VPBö„'ÐöìÞ™Æ¸ÛÀ~9’é]jv?÷…,#/çSŸ¸>”„õ;ì¤
+Ó&Ü9:ª®&˜BîÚñƒÔ*Ì W
+Þ¬6+•– 8§„Ç‘ø]ý=¶©•ABuõÜ“¼ŒÉdr ˆv­…††ÓšíËÐí¥>†÷úÑÆªøª~õè•›~ÇpÁº1Î'óif:Â ®c¿°I§F°ì˜bÃ«°	âXl|_ºõ7½ú_<r¿î}ÿÊûþ…÷ýóM÷û#ïûÆÂ}¹tßù5ÖÕøjé6~ïãy£½†»èÐøôj/\õ¥ôÖ™â«žÉç'©f(7IüþUØùø‚ceh’”/T†JC¤|{;Ïw`[±UJ"Í¡¡oô­ÞÜD=ó÷«âw›oH5(ò2YûÒYíÜþ;pöÅ7€ll è/%ä¹žúæ®Øúý}aëé«—OŸûáì¾Z82ä°ýE>zãXNZÑv°÷rwïåñÞ½LIÅG2¿WÉa~iù!çï›¸‰mbß7m¾A‹¥aj,øÒÔÍ/’ât’_âA¨‡' ²½W|^E¿ÇÒŒqè³<¯<Ë§tÔ†M°$Óg>6V[sx â’Ü!_RAëÏì\)Ú +E["¼øì3Nx&éÐz˜r•^¾7vŽ¯êß¸!fÝûLö 6ïÍZ||ƒßš8øðW#"ñÉuzƒ”õ:ê<euî‡bÓ‘›ŽW¤%“t‚çJ_Àœe¾²ƒZõã–T~9Ìg˜¶ÚÊçÕl^õ{'“üd^L:&oO`ïM¨,ÇÕ¢5g¡vñ:YÀ4Z(¡Ý´{‘>4óÜ n£ÑËè‚®ómQø1ŒíÃÿWÅ$:IÐa…,¶«"ÏžNÒñ{q£¼E0H üúd‚ŸŽ²¥Šm]ûw[Ô~ÑJ&ìKãä$*^!r½\‡Æk•%šx·®Ç™%®•ËµS<¯= ¿£«×kr6ÅY4[û\Ì~XûBÌ®à—²Ò®ý0UQzÍ<[Ã˜cñ\†B{8ƒr³Æ3¤±šÑÍ¶X99[c,¢µËsh^”çÉÚäLÿÒå ö
+‡2+TM3—uqŽÌdÄ@?Òï¨ kpEÁHä<Q_ãœ‰è~ëzsýÆCÙ
+5ýDE+0ö5Ùf‰V¸µõ=ý8p;Òo_xõk}Üˆ‡¦§å,ÊXÿVa®•É4%Ûì“k¢»›¯b9Yéë‡’Äð‰»A(Ò1îŠãô"L2+§éI,0Åjµvµ¶NŠüó#¢ûríw›f@Îå	]“Z+ô9ÐœðVT~%™Çu=9&g#*EÕÀ&ÏF¨w¦cü%{².@o…Mã<ã$3ô—ò¥AÀÑ¬ñW¸$un²]\¬ÐRÁÿ­° Îåú™­}¹òÄg°J`uMO ¸Æ6YåzõK,uŽÿk^8lyÖ[ûn^Véé•~l]d¼#Ð•o¢âé9häŸë…±ÉèPô¶­÷¾|ðABÞL’'¹Íø=póµŠÎöØšùjÉ"&®ey–¬<aŽÚ˜)‰/€Æ&	àëÙo„lÖð×ŸíÆ%P”˜Vk+ON®Ä~õá/þO“²Þž‡õhŸ³¨†«µPÆ	¬.,ô6ãÊ€°Ž·®ÿH'Îâ[+ûÙ‡¿Ó|Åý(YÒÖµ½J¡)=þFTdJŸ(@7]P_oœ–væ7ót‚Ó½«:ò)V^÷L“²ûˆm•Öaßv`EšœbòêðÀ€–¿CÇ…›aÁqµÄ¸LŸ~6ŸÂ™ÅQAöÞà¸wÎ° zš•½ÕéŽ Uþã%»}²˜0y„ùî´éÄ¥oÈµNÜ‰‘c\ÆèòÉ¦1Ûq§É$¦ÜØ7õ2jô@7äÿM‚ôóöŸÿRÃBxñ¶öÚ1ajÕ°PÃD—!ùìüªyt4$À;Eæ^bXx´´x\Þ¨°Ò`Ñ˜¾vž7]iXoóaÞÕ‘Ä‹h\,ÞL¦XjÍÆ#èLÉ~ÅŸž)í\B»ÜÞ•:¸»ôt!â´¯Áæž”%RHw4øz4	E´þvÆ…ÍÞd2ð[a"Tù§Ç†ºùF~DãÌxñºp·‡@ÞN¹å°ž¥“QáqÙ4¾ÄŒj²PœbB‡*?¸]Ç’
+<RÃS÷¢ÂÂÞ—
+Z×Þ›ò-½¿npø¿ãž‹3v4ÃAåy’øÇp°«C0•¨ÓEW-ÖÆ¶Ö2U½òÂkñ˜µ˜Ø<X×>ºìˆYœ%†ÊƒçÜ}Œ+18ÆNƒ²1–“­t{9ãë‡ Ór×3Ìªµ/µE¨ª›†´êû…£ú^?`b+¦0$·ƒ!Úhe(Ì—Iv>Ÿö+ÌkþäÌ˜Ålín7‘}©wiêÛgBp›.'Iu™${ê`šíë{„5ÎÑÛõE×.QV+O¤ÑûÚÅÒMÈjþú]¸}4R¡!x}øÈàŒ,_Ÿ°–bPäž'§›|.¶E°M‡KÚX¥šÐQªÇ¬Y¦ 3¹ônÞÝÔ;,D Á^_ÖtÍbšÏóµah»Î õ¹Õš²7ðŠðç˜V¶Ã&s:9OuBï£:BIüz@§o[××âRžI¿ûäšœ·¦ÑýõUéÈ+}·0
+z½õ‡ü--AyœÍñè¶øüËGÐ™P‘ Å¨2˜gâóuHipó¼³‡ö¯ÎHë“W{5`þbÝ±Dá°H¿ôm”éôÌŸÉ²o]Ëm³ó¼Ê¿=|ŽNOïÎ«jVŽ>œ§kÑETE¬™>ŒféÃí[ÿDÕÐr…=ºùôVðÑ×ÖÆúÉï¿ÚøtŒ'ƒ[§§§ïj|8šT¤‰ ðÚF´;„«˜Û¦þÁÖßŠ¬HN“¢HŠƒöŠ«­•,_Ó¯Ü¢þÎÀ7,& ©µË5ß¾Åg5æWNÃŒï+2ÃÎ3¾ò$€É¯Î:€ÿ¡ô¹i(]½®ƒ«Ûºk/ä)KƒÉ/¨º´îÌÜ-NäouNÂÔ›Ö;÷èˆuÊ:ôúÕ¼bÇcþ´«=ŠÒBIU2‡ÛS¨ ÙƒùÉ«d\}±2tYWN–0®Ö²­B.³´çùåq•UÅÜ§I6Æ(â0ú•}IˆnWÈxõ€Ž‘íÍƒpŽºN¥l»ŠHF}yðdÖ”k%¦ÛMã|`ÆÂ‡Bq‡lü0ó®6,¨ššÆ†jPÜ«â	²W‘Ðî«îDš]|ø+€Ëˆýë1ŸÊQ¨K`ãøÛYŠwñ(
+G	YŒ¬ƒgˆ«ÃD]:Š:clvêVò±ç}oÇäÁ³VàHõþyr†‰´ÃX…
+R7î„Ôg	Ðr!¦yŒ-ÊL8*ÖÝ$Ò%ñL;÷áÿÍ’ïä“;È)ˆã‰^ š›|¢™^Zœ÷Ö½W·èa¼OóÙ•ŽHÅpkrSšLªø¶­ïK!Ã?šÇIYQ´FÝ Åº&aÅFþáã"RA/°rþ ñYJH+Úµ¨~á¿L0n–î0èÊƒx`)´êï¼:z»÷âàpïhÇÞ€Ï~ˆ†#høðSºZ§Ò²ÛøX;E]1QQ_'š°A™Ú›÷ÉÑj^$
+È~fãÿb».m_)@9ÅdÇ·^”u÷23ã¢Ç°D¦ÀÍàƒ}U+È­-]Ò«$~ŠŒU$Ž¦]Ö‰S9ŸÐeÝ\ lI«Ðê/zÓ ,àÆR^[Nc€}˜î‘°»6­ÏL’nÇ¾Ä;e£ "m	'Ê][AŽÎÁ*ûèläãŠ¹˜Âº|ª¢<±Û0èŠµôÊxc™ò]‚µÛ[[¡4ñ¯%*Wuš´7íÂýKÆj5.Lì&ÁÙè6#KÍÊÂ™Yrvê3„÷“¯z £žÎú^8ØZ`oö5”+9Ö‘ò;%¿î”ïºÛ/Á§ÄäG–G%ÊKdzdÙ¡J‡ì$›mrüÓƒ¨9ÿ•Ñ:þ©Nq„Y°ê^íÑœ¸’ÊÚñÁûþ°çVmR«¾Xà…y$ë©Þ6u>(¶9â«Ç…]J¢!ÿ*ùþ*ùþ*ùþ=H¾*˜²[	…3\Ó×÷'"“[ÿ¯²³)ü*ö.%gý²%^=·~8 PØ—í)_Š]y$¬\H‘ÅlÕ&.ò2B®¼ÍzàJ><¸¼»íWoHŠ¬Ý!,èúeŒ.²¶
+%”M:%#®Ú®„EÃ¥¥7jí'ßP[B|“fGæÇ×lzdžxÑüÈóÜ“@	>¾&ÃžÌBïg¡Z]4ÞÛ#çEqC>)¢2$i‘ß¿€f\ºcnvj+…0È¾/ÎÚ*/Îl'šE²{Câ­²ŸFóPÈ,OÝ/·±8µÞ‹E³LËüÒ0:‚˜ :ðú¼r ¯C'©ÆQ—ljŸ;J7H—5è|Ípñ¦±TKcÖø‰SßjýT†•?Óßí«n/Ä	7B…»s,´òÑ|YÉ gTCø=˜-®ìG$d$z;Uz±à¨'»
+|;Æ ¦u+"¦ Dª	V"hÈÀ<’É]ÚUüBœ&IŒ§éu¡Œ{á;æHü²GBÃû§<É±…´4—91‚É¦Àcd™Å Hè”J‚ÈÙºíÓ®ÔtÇ¨I¹—éWÉÃ/hýñx†ÜÄS¡Èzú­¬’8MÆªDO¬5õÄmË¦>‘-ÉgF"N§®Ÿ… ð—Fîwfõ7š.-q3Í3¼}.¢,Æø†gt¿q	Qù¶féðB_j¶f¼ftî´èñïng÷sãº'$6­}9ew5W¿uïÄt°]9„QáT‚¬ {²cïdÇ6æ±#ç6kCBE?7äÆÒh¬
+š¤Ë
+IÃ:Ü?ÞkÆÕýšÈì.fòEZÖbS¹'Éyæò
+Úý˜ÌI %ñ® dd“é¿ªl¿ªl¿ªlKesLç\‹ýü¾¼{°§{ê’€o§ÞÉÊ]Õ»|ò$5Dr@nU¦ijÕMµîÈ”½^½"W&ue’}¦ †h|¥úPÛ•È@©†F(‘%ý«÷JÉº~‡xö¿Z¥c%Ïúµê) ÃÆíNŠ¨5x›ih¤²eûÂo­¨è¹‡!Ô(mÜ¢ºú³¬Ï
+„Ë!°MâZ ±ÍkZfG%ÒZù§3²óOgÍ–~„€¦þé¬®”œSÖZPCÐE×¨ˆ˜QµD¢:©´LÐB¹\H}ž\)h¿Jµ¦ÏF‚ßBû‹LÑ²HZXå©ý,ß”¬‘’Hú™TÚâ¶Ì·ˆ»`\ânë„Ô’\T§Ê­+\¡Æî¢y¹ôÈ‰±a\)rlE4iO@jxS3„Å¹I¿jéH×Ä¥œ‘5ƒ[”Ö´q¾Y^SÝ’ÈT’†“Í´!‘3Ý4§"E‚ÔIÖ="óÚmy«Üý_Å4–¬%‰Ùgv¢é'YõV²s²èu²á 1ÚÕÔ¨(Z3ÊÃ«ƒ^Õh§"Õ)©Ë`ß“˜ËeˆÕ.æ)Áb‹8ˆBog¸f8*yO,¢É´FÕ|V°ßá_`É‡Œo2¼´Ãf7ük]ÂMÆ6¢ŠòÅzòúÙJÓ\%ÓÊ‘Ã˜<PxO8	w2ÉÍ¢«I-kóåœåçÜŸ¼~P´qeÛ`)zÚÌyA( «Ièm-lÝØüqT½Šaì[»Ðh;Õ ²œO,‹®È¬ß:_ÃÉ}=lK\i•|ƒýø$`ºDaMÚ.k^®í¹Tp(ÔÎP2á¾¶ª©Ûí˜#¯Á<ïEØ©šÌ†¿¹ÍâÈ“Ý:,Xüë&ÔáßR+Xwë…;yGÿîAÈ£®Ü— ‡÷.ìáŸ·âðÏYf)q’‡¤%³Õ¡‰ra Îs3;G²{ã|:M«þ]¬ÿÆê#Zÿß9ÐÃO®5ºyw?'¡Átó¸: (1ä”GÖ™ÙÅT¾Çmðµ7Iq6Ï*çM‰¤IqŸWsPÝÖe`Nýc«yc£˜Pµ¬5Íâ>éûFÛ§¨Û¶ŽíR:ÈÆz£a¹AÝ6¶ýÏ½?àíž=ÁXÊ‰ö]hoØh¬ïò	úN{NâH°©4ñš÷ƒ’Àô#ÃžDžé÷‹¯!i]cs«†ÝC|ëúS{(C
+ ÐâjÓA‰´Ž0ÇçY2„òùE‚\ú=löíx’Dè72Óð)“Z×7÷mg#‘6jg!ôz|Ð“Y ò	‰cÕEiÏ& ë`é>PñDÇF†âÞL‹ÌÜu¹½ëÁ¹¡Œ:MÔÏ ßn8#fsÆÏ…­ÅsY÷Ø\™)HOÆþçr÷ˆx&ˆ{><sÎ‡YãDB’³Ò™sëéªJ`wh`­rÃã¬;¦Ùä¯löÄf•lÒÀ=Z®Ù@å)³ms¢þ÷Éú–>Ù«³¼€C½eGÈ$Kº\’¥1my–RF§É.ˆó4®Òºm ßÅ&–;`ïöãí@âú(T–*³Ç½PïØYç²”\áõLub²x¦#÷öDƒ?WÍ¾-)…²ïA*Æñõ¿Ÿ'ÅU_öoU\ž'0;=5˜$lk«§‡:p³æiCì®ÕÎ| ÃÙ¼„×a¢°ú@y‚ßý	{&N®4=ˆ<Ÿ\+ŒÝ`átœŒÞ¹Ù­h¯9ˆƒ‹Œ:4rq!±À Q
+5'"?ÕiÄÁl„òl>&Òî;Ø"—	‰G²Ø¨pè{v%çYÆÙ%¾üV' Óš3e>MúÉiIËOöÔo³¡šY·g„¦²E“¬ODp®Ý™>GY‡Ùunü8ýš$ÙYu.žˆuÞˆ“ gàˆ@5üðÙ–øb}=4¥ãóyö^Úº21†q?]ÅšT±n%ë`MCÈîº‘:wLôcÓOÝ%·@3oPk›TÚw:K58Æ9.eÞ=||v);–À<ÝXa³[„d£4vÄ¡,ùÁnå^]ÜÊXí¼¶#8@¸ª¤0V˜P  m‰â[¾ÇýÃÑ«—C9ÜôôÊƒïeü¹¾12É}ÉËløÉ*óó-vú~ÝyÑG%ÐXoŸbÁ²›ÁÊ.ˆcY±ÙØaƒ€?ÒI"7÷ÀŠhÛC»@“‚å,ÆÐæØ:ìºˆ:H|…ìŠÞ}cÐ‚±ÚmÜ6q’1ÜhÌda<|ñV,f–SjÑ”9‡èrö›SAç¦UÐ
+P`ª1ÆN›ÐÚrdFjÀ‘QÅQ'v$&5‘×Í ßÀµéOÜšþ@ïé8ÊßýÐŠ–˜í×>¥ÓY4®rû"¤‰âaËYiAb¬«¦a…ò—¢&šŒ†8zß¬’²´ïÑÑÏû& Qìdñ3:ûÃ¬*å¿Ôù{ÛþÊÝ;Æâž.¨v_4À÷áÒ&£»µÈ®˜Ÿ,²+æ'¨:élW\RV¤æÙó“û²*ø?ýP¶¤”èàjBY®$üeV>xú³\<#A«¦ûÆª§Ë˜s¥Kç·ØaÍ{¥‹uéšs«%Ð§ŒŸÙ¨P»´%ÐrÚ%ðW®ûïë*ó]Cý8Œ´ƒI‘ìÁÑ¬øâˆÊ¶x~´-j^ØÑ¶x¿–ÄeY’VC,©Q56…[‚ª±*ïÕ]¨kJv€Ü^5¶ST5ü_†j¬Ñ­UãÛêÝUc‡ªïC5V£ú	Tc#œüÇU²¹¦`¾ŽÒ+ß…Šý2ô_5¤»ë¿²Ó;“	çNM÷`ÓØXXæìª!ÎõúÍ}°«Þë7öºð‚ÚZ ©Šyâgúþy˜ÛqŽÎ‡ðŸ¥AX—ÑÔ2»òÜŽ-í”Ö6›5'›übF§ö_EÖÑA“•¤{÷<®ï@Ñy1õY³qWêÓÆåFêÓ&å»PŸ5ŠÞú_õáEñÒœ`ûÔýäÔçZ oK}Êê“¶¿£|2oMQvõ«ÏÈ8µÔaãm·ÅŒ„%›Î–À{ñ•¡vóÄ5ÂËû±–
+úG7*ôur±±
+q)k½y:Ÿb–¾XÁN¿-çg	f	-5”èÇ\¿TZ4ÈÊè"™x_ÞÏR!/Méù¤5ù-T#}Y¾§ÖAVL<±Ç{ÔÑ52ŒÄ-b·u6[Ú™þ@-vÌý»LIÉÃfÌ²fÆ,ïÅŒ©jY+&Û3êFÌ_÷ÿˆû‡¾³Ú´7ü¤{BÃšâ¶N¨ÃWÑ¯Üý'çîÇ½Óðõ_„wçÒüUêAþÚ`‘µeõÐ%KõI¿fÕ«Æ­IœÁÖõ­±f©q·U/Ù\L±ú/B]´tûsz)¹Ô}wK¬¦ÏnˆµâÖT;¬^§ÜàøÌ«jKq(v	TfbÔ/Àr«éí·Œu³œfçw{»[¦·6›q¿@«Y)ùá¿%?·ÙÌc‰·³š1 ]M¶ìV^+å…=CF[V%äDÜZ%´™ûô­ç>p.¶×ÃíVÃmÏ0îfƒ¾¿•Øx|rOvð/|ADâÄ.ŠÓ<½“¨b	ötþ.Ç7aÈÚ%þ.¦ùd#ÆÞŠyµr­–“¦[Ü7Êe¸è£bË/¤ùÉ[]/ÒÒ•L•Í˜ÚÍæŠµú<0µC œ
+ûIe|ã
+}øP’YŠ11³³ óÅ€[x]è$øk*2½^^Ç&c‚ÊAÐÅ)’‡&“é# jR^²Zª-Ý†E¡„
+ÕünG|ø+NÿÊ'×‡7+â»Å˜ÀðfÒÍrQ ô3x×)B³oƒs±h­m¦e¶Ý£qçer‰-ïg³yÕïõ:óÈwþ9€š†ýï<²Á’´ÞbÆVø”éÁLËÚÎ¦ès§Zœv"œðôÆp­6“^âÒ#-d,ò˜g	\™ŠþÞÊ7ŽICZÌ=>k0=PMlâ bYBO§QñžŒ}(=+ž¡ØEZÊ2†7ÄRj·•#+"€˜ÉòË\³9GST¡äëK6·~oœ¥ËbÏ™¬}ß™êÎ›¥º{rË†¸\7ÃÈÃìÅA!îåØÐæ,dÎ7ìWµùØkqßÑlõÁC­/žîP³›”ã¥œÃÔvëŽa0Xè–|kô4Î|øH€›7Ú)—k§!t_ž3n¬ùôS‡çÈ±ÙèÕD›ÖcÔÌäÌ¢¥Ë4ÌLºz‡Ê…^¿\LoBœŠVŠÏhøhÙ=[ó+ÛõþõxiTÝq—Ã­<¬í„vò 8 iñ¨‹}U	Ì„æ›V5¨€yµeV‘1Ä›&Tþ-¶-òËøÞÀ‘n;<ìáë^ƒ»åà;pæû<HOÆ4ª×LêØßÇÈQ=í8í¡;Ïõi—àãaÌvÛb8#ëSé.Ü+7À$7!P8¸S®‹3Ðw›õoc ÅÉž_Ú.×»B¢¶ësA¿H2¹µ ŸOb7šÈ$m‚¿*O6U«×AÄIB–eÃ˜mS"^MZìªÙš!+q!÷¯%P8›[Rý¯µ$+qMJÊ·©&(ó‘zR7j¤´’0áóÇµc@'ÝT…×Šš”Nr§VaŒŽËñE¯Þ,P&P^^“Ø²Mk¯hÕWÑqÑÓ+rÄÍök}·Ò-X/fÚ¥Ö‹ÙBáÚ7,%Y:Q6v¢¼_Ag~Ê»PóßjÂ6»è¸hÌNûÎI[é¬"5ïZêneMx±NIKõŠ;3-ß©&»Òvaewk™{é¼ï,Ó$Ê´Å%|€‹–º_€PÁ¢NqûÙ.ºQ:zÛO*ó;T"ÿj9ìQÖX…5blž“”U<å_]B1¦|UÉíIkÆJc-ukµ‹=Ôéûß±â²Ì×ø¿/mæ§BRÐ¡SýµãCAkÀ‡3pT2~‘Rÿ.«u€¾ xÁqBµƒªì&§Ñ|RI7äÐáK½Kxñë&J°~«øPàä¿¼:ùgwçpoçˆ£¢#kcˆ–LNÁ$ŽÎ
+t`wv¢j¾4M[«ã@›kiòc"º£9î³­~BmÑH²"ÓäÂ<¸Y9/åÐ¿ŸÙl8[tG ¥‰PU÷[ä¿Y~[ý•üå=|Ý|ó€Ÿ]‡´PtÉŽè*„[šŠ&€†øJíªñ‰b®Ž•k’D³z¬òcvžÎZY|éF÷`áq¥&\Ý>KLØýÄ²éÌÒ9µl9±Tù„u¯ë,¦É‹[Ý¬Ôõ$!áïNþ¬¬ÿÜÑ+¢^£ÁA@2êë,e4Eƒ{D7WŸ!/¬˜ÜÝ7 v?ç§t0¼dY£Ì°ø]·tè¾ò~IŽÍ+¯ÍW`ÉuÇŠ4¹™sÿúÂ
+ZÕRcí4²aµµœlnÞ´™¹7fßó=(ÙÇ[´ñµÀÐÎÎÙ/†Î*94ÐMG±Ë¨MI‘Ð	å89Ž#ûV|_G.êßÛù¬É®v~¾H©¶~k±oÝf³wìÊŒÛ]øDw[vû`>ã‹©ÑµÙ6˜¯ËÍ[Â†À#Ë2nÇvL„¸m¼ïYÒ"øñXÓß«AÐ‘ŒîË(¨þ½µIãÎL–nìL&{?Ì˜5¼Ï;QgÝžQCg[w®}8Éù‡Cm•êpw$|Ï¤~½
+^Â¾–œF%eýâÝÇ=•[Þ4‘•uvÀ[Uö22.ÀšoS»’s÷v†“çBøx!TºÜØ•
+¤˜¤ÓÙâ°‰ÙµååqþOéíD¯{|ýùpÐë¨CqÎÅ§o‚ü\%¿@®^ëSˆÿy÷:üÌ>w`[ˆaÌÎAÉdËqÐ¯y*N¢ñû³'i¦b“âøwÔUøºâVK’âp:ö¥U$”_>ÌƒB:U…/ª!›Þ}yA^¶ðBIt‰JI”ãDì¸·Ó?b P‰Öï£&7“³£ºÄ;0I›Ä™ÔM.òxÁ‹åß
+.Necî•ßk:½Nè"3,†¥bXêy‹ä¼ÙÑ¸JÄÀêlÎå€¶ÒÝùl’ŽQàb\èZEÂ1GŠcí‡âKÐò2‚è–|v… !ÑÍƒ-—‹L´54`HR´@­±ÃÒ™’¾Þ!óáÊKDÖù‡¿Ê&?ü«lSÄrØÈ€H^Ç³ ÝØ©?ÍNóVâÃ‡â(/*B×û$™‰ê<' F`bå>>áË:‡Ó\Å#xxžž'
+%8¹y&`¢é{‘ŒÞJh‚L´hä3ÄOý~´*Nœõ§b} GÝÁÉ#œÍí6lÇP$.A«}4ß~+6Ö××“_keQƒ^aC[–Îmûß@û'mí×>¶´_+ÛÔ¾öF§¬ID¨‰x70ÒiT6é4"úõúg+Ð‹Ã€%UÊ¬W~?&ú®U$MY‘¸½]MJUÒ„ŒD¿nW&µ¡ØÇDè¯J¥ô¤ Ú¨íª1sv$“¤…äõŒ"£p·8®ÛYƒèoš”€|@Ñ·ü¢}F1ÄÐëõ»¤²å!¡ž¾Cáª
+¬g-ò²¡3
+	†`|§BŽRxŠRCOª¨eÏX]Æ KKú·/kyA7n#Ð{±q$\ð~l#®5QChqÐM&Ôâ$âõh‰Çã²mB‰®º$I-¥a@ŽŽâ!D÷fI¨K@t‚ÜØ¥(Éjâ>,xúÑåjeúŒ£¹þtìXŸ\x–äI7ÎÞÙÇ›éz÷Ä#AâÃ"+°²Í¡Pq…žR@)âÀ.˜fÖvq7‰“[±·¨óH$û&'èbì–à0m <b'WUà^¾·©­–ëù~ÛãótSFFDÉNI9”×(•Â[%ñô8*ß—ì÷¦ü½s†!äïQõÆHÄ 1¦e2„ÕÑí€õä©M®E‹„s9pwä˜¼€Sä7É«)Ü`u©N,©%üô1ÛÏOÑ‰ˆfùmraL‘?:¦H*)èòÉÛè"š¤‘Ž’zrúóÆ_FfKRéQRV+…T8ŠôkWLàÝ¦ûN® ÷¬$zÁL+øÊÈªz² «íùbmÿ4ÔZ¦Öå4TÐR›"”È¿E!½šTYEN²yÒ6ç3Wšv–ÒWße{§QNÓ`ÚjÏžS]ÍŠ±"ýªdñnÀi¬¯¶Ùï‘èOµ•e{(ƒ³¶fýÉœÉ\ÅÒLÁ·ì&+O³§ÙÒ£ î*ó —\Ðaß—pM<7	ÉÌžþ1¹Rº¥RF`w ÁA|*fóâL~°ñue¾~>e,¥öÛ}ÔgÔ€‰r\$I&Náÿ?&;ÌnªM¬ÃOú¢nZM±ÐNw/F?
+øRYÜöZìÉ¤Hh;Êô¦Á´àuÇ&EFÖàL¢£>ãkz ÍJŠ?¯.gºýÈéŠË-[Ü²»«@]• 
+´ >Žþs¿Pˆ`iŸíJ°ž„ X×L±º5Ÿleµ.d+K¶Ó®n…Õ0\YngU˜Ü‚Êýsµ†R#k?)°*ì¶‰ÃîíyŠª³‘I¸)zÀà¾¬°•–äóÌÞGåùI±÷~\äY~VDÓÈûð>ÊN¢Ì{Y$“ð—]ù¡öÿ…”?®Ni­ vG©¦D³.lÎ0Õ1éØH §)º >[¢ª-R¶mbøžfá4'"ƒ]¯P»]ù±¤„N.÷»L½_â@¨»6Ofð|^Á†ee$OùÖü­àh­ÅrÑI^T%#;×Ðh¨›¸xˆD£ÒZyË€5eÕn2ýÐ·>\©C÷ÜŠÑ‡	Œ‚b•™õA!Ý‹ÛÞOÆ˜'ž%ÈºUè8²ŒqÆ`ØsrC,À²ägÊ8÷xª/&§v%‰ý?CO–ŒØ‹eM±+·´e,Õ£%ŒìÐÉ'tßÆþÌ--%6ÛJpkH¸„¶¸#lž¥€yð¼,(/0:‚;v{nöšÌ ÎUç€süýPÓ4OÊþÀGdÈ2ã´~Ïöv³•Feùqì4­4-V™vß/y)0¢L3ŸÒ•WAœÈý¿$×) -Ç¨»«³jÌ0ö6p„Èíéw²ðfsy`«­î	tÏ’ÒlÝÞ•k°Yd_	›¨îÅw¢f…áÖ¬[úP„¡µç¹µä(ëKÛgÈèA—â­¨Ûö8Ú»Zqlß›au:¥–ˆZ|L½”]§¡wòhÚo1|ŒÍXW¨‚2ÅH"¨O©ò.yß0Àµî´Û.—UÛ¸.ÄÕRmèm1aÝ¿í¤ÃlÿjCa4÷÷gC¹ËÂó7×_ˆ9åçQöõæÔ=Ö¾ÖóŸ¢0'&WðuÂªûQÙ­¢	fÉà1>úÒñ“3Ï®øÉ= Ôù¿$’&)ïûCJ†qgÅ±NmÜ=U6ây¨&e­JH|åéu9ùU¸àïá˜±‹ë
+±Ž™½NÎŠ$Uçä2N`2ßkî²œúk˜‹™Õ€âÏ¬nÊ›Û:·lž[Éý:Îî2sëÿHGÈ¾rÒ2“®Êß>•uî`¦Wª¦óÛhXXb‚ù›æ¼9–ï;/a¦P¤UÌ[ø¹rpÇói!ho¹59¼ˆªFZXdÙ¹%IÈ&=z€—‰AÛN>%ð¿h2ˆÓr|°p)Àkäîs¯Zó&ßvž},ü1§ßÂÿEÏ?n	ÜšÑio×žM³Í}î¶µë–j3íû@´M4ÞUùH[;þóní(›+|Ò±XZ•Éäô7uèZv!²aJniâL¼xêÖ¡µmÆæâÈà¿ùE2½£‘³«S5ëžÚµh…¾µ±Hêw·¬Ñ‘ª”ù¼Ó÷}–x]Ú)6ÈžošT_ÑY‰k}ª´ë¬¼L
+øp’çhéyì}
+µæ<bêeÆÁÂ	‘öØù„w}¼O7˜¼Ö:úª­ÛÄ/„*¦hn€ÄÔM© 9[—2´Åq,ú8…±L(0Ö0j3­Œ;WI°aœ§¬Òo’þ™=(å0ö3 ê|nW jêðt¥ŒÌùô˜‚B•ÃFÕÜC-nknÆ9Á˜&’"†v¢Ä¶½Ÿøú™èolŽÖ×á¿Þ€_æòpïwµ“&E5Û¦CúvžŽyl&½}ÛƒÆò0Ë/ë—O²hrPäßÉzÂëªŽÓëX¾wŸ\;3@-nÄšpð~˜¨{¢ÿÉµÀ!KN e¿›Á»Ç¿	üÕÉw#á®a;ß˜ÐÛ ÈžÀ±#¬lïÆÜHàM¹²Š¦3:r£©ÐÜo[ç3Vym1
+é€gð?¢®å³¾ýöD¬3n»Ý
+‘‰×½=V}øÿÎÒ7w˜p²hÑõøQñ^²ÜOÅŸQ7¢·Ï€0²q’…à0Ï(/þ8ŸF™¬wœŒ³|’H¨¸¿Ó{cGÇ$sàC=<2H¾‹(üÃŽ›'¾‘4\"ÓŠDx çG.]»e¼zi;çzÔY(ù¨2v¤Uiçdåãž%åÆòÄÇ‡ÃaØØY!Ñ9C+dB5Ú	ÔG”¹äµC@cÆj×êfÙÈßÉPÎAzW4ïrªáwµ“ChcOo:õ§Õ·É6\ÕÆº«iÔéº+ÚùèøÞÄ²'–ýkb…¸'Ó­jä "ååsÜ?Íç“o%HMÂ#/ïž}0ü…ËÓ'Î¤çûà¼™¾FO¦×oÜ=ªðË“3
+_ £Ó1È*qsú)n‚0TÔ![G«Ìl_Kê‰¿7ª:š£ €ž[ÁN•HE<¶¾ÎšwÕz'ï®ãq†L•à‚s>Ó43çÏt¢•~×_†[êO¸ÍÏ†³¤8›gUänï¡hlzõÔqhR¬‘XÐ—Ða%ù˜£rôu0¨‘l=<"U0¼—ÿ„Gùö	½Ö"¤“:Dß™õTaý\;PáD`“>æ±ÆvãtÔQ}  õ%D[xº-Cý:‘,†çÌ‡Ç„½3;YE2ç_<÷_]YG‡ÇSTuûÍƒË>ôJ©7ûîªÔ»=¹¿Öj—dò$9çôÐ>Ù*ÙRKÔöé!FÁd½Ðé3ž!'‘v?À]èŽ™ˆñkí¼úÛÌíñXgQK†ñ¸FšÔù—ß²Ð÷X ÈÇç(·:»’73òÛe/r b$%á­Ä¼`º›†™¸\­…:pMƒÜ?jKú‚D O¼Ô{»Qdw·ùÓPï‚¨ÖÕè/?)o	j&ÅE„Q¡B€gI‰×l{H¿paÍ³8Ì%®r&_ÄF­"ÅÄ¦áâb<J§=(¿	EÍ»ƒ¨§¸v·Å¼_¯9vàé½<³ƒRzñ•§ô¢ºM¯`Ð€Ê(‹s9m*äàç_†åüDnëýÍUñ»ÚÌQgªdj…G•º¨ì1wuÄ½ ²*„¥¼‘ÝªUïh£ÚþÖë¹Pl¹Ys)EÀTÊ!f·T™ógd3üÙRÍóOå£+Òüÿ¶GÏQ°M­¶¼…‘HX”Îæ%ú‘Ê¹òY¬/áó¹•Þ©ü
+÷F’ëpJVUÆ‚\ƒ¿+5´ÓÃ2Ñ•&ºRE.ê”ÑJ¨£…>š³àŸ{%;¬/HÊP:ƒp­:˜yÆejö·òj®ô¥»MÀc1:b6Ö¶„&‡Î×V¦_Õ‰ßXÛvt‘Ôõâ0™[Â8=ºÖÑÇõ‚ŽÛbÍ4Á*tèF½,Ú!’Xß—6ßå2{­Õ1‹éì÷r¹©û
+íf<”·4!6Ð³_ nB¤7~±E¶6…nq«i~é.¦4[2lP“~°=“¬&b[¬šÙër…¡aáßï¡¢ÒØÏçÙ{nFs›¬5½•L_áÑÄ©:Ú–Ç€³>•aŸéW,ñâ–¾ñÉèc^•°ö!ä^öÌûâUF‚¶ª"‹/™\-}Ž¨~È3žwÎYCaÎ˜¿¦^<«x ^A¯/r'xÆ9üðWÜ31X4UÊë"únL¾¾3=RÁô,ÕGrö>‡rÒm9ñ”‘ª©÷Åÿ  ÿÿì½Ùv#W’ ø®¯ðà¨@‰—XRÉX8IIìŒ…I25Ý'2&Â	w’® à»ƒ‹ØœÓ5ýÐOý8 ê‡<]çÔSžúþIÉ˜ÙÝ7w	†"³„#÷»_»vm7c4v®Úzh‘N£éH*oeus:RekFOáÖù?žÆÃØ¯‚tæø°L5+E2Z»tÜÌ òx×ñ^:N $]pz4)°ÿ2”§ÍCÛ7D»Ó¬	À…÷‘}£¨ƒç§	‘mL½„¸ë‹Y¨Œ>2,
+[&Ñ¾×mqŠðÞ‡Å< k¢Û¡#ØÑ/æ—qI%
+©Ô†Mµ~S›×{m5‹@™O+îùçmŒéñ£‡%ªôÇÏ	 ž[Ê8Ì#êoC'žNó„î0l¯«”q.ê¬NR€XþMbqñJŸéH’vœël~Ç†þ±ÑÐÙd¾NÂ³™‰4˜(@  pÀd‚$É9mê¢Ï 	„ù3çQ¥îI¢$]õ‰P—ÈŠj9¸”S,FuÃK‡ùø„îµÓ¼LÇ\ìÌÀ)^ƒG©‡ÕHc(Ú\ErDßDÛè`+Ò³x\éSÓgjhË49BN!¥INìTJ¬‰Ö‹6_¦KÛ„Â™º©~ƒ	ú…&›wpŠá+¼h²Î2™ü¦˜ÉpeÄ#e4‹¯ü0Æð?Oš¨æAeˆ¤@y5^ÕdXoØš¸§Ôôz	Z£”á0ú.eãÌ¤állîvkóAœy¦·E¼¹·1ÅZc2½ã„’Mö£= _ã³¼XŒâ$dÍ¹œÆ‘ª«°%ªÜüåæßR>ÿÓø(f@“El-¤o-¹–Zôõ	t²è{˜ÜüËxÅÑfQeÇ
+ç³pRÁ4š ©ò‡­#ì—~„¶RmjbÒVë@VZ>O õ®áÖ¡.²$%‘#rØez2Å0'%fßò…)Ò“¬d€äiYä2à\ÅÊbôu‡ÕK‘´£ŸÃØ‹i…;•÷¿øâÍþîÎëÃÍ›ÿ~óßÞD[û7ÿãpwk3ÚÞ‰6_ßüÓËÝƒè`çÕÍÿûš=Þ<ˆövö¿ûÔ8ˆv¢ýƒ½7ð}ý‹M¸Ö2XL&x2Æm@rzPšo!4ê
+áUif¹‚hY¯—Ë(Ž«p³È‘ªå›MJMÝ"â¥StnšBS?¦_°nz±-¼Á‚É.JwX!ç;b¼›¼ÅÍÿJ2@Ò,ÅFsœg¬‘Š2+fÆv°Ü@G¯½¼,§Y·y’&C6¸…Þ:ÂÎR´©¦¶pp„\¢½€$9¼Æqƒööß|órçÕf´}·¹ÿÝæË7°°›/ûÑùàæ_`/~ØaÆzY!üx0W½¯œ#pÀØ8)ž0ÍS<Šë»ƒC|µ ÍÃ1ñVFÔ#$t°iíÓ¨[fÕTôWz•RÝŠ,•#Ã-Çæ ø9áÝiT(t íä»Ýÿb-°ÿ„G°ƒŸhbŒfy”#æ,n~A,*vžoŽ¨FD³V¢½;ŽÏÊøæ/qŽ2JÙãß<6àðîÅÑËÍ­?½v7oËZ}—bR(DsbôžÝ!ÐÑúC,·9cÀY"Nôcª÷ú_<ìG»¯öÞìn¾>ÜYä\ ªÝy'Uƒ:‡e–g\Òn§Ç)î$ÑÁª#XŸàŠãaNGKiÆ=¦úåæ:ðe:ºùç1ŽŽV0 —¡¶éDÂÀ@—ŒZ‡Ñó;J¥ƒ›E|»;Ì€I¡êbÈ˜^ ”Wfß$À¶·°’(ddº¹Îß.ÄùÁp!¬ 1‹  HPwÞF×}J>Ý$­ï$ùbd—Pò6ì'íhe9ó£×¯ûÄêeÁ˜\¸‡ðVZs©º\¿»»WŽý²@ªD€³¥ÎÅ>XD«f4<µ¤Žã¬?Ê“tXöc@”©ñªT Ž×	ÝûKûO–Ž‡qyº ef•`Øµi¼Û~Ý’‰q¼v
+ŽÐz<aR"˜Æòe>^ðè  ÆÁà”ÖÂˆUÔ¶ÖßÜßßüÏ¶P2"ñXé«jT~óÍÜÙ:tk“ÞPT•¥F"òÐIkùàp÷õwÑµ¯m]+3C%–~–
+Ê3Õ =ÓTÈÏPÍ83ÔÓÏHëj¶DÔõ«µ¿][d%‚\ ‘6¨€õØC—|¤Óº\û¼]ŒÞjQ‹€.œÖì]Ó{%©þê+W …*{›½³µ$ nŒŽÄ>0ÝgYu‰OªÂ5ßR_,F™£ôˆ(*¨]SùÝ1RûÈ®i]Úµ 1êu¾ÍF˜·e‹¯˜Ñ‹1âÊÍ*sG-ª_J`VÑãË¸áD¬æå×åxÝ0¡u>I÷åÀRÆ®Ü_&,ù»vdwa¹çÖì„U'©×º–‹z°`JÛºi³Àº2*´¼_%	µ"·¨7Ó”ôû|z–êRkƒÖé'¸á¢ÝMƒÇzFŒäÑ#SvQáå<%’)½ Bhÿhàã_ãR±¯œƒ@Y?qµ@É¡ÙÿóøÏãmºõiþy¼}¤f„´É	Yî©üô>_ÿtLR2¾oá*= MœZ%ócº‹C ¤‘nùy·^™{qÀé5ÚChÊ©y©O°6§_›ô‰kÆ¦°¢ãJX>Z„	·m*ƒjÛ\n!­0ì©4Äzª¤Êa7·Êý>P#{?4­ë7ú½’o4vÎê“Sa{;Y«áäÉ|<ùBžp„ˆåVèwOŽˆ¤ÄUà£ž-dÅ s™JMVÎdÞë!±¯­÷ÛwúýÈÅ«úÜy“]bq ºä¡ˆÊ"¹.¿ ûÀƒ”=cÌ¥vš¤‹*Ÿ‡SË¾eUÜÄ¹–V»d–È[ÑC“x”Õxþ\«O9ƒU_û·f+ênjNlˆ˜ÝÄ¯H®mÉf¤½¼&t–/`—
+;¸—>ª$n<pôjØä% x
+é;íÝhk-©ŽØ?wPÞ÷Í½M1qGÕ6Q]"½¡±’Ëu´MÙP6`ëºqðmïíÊ;­uw†2åak7£çÚ$t81´Ž5†g>MaÓ2Zÿ"EÖ‚“¸ÙØHÆÞ8ÿu–Ú›I…âÍ´ÀRžfdï!E"%FrÊ¬¨oµ¥¶É`m_d,Þ›Ï5-L€i¸Çq µr9æØø:¤¨‘„,Úâ,ê·r2âÛˆáPãY\ƒu´º•qc*vD23+ª›ÅªoñÜí-ü<°ñ¾æ{ýÎ^ZbÞ8ð—Ü±¡?ƒ…­úÚOì‚$(ìn8­Ó7*,DIVY¹Æµ¿¨“/Y5tþ¸ÒlCµB×¦˜ãb—2@+&F'®ó~bJ
+
+4(CPhàæ@¾P[lçü2”z~bJÚør>0ëœ³û ˜úÕ¬‹PZz TÀi)áÔ±T@Y2 |_rh¢/Œ½/R¸:ÑûÖ†³fÈõÀn«v.uƒÌkAYs€Möƒ,š*|§œÿÊGÃ¾OùSSfc‡¿pà˜ÇÞ !"MÑ)Ð'"3¨Z>ö^n¾~ó~{çýæÖæ›÷{›Ûû›o6j’gWTíZ?ÚLÐ^LÜŽØ(j¢HŽ$âEôèµ ŠÂEëbYèøàÜÇƒËè†fWÄÔpšÃeÕ£WñÅ£ï±j×žÛ¢ËÙ«­aŠz¥ÌF„ftáé‰º®Œ‘‰³‰åÿ8s`¹»˜è={ichVå|¢‰<;À¾u"@B,Æ/}eYÈ	@w7Ýðû›Š¶­!Y	³óçì^˜¦ó!˜ýñ¢höÉ ^íÕ#TB¡ðŒüRëö‰¥Zf`çH!áè^pI$}}æ1%šÄ">ñd\I@Ôk¾¥ŽÄFŒk£\.àÄ¡öæ$òÄÁõÏ#\Ë¶6ã3‹$ë’®Û…~©Ã*·tÂ’x=¾9¶ÒY—¶é«ËÕ	øJÞjnÿâF †%£teæXÕÝ€åMG(Ð÷!qca‹êÒÔjz5óÅzŽ çÑ©QC—ÓŒC¢o»‰†E.ø®)®‹ÛÕªuÈ‹Ô¨í®P•ZVE®Gšñˆž#BBœÈ±‘:¶ÂqF]|­pÔã~ôÍ¸–ÓæßåòK†¨öÓ	°Ò¦à†“^‡éE•{
+‘cdöáÿ×Ž¾¼Š½ Ì½?ôú?æÙ¸Ûùó¸cá}IaÌÖ—C­°ÞÌ3!Å,Ø%Ü±cŒ†Ý7É¶',ˆÜ
+ÒB‚‰C¸ºÖ<NÌà Zà¾ú»d.BæHÐtèÿÛ9ˆöwö^înm¢‰Ðö›è`ç»W;¯ß`p“(ÿÓd"ˆòëÞúŸÇüGÛÓëª;µb1Ëu{_Léß“¾pÃò\up™8âÒúäF#u äÀùÁàD‚>!¼±Y‡f¨¡õæ‹DIpÖ= hžgsÃ×Cà£W2]€Ô–iHÀ•"Âbÿ¨²-P'Ë$FdvžÖ)5qáêœoÚê›7ØfwæW“O^5,ÀO¿"%OcWÏ˜Íe°Äd8Õ9ˆêì'¯¾Ãpýt¨å].ªØŒzSµ[_Ë£Árî§Àa0oE^(àh Ï‰Ð°IK8½”6À¨˜MªÑ{¶U$3^¿ù+PÌ†MáKé>TªSÀíezB×s´` ¹ë…¨0ü}e0’tIüq+†ü±wqeg°¾4Fh¸Àâæèèæ—‹è>TêÊ–×¨oWñ—Õ^Û•/¯œáúƒXi3;ÍŒþLŽnõÅ|EÝ¬5\;ÙÔÊzÄ”³X×PÐRcsRÒêF	JËù^\TY<|fÉ_Ô†TÄKAI§U>•ÚÔ¸”7úˆuEÆ$ý"^œè@+X*Ìw˜£*¨§ëj˜q›]ëB:Hõ9²D)â<×mA»Á5«ÅØcd¬6±™ãï	>„&WÏˆèloâC,†ÏÝ ›-Ò>*¬tXuNJ†Y½‰YÐpîŸÅ|Ñ­„¼´ÍÆ ÈƒEEÛpX[ÉVÝ²Í´&ÀùI6²º´
+è<[cƒ	S\Ðœ»ox$^¿´Qu;‡T¯™Íw&ÛâŒÖmÒù6Ùžzx›fQk8än(ÿÒ[yÀŒX¼–Ï/ÒÏN¥I;ÿx>LË¦©æÀÒûz_÷+ý,íZÓ¡™GV—{Ã+‹Û$Ùnl)RSóW›wKêÍ*©Dd¨yƒE‘¬y8šc|ˆ½òÿ3SÎ‰y8&_t2a0Ýˆ"£{‰{âsOå#—ÀºWjZåøá—:w¶õ¹‘F5êÖ®ÍºÝ{¦¾Ù–€Í—®NæÐ4u‹Hbä¼M$eZ´ì[L3B~¦C=GO
+ägÀ‡”n6òÉŸ¿+ñšý¤ÁHìÜ†ùîi ©Û‘"
+ªƒygÙ°ØŠMÎBoâ¶†ÖÃCK*Bò÷ôyêoöhö(Ôì‘ÛìQC³Ü†»›oÔÍJe´›\p›6aÉ1NvQvê@˜1ƒ¢aòp˜K«nÜm©'$¯à£Õšø&QÏH1ËFñzþ±ïÙ¸kê‹xú³5h)hT!´¬C`g˜LñišØå¨£•Ev&µ^åéÄË)´/m‚°h;Æõi]ºð.¼ lHe¤ÐÎ`WÕsàÈEˆ×aW®í5öº	‡]ñj¬Y%6T#@Ž=ÚðXI€
+§RÜÅ{ƒÑ`7¿'zËßîå#>Ew³ôè kÿŽé gÄO ÇrÀI}ÇŠ}^€à%d_<¬Ù­(‚ÙÎã•§s#rËŽçŽf=…ú¥Â/€8ÿ©¶TZ]¸£Õ/K4åÚSZ(TÅÑëg­²Žpú†"´†r÷ªrôÔã!±gF³û9‚‰î³ÌkÝGQ{¹Ø[™\óùé- Xwãê,t‰ø¿µõ›K!îÓV5@NyK]/ñ*SÉWT!ý ûæ©B„‘€Ý€.Šêútô<¶š±ÄG
+ÌZèÎ¢K’q2‘P-µç¼Ö‘f¼>T5îW“±¤*Æ¦{ol:l1€7–¤Ä…¾c!ða²h(k|ƒB´˜x¬'=§ã{5¥Æ´Œ+Ê¦’©y¼mcÛðêOŠÄì–j8q¯fY‹PzM(_C9øÞÕëÄ]prFœ#‹ª©#ö”È.D*ìib¾{#tY¢Ñ§C6„aì®TCxó¦4Aik
+âÁF›xè0•|XÒtÈ0%(ÜyH·-m¿×ž”}ž½¾ãfÊÌx|õÌä+-öðWå1ZeTŸ¢¬5ùÌøªös¶Á=?cš¤Cn­Žþˆˆ³Bç˜å?½<øOýi•ËþQž|øCŒˆþA=ÜåP7~ç”êµÑæx_åïËÓ4­ºoùzÒª¬Gì‚…ódàª£ƒìîêJÏÑ$ "­³9¬rEFr¸M—kn—ûß{»$]‘ê”þŠÜöÚÆ ¡„¯È9rmñXR5ö]ÚöÑâó\<¡Å¯gZ|¥üm\qÙ½³)³NXø$ôˆ˜N0Ý'%öÜ0ª•°<o¿.|^´.ü»¾.*ø™wa¸Éàlë"÷ Óbe:7ÿ %õ\wê5âÿÄL†Ò‡‹ïjÁøÆÓ*Q'£‰M>EÁÄ”X}íé0l ÖÇPùÙÍ_h”´	O)”ŸVPDEø-:”,xôÆyÔÜ›_ÎÒ!¶ûñØq¼:ØÛ¥~·3,Ÿaô=aœÄG¿º²òô[8Û
+;¤q0Ä…m ÿÑÍÿ—,LƒJŽÙaOxLl›å‘¥pRELa¸¤b1¶³âypë3'@cQnÑ¿¥
+¶¨›SªÒaÑ"ÞÃ©Ï‹
+ô/†å³ö¡Ý}Ž//ç„w÷Ex¿¼œõª¼WHÊN,7´Î6!EZÒfoð IÈOúfÞ„iÄˆôŠcGv3I?ÛùbÃ}ñpv„(œù—DCg^g£ÄŽžíÂx_æü]y«UhûBËÐýIwJŸ{¢¾>÷D		¥	!´×àRèÅuŽÏc}ùý]4Vö?N2Ùb^¶A[eŸø6ƒÅcgß×ÙñaÁ÷…:ý¼Ã²ïzÚ¹¤CÅâ¤ëÌ‚·¿…NÒ3˜Æ³ï_½ÜO¦Õ»‡^88
+x$Ó>¨!¯“–}N€ÜÊñ¡ŠMÏîå1ÙÙhh.Tî©xÏ^l©]‘ƒNÙ¢ÜÁž‚ZExw(4Oá–×Jë4¼NEÎï,NqÂÎS<a [äØKd-õ„e¾õ®5Îs#’¤‹Ìz”Å«s8L?OAq†yÉ2½ó9‘µ<Óµª»AX
+ÁµÉ=R§ûô@Ü"ìu?§Iƒ‡³Ê›ü(¿Æ˜ãåË³ÁVlQ»ºÉ°·.SÍJ¯Ÿ¸(âËŽ)ÞDy¯°E$Ã±•§VŽöÂE¤§IM#¼ŸƒœÆºn‚%D/ÁÄ-J}”
+E³eåø´|	gy]Þí–ï§QžMT`?Ãzaå®OÒŠ$§"†x0‘©]á€_×§2•2l.Ÿýn˜±Ã€ô<(–?¸Ç~/Úpž©°Å¿_ÁDçN
+E]Þ¬õ¥‰›µ§”Ú‘#CfbO‘rºòùÎîkX<Â@~äHr<L/0´EµË®ßÒZ£Á0¥ýH”ÇX²U84KŒŠ'Ô/ý–
+åCÏÄ'Ü„jõ´—QdFB0_ÉxéÝ…×ßn/XoÑÆ>†ÍY~ûçéÊÃ••%üóäøÝòÉb´.üÇK?¯,ý^Ó–ÔLÓø}:DwŒa‹	–ÎÆÀÔœGG—ÑpR¼”Œá}L/¡0:äed­5`²8žïBÜªhç×Ñœ±x÷Ðš¹ÀþçÇÔ;Q~ô#@GG.ºÜ}íuÕé /è»$ªë#öF ÐýhêP´¯šKôM [Òêº-á\z~C2j:MöYµç¼+ÖŠG!¦ÉæWj|ªÔ²}ÄÕ0ž‹œ‘%TbJÕê£Òj>¤¤¾FyŠŽXþ_YuŠ5ì´¾j
+,á%ù-ö»§V18r—â¡ÐUrè‡Ç">H Ï+~øŽBa»¿PìOó{"®<‰‡Œ·ÉÉëcÈ§‰|n<6~è%|ß©EŒp«¿¬²j:´š§ðÑÐ&KDò™wgô•"¬wLÕWÇ¹rK“Œ‰:A~Ÿã_ ŒÐ1 ›|Y‰\d˜¤WZhÊ†fôC!žä$ÜÀ1@Rµš¤q5E–ÝgSå øoj’æL‚	Z+ÆøcðKLŸÉwJÁ_Á!-¹×tÌ‰ì~)Ö§G4Mã1ÎþD¬v©õ¤s:œ©ìO<`Ãfô~ÿi*WWÑ·R{¬×’!ØÅ‚?•ÈŠáàd1LãÅ9?±°oèe®»äƒ(s}
+Ð*ÓR|›Š¦q…D½$–5Î8[*ûã¿5.•@“=íPþ†ÿæ¯“*1†ß<wä…'Ü\&?†EŽÌžÄùªƒ¿$L«*ÚW‚Ô>ê‹ êEwøSüHaYeøSæ1ýÛQÊ&Ö¬o0“"þYÛü%8h6)x@RaøaZˆ^–8Œu´¬‚išGÀØº"3/ûÓ8{½Wí1ÃÅ	›æE:˜rD°=¢g°ÈpÒÞÎ>N2ÙJ¤p kâ¶YäÒp!OéÐ¦"à’K@ò½oŠú™ÏºVÄçÇŠöŒ‡%ÇLˆiôZ k8O\§K€[Ù¥ip‰­¡|HMsŽuäÇ§)wO"W•ŽÓ4AI°ÛŸæŽ+ûÅg\ÀPþ‰l_—x§ñÈDðZµÉô¸‚<žÑ~Ö$‚AjqŒfG@0YcÄBXF&u±$Œ÷</’:Ò£¬ËkžõÄOnu6™bqrHRec‹ Ùµ±0ªìã¹F•)º‹“‘ç=Ëz·çaÔ˜7ä˜Ë·òé;nØVG´à¸óÝäU<Y'I_‘<Æœ%D?Ík’k@!•x)œ9WÈQÒqÜ®ÝíÀ>QŠ‘¢QI²Äk£X°ÐXË¹±¸F¼Ù’ g§ŒD@ø°b¹¤G#ÑúþwµÚÑEO?$w+ß>wÙX¹²°P¼ÛSQÉã.Fê³kuÅ,ÉnŽ×Ømë‘b°{š‡§Þ³!< .YŽÂkÉV2–3_S2+äßE·Ú#“G7Å†]Ïe×=ì¿c¦Æ‡²þÕèÜ/`%ÍÉbkÚ™x+vñÍ]hçÚ)4MC©ƒSä~Çéùð’{˜'Ñ0++†°Èf’~±¤O/MëéUú¨hèÑTeöü¼c£à5úYâGu¡á¥Aæ´4Z¨
+µ ¢ .F)Åæ±zãm—C¯Zš2ö’ðÐ) CŠ8PqÝø,|0Â#Ú(¡¿Ç×T±Œ½š8­³G–ç>üèÐ#ò.¢Te,ú&g¹>çtm1zÒóà1Dí8K%5œüi¡Y¾{ÛÑÖkÔÁû•ˆÓEW¬„ÚÌÌCb2+,ªmïa¾6¢Žpì`–x|Ý+É¬AC¯oþ]âW­¦jÃèûo û„S´!±¦Ær×œNÓÐ‘Òõ•‡°ªYâ»o§ã¸Üyê”ä”,š r?Ãav‚á—N™2#Cwmb±šu¯óˆXÙÇVPjŠ?„ÜþEy·çR¦bRL÷ö€E|Îãõiš<ª†
+STœ²¾P¿Á»­qÅÍ<ß¾3eRCÞ&l ÿjå†ÔÆcžæo‘p=?Í É¡°åž¦b‘¸ðs˜çó¡xð#Ã1Ìd8‘Ä%jQk5¬6,Ü®Œ×h•Å@Ç¥ö;~D‡CA‡"O!˜ÜŠüò„|‡ÐDô@ã±YiÁÜòâ¥z%8?•€óô‹óiærùGI/ÇÕÇ‹ÖÚ÷œì8ÀÊ>å,9rO7Q©ÕÏJúË%¯P°ô45‹“úÈ·œ†Dw G b2å”Sú[XR„XÍâ¸W©Vé=µiæKyŸD”æb"ü„Å¡œÂ¢%x!ËmZ;*l÷à nö4Ø§}-îc"Dl
+?@ÇhwIÎã$.8‡(Ž¹uˆÕàìt®øá¸e„`€,¶!S$”€ôÕ0Å„ƒÈ^ú jÖxÇø÷HÅpŠûÍïÃS3<¶/üàU‰H-D)*­Mù*Z}
+ÏŸY‡žÕœ5RÆ”Ú‰+Z8V¸ù«Ÿža¬`R¼`:MM&~+õ <ô¨ž3u€÷ zN¸ÏïvÒa‡a99/lTàû¨|O…ïÜq1N}º|{úŽ)IØj¼eÍ8ªë¬ÚØ{F9@‹`	òX¸N<`§Y2–î[G/aê'Þ9
+hÓ²Ë×ž&™.˜Ìo!)ßvDÖ†¶ÂÓŸfBåv§IƒKaï$~py™¦â_£€Üª¾¶àö«L?Ëí4¡¼Ol,„ ôe˜ÖW‰~ŠIèí 9­™Årí1c—HU6‰šÔÆ<îZ<IÃƒ—$ÞËìŽtZW
+å€…q¦#€xbQ*Ö¼7å¬º¼5áÅ6k™£ªd$‹²« UÍë°•·(3á9pALêpvÄ©¦i´BƒC>Ä©'ÕRZPˆ‹pÌz–x×È0«JSÒò„ðRHåy0	I­ðÓZre À®\í®Xx5PþÄ3Vë3\ÎIáî5ßª.Û3Õ%ýöth<wº“üf°C!¥»­zäOzš¬.ðFž9ÕF –1V§V“?óå‰m^O±#ÎÃmiæRÉ!Â"Õ~ÌK^åÅ<M2+üx'ß$·º§ÅHòÁg ©Rãáâ–7HëåU´ÐÉ:¼›VÖ+·âWEœ
+?µ²*êWÈ«úr5K­ðãH®jr‹¶•]áçÚ9q^–Zig+B JëmnfÕ3‘k~JˆZJˆ¿™]IÂ0.«=MyÔñAp°õKw ªÁìRVš€'pHHøJáBTB‡>¯ÛH¢1ñÀXÒÒ¥–„ÔiÞDBA`Æ={9Ú	šnr=z6x{PÅe>
+Yìr*yOAŠ¾‹ÊµÔ2VUWÁË†!¾Ï•øp:£7¢¯Òá)…ÞNGÑ—WòðúƒFÐøt´Ç CFH[Õ"¤­Špiùé¾žŽŽÒ¢‹PCP·Ú]¿ÑR¾UÁÝ¤[Ü§Ÿïr8` iüj#£†N²r{Ê³#H	?/’}ÕäÒ+zd$›ø@…ÅjWùxñr‚«0o¯s‡ï5Lø?ñ¼Z[?kºCÌrÃ&·[QoÒÏMQoéèþ¨·tÄ©7Öoz“ðYZ°m¶anåhÍ\ÏG¿÷‘vÊÝZÛÝ&z9[stv[BoÔ›îŠ|£¥vöÂqñ™…"{è£È”SC’I1ØŒ™&>Ó«ýz—;:D‰¦_»orŒËD-‚Bèó‚½Ç?{(0¡Ý‘`Zìx»®Pª¢Õ¦S‡ëo%‰kGh*ûIî=ê4ÈM0Ã3¶’CyæýÑZG´ò£Ð‚f=‡I8FñªŸ-ÅZÄç\Ž:?i ›e¶|0ó¸þF<;«Ò’xV"¡Ùe
+€ˆÔÒK¤–MDª×Áß¢Wù‘QÌºë¯6–ÛÎ–Ÿð(gh±á,õ‰’n†'÷E6ÃŠÕ¬§ŸhcÿD4s£8ÔëÚ Ú_È[Í Ò¾PK;ã¢GZi~B3UD)Ð”wÖ¾p²9;ëNÛFÍØ²9¢¦Bíx§éÌ¹4Òl+èföÖ§íæÖô5ØèOÄ)hN0Jìp9‡ÏŽsPÏ&Éontx`›þ4ÎŽ3ä”Xü—žˆfFG,Á30œðžŒÒ€19‹dé8¡€Ö’Æ²”D°Óbx¾øÙ,æˆó\w8qŒÞ›X2aPåðZ<M §X¼äˆVLøŽøù6^Hé}ýºZ­¨ÐÕ†´¬ZÑCbxñz(Š;°‡ðnóöP†“´-í'Tµ;( ÜÁ­ÙY(¶{k+(öú¶†{·S%lÞŠm¦¹çœŸc|¤Y¹ft±Ÿd3òÍ¬¯ÙÕ­|4+w|[îqKjªc5Ät@”’ñ|â(,Æ¦Áe¹Ä‰…|S¨¹0åe¤TWÎj]ûç³ëX¯¨‡jö–5h	'$Ï™ÑãkÓ~ÅB¡rmúš³ÞUs·à ÃÛh°~nóžuú{
+ú%ì¬÷xáÄ˜#Vp‰1¥\;ÂÿÆ
+‘aH¬ûš÷×öðBö5ì4æ¬€ÊlVn;4³VMóú­ÆLŒ£Ø²§þæ¯,è}’F2ó/ÖësY ´€W»2ªuô_˜	ôsË›—}p²NG5æMaùƒÓÊ¢Ž	=h&»¡â?`X4áØÒCã[9#ïqë´=ÍyýÛ*—9}¡é—­“8¢­†3 `d[z{ã-÷7ÏJ‘4˜Ê·ËŸ§†?~Ušo*JVÄ¹Ðbû‹*É‹s¢›d0Tý6ºKV±V‰obwõÌ_iF?¶G„X•M%Uõ¥c³ê×mŠ­Êøª~$(X*˜Šö(ÐQ‘¸… @QmdË‰®…î Ô]Äü)†tk¤õ	‡ñãi…VX<ÌJ|*|ÅåÆ¥â-vWé1u KÉÀl"P6y¯ YŠfûâ§^žÌå	³6's9ÃLeüÔH•¹@aöu¬'3ÉÆl2düüŠ·U“¼˜j†/«Š,÷®
+ýÒÓHÉ¯èÞ£Ü¬ÑÀ†éÌd96.7—ôNß­ÒQy˜c‹ë˜n+
+>è)3
+×~RZiJÏÄ]­)õû}Û]‹Ïš6Â)òö‘ºI«½¹Ú «_÷ ÝéDŸ¯?AÎ§?ek1àywš§¢X½¦ÞJêÍèìOžmyë›{']‡³è«çÑ£ÇéZly›L¿òÂÄC‹ŒµÙ;ËÙ"öE]Ùµ5ñ;F*Dù;Õñ]Î,Wo™V2‰VéÃjòo´Œ=ñóì6	îš’ [ÇMË|ÄbbxŽŠ–ió,¨;@{%zõ|MÇÚyä)‘¬nYØkvÑóv’4*³1ùË~fþ®˜Óƒr’¬G°¾P§?œŸ˜tBXbs2^ZÁŽpé0{)`Â‹,ÚE¼¡ß0dhß@"öIåÚ$Ô¥0…Ë	ôõRk¯G/?KtºDJï‘º+ÒD9ïtzOå\é»‚!ñE!™@Ì‡ÂxG\Ã5†¡ÒŽnx`ÏÚ1½ODÂ:üÒëYz¶ºÙb€zš*­é{ÑýÇƒ7¯ûfÇ—"÷d/4y—4öÝ¥íì˜Žç¼e*§FÍ–ñB³n™6ìº=s&óß4u[|ªM3n”¹î™âdÂ[&zŸmÇô1;VŠs¹Æ1½—b¿Ê;î—vÝÞÛvéØ•eŽÖ© &tÄÙ¡ÓéÙa.+=XXÌ!Ø5”S=±v1®KÖk(XžPc5„Ê[–ÀÚ²ä Ô—Üim0<-A÷-ßJœHëååºƒ9rÌ}°7ðQ6–ÀƒE­ý¶g#B{Ä¡€D›¨d8;(.¾SŽä3D?A\l>ó+$åî5
+hìJR€?ç.*³e’°Á-F8MøåekB™yÕöé©3ÙLyË@py‰Õ+Ñã¢ÉyãdlŸŽZ—çïòªêÝ$GïÅ,\ °ˆ’wÅG“-0ðf-G<`¯!Äã&$!TŸ=Ç–ˆ'îî½9x¿ójoç`S¦*{Òpûj7D÷­Q‡Û—{ðvó»bÏÔ)ï‰”­‘Œ¬Yà(VA“8¦'ŸÐð)ç€EÔ\YãMˆ¤ü,‰>{D&â›…˜pÍ2Ö\E—S­«ÇBtëÍ¤PÚ;‘ˆézÑhÓºvƒ–âÆhÐJýd4(ˆ1³=[´¦5gç‰2Z9¢Ø_µhšhÄÈÌM[^3ÝÏ!Ü1‹òœÑ"Ò¶i‹ke–\¥VÆäˆ…RL’æJâaZTPvÿM´µó?w·Þ ,G9\Ý?M³³<¢kañƒ;Wg<Ã?›,ZÜ7Óãc¸adþ9=‘ÁÓÆnŽ”±fÉá©Ò0@Øz´­Â„ICJ=XVoâ«ž¬Txû°²i	Ž­ª¤y|ñ·ÜÂúöéBOŽŒ1&!Ôˆ‘íaÁ$SÀŸÝx0XŒ
+|…E,úTs¯ÉåY*v×¢„ÚäýNµ™…<\]‘Ñ-­3Ï¤W'<2ñæ®˜ÚËô,:}öj~Ð.Y¿òÊ“õäûÖgaœ¤vœ9Âí´Ð\ÄØƒ~bÇfÐ“ÍÝu£u½è@Vðˆµg±·ŠQB?ýÚé;àvÀ´uµ›GU+Tš)éQŠ›à¯D°¥´vð}ÃX€õ(1ŒKÚÊÚÙŽ²–ŒËR¦GcÖ+ì}ÓÎ°²wY]ZaSÊ(˜Lt_/eHŒ¦ŠXl$Îp·!¶€M6gê­ÍI8ãŽBÏŒàw7	òî®Y¦¼¡Ú¤ &Ñ“ÖÛ™â™`Uƒ(…ÿx¶¥7a•ì4)ÐnªÜ@%áü–¨|_†¸Ó1ê©ž’,)2ëå›ñ{_þ¥çëÑQžóTyl:&¶} kâVæºEöjÐ<Ns?=îsÔãîÃy\Œ»îšüxóK„É©AçMJ/CîÅèh˜ÿ4M‘„…•Ì¸Ø;ažbIÜW©íôA1x¦ˆ¸_]Z1PVêWCà~À¸Í|ûøî @þvÅ# ÄW×ÖWVà¿º„Ê=¥ÃsìèÿòßÀ’À§ Z7:-D—¶‘<ÐYJLŒ@fj“ÍáÑ9@p	\4Ð2µ·øëV•GKÑ—WÐä1GTîu4ÇÖó5¥´Ôô­¹À™'Fa¥ž­–Âfräê*€´VÖ£Ãl„y¸FâFÙFñmÔ4xµZbUŒNªÑ<=QPq2-1%û0§?ŠTkò½©Â¶Ï³*‡kÇtÝÜ³ŒõR F¹Äz¦Ú‘”iáT`SÀÀÂm†M*êbr˜áOû8§òuÏØ>jU6z˜ïŽa+„‹ôÇZ½ü!àŠô˜gt´ÉV\y%f°›Ô¦\5êüC×b*K^EÓRNPE)™—BŸ„?Ò‘F––}ƒ!0å.îDú§(3Å«žr>²ÖÑ:Ê>•£·¶ˆÁu‹Õ$SÊùÙ‘ž¾ ÇºÒDšlÁ€è'Ò/,~;Ñ'ÜÍd¢“¢Áû¡ãµ¡–zOø²³Uá¦åVM°Gd¾}
+[´gìŸÖIäO¨*î—ýÆòƒ•÷¤7»VWWï¬vµŽ{…Ï)ºÖ‹ÑÉüz³áŽa{N?ê7»Þí‡‡b¨ÙBfAI¦°ªÄÆ»€ÄU"ÁiB½÷<Â?1hƒ~åˆz7·_Ga Ç!Œ§hþ±çâ,ÎÞ9±57Q$}+rÝF"9=bˆ¥’¿sN*¦BSqX\&lÄ:£QL»~ÊAI·¤ÁÑªf,i!¿NÇlE•›„KInû~0K¡áNWÑL¼»A5áñz´ª×aÆ–±ee™ÁÞaÌóu«’ ¬G+ú3±›vÙv–sº¼ÍO0y²ØÊfYm=0Ã@Á³è£6ä-ò}7N™V•¥ñ‹–c×XêÁe€i2mæv`œ:ÐñOäJçuôeìŽŸêê¢üÔ®Pn¦O2~­Ñ¹o&U6B½Ì€¸w&N1ì™²Ñ(…Ý®RxÝMÇå”˜ã±d-)ÏW)ÈÛHè­bXË%%¢Û\€ROeB€VåQMB3þ³#{ÐrPœé‘aÉ®Éº8E%LnP$¦&Äó.¢@Wl`õŒºÎj¢s‡ÎeÁsw|CÔ¥íºÅ/lW  Œ^	ª˜¸å“ãNË!	˜0™ê		B#8Ú…ý9Ã¼5Ešþœ–˜
+ó4ŸÀ—qÔÙ*2¼¯`ñ;ÚRØ¸ªËe:Nf‘=-ç<[b&/ƒË>·dsÙÇ9±vF6—ïU³Ë×¢%ËË>m_UÒÏþ²­àcRV[i‰XÕ‘]”›e;”øŒm¨í>Œn§ÓñG(èò6Æ·Ôd½ñ-Y×ˆ–ïÝÎ¶¥(™sô¬ˆŽãÃàÌÈÊBW.}LÓ	¢yvòÉes¯«a&þE%çãØRŒƒ:<¯ð{À‘Ä‚¶O(ñ„ÜpQÁJs÷g¦ºÃ7„ò)ƒ…=hþ8>Ë‹Å¨Baœ‘3:•iAhüýòmGj"Þ:©*•ô‹ÁÙÌ8”Ü–2Á/q'É*Sä¬‰$U{þŠ†u WSÍÒ{SSÙ€µŒÑ„sõÞÚFoV·€¹6.{˜/s˜¶™Rjé©–(,ž{µÏ¨°ó´ c]“ë#×™c]îIýæç§×ÆùáQÎ5/-Ý<õjÚP…íÓíTl"«¢Š€oGÐ$ÚäÏ6úŒG	£‹-—	®¿Õ‚>)ff4§5$  ¦!/5l.žê^ß±6;Ö`¨ƒžÃóø²4L+M7.ÑA™T¹”Óñ€?)q^ 9X €ý+œ”XÀj™ï¹º%LïnmËgqøøærÂæ>Ä¸ì(LíçafPWmG¸ú…±™¡¦¶®ÚSrcG£?M†yœ¨ÛítÖ#|³HÖ¦ëJŠÒ‰þKÔ=K1Ã_&UÒöM¦>Æu¬ƒ€úVNk\RÆéQ,xp`Æd:ÐÿçáÊÒã•?|Í`Qt8Õ²söPÆŸŠ¡4rðfwG@áæÛì5Íh1z¼¶²­ômrÆ©ð~”³´®k—ÿ–ç¬À_…8c™<V@P¥g˜FyáÖÅHµÇ¯9;‰9tè¨½ZføV¾Dî)wÇRá¯ÊKu»±TâB0Í„›“L‰GáRû&ÒýF‘Ê&‹HxA/ ™;¬³”gQDölnelÓbûðDDºpÝÄv ÿÂ…
+YËX‹¡<®¿Áq²W¾§Ü”Ÿ~¬
+»ÕãU/VH œÊw¿	™šÆ:aü©3QyÑÀAYcàìS^Ô¢Æ}r‚P«Ðãì(Ñf>Æ‘B]çœ+qï§Ã9mGÀ:Û@}aØ@`Š8aäÇ;	•kÂ<¿6–©?¸4…o³tÀÞp|²÷Œn>ý ï„wÈ‡ÑÀ<<óÆ=˜Ç…)º±1ÏñpZžrð}„Bzúå xÉn§G0´AŠâÜÂoT‡¾›ø:ŸVõU$eZSÈbw-‡2±ÆÌL¾E¥~™ý,S·Ò%V”!#; MÒÐÅ¥Ü–ÙÔJÓ¢Hm K³¼s|œÐæŒI !‘t5NîºS;.ÑæpøÒÐÁtµyhM¯õY½A)ÁÇÕæ'î9Ëå$U:0³™Á4H0Q•OÎì¶.·,›Bå¬mª ’¬#RT{íÉ´®4³]Óˆ?JÍ«‡<†,<¥ôÚÔ®øéhC4'T…S€R)fño`ºXz?ñ]kT¼XºhjÈx†ÒàI^l­©·fã’('[qwB÷ÌçÂ~úôD¼~µ?Ò´ú|,oíëÀøU¯*˜Ü‹©mCc€CÎ(àPÂIMR¥5©ÇÁmËÙ™Gqœ‡Òvu;ˆ+¡¸„w/ã’Þ'ˆ[»ÊÖ×ñaW³fÈÒÍ4#p@x@†d#¢@_cb{ü²pÓé{‡r€Z¦Ý2ÔßÙ´­jy<UéšL÷zý<_[ŒxëÏW#ìñùŠ†Å'y6®ð¶:Cw¤•hpÑÐuò™ßF´
+ÏWti=4õb-ý#Ó¸)˜¼ÍBt…³D´)ãžÞ4ôîh'z®7¸!	Xù\À°Â0ñPÇð]<6Îº~°ý&2ª³>/`Î i,Yyú¬Óßêœëç[µ¤Î¯*É«ð¸ÿU0ækÜÌ»ÂîÈ¥Tpíí§ñ âv\bÚ]•¨¦Gw²ñàî¡1J“à? }Êè8MTé÷ÄAœËÒ HpMúOôÜrñø$e‘qNBE?MÓiÚ†*!½)pHZW
+mX(šéhCxØG¨†»_öZ!åu¯Àªôæeãl„„X’•—Çiuž£Ýå7hÀ0ÌÏÅÊ&@«¸ ùþÈÌkIGÕšÈò&M›	/¡,éóÅè1§>\¶ž ×Ž÷ÏÐ¼uWTÞ27øw²JäWh”‹@9ÆŒ‹Š›”«Jýr2„Û¬³¤l](ªt\”p´¡Ø:Ýº–„Ú"ìCý²S5¹õ:]7ôtw\±ÊoWÞ-F«+p[ÏWÙóh)ZuÞ­‰:«p3 l5,HðÁ\,¯*3+_Ç¯»ªzÿ„„å#_žæç‡9\¬Ý2—ÉÆg7¿3ôýYŒˆ%[Ðè}[µ ÝK¤mÖc'£Fc˜¢âÙ4Ü$Pa+}¥©Ü2œm•·- a—¤ö7Æ,®]ÊH¶ Õm×=S,â¹MJãð8:]}öBbÄÔÛóˆÈcüÌ+"Z“Ëï	Af2JœÚ@]¼.ü'–¿áSõÔØ(jÈÇL1@.ÈãŸ~ñÂ:)‹M0>7cþÒÀœ vè$VŒÀ§›pKÛéTiúš¡„4à&+Õ.¼©çÆMòËvR=L¨»š.œæú–ëZ/DJ1øoâ¶3ÒEÂ½ÃòØj'ÁÎâ~ëè4k÷@ç—øºmVº?`¿ÊwÞp{x%<»Ñ- ÓÙ¬t^­~äRÖ„¼vWµÖüÒ˜`Ä10-oj¦ŽOrÃÆ)ŠÑ<0NbòÑåqi ú/Ysâh-¾#P£F9 Y=Ú¤°Mu÷j²ÅÂgoû[äþ4²CËŠäI*­’a+Y$ÝºÉ¶š@ºÅ‡íá¹êA'/üR<8ürÿ±„wþKøº>G)Õ(®$”\û.ë ÀZ%Éò«WË—ð‰¾ÿ~}4ZôŒ8éÛ|\ Û]”q˜^T[ùöõ1+1hðÊãÞSD	;#do’èÉÊŠ¬©ˆºýøˆ›¿ÅÔÔ“‰t¨þb„úä+ØâìäÎ ÍæŠŽ<$Þ‘­®…F¶º¢š†ða›Ú¿¼â‹wýõùð±¶›¾¥³ÍqC÷¶]Î+ct¦ È<5Ò›"PÕVLáµ¿¼jÕíÀïwaU;=1ÅGkòHH¡Ät4Š‹K¦âqyžŒOb"šç:Àr{ÎÊ’ç—’	gYÏ•ôÄ}G"¨«¼‚[‡-œÑÔDñàñ?°—•ž"œY«£øâ6mbd.Â£‚Ø“O‡«3¶ÕîÍÐíj³[ŽºrTzÄ¼¾Í.Ò¤»J©ŒW:¹ú(÷¨>v—Éi‘ìÁHúõà0òxEãw¼¹)­¢ˆÄªÏœ?â¿¼Ÿ °<À"îZ%0‰õ‚ ZàÅ¨P—f­ó,QÁ‚^+l·Ù Ïláó™ÕY‚b‘‹o¼^“Š!¸–ó*ó˜ìx1:" êÆªR§ÇœMR´Ú§Ý#ý]-º{bïnGá•[¸"/£ø	wø7
+¾‰ü;¹ÁBø5¹7„ØQ û­  ìÙJ	”#–veüº0Ÿš8@ƒwöèæ/46*)½k˜‘"—uG1èš‹A;¯à§#	 Ñ ¸ùWÂÝ™¶L}±2%-c0ÚhMuˆ£AšT§;aŠEõŸ×¡¢"1OÓ¸†·o;„¼ýŠd1ø] üþF. `ÀwïTGyr¹®öE[pš¢ª·sRdIÇìò º²^˜ü ŒB»˜ß)žÀ¹¶Ð?ç¤ˆGqí8ÅBWŸ*á½ô„÷¿($|pj[’Ó”±W+bsáŒmßå©V<1/þV>Œª¦®ÆhÈÿšgÌ€Ç™·Pa§(¶ââ$þ8«"ãMÈ–™¹\j„ø8Iö€QÓ56AÌ¡½t/ñ’£´W@bm“€éš$ÜLs:š3‹{ü­­ô4ÃÖàéQçgí±¾<òmVhj')ž–mÚvXà§L$OÕ¸¼ù–›Næ1Ž”8TæbVõþ³5óé2ù9ö/ýÁ0tÉ1NâÚæÓj2…Õ=æGÓ‚B‡lWeÅ\ÌSòúó²,Ò/>yÅ5ÍÝ³x¸ª¥ÊSö@,miºÖj
+‚abp°EŠdŠ5å¬¢ùèÅù1Šiî)òNÅ’ÞÈ„ê±zM‰kãÃ{8ÓAÆ\òE®Á®î\³xA±šÚ,ˆFWà²ˆ6äœeúú¨J®WÈ1yE¶
+¢5cŠÍ¨µìøË–È’p[Ö„‚%pHmÔ£Í|ôOÚå{s¨³/„ŸLÈŠñ¼KoÉ’Edx•ŽrKwÂÅˆãì§i*JÃàÂâ,Î†ˆeÊÔ@8\º‘éÒÕ’œFbŠ:µ±Qä	Qß§áWœ¯B’ˆIuct°ë†Ï‰-’¦Y¨8¿•-H#R§SiS«§ÖT
+ðk‘;Ö„öTîD~Lnï_®‚RI2quTÓZ‘Ö²u™f.\ÃiÍÂK›sÏæGb›Á\ÕÒ7û”Á”é¸Ìð®àæìÁêv˜>ƒVd1zëÀï¢:÷‹*PÓ¢Œ ûÎd=ØÐ^fG@]Rˆú†ãE2Žƒ´ª%!öµD¶EL)©ÛbxŽãy­ž¥Ür‘e86ŽhÂDOª¦	¤bŠ28/ä9¤™8d«”“«h¹[t¡BËü@N|’s{ˆ”é[ S²!÷ÔR€1Ÿr×“ÙØÞ‰íŠìÏÞÕ¹*Z\gdœá±e
+'Æ67‰è*èjQÖòÇÚn1K}f^;ðÚÏwh_„~yq¥J7í¥ÌNc ¥@ˆA 4Ä=^b¯«|YôÇ?S¤¤7$œ‹÷ê¢õ¹@;µö7t“§øõÁ,£›×9Pti’¸äƒ9h7%È–÷¯åìÀZw4Kãh–þ£©Ú*9à—·P¨­Õ<!¿œò½ËHKy°/çöí‡6Ìë$‰$e”£1Ê­Àø®MA^ihæ2È¤ØãÞäÂ¢J3¬Ó¸õíb¤ŽvÍ–,ºÓ‘¤0h—ûY’Eƒa\–ÈÓ>_('ñ ]º\z²ðB®]æx˜^0Ÿ%¦/å¡Å/—ŽÒê<MÇZ]Vû…±«ÏNWõæPî·ôðbLó¸Z:Æƒ=+Ñtéë••¨*à!PÑKUvrZ-¼ø&;fy•b.<MyK?[>]µz›8±†CÃÔ%Ú¥NG/¾CÍÅÿ$1£RpÀw.P/Ÿ-OŒ‰-[3ó®ÓI<YZ‹ðëÒyO¬ÁeãÉ´²@ÑQªgÃtÁ~•%Ï(ÄK]áÐú?Í’6Ã.é¤z¾Ð¿–‹þY°Šäã-²}~Åì-Y&J aÐek:ßL«*GQFÒ‚>€/Ë³€-³ÁÇçWI~>FWõÃt4Ám¸Žª¬Âh¿‰³Óž'é'«°Úßæµ#<ãÏ¯V¿¾†!D¯¨Ž9’e6”[¥*òÒ`Bš®‚½ÆïmGÉëocùŒ•ñ¬I>˜"ì£µÛ -|ýær7évt8éô6ú¬Õí];ãåÁŒÑ²-‡ñÒN´oè7°†³nWšxCScÓM,Hvó¹¤at5àü®Õ²ZMÏMå.°§B 0Ò¥ß9:aß¯,?†_y‘¤{²oOó³´XeVÕ­ÜC†àHø‘—(î/½ƒ°6ÞwíÚ	n˜Ÿææp¨PfÇsóŠ5)oÔçÚ¾³ñÃÏ ËpšQ•ã!ÿôûLàQÀ©%Ó§ü[ZÂyŠŽt>ÅQyó×è,ýÙÆKQdÃ~žqyº&à÷	ÁïËo×èæÅ‘š½^hŽ¢ž=Í«°ÌM-Ü†½cžj/„=Y1ajÕ©Ç+B˜	.ö”àæ®`á›¯³;»8‘½û–*°1ú2Þbæ,,²è¸fÖ¢ÊÖºW‘GU@Ž6ÂÅ}¬ä‹¡jÆ¼¡ñ	Ôxû.l~+½7œ–æ:S1‘™ÖøÙ²ûÍƒÂ2ï!ƒ_ó Ô•Ì8\³Õ…7©é@$é_´š#1ã¡¶µ+ 
+ñƒ¡ë<;%“ç¿t§4î²¸êœŽà™0Ü“aN·sÏ{ä=J±Üž™w§íq’¢š¿ùÓt ÒLÿZ‡é@R¿Îi:`¶;µ+ÀË´:Kê¦áVAï‹tÁ<‰(‚Kþ¾œž¤˜ëª­Ä?çâ!¿ž4“!ëÍÇI&[ÈKYz:¬€syÕÐ@Ÿ—¥ÞKÈ°y2Ö¿íå÷™tiðso'e%óé›×))ývÇdåSCÔ80ŠÕîô,.Ù*ÎDàÎi¸òøK%òÚåÊ#”ï!cô:=¹ùë ódÍÊÙlŒ+¶2ðŸõÒ?~y‰/L¢†ïèhéI„WÉ1z#_,¡=ž)<òpâÖþa€y\ººrÙœÖÕ`lÃÇÂä†2¹\zÈ%‹ù0á‚Å‘Îpc¶+1Ÿ¥µèü4«R&ç$²³`Ôò¼©”ù¤ÐUKj šE9ÊÇ•.õ|$odí!V5Æb,‡¹÷>ÎêÙò‘%·ÚI'žÛ¡q$ŸÍvxèú9m‡Òî}Ž»¡´ŸËfxéÂ9í»Ö?Ë­Çç²ÌáìN„ÌÓþYîƒÞg´Hd”*ÃÝ›HÐe£4Xû‡ˆì7Úì-I=Q¨àâU–˜ÆÒ$§ÃŸ–ò!‘¶NÍ"XÐÄ>ÂP´^.­F£d]ý\#Å#W‰ã¨-éé0>J‡zëGÃ\è+/JpäÞL'À6â2Å¯.¼@î}Š'yÁŽÁ³ejÚÓ%Só6(%Î—Ž§ — Â„×"Jy“&KX]Rí8LËu.)X¢lŸì,¢ÚFýÀøxeey”ö®|Õ)Ã)œ¯Òaå|j¥hì¦â${˜À”‡rb’6 È'x^ù€^ . ÄdGï<[f|u¯\[Q2†%7¦hûczùü
+^‹yÓììÁ3âgËl…¸³Észøé€Q0œ{ÿ{KÇfbVèt˜2Í!ä:µª’¡1ÀŸ¨»•¦£(FE\\öjAÝr9`!
+ÐƒÔÏ¨êÐE%ôÓìO]§½»ˆ&¶wí¿šêÕv³^ÃíçCï=r5	(¸„w!™ž>p‘%j·D2¢Rv?ªt¯W×¼ßÎ«Î.Êãl¥>·3Ž¾£‰œJÄTo!ÚlaÖÔRxYì¶¯ï´êñI«Õæ/a™ã“rƒ%§­Œä´|ø•6tÙv‹1Sä¡IÏwÚé@Ð!Gkçkã¦á¨6š Í,úZ «£z¡<“üIiF¦òß£Ä&­“iAá*é.ÀÌ}XŒ`‰)¿PöDÖ$pæj­ÎÔ¼¨3lÑFN¢vÓxOº$bM[Êâ±Âj *Þ¢€wõÚpS>Ä›r/³#À©p·±ë›~HîàíêÊäâvÅ‹= ûV]ðÒrî<Ãmû8«‚£A|E8ÆwÒp—q¼¡êW&. wýÁuÄýF:íV%'ÙI.×…ÿ¼ï•±§Z¢¦Eò\|¬R TÛ˜_ŒE90EYu¹ôõ
+^Tâ×
+»µà-±ƒ'^¬šfGü1œS ¬>.­„AÖÇëŸ–
+3ü˜RvÌxÖd—aÖ£ÈS“¦¢–!GMáÈoåáá±XßÜÁ¯ìÚ¢Òl°,ûÚPÁÐ®….`[
+a5Aú8v«`¥·ïjŠ‡uvøi¯†£¶ÂG?ðK«ýÇJ%­®q˜‡'5ÒC–b[ÖEƒiQæÅÅ'N¯À—ˆ›´TÆÊR)T>Œ9ža&{ T;¯m»Y­°Gf¼¿·ÓÇ÷÷qþ>3èwËŠí°aš/Ü2‚÷GøÅéCãVñ	¾f
+½µ…W^<ÞéÃ6–Ø…(!‘þE©Ä2Ö÷ÝãÜ7`W`S‡ŠP»­Ñ”8º½æW¶eàß°„¶T|®8Veô|Ó–tO"2U(E©–Ö ø…4Ø!´ÌÅ˜{ÌâíõÅxûøäÚ¢ÃÖ[ÁèâSdýµ4/Š,é6ÐôËOÔ9%š-@ãÔÐgÏ€éÇhåÚÙvCš<cQôÐœoAþú$AÐiVÊ»þ&J0;m)J¸­Øàß·À‚æCZ6Â‚t	—÷¦_cG›_ŽÖÄ—®½4qÅš(ÁÇÏ‡|¹!â³£¯¥c€/òÑÁ(Ë1
+Uqíá`‹ ?úâô=hßwõãhËg1Œ¾1c×Oíq×4ÿqš–HéÔÆ‰1«18E·Z>Š³Ã¿;[Ó Ö`kø¦²çç‹/>¡ƒ-c,z±¢G®hìY×`Vd9ÿ¥háøßÖÿYÌîÞÛ‹x}BÞùaðyluK<~oÐÎ·r.·ÃíÖC°ù#†ÇQq<EtÒúp_æÂ²f(*¤†Úú§qÉ^õüà¼Íô¬FD œ?Ö­§û´8VVy—êbww¹xL!cëç–ó·þù›—õ‹Iùç9ÊüƒíÉñ6±+5þ²«AoqûseAH­P÷ú™)S©ÕBÈ¹Ô
+ÚÙ' n—Ýv[Ïˆqÿ1ßâÙj´Vzð9}–ª¾X³Ìül[«†~BK’]Ìe1-A¢UŠ^,åâÂÈ£a~\ù”OÒ*ž¢Ku.™ ¦ê3ˆ‹ùzÎ™@1?"`VˆB4?a7æžn¯|²ë3!8ºe­YôQâã×KB˜6¨ÄG—o£¥¥­¢ø°­Vâc*®ÂqÅêuW²5¦Ã¢fÚ¨±Ä§^%>³).dÛ%jøiBÂWê45"Ø@"ãxø2ä’Ñ¯kô¼V#Z®ÑTó^¹»ƒNC6‰/öÈIøŠeÓ½nQÃx>3í9©I‡‡Ÿ³™5¹rÛu[hóðÓðzy9úž‚E“¼Â¬ñ0ÚÝŽ`,#
+NÜ)¨LÄBÓøsÕ'ÂEwU ìç‘~É4X¶€Jž{Ç9Þç%8ËèY´»Qéë!¯€¦j×®¶Ëü¸Ñš¯|ÍåÙšO‹[E9H«%nSMF%ÐŠ´©Væ¬Š›æÛý´2ÓhZñ6§×c1/··Mýï¹†;ì33ãÀeÊÁ7¼®NÃ-9‹IUh0ë 2÷~-{º>_HšƒÉ~l³»ÃQ{ó*ÞEµÄPýËÌA"òÌ€Ò£	·84h6—ÀÏ•#Hà–T¨¥5u×Ò¢âám-*<ãnmbA¼g3‹Ç÷bfA#Ÿ©~jÍ-¨¯êßovÁj¡}&SW9nÅ)îumKûÐÆ`/+];‹Akuë|	Ûù¨Z¯{ŸÀeN3ž«FõoÊÊå>ÌZîç©
+mœöœ´žsÑyÞJãY³?ÒJ(¤ôä(‹Lˆ¼2¢vVD±d•Q<³QàVAs!Ì S‘´°1
+E‹™ßÚúÌFS$¿oü•è×™®8å¶ˆe{[D«ƒ_ÇÄ¦uzÕÞ\RˆÙÝ‡‰M9W›Æ”3™”´ÜêyšØÌ´Å¼»ò–wŠ÷hžCæ&ePf0“ÁÉmV'àH.NÊÏÂè$ìôö÷g<òyZ‚\•-L?ÚØ\udÛhÙ1[¿'ËŽYfþZvÔF<ùÚˆxâµÌpÄÍì1.q²®¿_[™p¹ùùÍV#ðùÍVÃÓÚ¿C[òN¶–hU<nªÞÙ†ã7“
+ü¸8§1ž·]•ÐMÙJ…k„oÆ½zžq…7VhgÐ˜3T¶Å>Þ åeßó¸81Íaæ£æ6ìè8wýIsþ€éeß÷¼¹5;ÈzÙ7Ÿ4·à½^öÝ§LÒ8£µ‚C¶FöÑ—í±|+‡ÏT¯|_
+2úü¿S…{D´Ÿ)$Ý…Â<àèó1Qh)›iïÕŽk·W;ÅÓG­yO'ÚæÚÂ¹)Ñ¾ºŸ-Ÿ>ªíÔ£³é=ýÎÎfyå½m¯1.ÖøŽóÆÀlò›<ëÛ¸ºï<q<4Zf¸±¸ôëÊ!ê'ß@õ¶&‡åá¼M`â!OIvÐÏ¸5VÏÍ`x½ÏH™›_€–iÚ—PÌo?¿£x+~Z‰¨‹×Ë›&Ðl6<¿ïõùÃÞ®„Ü¼roµB&ØzmˆÛ´ê¶IUÜ’$mŽËó´@ÃÚÌ²R–(E»¶DbqÅµàPíw;‰’Ô-èUIVÎ`ŽŸ&ö\ëËÖÉ5“ô¬`ƒ­z•WñðU|ÁµùÀYJ€ÀïvËéh1*Xxâé(ú*ê®EÿáÀRFü¯öz‹ÑJëîÒ¸§IëÎŠ~9È‹;Z™©ŸÉ Í™ää^‘ ,êiŸf·Ë²,Ëô`^€-Q¾ÒÜK­âÉü<ûÃ$x9ˆ.¿ò»ð!V@VÃCÃ\®ÛÕ¢hÚ*õvŸŒáeƒslVÙø„%²Ž¾”ƒ¡KÆqí‹£F™ 6+¸Ëy©WñK-´ê¾An„ŸÆíC+…Û‹öï"xª3 Ý©PÅ#cúÜàPÃsö\¬Ž×JµU@eìXi)â¹é_÷m¿ß§q-Fðz{çSìŠâOÑ¢©G‚9Ö%ú§ÅÑ˜) ÙÃ[ÏâçJN£¥Õ,­Þr¸°Ï3D™ÿüìgñÓhCK}¶QÊÝåèÁÕµmlÑkÓà¤c–É¿çlsÔ`wrßÖ¦3häæj\twkÓF#¢y™]Ï¶Gó³6ao>3« !Ý\¤ÿk›`–RRr6˜&>iÌ(Ñ6ƒçmM/ÝëÄ6)2n³eK¸àZFé¡&˜ìÅZvj¼‡°úf–—Õ•èÿÑeV´ýj#aUpÂü§¼jýô2¾D>”Ý£k+^¹d(rk»¸BØ²*Ád+e…à™¤<§P úMv4Ìò*ÄÁè¸-¢Ý.¼Øh/«0#êÓ(ŸRQþÔ_¨¯¼8‰ÇÙÏ1AF}É¾g8
+Á”C^³µZ3Ì&³ygÀçS–7©ïD5ù«¥6îƒ
+Ííô8ž+júZÈ»?ªâ)¦0‚e0ä4‰“‚¶'0)+Œóè(d‚[– ÊE’Ú¦³J·çfBVÕßð=Ö‡oNís²F³$²m™îw¶d¿í4#þÌµ³¥ù-K8Íñ,`/¼n÷m302±Å¼_ävÝ}¿Ä]¾9NPõ\«Fš£á)¢eK:ˆqË"Ã5%Ð‹lõCG+(PÇpC‹~½äx Û²e·ž~[Ú‹%Ù?n´)F>ðk¡£3Þ<tƒ7)ããfQþÌ¶Ä¡k¸EƒÚE|ñL&ÅçK_Ãþµ®¾4Ôš–
+¦ýu.óÓµ²ì!Ô˜“l|"•O•óÖK9°ðBA\½@»‚‡U)xàÁï-Å¨BiG£àÄ&/®$®¸–¨¢‹âšå¢‰ÿý_ÿy–âWI\+‚¾‹JÀV6ïå½‰v¨VÒUsÒqÂv´î³[±f¢mTS–ÊÀeM?öD
+Æ´”Œ–Uƒ¦ÁFn"kn™Ž2"ÚkzžÉB(<V‡ù~:†ÁªË±^R­¨¤×³ÕÒˆ¦‚zMF½™KjÌJjaíƒ|D”³ªÿ*Küê€g‘iÃa‘~ ÈyÜ7Ôm“AÒíà‡3}NðcópbÆB·¡ºÔew’ðú‚ðGë>“ZQ2ïYEWk¦è*Ò0
+\êh;Lde"kvƒwŠŒ.–âi•·‰<šU$¢‹ÊÞ¡œ»_Á1¹tDÆBÈG¼z4`ÂŽK¨V)‚†iŒ”â:ô]¤~ÉQmjr’E8¿DCtŽèG?äƒ›‰&y’ÊQ9EYBqó×	àÁR
+`©ó127XIg4)„%‚ˆ£Ÿ¦ñð§)n!™èæ}¯È ­Ìf¢.Í£h7þ-¼æWŸÌ$-i-/™UbÒiû¥&^¹É¬=æËFiV„$(ukÓVÀ×ià“‰´¥ãc³D›ýÚÚt7Íyˆ³m&÷×—hSrüò:=¹ùë Ë£4:HOy•÷%Ú®D§cÑ)é{Põ$/ ×QÊtƒåb” õÌÍ_É|¦„ÑÍUþÝÅ0ôÂ¦Ãø°‹XÎ@ùFìâÃ,~ilNÛ©ï¦³>”âcïE¢za*_.O-ù
+Õ&ÊÈÊƒ*'qö5‡»{oÞï¼ÚÛß9Øìgc n“´T…¿ VB”) Lˆ2S²JIªtfˆÈ;õ–KWÙ€ºÅˆe'&G•Ð¨’O<ªfQ³› anCrÆÔ*¡‰hü³“ÏY<9p;)p8ZÁ}‰g·pa9¾†»”M’ë™…ÈT›…ÈWÖ»eø	=È¤W°ÿxÆø/8=ç­DøŸZ†ÎåÙâ¦¸EKùùLÒsÞ—¼®jç{¼­~`røšWÞwWÚßùŸ‰ ŸÓvR–_C”Y5‰ýz¶ŠŽ8¿Žæ¶êþ&ÒÇÏß‘H_Â—êß
+Œ¸‹ògFŸX²ÇÊ3_ŠâÚsjôšXÆ˜L'	J‹4IÇƒ,Nb¸ª)sÛ¸¢n–¬G,Èò"üÅwëQg³ÊÎâN<Ê7Ãü§i
+õ:,UÅ¥„*ØIÎÓ”Z/eaüKLë úÀ#k6¢+tìˆ~£ëh=(#]4Wž–h ¬ Xï?ñyœ‰Inçƒn‚ÿ-FÁ¬¾hƒê,B¿½EèWô¨mÂ5ŠS§Qw0Ì§ÉNQ˜þv¸œù0í§E‘Ý…üÃ:†¥íeHKBíõ…ÅH6£uñ…ùw2Œ/¦Hq@Þ]¼¬
+u¦ÆÑfØ5«ÆÛjˆ½a<Îýð€+½8LË*%x•ŽKŒî_7ÇSþm;=ÎÆÍ=ŠÐ§„­Óylüø×ÁÌ ²Å%Á\ñãøŽŽÒâ!Aöõ)!Aët^ K£$¾œò€éÓ¢ê~8„Ùl³¢!r`j9.<þòJN‡¸¨Ýñ"çÁ‡;A—šÕÌ0ö2‰“ ˆñ·/3àA±xq€fõø)ÁÍéz^@7ÄË”u€ÑÄæzx!OÌ ð©Ó›¿Ä
+câîqö”šàî”’±íâ•Å,q“Q6Ö€DŸ[ä@eî6Ÿ0×é +IyŽêî)%z»²´µï/ÈÅbbZ5>rØ8‚ ~ü²;È‡èÏ”åã:àÀ9?M ÈóóqZì& NçÏá_w
+ %ûçÆÊãx‚³% =I+€Ð²û“à°L:¬.u0ãs9ÉÌ¥ ¢Àq6Œ~¼ù%J/pÚÑ8ŽÐ¾Aú<XÐÀK_d<ø2î	F¨:.âŸãü ½Ð†ël^IV"P"¯g÷Ã—WöÓë¨K[Üû ç·³[Å#Ø!à²"‹¶ §é°Êi‰RZH¯xëé
+¥øF[Z=ØëL¾SéŒJWTøÿ<ÁÇœL«ðsE †.Kà³‚ÔhÒí©‚|×åÆªW¯^èF±i½«+ü÷øQo
+8{P‹öC¤g»–Çž€'NDo­µŒ±ÿŸÓoóâÛŒ[QtÅ†+0mÄ6ûüÒˆ¶/#›@ˆ_^
+¼£&`«V5ôƒ:žž¥#/Zâñe-*Šâ°h6 l‚‡_GFö¸E= ¦Ï Šã„³-`,	¨Ù‡ý/ã8lÈAjxJÏ²ôœ¹àÁ£R€0s|ÅUBÏ^²W{Ø\?@TÑäŽŸ:NÓÁÇ|ZÉàù"aó®DpÂ$°±Åå¼Ìñð öºè>Ù¬×íˆâï‘ð„¦€ÜèŒòqu:¼$þ!+Ažâ›¤ùG`èØ®Š £Ó¡ôŒËËÑÁôãÌN2#šU4ÌO²¼è™^jçb’±¨è8Cë"ÈJ†*Ä ¯ ×AñN$¥Y$úçez\‰³Äˆn8•t†ÄéÁ¶R•âaÐ¾fI&»Ñ¶nti^tÞÞÑÕ—©xÓ>G54§ºGÔð-Þm¬Ú8'œ35Zï+vA…±¥j(¼®Á’Š£;óÐ´VÄRò|Ÿ R«ýh÷p¶à@A‡¤
+tì‹2tÉ­9ÜÅ'qF*úJÜœ¤Eúõ,ª@¼ÞŽ‰«­Û¯r*¶ÑªX—²°ÀÙ§õƒ2éˆ$;>Æ‹
+Æ£Q >††—TÃ=õØj…o´BQoi6ìÊ¦—£îêÊÊJôÑùÏÚ£žEQEZ¨X¹Í²ágpœ´P­jß©¿Q|Ñ]QÐÐÓJ2€` f^€
+ ÖúÑ›
+è¯óƒªÇÃÁ5
+Dû$¢||œLaDÄ•1Æ.ªRèkH20ÌFO ŒIzéç6–´·Z1¤ptØ2šèáJ$Mo¸È^<yoŠÐD@ÔÉ
+¹-hî…B½b=eêàÏKø|0 §6|Ð
+_g†ãa÷{kè²Ú¿%ÙEˆ£y¡5áÜ– zìÇZº¶…ÊåôHŠ‘k.M¶¼ÂéOpq|3Ì)ÞÏ~}"‰Rwûñ|–Þ"ý¡îŠ¢š}.›%è×ÄÙúØð>ÙaK‚>›bz}¾L’Ä2ggÎ¨*Î‡e~ã‘gã¥Ó%X/në)•ŽV"Óx_S·>ÛBäá³T?çyÃÐæžÛà({¦[²¹Ö.kh÷	ÿm”4ˆÚ+aùððÂ—Âo®öª_‹Aeã±1#Ð’"ðû#ÛòÓUœ®:7NMÒVÛéÊ„`%©ñå•Š	Ñ–Ì“üÅc<„€®|Á´#>]5ÆŠòñ˜éë{}kŒÆ»‡|€,x`ØÑù´í‘),MBM«—1pEUŽ–ûðßñtLAØe¨g7Õq|–‹ ã$6‰bø6ÎÏb$Ÿb40L2?s–³qô?Xƒ„%;˜j"!àx¦°~Ìé B¹eªXT%­?-'xE“t˜›ŒU?ÚWP[#šJ\1žXª)4fl8Ë"=k˜™É–Ðm™US6à¾µQ“ºc²[³öÃcq!¬f­ÇŽ¦–33]çrŠÆÁ¤³Mþ4šÍ]{løÑÈ“ÀÝðD|Óâ|ÙªeWu¹O[^D›¸× \…mïW¡ÚúMÿª4)áí5ËNÆo¦UÊ©³Z¡µ²@l¯mi”n´g/ÄAœ(ÙÜBÐ3§æ™¿…¯ž-#Ê¿®¸q†9¡‚û¾Zô«Äj3g#l¥œÀmm¸ÑZžkz¤üÈôpm/Œ©§jHVïñ}4Û½ùµá/Ç‹ºA5Çµ†Ktõ	®Ø“Zo·'–«Ý,W©½Û1}¸v›+t-t…þ^zœlk6x×¸ hÖ›ÏžÁêWèvÆÄZù	ÊM6¢Î·1Þô›¡ø“´ ²°@ùs	½d¸<e¿ƒÒÞ­"K	ñÓÁ]'€v„6Š~Ç¹¾°À4Zw@òÃ>¢	^Ü[Ñ4šÆ‡Ùà}³eü‘Ç	@¢Á>¤w­ýÙ1FSÉÇ@›ïðüŠi<vPä¼	^{¯6/ùü@2tép.†êr­‘´Û5PR`ž¥Åó¤QÒ%Á³x8p¥ic	÷„; ¦ƒ1f»©¸97EqtIˆ`ñúÔP«+t"MÃ®¯°EÇù`Z®£Æ>©*Ù
+la|Áï³¥qî¦N£½æ®F‘þ4EÂÂzaYyûâÍºoX•swÍÖýÿ   ÿÿì}ïrIrç«ÔÀ³Gp— 	€”(š¤‚¢¤Yy%-jÇëà)VM 	ôªÆv¹0#ìW¸÷ånì;b?mø	ø&~‚{„Ë¬ªî®ª®@ÍìôÎR@£»þfeefeþ’NŠPád¤ÉÌ&ÌÜ/Ìòò7þ:æØÃ^R%÷hñ@í£Çìré‰M]FyC72·Œ%9…CÚü!yJ,JMÃ¡gV:–‚zæü5•š6T–¦“›‘UÙ²¦;ƒ6Çås6¸,wG£ús5(Ø%áë|19ùcÐÏ²ÂÔˆGv’oúxº;äµ‰(*¿ÕÈû
+¥¸üP«ÊBn±C%ï·ÙüþûÔe§þ L¡%#mEl½DX´¼O`ÔZÉPqZÛè€éÝâ»áVì“W|zÞ#Ö<E¸3I´ mäJ¿¥Æ–~;Ï•ýeSà‚-Ô°h
+
+gÆ7I2ŒÃ—¸$ï4Ä@‹^aúºø‚Ãìz(ºRö^ƒàæ“äæ¨±CvHwþ3@®³¢¦ÆGþ<)rvŠœ­AGWÝn{ïétÛÝ½þN«ýp¿ÕÞyˆÜ½V»ÛÂÛ¿ît¯wÛÝ£½ö£nîÂãí>³uâƒðT‡ôÚ½Îu·ýðá¨×Þ{Øï¶wöá‘G]ø¡»ßÚm?ÜeŸöÛ;þdÀ·›ú7½Ý“ý½k%(`Ý”ùè!tu¯½û Õ~´ObyÝöƒqëlaí}üna£zÐÐðÛÃûÔmï? ;­½v÷¶­×zÐî<€¶íõ~Ýmwö¡ùû»§½ö£G¤»7¡‚‡KÁÚ½ÚüüÉ“Ó=Öæ=(Œtv¡»8hÝ6ªÝÛƒŠ{ìÑ£¬ÝéÁÝ^~ã»‡0þ´5§x›ì·÷ö4ŠÀ»Þíµwá.<Dv¡1´ß†¹Üï@=]¯¶>;ÙíõöŠñÝk÷öûxF¸ƒ…d±‹÷vã^»³×Â?§‡X76;‚‚?8VH0xÐ:7lvÞ}ð€àÐöÛû8IVè¨“büõ-†5|=¬ÞfÐË SÕ *@2†­Ñº1«~8J²YågŸØñrCd›»>ÜºVwBïQôP!ýX‰ `µ}—ÄèïÅ ˜	e}N©Fj=,A’5Dãg6ˆÐÝÄ6UuÇn^ÅÉÇÖ(à¥)HÂ³ƒ2 ˜~-ºŽ²è2Îo_â	ÿ<bö…5C´„,¶IÎ£Ax	#ô-”·ä—Ûeï1`“ýŒ‘ ªšMû*¦Øñè&û{ÑièÜ6žUýƒ4™bžöãŽÿÔÚÝÁ°{Ö_yJ«†Øb³šô˜LÒD„)êÝ‡y_·…óÔÒ‰:e­)&¬æ[6˜…T b)Á¯¨/íw8¯’Ëžÿu ž$NZ~Ø]¡‘ÅP4ì|¸%3Ì6Œ™ä–¿j¼ …šš¢MÁxÂ»É&¦.|Š>üÛ²­¨B‚Ö#ê‰.qÄj?×°ê'A
+Jo:ëIz9ËÞ2åh`ZH‘™íø\K¥j\ÿê½³h8š©Çbùéê¹cÑ9ò,5†0WªµdSòƒ²¦|„uSÄ_Þ’³ûÿ‹~•ß$ã0Ó×jÆF–né³sºVüW_²,ñÔê"²a«mÝ]ù˜þNÂ2ƒ-ûðU8™K7Uµºš~òp›­xI®×ã=¼‰;3Ac˜"
+[µÈ8ó§O3²‘í¸À|Þ&S‚Y¤ZÀ†T<G·G–¯©ù]/ÉuÖ&Ô}pSáN¶e@3ïX¹ÅV¡–M2E#­žgñ7VT¯¾¨J†Œ9"þ 6í!â@uDä¥Jæ<½‚siŽzUÖ SàÎÃ÷ÞdÐDâUöcÑŸ˜Í-]¤q°<&V¿DÐº&çzÍ§m‡û 2Š3å`ÎÊ¾pVÚÃÓx~Þ•hÑR‚˜”\Õ‰{@ÔÈóŠlù¨zÜÊ.Ãxsdÿsæ1ÂšŸôÓdB¶©Ï0Ì)*Ú…;3i®Õ›ºšð§8HBØ¬0Ï†Å«&j’‡ Ó˜ñIÐï4Ÿ²3ÀBÉÓ>ÑÇÈ…~BDÏúãOô„ÛFóŒÊ@Ô3îDŽA'ýd<ÏÐ+d{\‡CüTƒâ:ØÓen?ªg#ZP}	ö³<ÑÓ­öÉ‡ì«¿è!A,M×D¹ŽF0È“	PûR9õd·»L!àYè:²q¥˜ ¢*sÕ­æ‹cõÚ²ÅQ9„Ž9i>0•$ºy'º<Ž¦ù@{	z-¬a,ÅmF¶·ò-3¢|5-ÞŸ;„á1Sôðöî½	œSÚ4Ã.Êö¹çÈtÊ³q˜èjp5ŒGhŠí¨;ë¡è}Šî­•¢]Ãê¦æ“áVuà{YúE”³¬Ã»0Ž¤sÚGö‚3C±ø@°Ø W”Óˆg7èHùØ·æSÝcÍFmó{XUõôHIùÎJ-(èšÏ÷º'AtBÿþ/ÓˆzGfápâóz¡«ýwçß¾ÖˆtÚMãiòq‚žd9…õ–É¯Éö*6¢Ð86žæƒ$Ã‘üD³ýŠE¯s¹B†RMQÞèNåVÁ÷-Ë>™]>—4ZpÑ•ßNs!
+VÁáÅØk2,˜5‡¼˜ÿ*Š8HA¿Na¥¶ÿ%ý#¥«·{,GiAêŒµìÒžˆPÒZÎN„FŠÒ	F“?	Ð#%§Ô•¬bXˆ¥“µeÔ3ütlÈøv8NÚ“7^‹T?Z,H2úáŽaLðýò5ðH|ó•^èÐ´ËŽlûsÚG¨³;+2ËK¡A¸ÌÓEc
+ŸÉbO´/Wi­5VpÍÃóQÆoº4ìtÕÚïñ³DÍ:ŠjÓ±ä5¯wîP!ºLÃëð+-Ø³¶ÒºèÇ”~L‚iˆ¹ÖUBf¨!mæ’`j“:Âk„j#	¹¤‘˜k°µÅ1Gt?.ãW/­‚Ú$w©RßŽø’ ^aó×˜ç¼öêÂ·‡Ó²­ª÷KæQqº÷asŒ—U¸œÀäTveÌ,Ï£‘¡’ó„FObŒôxjòâÁÑBÐo5´—ŽÒ#:Ó”B‰åÉ“š” JÍ¦@Jù²ôÉã«N%âWó~diþQŽ®Ô5BÂ§¤±¹ÍZÁ¾›Î Jùâs[ÔŒÛªîÉ;0h}«®‡JD«ú²<ÄÎèÕJÝu—Åž6kE³ÖÝZ‘ªú‰åýÄß5,XD9ªŠ?8•GÂCõ3jOˆi“´x…uå-vÕ”ºØe½rÜO%Š ¿\Iòb—áÒ&…9@×#ƒñvñŸŒ?h…QöÇø>Bí8•ÉNf(Žaø#Ý+
+Ä™Œœ¦÷F¨Ì ‰ëËå1ZÇžQ ¥1Yh–Áö.Ý¦:è{Í7_ê|oÄwÔêW“LvÃ‰OÌÂŒäwñ<†åzºòÎÈÃ.ÈDi`H,ï3%f¹Ž]VéŽ]þ`½&icud¦s¼Ô‰ñ„ë-Ö‡] d—™2¾)Âš
+š2·´Ö,²KçH^¹ÃYêdÇUèÚ¦l©U¥ÎÃÆÏ€² G!'d,A4Ó¥‘.Ñ‡>“Ë`²¡Ç1wðqLsÑ`è†ÞÀâ³~€HW;èC«eÙÏßëè_
+o0«VMZÕ3LE"Ö/P¾Â« ;Zðôñ\Úž±5Àp’ž–Tpˆgm!¥
+GSÐ<ÚŽ†%“s—£EþIÿ\2A8oX‘3+Dµ1Y‘ÞÒ™á¥ó7
+·<ÆJÂôÛöç<qª»{2a Ú5»ÊÐ´××ÙU;ñ[
+^É GeÉZÇîÙß;K£$¥J‚ünyßü>šJŸ]G¨4fÄçQ²_ôïI³K1ÂÊ¯Æ7ŠÑ§/ßŒÏCJß¾ÛëÀÙ*ëÀo¦Þ‚zŽéö(šÞE8VîéßæÏ!Ö›øÿîªñìéó²*Ê>NúÀvž>7u­Â#J,6á¦ým9\¾ÉoèßŠ“ar:J"$‹ò³qè_
+K_&hX“1>u´(?Ûž-%ñ-ù®iØß„¦ÌtZ½ù<MÆç˜|î\Ã6¢+Ok§4oÿF.l¾£d¶^%Šn¿X„^î1kX£®´„z¥ÛxQ‹3Ubr9€~˜7\íÆgzTÌZv´¿_Ñnè&¡µÈ?v´(>šž­â(šôaf<Ê-‚¦uv¾rLÄ»¦ðôÿˆú èŸÐŸMZ\Ãý˜M¶‚ˆ™QCÈ´Pym¯GáÚÑ;ã=0S¸7}×¦î´õN¡0|¸ø¨ÒED	b=#·¸aõÕ[v‘Nzw Þr²zéõTs×¸•=•†X¹a|K^ç¦§Î«{±zÏù®"èîâ+ Ñe¬°¤Y?Þ}BÛÿC,gûÊ[ãƒ~šÐ|õ—IV˜l¥¤ï¬¿ÂŽ<ÍûñCÌ~d³óÛIÿ|>é-Hæò=ïˆ2|Tê‡2†øÝÄIQÓ:G0u|XŽãÉï*J¯©¤óYQ
+B×ƒ–HK µãmóCg¹?æ.‹zîXúàJ¾ÄŸx¢¬ß
+²,Ì2ô+^a(%ýx×ÈSèÈ	žY Ð®a‰øì¬kåz³y
+]_Ï¬jJûñÎì+Ú´&ýø¦jAÓÌ*ZH^ÄOÆÔ}Î;džMƒ‘Æ8£§ÂóÒWÃ+«vŠ:Ô"?˜wG<úûMxKí>!Û ¥[«ï:L‚_ÐEF­ùªŸu-l,¡âZÓgÔ ˜ÌíšT>Õ‹çé8+ao¯àA–=DBÃñ(!‹VÂ'y@[»a4Ó«‰pÔËbÃ1‹<µìüËÈaËI|þ²Ó™lqÞ‹LÖâÙæÇoóÒ~2üö%ëÐ«`‹E÷6º¬•/?ªä%ÍÏ‡*?x—CÍGšb,f%M)E¦CMIÅoÞ¥å9í4…å?™N("ÕoÖ,\pÿÍFˆˆs´¨f.«^ºÄuêÅÒ:aaØ,_h9{ÛÌÌ8ó,#˜òBI¦éÀ°¹JÜ”®zÝ‘0†wl›%•VÃ0çkóTlã„ÂXx±~œÇ£Èo™A‘²_×æƒÃ.¾C|K=Ž_ñ 0âô¬z¡ÉÊZÉÜ+åâìíH™+5ÇÎÌ*TimÚª‡Êø"ºäcü£¦7€oKËSr¬£Æh;_Ç0còrcÀ¬Îk…U»¥¤U,$9c¶ÅÏ²ñçÑÖ´ó#hz÷þÄöè’Ýûu	âÖ6)R6Àå'C,æÇk»°<‘l|@?§ÉGüì‡u³oŠ>´¹eŽºvø÷ÆqžO—ˆBÞáö¨k,Ó‚ùÞ8æŽ!¦ÉÅG"NiŽÖ^€P]N-§¨ÒO¸=ÿÀ[­qÎbPGEð1ò:¹Äi4ŒªÙ¯Ô„8Q¥çaþAzÎZ2”_»ˆ(U~í1"6Ð¯VË Iœy‘	…¥z@žE´£wËÝw5È•ßašÌ§6÷q5T¹e
+û×?/¸ÏcáYekò¹Ê”<øËHuª¥…–ZüE‡÷æ@¯tEMcaàïØœÏ-£NC»}ZDÙ‰Šs*ÍyGÜ]G@•oL)äif-¬©¼0¯Y2=KaÓ
+ÙÖì×’tµ §)½RGª–^ôd{åef€åuˆî£oarvøÀIO.ÿzá¹UiƒGýü „QC­¨Q4>Í¿MƒlÔ]ÿü:ùŠû?Ìäñ.Ft8êUq>‹ø¤xØ8¦,ýµž£P,gñžâÊOo˜S¹a0:û2ŠÎ|:Ó>Úv¾v‘*6NÌÍÈL¯dËôpg‡Æ1é#ÑðWkµFd£òZÃÃ¬]æ!:lFäò	e˜£ÀJFá±õóhS´§a¸z3³P˜jëœ=tÍå%[Ë×¦¡N½x'¦Â6ù#Ó•Õ"F'¦@ûîîHÙ¼¸¼Wd-C PƒùS7Úä>UPÙÝ—DÌBU˜Òn>¥6eÔ Yî˜Y9ƒ\{•§<J?Ñd`À^È'Ë8“Ú©2¦½XÒŒaž¢p%S@^ÆÏv€ÏfXƒêOÏPAÏ	»dÉÛ¾0M¿¢»ÛíôxŸ{Ëú<R0ñó;°Õ}ƒ;ß†ÝˆÿÉ¼?2ã@;C#m³ÉÐÎ‚aHZ¤³I~É„­³0Å{[D|@þmÓË¨P²%#ÿMÆ‡>Ž@)ù5ªÈAkìnÁ>tsN#øHc‡tºÓÒÝ…?­ð'^˜ªžÿ×ÞÙß„þ¾ÏìêžÙÝl˜qˆ c+ jÎ{ØÀC¦èêjfÙ­“†§ðËéîÙ
+³	˜#*±À³7bÙÕž59
+Â.µ[h›¥r×F…¿h\ç™äÐWêÚŠ>µè'e/ZÎbäe3ZÉjô…Ø–4èlG>V¥ìš±ÝnÃ»[DÐf*“pµ5¼5IÆÀÙ¥=4Çoâ7¨^Ç¶UØ‚«×sÙ„=V|¥Ù¶]ñªòJ@ýêí‹³oÏÿìÕÙ›gç'íhÒçƒ0SÝ´ya(ãR•,ÔÂ|Úët¢pÖj‘g¤Šüf»¶ÈÏ´¤µÏßÞ÷%XüÖ´¤™ÕïÓ.êO7ÍõM~5ŒºÇ	8ìuÜæ·ÈY˜µÎßš¸[æ)qK¦(ýnÝ–(Ú4›5Š?¢â}G4%FË€äKD§%x¯vˆ>±Qi÷”2¥ZTâÎžÏð-Ì›–›©Ú2`È—Àt¼ùÍÒgIÎ¡M­ñ2Ã¹ËÂ!ÇôÓjí†œ‡Cô#	½ØšP¾gØ~ª”`’°dò˜và€xî»L†‚RyoiJífæ_È‹L(¦6û6º‰ÉWEƒ«h
+Œwwog»‡9‘„s	CÎ
+ÇêTPäô+f4±òâ`í8:AJÞQ¡ùêu8¼ÿK?JÜ%xíkXz±­ùè1Ä’#D}Îuha3ãÏmwpßÑÁÿËåsýÉô6Ë¾P›vs¢œxZÉ|¬2nß÷àÀš½DÙµKNØ èñö‡Æñéë³¿;àã\vÔƒ}»·9çV¹µ™Ÿààž<WÆ6ïìç`‰oEÙ­’%sV&¯S2‘{=%a_émC€[üÌNËíé²ÞÂÐ¢NÒ0È>ŸÇ®ˆ²SzÈt«S¼Y¢f¡	¡ùž~™%¤E¾.tf‹¸{_oTé˜€pQÔÓ¼x·ù·d{›¼	á1¼yˆ‰ŸÊSãurÚ¼û¿P`ç–å©±ŽÂë4™¼¡	NËSýyæò1Z!÷´VÈ•=ÐØÎÎÝxžçë?Ÿ©×8SÿüçèÚÍ£2yÇÒ‰•yý÷Ùl037†o w%¸ßA”—q8ÀøëòÈŽB›÷é*òïiùrÆòoS¼õqpÓìlzO
+»¿™¨Npè¢D—i/ïÒç)Ë‘§õâÐ¿ípçìþûa4	ˆ8fw¨¤,J •¦¶åSPÓ0Ø•‡/†8Vîg="Š&Mï9±ýj9b;ãhÜK›‘é¨¸ÍìR9ýpŽY\ORg‡+¾u–M²Lß‰U¨÷"5zãø×Q6»ÿK
+‚ÊAeTüŒ¶NÛ*]Ö<ºUÄð˜rtçÒâ ÍIOpÎ6äø |53Ì¦2Œè^‡ß¬òË²nÞfkkÿ×Ñ{Ø?;n½ØÉËØUƒ£±Ëƒ¯±KŸRM»ªd)ê”õE¶.—IÊÓkª¼ðÔ”È«(7ß?âÐ[‚]i8gÑý¿ßÿW˜‘Œ:·<£T"‘Í»Þ¦AEø*¥Ü«¾Ö/´Çï=OMûqLžÎ« ‹¨åŠ§†H<Ž¦œãnA|C‡LŒX‹i¶cš©ˆûÅ±aÄ<ŸÂ ÙgÖ©-½	¯ ×£ÓÚäÇqÊrÇn“—¨¿©¤²e Mâ<CK*‘[w³{"«Œb¥U·hÕ°€Y6ïŽŸ‡ýQº[âðk®‘m$7†ö,Ül5^†njM,Fý_n6m.k´‘nkxQ×5,*BÄ{üÜúzÁë¹{o'ðªS[OujCWµÎ£¿Ú¾Ý_¯Oâ³†—ÆodìÍUœ|l™3Sæ—ÃB z®y Aâ©f3U=ª~n&—8»›À()umþm™9e”6œn´«^û½ÛKÍá§&ø”UNé™õ×#7‘Ð&
+“ôVržõ0@{¸›¹%Øâ¹iÅ^Õ÷{÷)¯†*}Œ%à.œÛ*7÷¨­RÜ ``/ÉÆÏ™S~ål¦´Q}6™Oé±&{8=ÿ/Ï%J•azC³ËSÄÒ´¿cIòÞ8>Ë7ù:cç<¢}s‚ÐÇ|Tsžd/e¦¨‹˜ÎW„:‹œi‹4²17È+¸Ø§[¸€õ/XªlØ¦³'oÈÝf-âów À‹åJf¯øãµœã^K;_àÅÏÞ&x²\l½˜KÀÓï¨ž? ^^>x­´:¿Xdô²C@u349ùÎÙO÷€ ŒôÈåsQ|÷+Í©¨#žwšo1]¯-†¾êéÀ.ÆØ<6R2Ci²0â3líþ÷?ÿ«¡œÂæpÿ=üÒÌ6ùz\«òsá^ÚÏ[³kêÏK5ëÓ'jÙÏÎ€Wm[^Þö¼Ôu'.1e“êˆÎ9¥æ³–vx]ÍÍ,âú–ÀÅà|~]ŽP~.A7@€“ ~	2ªäðJN.ÓÈtü °²oóÊþ«¸,¯4{ËÍ§ò“ =é¬'ÏJÈ¿Æ™Y4s3¶¿¢ì6ù8	ÓƒBÏ¿£<Ì@Vç‘þ×*(mlúÊÅ58©ÐŽß«Ã«Y:÷4nö’#!Êo¯^U­$°é|ôÊ÷õãTü^j‰|Ëùíãå)æåŽ”7ýx¥¤"MÐ²ÆÁ7^ôAµ¤z-/Oñh™°:ëÔC«í«ât>ñŒX°y˜°'\^&x™/×tHãôP¡m­ê¨\PE|_õ'Œf,æÜÑC¦µp‚€Þx Æ°ç0ájî	bsü°Ìµ-`Ýr[}ÖŠ­ Ü‘Ò€äæ:FCîWyt-x</R]‹œ…›¢Ë›nÀX¸Ñb,èðn´	ÙÕÑ©ïki@NXÅ’i¦Lé©KH“öpx’¦ÉÇ—áÕLÜÿ.‰gN´ì›iÔÁ-|x*%ZþÌèuŽþ™3RõˆÜìelw¥ÉÂqÄš­ž,>ÎÏð­¾-úÂOBn k &\³${¤’Ÿ¤œ ¦ÃjŠ‡Ú¤®š¡<q ÖŒÀ®*zÕmLÐ$í.zfK .%µbtûÜ>_£^­cóªùMÓ‡xµ¬Î*ŽÕ¶´cJg²ÁMÒÑmÌeóÚSj^“™Šùu«0#Òt¬‚žËhö…ò«ÁºèKË¨âhá<hLt–×lÝàF÷’­µÅ°@ÿæ9—æÒáŸ6,P8ðW%Wôe<¾  
+ÓÙÍvõDÜyÜ+Ä	zð&C¼_¡-„kçVö°¿U¸•E3Ñ®XÝÑ€ÏsÊIo¬"2.g•ü<ÛMfð¦ÓS†²`êƒKâŒ8îá~°Zð¸`pw¹†Ò¶ZU{»pdVê×†¨+]lÿ’°Œ? È	O"LkÉÈ/·5ZqMMBïˆEë®Ã¼òça8¸„¹ÐVY©tÑŸè‰ÈˆÈ ´ÓCÚéh%u9Y/§7¶´5fÐ‰sU¿6pÿ“yc'Ïç}L²c˜áÇ¤a¡æýêÅ³ô€–Uø¨
+î«ûÿÔÜÐšÎãLËŠMšðBÓmšïã±™×X8ªÃ2of6&bŸüTšó ¾¦šr@…\æÛn·² ¡ÜMãeºx:
+ûN£´‡]}/—ÐÖh×¨ÄGNSîÿýd)áßFã¦ä}ókù^{–Ð!~9Ÿ¡ï^óâºpŒ’y
+ÂM·5ˆ†Ñlc‹Œ£É³	·X «p}=6ßS¡È¥Ë›FÕÂÊÜã]^Œ‰pKw<1K±•ƒ]ýÏOG´¿
+S¨ƒÁSÀ”ýnË ›({•ó˜)S .‰³Ü?Åî÷\Ìé÷þßÑ’PÒH[³“‚Pßòl
+¥è“¾˜„Üno¨0€=3(½£ë/PJ-Ú*X©IÂ\!Þ³ÒçFÎ€å4AÓï)9&iÐÐÓ}n54þ›;×i„M€!$%ÝóïÙó{&ª÷G’-FáxVŸÒù‹ÖVe	. JVQÒ*i¸ŠØZ–öT¦Öáh»he‡Ù8A}’-·dÿÍÒ$+nÕXl‡§ÉôÖMÚ|ô9e“¢µŽ˜p'I²¬jvz”ÎÐuó¤=A·œ’;ÎÅ½½vìdn8î<sè÷n£no³É
+§ÑÒùs=›gh£©ÁyÈ,l.ÙÜµÃ˜ÕwåHYGú”Ôó†8Ñl‡6ÚSBÂ¥]ŒÀ=:wðEÓLÛÛ¤Ó†57È£¬Øàaz\’ÁÈÞ’?ÎaÌQ›@ÝÒ¨.¾…?ý#a£$…çO¸Gîó1LA[N&¡NIav»ù$‚ßä“DŽ@<(ê/n7‹YŠÑ·¼Û&ßPè_áýoDF.o	Âh›Aq#ÂÁ“[|
+çò ˜XÖáaFåØ-’·åâÝ14rq§m‡Ò›öU’>ú#Ú|ó’dMHƒ'Ô”AGÚ:œöJöæ$IÇüUüÈr3NÏé™þÐäeobü³¶ý„ + sÖý&¼…ò¾½DD“ö‡ð6kVÆh³}Œß$}ÀÚóa“ê
+05§A"EÝÒ‹I†ÖÓ|àyóÍq…BóJMŒ¨Òé‹üåwðöÅ;Ãf®½k)«=gŒL´,ñÎHö½6ùMNÉ·¯_þ#¡ö123ôg .ÂÊ¡lš/ÚŒÐ:ä‰Ý s“z’rôº°²’@ˆH£PGÚ~ç.#Í‹ßoQâÎÞQäÓxÛÑl[ä’¾\ì¼k³˜ Šâ“†ÍK¸µE6¦³Ö“7[4 Š^®©Á&)Fmr7…‹ê‚~‡Ó¨©©IÉÅDa,¼·}H]	}EÊ #àeƒaŽv2ÓáSÙ0`Ó·Êö¶A-qêÆŽ‘Ð,™Án,òQÙ#K]™ìõ|1—À)+¥äÔÎw	f<:ÆÔb¦Þ?RÄ™Öþöúþß@üq6$Î8>KÃq”eAv’ïtGr‡¹™¼Ò‹#ù9s5Óþ¬ìz¥hP|íxLðèð D³xôh‹}¹Š“¢Ú¤m©tÌ¯ ln¢Ò»£]|×);?K“!#2Æ^„ÅeEá»ž$T¢(^ùì4PR2 ª¡ðéQ§¼œk[90ÍRtb‹¢½'3ŸEuútsµ(ZºÅÞÝÂÆl‰=»Ó.yËvÄNqŠ`ç	lRWpD1Z£(ÄžßªÜxXF˜\úX½–±9pŒÅÊõ0©%°ˆ'I<Ñ=Kû‰›•°äõ;ÐœÜ"è“^‰å?ý€ï‚Ø"[)¨ƒÈé7öô&2kžŽÑÐ2FCœÿaÒLŒ:V–}€¶UTÄÖ?¿]tÞÕ6t¯½\MÆH=Ð¦ió;)ž\á¸€@ŽñMèÏÜ:Ä+¡hf¹]ÁB›cB› ß·)LJrrNl)J¹ÊP´Ü¥6P1Úp‘— \Zújm¥çbkÁgà%-Yí…2óPè_Q@å£mOù#›ª(éÜ(3T¾$(#š¶aÖOAÇL~_üN©…S~LÄotÞ¡Àåí4%v(k}R»ÖKµÖËzµacW_¼:;9}ûíï¿}óôÙ:É'ÛŒèjO¡ÓCk2l+EqO´Å=©Y§Z^‹¶²†rdÂM63š#sq©xž“	ˆëzÃ¤®žËaëã(‚muÚ*OŒÑ×àçµ½¿C2Š³AOŽ¥tFãA™H>»q¶jd»¦Ûñ×ÿdr³ËOÉ/c<¼7:V¨ÉèòyIå~ªË¡OàøÂ(R»Bª*=qT¼Hà{äèúl­Ë5kŠi2
+‹¿ š:é¢¼Õ=Š¶Ó2Ûxé\ê†Ê>Jòb*³Ü£ô<ˆgÁ˜,$e«¥ªp|Q|æQ É¬cøìN?5“äƒ"º•JÃ5juÀCWÅÅ1²%'Rõ¡!Å§xÉž7ž³MñšÌSk'fï 6¶Lj¸ìúB¥o˜†3¤+›ÝÆ4¤xÍlt@Þ½(õñ»_¼w…ÅY£»œ¸Ák@ÞÛå•i@Z%2fpß
+''£_†‰—Á%”‹«6Ü&™$ci\½Ò˜6Ååý2N b%ZÄ1íµÎô…A4p¬ö•óIû ˜yJ•üœRBÎ]J1f˜`êX{î%ºÌ—z>}ÅPO6Ý!>@jÕtŠ»RÈŒ6/5Bí:sÞQþ Iw|‰)ÅŽ)(ß÷ÿ*åáöh·.ÎìÜx¡ZIóÙ-ªÎ¾)-ì®ÈæBé@çyÅš×,Êr†	FQ¦S1­Úï*Ìa<//lŸÒñ×ãáj ß‰dâ¡ãâÌäáYª^ùfÍ’‰aHà´ÕÛàZ*+y˜3œÉnôSõÊçÒëaÕÙTƒ.ò â˜öÃUšñ ÿ$<·Ý<<ÀöwVx…/(¡pUì=	Z¯Œ±©Õ
+ŠðŠI¯ãÊ(¦0—-YË¸äq3`w¦§è–R‰7õý‹’¾ƒ‰¦lt)EøÑuIÙ
+Í>T5´N)6rÉùÑ¦f»È‡Û¹øq·Í¾SÉÃ€ÁŽ<a¹Kl„~’q,^0|Ø¬RUm„û(
+I§‚ÐéIzjG~ÕS?±aK¥Êp–Ò.òK§eà´ƒHì¡cä—'Ü…V¥'Ö˜C*¸[E‰]AîEŠýûÂÝá4A”åÙ’âj¯WÍ’±N\¥DÃ4 Sfk–´Rr•&c)#iÍÂ ®Š³¢ÉH4:7‚Uu¸º úlç“ìÔ9¿ãåõÀ®7LÐªœû?0¼í€¡Ô1ˆ2J¸WB&yÈß ÉýgM.¼évô:çú²ùÞ•—zä…UÏ!ÍàÎËëŸþÉíÀÃÎš˜Q×k¹“¿Çí‹Î;wãMGRòÈ™´™r@œËSQ—}ilñ±Æz[LD	Z²™»„ï¶¿’Õ¤ò«Îc³±Ço6-ˆ+Ÿe-—ØòZÈ'Š2t‘ë ºìËµ~Ú#òü%ÜÀØUq»Ž&ýy\ø‚ål±¡eâtL­Ûú¯Œ3³`ägš[ôô³84÷±d”‡§j¢îù©xp^œ¡Jð:L•[“Ÿtí*O?ñ€þIÝ$z¿ŽòªÃ‹¨•#ïÊŽümIv¤¢´¸¹iÁe|}hñºÒF­)oUGR%<@Õxq'GÒÚ«F@Æ‹Ù »ÅŸOÔ!o…N;-š´q6û¬TÞ
+º~~~×c§kÅÖgyUõ?_•èéwÏ’®ÊñØbÅaeêyuÿƒ¨¨IwÈ)ÔU$þñ¯Ìé­‡ú]·íâëîYðŽÿ@ÏÇjsÁÊé	®vÊÌ:åFB÷º<Äo¥°#”»S7¯h ãW´èsƒtjÂ~ÙGÀÃ÷ú—ÎjŒŒ¹"ÏÔÓEš`%–ü4µè1Ï\HºsÚ¨Wº!Q|“wE^Ö€ï-¯âx#Èn'}â›#L½‚A4¶<Â´šœ<·˜ß5óbl'—Y˜^ uñÓ0sA£é.ê´¨”HÝ·å[mÐlÇ\#ÝØðË-¦^Y8û&œ„hù›xIÞ·%ŽÉn—jG.J^å0&G|Ü‡¬uáÉ‹á¤)yNÑ[²_èRmgŸ·`¹ñÄË‹`òjV£v!wb¬ay‘m‘Ìg^–œš­Ës²¸So„þ,˜÷”*üeéÆßm‘h‘K¾ïkÏ–Þ!}Œo#˜eyòOâ°ý1H'ÍÆ³4MÈ$ ê§x+ÿ–Ì=¾ÿ-zè¦‘Í‡ Â-âŸÆDn3(Œ4pn¹ëXÍZ·Tcj¿S÷ï.ùµ”¤_^|wGü—ÖGóÙAß­pÈ]à'r XŸ5ÞîÔ×K}‹]‚š¢%&³È¤ˆk{XOà|ùò=/AAý‘ L—÷y»êI:çU†’ÓQOlª•J§xëK¶ò`¶Ÿ®üú,—2ì?B¡«ìÁÏ‚×Ï‚—xý,x}â7~¼ì—Fð*b¶—¾
+Ë«dj-¯"ÞäóŠ]Þ‰ÝÕëS]'q˜Î˜Ð%Ë\|&þÚå.
+ð³Ð•_ŸEèÇüG(qñæÿ,ný,n‰×ÏâÖ'~ãgqË~iÄ-Êª–—µòótñ½´è·Ï.hå€š_šœõ;Œ…ÃÿÉ,o·éñ¥vÇƒƒ­Î¶¯o‰¾¯¬oµSãà2ŒÍaŠ´H&Çß2éŒ!Á“mrÎ¸4|9Ü¦Å/%úÖ$¦eRØçW	>TX»¸M×å¤k’Å×+­.+«rçìˆ;¿ðÏ +^'ZVZP/k6N)´ãÉÙt`ÿ&„­&"” ‘WÑpŽÐmr–¤ä*¸NÒ-¢>Ê)ßž4N‚½Â©—z‰Î3ô“G]º¿ G=y+.Ž†÷ÿ9œ¤°ð"ÔÛ%.æáøy¤†:š†¼#¢Ãæ§R=Ö¡xØÕc_Ö§‡¬]Y›ò¹5Uô;Æ°¡¬Äžñ( ABÕ‡TÐ
+X-rü)BÔ³~x‚’},¹ˆ—ß)Myîeúìêñÿœ4È¯h%íq˜eÁ0Dâ‡¯z°9W›WÑ˜Ö¨/ý(t}âS3Ž‹óíˆQ¾Š*¤¤ƒã!<~¼{“-¡õôe¾ ²‚uðW’´¬~ÎŽ×±‰gK7¼È ¡¦tÈ›]¦áX®ÕöJÔLJÅÞnËåUSs+Ò|#2”‡€RÈ‹“zÕ×Õ­R· Yõ²dŽ²¼ô2	`ÔÅ´…Ö¤Yrîe*¤>à8ä,M¨©œÚµc ’…|Æ1×ù·t–Ïãe©‰eøÊ·H
+”7¾ú¼cþ¹FõÔ˜1f¯ðÉl)ˆ%±Ve€o¾	™ÌÁùr¹oÄµp3¤*ël=^÷ÌEðR-ªÕ¶*\Ä¨ÕÝ¥P8Q”•h"×ÕŸgˆ7J­­ÅÑùŽÝæ¥Qá“Lf„'ú¡™e+ÚºH5ìšÆA?ð¦G§˜î.$Áç™&˜ 	5íq’äôdŽi‹H¥KvC¤°ô#c°Z¸âyxT!iÔ-©›uW29“!†ç Uyi¡[$lÏhöâ6mŠ¨Ö©¿Ö2©Ø#òp5`w%Ëá¢jÊ­˜(‰˜‰Ø
+ºQG·\9á‡ìÔ¢Ôîôä,@ÓiMsÆü`)Æ¬h÷ÏËË1.i7Z|Ü˜)÷dÞéÒ¼;šLç³eŽ6˜õö*ŠÍYÅl—OÊPs–)¥² W:Ô‡¾£r±ã÷ìqûbÇå`º¨±ÊØ$,#åsøüÛi"+½½E6r“›ê–´@ÕÖškò"¼–: Eö+¼"F+ìoÓØ–ÛR½§êTòbëpwA__6Íµ¡q/ÆÁ0|T$€"y¸ÊCÉ,¤¢ÉÏÒù„fH7xÀ»<'(,fæu2¦§ã¡+‡­µ‘ËyA±KÁ3üúZò±`
+¾
+ÁòùýeL>lÔÖœÙeš =ýfƒC©µë0YÈNÃ–±:,3Ú0ÞÏn )“ ~M>zðr¶”ãwÏøå›pÓðŒÍyØÔqËõÌ|qà/L{~ìOÆq«óENüï~¸Ù®­\áU[é««À-å °ö‡·1ÞçÙMñªxu #ãn`£Ú?2þ i¼sÉ/å(âµuZ§×’F,ÈSïŠð7X4HÎ<ë§û2·þÃ=GÏvWÝ[lßï¢ðcscd£ËHlCyñO~¢?aþeò´ÿiþ|µÆ4¯Nà»Ýá‹B4Ž¿Kú÷ÿI¦É $AL7$¨2KÑðTÎy›”M"ùã<ˆÿ8‡vŽšð¹­A®ÓÆáö8A¥¯­ü²)eø[\Ã1±rØP Õd®Ê¥‡eê®†¢H•éGPHƒ¡2“iÐ§™w¶H†y áSûÑ^UdçÆjéNñN§úBxÍjÔPS+fF6.13à³;_:2é€'WVÊWX‘Åz8‚©²¬6™QfX&B^"VµäÀö]ƒÎ§eIæLÈfœÊÃQ×‚—G1êÊ% +æM˜Í¡ƒ$;ÜueÚQ94&dtFuF¯Kä¨R9–žGJC¾pž§ ƒÛX¶uÁP-µ—ûAÞdãÿþç­YR4¡ÖNƒ6(ç1™`…Ö AI£1ÖzJ-:ä9Ok@ºôï³hšð‘£Y¶`§ßwžu¼xª²1)ý›g·XÀêÌûxçŸ'é³A4kB=kºÃ ³IÆÊ›_½}qöíùïŸ½:{óìü¤!Üã Ìh‰ä1íÀ†š8KÇÒxÙo©Í§`"®Üò¼€™P„g¾x¼¬Ñ4æ4z2¨$2•èUE¬VÔ§§¶ ßØš<Á=æÚ ê@nö:Çª-SùŠ€¹@+`-VÒõÓx\zÇXäVíŠ¥i¬)Âç9!•´Í æÅÔ¡ŒÞš‹Ã«åí‹%Ã°£}1&\æ©P$à‚y:€Þ–ã­K[îœ95\&/³¶fKB­{Çð¼éö
+g4Ìº<Gd×:"H>NÂôgaú¸=›fŠÌE2ÃH’?†4ÚôµˆayDÄm4&îá½ÏÓ¦|úíí4n¢?ÅS?žŸ¿Šø¨MÍhÚ_}‘yî†½ÁÈÍÞ¦ K*H#Ïn`KŒt­]¦ÕÓ«*‡³k’Ä§q01ál«UÂtáº{œÐ(²º¢xíöÓd’Ó`˜Ûy
+ÊÔd€ÎUbKß„°³Þÿ%hsOAdÙ¿Wmó40½Úœ»zŸ=}njãSXÁx¢¤Nÿ4IqO†7k5KËƒôvšfkÌ2òNV³˜!äs93œü=HšPÑÏÃÏ¨{¬S`/Ì'ÑçÕ'1s»!	pn1ÎÚW :ýQg©c¬„†ÿû<=|á<Ï¼6y,³Œ	¯[ÈxöÇJ¢ô´=
+2vksÓIP¼¸É_~C÷¸2&Ö$ÇÚä³r¢z,ú®–úiÒÖ›æ™¦‘9ï'iÈ›#¶NÌK½ERJað}§Óv†/Ñ$½›[DçÖÎ*7Kß%¿Ä:Ðí«èlZë M¡
+ÒY¦V"É«`Õ¢4Ôl*]ß&M©­¬Zhlèœ¶cœÐ>”7ƒ©Yb27yóL=£EóÙ­Y|N^U¼’šÅ3²òj>0vž4ð¹iéfL3ÜÔsƒ# ¯w<¨d;|`²¯ñ")ì®´«d9+SšÙòÃT¿•¼À¹‘ˆ£ÕBÃ:S%^žã¸ù]'ýhÂMk‚’Úq”Ëf2X!õó®lÓ[Hk~•ô ‚×}1æ8Îc90dö:Œ+gí¬ŽÎÇVçfµz ËSŒÙ-eÍ«W
+í±ä‰è42ˆîÙ­,N>ú¤é•ÚÅ†výº+hÒ‰í±{ˆVÊ ÅŽk¬Üzë³<Ybu¾ÅýåØ³<Ñ²ëòŠG‘Ûc9i:¡®$=S¾se5òÈ³§ž\5F/åÍÝt­²1œ1ÞÓôþÏ¨Â~	ÓO$ŸLÞÅ¥uLåàržò áìsÏ²17°|§·xüæ[ÈÃãÈýV{›TkÑóÙŽdçÙNr½èt<-†C§Ç^%´Ââœ‡Ü!ß—¦ó8ÑU%ôyJ÷[Ò|qbv– µ­šx­Ä˜þC«X½³ÛÚùœL^ÐÓ[gî"¨ÊJ%f¬ãmr„¦T ú6c.OŒµ*UyLà|å• JcË{ÜžD×a\ÎüÉ‹Ú³`=€-^ª®‹Î^±$à{èý:ã0¹oõN*½t¹$9èÛØ¥e~‹Ô‰y7²É|Hèi.¼<ÆM„Ÿ/iÛÍøRÔ‡urHí_r Ì®: kÈA¦ÑnA$ºãú]6¾îå®Š4r“áv.º§)l ýQD°iøØkŠàÁø<D“AÐ°—c´–u7Ó.¾™bÐL%%o´{;îhFGK:Þñ?þùJÇÙÎðŒ_:æÐân` e3Š)Ýœ§Ä8;í=—k-Ÿ¼ä3ôÙÊÇçi8¢8sÄ‹…ÐÓŸ0:IZæ_?Ÿx}‰ƒèË52gñw~#à}ÈT”k_®.æ†'vÊ±ø]¶=³Ê”$bw˜3OÅ+Â©©0¹±<­Ôë®õh]ÅýPõ(28qG›¥(…¾Ë¥9(ñ°4\Æ>ÇÊrÍßÇÔ¸çÁu˜¢;ñüjK5ŸZ'Ð±O¾	¯@Ê~äòä¾(§äbI2¥›RÃ)„úòl3Í«MiÙ§üK2m•ô]Þõ^
+¥åÅå¬ËñP°.w)ÐL†eÑ°ªÀÖÖLåœh¦<Þ¨p>0ExZ`tÆÃ}2‚ÿû9©POn‡=Ó¥	?	ÒÓ¨Í=_mÉm–¤Ü´´©£ïÙMØŸ3 Ö&3½O“”Üÿf²v8l9å„ÕE?áòkÏ#eê‚gø¦AÕYSµù	'qw)?Ž³ïíq8#Ì‹‰¤ÔÇÉ¾2x;§œR&î5&íåéxS!ÿ.ËÓkÊæ›úÃ±ñNáóiÇ¼]0íì¿<õ>a5r£³A‚:}µß¿ÈK}·I¤¯PË‚L€ŒŠŠ·Ø‰)uc§§ ga–À7rç®k}GÒN"ºÁÏ›u¤œ=;§R*¤è--¨zÊ¼ÊäòÓI¨ÐêºEw››,·5²8Žsæé0L×/L)¾)ô¦zºM`ã´­<-jÛêt®þl–&ÂSô‹…F5þ¦³sùh¿Ó°—Š/^ƒaøŸýÀ±4Nˆ ÀyT‡ j¼…B±ªg7}G`i8òk#¥³¡>$»;nRUÇáj·wµ:šG”Q¨¦®ö?wÖswžÈ]ÏOoq¤A±ÿ—éÿÞ£pç²fÿu	«#PäA®=oÂ!•.]‹Üg•ûg^§kùï]Åjl‰Ë#ÓVyøæ
+Õö®^§1=nb®Ü”ò¡¤ìZ˜ê1˜#Ô|éyè«’JŠ{ ÝÐÃãà;]j“²)!­‹½íÞ;÷¡5â5;DÍ¢ÙõPDÿÁŽ_Å0
+×Q]"ˆÚ=ž$7G`œ8n{~õ y˜¬oàõà¨ñŠtº[»ûä„ôö·zûPÝÎV‡ìïÃ=o¶ºŽ`Yu®ö®Õ|ï¢ÁltÔ¨[ÝËh
+Ù¦IÊûå«(Ž4šÁïÏpêpÜw»[jì™£Ÿ×‡Z@¦ÁíQ£ÓyÔîíû×—¯'WWY8C85|Ÿ´òd›	 sÐ|#Ó³ÙmLC4Ku@6Xu­AQéd$`SLæ³_t/šîzèõ ÂƒË,‰çTgŸÍ’q‹ohœ«™9¿/Ò½ç§ú1X+Ê|~îC	ãxAçÅÏg*
+¯|ß< ê€‰ÃCÏ©8û¶l’Æss0ø*hô¸O8£¹:F­‹;rmZÊI¡°ý×n¥Á·[ ¡­ÃÜ¡cgtCÙÊ¥.“/¾z-
+!Êgqùöò3-,©°VG"“ÍÍfd³›Ø^L®!ay ¤§Æ\Î#fÈbÒìôMÆ«° {ghÀã¯aÌX|)ùÈvNØ:~Ñ £Wÿæ°ýE!µý9itRé ˜G‹ºÏm,<c=e±…kø¡±£ð3W‘a«ò9ç*J-S²Š%ó»BéLñª[:‡ý‹~ëŠbÃ«]¸<‹m·ÛMÙó›™'.ÊÞðÔîðÛBÅvƒÞå>TüŽ‹wv ¼Þ¹™Täþ= $÷ƒ·žF Ù7ÀøçÙÑâÁŽ»	 ¬”/ì{¼0¸­œL†(í¹_@Êý"gÐvuÁÃ‘Ão,KæËðÚ)tÊc6=Db¹Ý’„7›®øÞü:<aÏ¦ö‚÷}øØúzA¸{Çdú-¶Ýg:ˆ‡üê<:Üèä’o“$žES·6ÑÖ<ÏÅvÌ2¤"Éi1·ô‚EÏŒŒþá‡ýéMq¾v¦7$èh@¸Âë%×_Qó9,«£E“3zÁXNnc½xÿ5K/·÷ì!'çpŒ:OçÖs¸­Ùí–<·tø‘
+
+GÂ¾‹¶ý¬ÈÿQ¤s/ßêñ_Œ„w,r`({5nŒ j.òón³v4Å'jg‘¸!ä¸Í[Ê¿~9­-|¹ódqyKÑ©ÛÝÊE•-ºÝ¦>OÏJ_U:¼‰Y1ü†G'WÕ
+j½¨Cl¯(-:ˆµÅDóO2©Ÿ•ÅBã•§bûôŽvÀ«ñ ¼‚Ï€W¼1—ÕVM/[{T2»UØ¨ÕBFÆÞßÑù1z(k¿¦y+€Övw¬~ñíÙusÇ,ä1l 8Ï/«»9c`õRM	poké	¦Ñ&£h‡øCHK“ÕŠ¡u4CSŒ=9ä:ý`œ™ ê½ i“ÑƒÐ°?ŸE×4à$6mÕèk7XaÔýÛd7BÌÒ$Î4¡÷EY:š—@±¦B£›¯òèŽÁý†m6;B]ª,œàgT2a^ŸhÞ²#ùÖHõ„84»4I“`‚ÊŽld“OšD`W/wX´÷Ù¥ûA¥³Ìá€v˜ç3b\®rÌ\²7Ù•—ú¢)¾ô‚“aÁl–e¨Ý>G/£Éˆ.˜·°Á±ð)·s‘ÓnM”t¤U„„ýý‘ÒÑ7éý÷Wˆš¤ôz<‚ð\Ø^.ÜY/áÀî5¹ëðšD&ý*œÁ
+‚Ä lãÏ¥Åcu„°oí‰âÍ’aƒ0¬ý°ukU³œ‚î$êIœ}X2ûg3–E%hÕ«ûÿÀhB™³4Âž›%nÓ}õÆg|Æ>S"WNhÐ-í&,d6|bª<Co)ÜŽ×!TÍ3;†ÿ)Ëÿ;ï3‡.ÿ“»ZQºl¼šºj1qÏÓ§•×é>³ñ9'üÔtqÿ¿ãY4ÈÉ5¦¿pÒÏt*Ä¡×[¤óÃ­9Ÿ†˜–~ÀEŒê”Og¥B:«µl?pœu-M²4)êUž ìÛK†fF/æ\:|6úŽ»˜6ë’sÈEÇçòqÙE×C±!ÇÄÃÿÐÓ+OCÜTcI{,­`±,àyòû‚çó\PÖî]MÎ¯_-„žßý·­°Ðõ=ŽÔ}–”ËÇ¹t gáðË™…¯²ô“]×øW‡Ÿ"~þáÿ2Fº”w•(»uŒõy8þü£kùUg‚«w'à°h('4z‘Pm’`ÚyÐU'³z
+èD i´p¨yü¡Íä¸F‡Š…Ë¤â8@?FÖkæJ!ïwd¤ÃhBÝü’ééìl‘›Æ>Æá|‚}u‹ûÒL¶à”@	œ…YL(\fÅÃ±Gzª÷Ûq´¸
+`ÉÝU½lÝø¿;¹‰²ò¨%›	àv»(ªùP¹]Æ“]<}°ûpwÿrc‹.¥óèO˜„³Px´àiÖXå|] ‰’q€3sƒdòÎ§5ËËÂ4ÛO„ñÇ›sjkßÑ‡A,ÒêÁŸtx4w¶èÿÚ;{›+œ +ÇÆ¿x¿E6æáuBSúÆaÿ‡QúÚ‡<Zèœr÷à³l’ãd’Ìü…§BœÇÊ³ÊQòx¥X}<„È÷æa½èy8fšÄjoK|›ÆÁå£ð[ñ(Å¤?-Š}h.vgïÑƒ|Šuz,uEœ“<HögÎü3g./f@tµ\õ½8èÏlý“°uX©\e±,ö£àŸ)÷.¼x°Eà? ¤”Ë =§'Ð»îL†‡Û9‹XÚ™¢†¯ÓrYìôÚ6+‘}ž6÷íÝÆñYeþP(<Ë ÉÈDÎÆ¦?x¯PÜµDúÛ=9ƒ	ú'G ÝæÓ±dŠ¤ìY³pŠ3hRp;.>ødcIM.€>ŠQ˜5Ëjd`7!Ðî€ƒÏo	òÇ,Ë¨ÕPEƒÏÅTñŠ¶Gìu‰(€ˆr^@pÄ÷öy<Ð¾øjÀÅg—ô¤9ž]®ñ0rTwQÏwï6Û8I0ðÀR­ãZÌ‰kÁ©€¦=ºÀÑ‚‹Î;¸'`2{XÖû¤v½—j½—uëÆSìî‹Wg'§o¿ýý·ož>{C'èäq~É.Á±eCKë2†Ê>Ñø¤v|îi‰-ÚRèrˆ«”ù&_äÃ¸E¼Xöï<)%ÃÚ“5•Ð9ø„IÕ×9:˜GE‹ÊÆUü$ˆnã*vÎ˜sœe¿£NÚyŸ¬Ò|-ß‡òP!†ŠƒÊ=®8@ ›õÔáÑP2Í“x–0?U =JÒíÞNƒøùêþ?‘Thá7+:ÑzÛP x	rWoY/	[ËQó!˜\Ò<:ËyX˜™ƒ—ê!€¡íuaðPM9uyöO	¢å›Ð®q\Òóò8úU×„²=º<V‡Ó®øÀ‚ÓŸsuÔ~×™]çÜÚ¢…Äû
+tímº¶:°¨6Šä8tû„Z)^ú&_ÌÊäß2K2K«W$ý¹*w¥ôq²*É“gÉmíHt˜ßíÈ$Èo/‰8˜ˆJ:+žxö*a¾YÛGÄ¶4ã†ýJ"©?e°¥‚’oÕÎÄšH«_&ÎÚX&õ²R†g
+æ›ÒÝñN¾|Cñ§|/ßP»ÓR9—«ÉM¾ã5ó!ër\Ã¢2ŸáBeÎÐ !ò ÕL™lI-fÒ—}’%£î:Älkh	Ññ46åL6úï™3ò$²ÅÔ·0â4XTŸ“ÀwíÀMÚ7¡_8uUNÓ&-.vu+Ý<Rû]}ƒ»»gG‹üSõ!K.<'~«>[¨ïG‹â£®Ež`¡©ê=ë{Êàèîkß*uF¹¡}'‰>‰ªOLãàö|Þï‡YvŽ’ÈæÊõíyª¸¨×•Þ¾,ó§Æ\µµºÉæó3è/˜oSU®“e®ÌO:ûáyŸ'¯Jây?	‘YðO__ªÏuh-gƒ«ß¦1-Ÿ}4ï§i8 {î@ÜÄ»Ú„O”V¥ÜÓ¾W`ÂÓ7ŠoÚgàsú´ð½ú|Ÿ&•™a>ÊÏ¦çŠuˆoÈw«ïÆp÷t”D}h}ùYÛö—Â£ÒWÍçV¬ÒÜ£sùØ´rŒZy>™|Ã3Í¢OP2Aí¥Ì>[ÞÓ½ù&äözñÕ´zóyšŒÏ­P¯#-&9°Åð*È¨êt´¿iGí­ô¸r£þ®½êLAa“õmÀE‘?¹ýè8šÌFÑ` ÍÝøßŒŸG“õª-+ïÁorRû‰mÁ››K­Ãœ~¼ÛKýã·Stc)E¸£EÝNú¤Ì®3ã	Î,½µž	Ïi©”²(Tx»ÝÖPÛ)U”‚šÀÂõBWS¨Æ`0S„®&Ðì5=Y‚éñÕ ¿ò$]Îøé±Ô¡2Ø4’áî<S³_»yèð
+>Q>|O“~s€ÿ¿Ü"¢Š¾±ehèæ–ÕÉ[mã£æd5w¤‚þˆ4ûq2<K-e´Äa;æ6ÏðÖ·h2Zû!¡å4¶HQ°±	zË¨Î.š764µÒÞÂÓùÆ0œeØ2}2žjÅ•=yUÑÔ€É6V|ÍSò pàSûÑ¾·üÁßéøÉ –*›Ù7!ì	eÎúíŒ³o™ç™ÅgL²ÐÊo³¶°Ž^ØÖ¼Æ îcWK&ÏØùæŒñN9«Õlóo•\Y!<ÍäÞöû‚*Uþt5%”Îý+™<…~à,ùV= ÏK•ûVÅ6óY0Cg0Æ­XAìžù3Q˜o™ü^y_ÿnœƒg×ªœðæ(˜âðy‡ì‹~Q(¬å×Ï««Š³P–½n=Ž?\Kz‡·ÕtöôyY]H'}X|OŸ›eÁÏ!E~ùèsHvëS©WÞ7Òpea¶ÌÞÁ_õÜ?nki®·Þšë­ŸæzÆ[KwÿQ+9a…r2ä0ùsrÖ"*×9Žè8gÜ„ŸL®¢tüb<MÒÙ)=•»Å_•Ñ?¤eaIRT¾…v)yM©Á7?¯ši@X¹,°MœT©“,Ô'kTx:õW¤Ô¬ðl2d5 WmNæq,='Í TÉúª¯eà©ZdUcšBÐŸÍƒX.ÌC£a{–FãfEüuM£¬š†¥ZïVµ¥œ»z#&ŸsÄ±>jðJ	=ç¨Lî÷•©oe©"‘ú`èlc%À²b¦9C²ú#Œ #¸(ë:éßÿ')ìþ{>4,ÜUà¬ž"•u§X4t¦—Cêé.a§PD‘¼F0u–º\Y(‡Û´¸J%l³©2ùJj,¨'Bj™2M^%°$ó}¥@Aì:c¶ºâÁël»›¿©÷H£îKUO4P ºùuÅHJçáÓøfíhÒçƒ0kVkÔÖÊMôøv>K,k¬†ÈJB£æ_dŒ‚u
+´Kµ#– N§ñ”?ŒA²zMª.<µµM¶ãVîÓ|}NYk¬³¶hß²Š]Õd§™!ê$‹+ÌÜ{˜Lq‡b^ øä]>ßôË1ûçp›=V­TË›—É
+jÐ±oÓhæu}Y‡Ûl­¨÷Uòçç£ùU=â„M±ZæWXæÆæ¦Œ2šLçÕuœ"‹Ðùp‚ÜGÀDÂô¨ñ³EW˜©$*ãÓ½]åÔmí‡f%PŠ¦Íœz«Gg*ñZûEÄÇwžËŸê[ÑÄRÌV»ÏkTÔŠcž²B*FtåÆá6ò¥„2 *øœÂ%qÐ-âá›‚x÷:ÞÿD>²Mxy6ÁŽ
+&ºº¹ŒbÐ˜’Íß1Š.çA|-;A
+Š˜ÿšä—\qã%‚>múá„˜\lWó¤ØŒ,A¸²Ê§^_ µ€8#
+2mò"ËrªG“D4†Ã$þÄDnÂðD‹„iq”¡1¹eIÖþÁ )ýUCz*E‰HÿË-k›Ìe#¥ËF†Z~–Ž„·ŒÒ‘ªêˆH&’œ”Ò(aIÃ^’‚“<Ü?ˆÔ¤.y«Èdâ_ˆÜd³1
+ÇtÊª±’ÉR¢2¦²~Bž=cF216ZBûP„©¯úðZÇ¹Õ:ÊØ:ÓØ~r?%7˜¿Æ¹ÿ1CÑÕ
+«ŸýÒCñ”»(Ê*O~é`ÁnåNÝQ‡ÂWAŠîž¥	Xã
+­‡‡ÝP£MlQçÇ˜68B{pZ
+`übõ#4›‰“'–XŠŸÆÎ‹¡M;Èk¿’C¾#ôœ®ø{¥©õ¤Y5àcÝÒ^·Fš€Ã'i^Ñ(9î.õ ~:·×Nb2­™
+¦f/é®£9±µl:_žè©„ÂŠax&aTG\²déŸ"½Ù”w	#ïÓ7Òê!°jÓ€ž&Ä[ù’Vq ð»j7Òðó(Ê•Ã”*(ÝJè§,ü0åéœÆŸd\u;…ú‰;òÖšTŽ¯¸ÈûK§º'ó(Æc¦î
+d§=ä“qóIœ€ä5Oœ•kñÞ|k]7
+øÚ æ,Gt&8(Á$™!õ%Ã›êÔ“ †±â "kÈu4DÃ„†S%EK†®ðŸ¡/rù}–‡¥+g˜0'¬²e¹ùÿç}oˆÒÏ‡¬qüÝýŸ'ýyœ“9è÷ß#µð˜tò­d×‚Ê"\á×@EdËè2Ž’YØ§,¯b>JÃ!¦nÅ‡)=JF³¦= »"Oj;ç‰·t³]¡jÕ`öÖ}¯Ön3
+ûN£´‡«,}“Æâ¹Ê}ŠT¥æÒZ
+õßO›Êý ÌÂ? f?) 4|œw‰ŽhcËTJÞ@@‚2Ä}Ýéü;§ß	dÅ«zÖUšœr!W“éá;šŸøÁh|b¤¥U¹©A
+_½Ì€Ùâ…Öbˆ´è‘©Ž×"d‚¼cË¸.FÈ³îTØ hgpŽÌ‰IYžšR~ :‰BÍ_#ó/cÙBœJv-šá?(•w÷Š„,&d-.‹,Î é±‹m°}d—É©böj7cz²k»š3árÂ˜³µª´ƒ·©Ji–z¸/]‘µq
+š‘¸=0Î­ºB4¦•¢ïlm0üb@k4 ‡(LÏÆ8>¶öÈ¨Ì.¤ÙÊ”´­\|QÈ`Ž®¢ðrÖÂ>*lÂÌ'Ø]ûâ’ïYO€ðÒGŠáUoá yN»³ïbˆ™~êl¸’Z £\
+á2e‘GiFe*YzŠÖY°“âîÀC3¦ËA"åúÍ¥DŠÒ‰E,£—Ž;š=ÆcÝ¥(©·¸+„æ%í±óS&ÃyKu¦u£.ºi‚\S¡1'8[bœ”ô-Ÿb”.Þyöü%Bc¥t ôÙL=×b­é¡©:áRë9=mS~ÁH‹M¿Ã……¡Tàj¯“ë ×Ù)×âNù­;Ë©Ã2¾¹¼\²¸óòÉ56ž}Ê‡Dã€/ðÍ#VüT
+ÉÝÿ  ÿÿì}ÛnÜH–àû|E”°°RÝºÛ®²5.y³$¹J=¶¤VÊîj5T&%±Ì$³I¦$— `ßû¶Àb±/ûR³‹n ~`^õ'ý%{NÜFÉL¦.¶åR&Æåœç~Œzü¯ü|ZË‰÷«÷bLôºäHB5ž{væîÒÇ»+ÿ­1™áëÉ-¬;V×xÛÝÞ';½?¿ß9ÜÞßPÒðr˜ðB¥‚®2ß8êøµSFpåÅª³V –x¸X3/¸¢hD,åÿl…0×±~òº½¼²¹|tIž¬beïSPÏjÈèóP2ÍÍm®ÙÖÒVK„7<Ì¿\¾Ü¨n¡½*S±1EÙFæ<tèýŠÓc˜‡ù–“à”û4-X™:¬ÒU7ÚšØ•‹ë-+Á%h”uàù­
+FS* -D‹9ÝÔ¿¤2¼@ÔAðP:^$JÏš·ÀµUÊÃ"Ïopvõ%{¡J’škæw÷¬Á›Ú/ßx™ØBäHœ]¦Táya±hnÀž ´ÕÎëÃ¶MNvÈ`. «LsbÈ«ëJ:#(žÛÜÚ;øSÜ«¢n^?ý‚.Í•¿œYÚÑï/²À>3;åŸ ýà…Á ÇRîªºTWuV_©2.È„%n%äÿç’7¿Á€ÝÅßªøÖ¨uÓ`n2öäûßd7:ogjÖ{VtWªkƒxüVW—WÙ¿ø·ºäª`>ô.ßR€¦IjçŠ¼éuhw©.VrO‡f{ÅÎüêSb¶J qÝ˜]DÉÉ.÷©<Äšù¨ÈÿMf•ïÞ(&™×^,­ôV‰…9N¾,æ§__³cGñÍúÁ]ÿ`¶Ã²#S¼á¨¦0ÑönðòF44WÖŽéÏžÿ¼ù j*>nußÜZ ¡[˜Î1ƒ÷w1¹ ­?õ&ŒL­’`Œ‡Ax‰ï+;«N374brûÞÉÞ˜nNëè#z¾3öv¦0ýîæïéJ—gÆ?ö“lœ<ŠVÆOÉ?sõ9t¸ÖN‡~
+‹-ºu`-v?;ˆuSú»P}5›ã£²DÏ±ÏCƒÒê8:1üGÍ Ï¼¹¨X§™#ÂŽ}jÓÐ…nmÇ>bîØGÇ¢£2Óž1ˆÿÌs8RéÕõYh0œŸó…–;«}}’0>ö™6˜}LÆÚbÿÍûø³–ð>>i+”7‰ò«ƒ)¨‘©ÓŽÆÿñ– @>±ÙÁ…p¾»¡pÒó¯ñ‰<Md#ûbÄop@;“u6d:¨ŒÈ7(ŸjBë>TÑ™†œƒ-ìDý²Fe¦CÚu·wwvö7­ ›Å‹dý)ü›ÿ‡þ‡þˆ&ãÙ¶xŸ?xï‡wÝ®å›Nž·qßEŠ‡ÏËº›ôV)+´ôhÔÍ?yË§kÖåŠµlÚ-õ_Wæú"¸GÀ ¼	.ÝbÙ«e0ÀpÆW­uÚùç©áÚòÃqè%àfú˜T©l½ÚW¤²~¿$¥ÔÎÄF^èù“©k;ü¬Ïkºb-ŸÑØgçr­Ëf(|nQPxjrAý|ßú§…¬~bk		U,XÑKÙÁ‘Ýué@
+kò(Q¨“›h‚ZvUûžÅr[»nt³s¢;xÓju—ºÑI‘
+¸œp´¶E‡œ5·«pÇ9xãî³Âçîv=îêùÛU¹¤UùÚÝ¢§]]?»Ê)Ù,Íã	§¥¢šgt­sxÕ©>uÏlôª¦GÝ}ñ§›R;`Dñ±«Dj'PÞ¥³Ý]¹ÚÍÒÑÎ*Cšä[TÚ=Ãõî¥ëBL=Ï»¶dç¥vã3•âÁ¶PMµÉTQ›…wiœD¹iæ,Ün;°S+ <Up§6ÇÒEë©\iï©¯!ýÔ¯Aøg¿8yw¨+ÚSÊ·xf--ýøõêùÙOC¤OÂøî`d%¥„>•ÚpPCG®÷IS 1…Ðtù¾'
+Ù³sÜÃíÉ_5/WÊ^;DÙI¶‰\—ðH¶Öù1zöø¼rš2[²ÃÎ¶'„M
+˜•aJ¥1…2˜ÚÔTRŒ9D&³h!µ`-‰J(&áð*d%—Pá’‘êNb
+Ùå":ƒ*áÈ9ÃUSrvï2)› ´¨2¨¨†ðÓ†à#‹äc‘wZB9Ëk±CÆŽœbÑŒdRÈ8´âòµ¾¹¦B¦™â4ž9–“Ñ64ñ‘8IàÐTgßtœ5¶MÌ2Ù-k™gª0§MµMjwõœM¾HVºžGÉÄÐÑÔ§ä¤Ê9ä‹JÉ”ú> wÂ0*ëB?‚G<Ä²Ì@Dß3‘{!h3Sf5œ™„îÑ‰|®RPÚÖ6a*–g÷C‡•|Ø¢8LàáKâU¦ÈJ3ä“ÂÛÁÁj©¼
+…sç;ïT8Wad¦Ò}CSã]Êf<<ï ô"‡lÆ¢7ÿät%³‰a°
+t(\a‰†–1ñ›Âbü…^ýÎR/¤_»Ñ˜ÛöO‚(â¹7o‚#'TŒÕ¥/@AkO|ŸxÙ8@h{Ä®ö<ÖÜ&ûK:OW±‚EºÐ :¹Mú:øúyãòe˜ÛüÇïÿƒä¿IçCyáÍï°âd…ì†Á~<Gï¶€äÛÃ¼?¹ù=PìcÓÙf+2¡ˆ‡Ç~bd†AôíÜš…øvîåË—ÕõJ/7ÈÓÕEòìù"ùþ¾4Òã{G„G¶ýcøòÌèoi‰kÒ*¡]o`Y˜Ôß2íY$k«´¨"¼ù~%½KŠrT·ï§é—{œ¤l!ð,é2²Ý&ˆ°Þ	{ž¢¾ÙÄGF—Ú.£¯lCÉÛ (Mk@¶åHæ6åWÙaoœŽàLquØ€RÏª„î  yêÔ,¤{ÉŠ>}¢”æ-ø<½CîD€5–ûX)ª|ßæÕ o9ÝË±À tw@¾%j©]CM\¾D©²Di.ãÛñ¯¨^ÓÇ}¬ý‹dZ¼ \¿¦Æ²U/\ÕÒáŽÉO½qº‡ªSîã,¾8Š½4ëÌ ø%7¿Ã·~<$é˜¢ÆWs‹d.eÝÎAZ—¸ãÔOLyv²ä“1ý+‚Ì€y;îwøïx‘Ìs·Éôg…Ö¤ó‹ŽÅÅ;}/ëŸ$^¦—áþÇ¡¿ì'IœÀ¼ñ{7_õD%'	ÌºÆãÁÌ¹¼GøJ9ý7æØ‹ŸöÖ£cEºAëŽüåp÷hg‘ü«q>+ÿéJÌçú_Mú'×ïZ%™¾«GÅ¹‡™3¬Y
+Ä^¹U Såºs²—¦®:òa±ü$óõÔòr>§4y9u‰ë•”{©—”S\±D±œ×ÅC{#ÂSyÜü	 ªŸ¤7¿Ÿû¡Z„®P€n:2ŒeV4úÛ)Ó(F~"80»´­2uoÓ.€¥Ã;˜žÂïFƒ7TVÇvµÕÂr¿/üdËKýÍ²5ÿÏ¥W £ñÑ$ñqèÓ-  Yùm#vÛ“%¸F8^ËFËø´þv\1©µÚ «¶õâpÜ}ÛˆR~[(u(m8 eD‰Ÿ“HSé–KühG&-äˆ	>¿“e5K¢vlVÖ˜çÏˆó=•CUq÷õMˆÎF©s†V”gÅWW}añ}UÎ°ÎàS5'Ua¥„%«`i¢0µÒ©^hRÃtuô6eÍ~^ƒ3Jc¢ƒ@ ÉS‡Ç•lÐ!‚(ehÛBªõ­¥øœb_­"¨qB"¡ØÄÇ$’t•§ªK§[‹<e%¨‡Ø*“È]yaØ-£¹ñ°ò+3^!/-ü&V„þØ¼âÅà\¯6gÅ³gµ³e@(l‚Íâ×1)›dJq‡[vÛ_©ÝÒÓeÏí¡¶¨\w™]F0V ½P8µ@í¿ BkËÏíÑ§#3ßa¯á¬¼ä……Pñ®»!0BGHlOC_”|Ž¥I7ó#Æ–x1áÔÚ6BÅ²ž—o·Š²DŒzŽâ4.îK­ílØõkÉ9tP1ÈªPûÍ:,ÀÊ5=øéÂt0ˆDvz`ÙkíÓ2Io¸L<‚t#H•½,—S?ÝX°ebqÇRå"ÖÉë	D0†ø/õÇiÎVÁ>/˜‘ Ï: Í„8,†^„`6¤eÅŸØ â4«˜º5¶ÔnÇ6àcÑ~§á£¸±æÀHÑæ…Š“mc¤RtØ…“JµÏB±OÎÐ…Lƒäñèb›[¹RYä&¸Q8ar6JðÊ‘àl|ÊfpâB»:N< 8mÂPéZâ£špEËe„ë…Žè¶¶ØÅâÔDçºª/ž#°y/>‰#+´KVÉÒ—Øùâh;‘Á¿ï¢õdÁ*ºó;}œ*G¥0îZ·“ÅÕéQs“°íÔÇó¬FÜU.ÂÕv$]]&;€™HT“›ßpJ£8¢â:ÃÈ>¼è4N‚_a-„e±P®~Jº»ˆ”õtŒU§Š$8ŠùS %>”°À$´&÷A°úþZdfk+kÖrœÒ½ÛšÚ.&JÀ#¿Åa|x‹ä°²¿ÀùÜónþcà/’Á˜Wu\$‡_ã„ý¾¾ÜµàÀ‹xTf²M"É^ñ¡j©Ä!¸¢“ÎÙ˜?°hJ@y¼ô
+,&â¶‰6µJ8‹£ìpzqÒë‹$ß*òJB*C•ÿ¯†jo@éæ«âK8YÅ;Zc~Ç¤’2õPlwdz7J ®œ<SZMÉ­›Tß!é”$Så´H+áŒìGá§ö‰¨’Î­šè¡—kœ¤qä6CwC ’•Xi0¨Ó™*j2óÃ K?ñ·ºÇ›ÂHijOW_:Äö`Qu†á3÷þcJòÆGWÏöà*Ž-?¸züÂAµ%õ;Bmn¸³Ok’qè-¦¾2›Ø÷æ®´ºž¦½Šã¦<¡D©4”5~pÉ„Ÿëçƒã %Ô  N¯³™¤(P¤pÚ`æxªŸ©'H´æè6žì\Â³ƒ¡½ìoƒá™4¡¡Ú¦ãW:Ò¹vÀžŽ²†ú@­Î‡¶-V´ÇVôV¡}¨ûŒ¹44È¯sj4¡ìWÈf,Õ…:u_ÝŒšPoV×qóŒvØÑ«.Õ9mð¢BsÞX?g2ºTãL/¾«Úê¿*)–JÚªWý•jþ÷FÞ)Es]Ù
+ wìE}zÐ}Ø¨ñ²q%B:±¢CÎl`:Äê­çáVô½
+ƒM‰‘-ñÉôŠù}ØÐ?Å0 xÈÖ“‡êe©‡NÔrj=&•%‹6Õõ y™”¦Ñ¬êÿÄ£ø<¢®ëð,Û
+ÓÃ¯VÆe.Ðª¶eKk
+ÄJt¬•a¥÷¦:÷ßÈ¯ÔQfwôX$1Uœ©§1J¡®.-#àL…rƒ3IœYÿg …+ÞŠøW[’½Õ¾…à-ºW¤nµ™SäÖž½·ò¶05sÊ•¯ñ²1e:T‘Ùz@&<FÁ„vUÚ¡†ùÉ¢èBs<.êE‹t'ÒÉá]ŠùÌ(“Ëø6Ÿ‰/FÆW!þþ
+ø#=Òý´Ò=Çh—h/H[m¹^<pï…zf*krŒzÞ,Î¿|L¾öõìv%G¼¢±Nvto,u‚¢8PâäÔ‹àð¡D8 ©8&¨–jÁP•lwèŒÄ3v@q>Ñé)ÔçEËkËÔ·bœ{¤d˜á}z¢¥ä‡1HZh‘}DÀSøA/’~;]EÒšÙÛäwOÔjz‰‡áàÌ«+o'{h‹Æ•ÇVJ@ŽÆƒ;PKN¨ ªÉúŠš£ýíýžpBSÙiA¯CžLG#yD¦Û´49ãhw¦2(ilø¼ùÿöïd_ZÁéLø¨IŸ´e£ò¥âuï,|ao/¢´‰?jàÓ‚ÿ²¼ÒKs¥'çôR ²K?3f¶&Š0³4oÙ‘w „¯à-Û#Þnw%Þªª­°¼Ïo»êÔ\xë}ñx+'FÛžÔŸ´Ž·blh[D[EõüÙá­ªVD\âæv“ .QCôx‰Í3¿´êÛkk%*+£ÚŠ‡#èàv-žwËHäzéEÝ3 ü¤vkFÐº&P†hWy4-‹:½VXkŽY"°67]èžóxy÷rµîkÓ¥{y+zWèÔ¤Ý3à*eeÉ°NÊ¦M¦Ù˜…{ïZËzñ Ôsz¡ÿó¨Èª¨7Ã}{`'~a¨=^©)83às‹;†Õ 	;ÍmØ–€´ólã`b:–¦p¶­ÌÃl_é6Ïx¡¼_6)*ÝÔÅ+ó^>›h@ôi….´æÂRÆ~®ïÀiþ-¢4 •b…
+f@ê’8ŠOoèåq‚%ŒîÃ2#¤»}¯1 ‡æË3‚'ÇÖ©¤r¥á´uà@ó€y]ƒD-·²‘Áp'OÿSwwéC|t°úü´ow+Ÿ(n%@y4Táw"ËXe2oôY{JFKÏ´¨WÁ-†§ö ØÊqÐŠœáÿ
+s7fƒ)T/¯*€nr)S"\×¹gÝ:qÕ× ñžÅåOÏô;·ÙãÙ¡Ìi6ìvÉ‚¸º/"Ob „„Á0½Ð“ä$FôL¼§5éšJ i	ûÊí¤»£g±¢µRÛÀ÷Ó¨u0Á±$7Xp¥µaKømíª%å8Âé&øƒkê¢’bi˜~F#l7Â ÛfþîÕÑjvKÌ¥9m‰½òË†Ÿ×ç"ÿ¬ÖXˆ´UKœ·›f…MG}Í8ïà)©0qŠ!ÑJ©ºhV7—’£â€îãÐ=Ò8]Átu¸ø–ÌH…aÐR«O×ËeVÀ‹^èÝ5qÞñ*î?^ZÏ»<uù2Ò;ø¾AÒI°AXªá{Ö:-šp'¸.L.Õƒ@Ÿ×öÜu+&.mIqøï¼lœÙ§m8 ƒ°6³·Ç<t€ûdÀÉëÓœ»ÝÏá³3vë%Ÿ5µ	%’ø?ä{PäË([˜2¸Žlàº:‰j“FÌ ­ðÌ«ÞÈK>†¨¿“Ü -7	R	/
+†HGGcØ¡¹ºŒ£ÉYŸâ·…]|Q GYâõ?¢ÏÒE P6·iK m¿ŸÑPß2ëwö¬L
+CövøžxFŽ•„¾7À÷fÁéYfX¼‚Ê)€!•sœœ=kÎqr8ÔÏWÊ3Vê£×Ù,Bÿ¤<àZçÉé­° Â¢ GM°<ðÈ.€XœÞüsv’nBïbäJ°%ÀJ¬|â‡Þ%UêNü¢Ž®¼#UZ`RTÅØaWò3ŸÙ´á—ü‡ü#	ÆÃŒoþF¿ï…<iîÎŸúEÌÁ¯è‘P*ò‡<8 uHñ˜s3¹&‰5	¢ÔO¨Ñe?™ôêÝu…Ê<Ægh-°½¼¿Pï|2W¥ÏßòšÌQ__Á¨3M!…‘×®[=È,¹¦­c4$Ÿ.4èÖsšj™¯‰ã)u0ÔÔÜÕ»eïNùeM\cÉ·’ÀKèR3ÿf‹Nö«ÂÔ`pBb}ÍýœiÖjT§ßYÙfJ‡é¦ŽÄÕÅÞ!uDyÃíBl«5ð*È8€Þ¸ohÞÞ¼¶äÜ™ˆÛ"ßj¥L	¸‹{¥·}cÊî”ƒÇˆµ°Ò"Fcr£ùŒÀžÅÑ)';Ã4(4êÌÐ!ñBã¬Ä¼úã$B¸ sSs/G–yy„éã÷,ècœÚ9ËÒ,É4)}Å(éj(oî\‘ååeu, eÉÁ`Þé<`‘kË MIJË×®õK–VÏ×*­)4!µgK Ië´	ZËÂ¢91k[5êúˆ¬‡À¸TdÎùŒh““¦"P‚rÔÁd-.Á„ˆ¾j—6ü,c§KHki§â²: ä&,ŒÌ€ìÖO€‘–‹a&Dù=em(‘%,ù;ÒÞ!-æ`"ÕQœ/ŒÑœŸpe¬„ñ«òéä$€†ã¤0UÏv°XÈœ™‘“¯›½m‡²ª™°å[¹°¯\{/+PœÙ$†mA~ï4Œ½pO$ü¼Ãý§Ñ…_$†Ý4•w¤Ä]¼Ë¢TÉûˆýuN6ØïMöÍ ß×¤s%Çuí¬<t¿äõc”ì…˜d;ðiŠŽà8[ZV/ÖÖ“¶Èù 
+Ù®¤FI¤^¨Z–‹ÞJÕ³ÊU²fí]§(`“ó¸ùwÔÙêÚªVÔ´U¤u M•cïÖ›4ndÒxƒìÑÕ£ïØˆk¢ºTç?A?ª®¶Æii:-+,}F|¨'dž.]Ð¿–¢†ónŠå¢Å€i	…ª&Ž&¯Éüþ8KâyZ)È`ÀjÀùÂdj‰åÈxÑ¶¨Gbo¯ÏÕ–@]™ÍH¶7â~™*­èZØx¢)Ù°Âpf³d½(–$4ƒ’ÚrŸÀÎ¡ß¹3¸ëj~ :·IÿÎV<¦ÎcÁøŽNPËÙ8š@…þEÝÂ<íz~fñ²Õ[`¼°¥äºèMö§‰\]š.¹¹MúÇÁ³Ú
+¥\Ù±Ih8{Ã'OÈW =U[;UWzÁä>`?€é	ê•8EGý;§¬Ì<äE†Ìz
+‚tËI€Î˜ycînî*“j£(µÊ£:5~jÒKJƒ¶lãè`?™³1ùü`'^5ªöj¨×Zœ…Ù”rDsÉÙLJüîT%ñaNb¿1uV­JìÖÝØ”äTÍ%v»ÃRï5µ&ñ‡‹¶${W“[’”µ¦v$±¢¹9)Ï‡Á¶ÛR>4i2¢–"å:ÇùÝÚu‚˜{vÖó,)ù††§ÊÏuêòµÆ÷jö¥«•?·Ýí}²ÓûóûÃíý²“öãæÜÀ@mÙÌßú+jiã×Ã›—Ðméb³h•ŸS¼Vž¯RçN+/Vï°x]‡ Ê\D¢ApS—›Ë%(<ÇèZÆÆu\ÇóÐà/Xé:s±ôœœ-ÑÂc|¬Ï5ï}Š›ÀÜæšÍs‘ˆ~¢oty)KŽ$ø)7«‚Ït¨À'OÓÎÙ|½é—¸WpëÉ·8÷’°zõpiŸAŽò‡‘}Œ‚ßSÆž™´6›RæI$”Y’ü)°70Õ(¹Ä~ÎªìøŒ®V1ùÅ\Ñ¬"8’½ÐŠìy§‹Döªk”Le×ñcÞ—^¸²."Ð?‘–JðÃUQ µªå?7é—•mµíL?»g«zG8ÓeñH—K€øSÄê¼íÅñÇf’F¾8¤õáë0ï…§à¥Šq4`5ŒSa¤ýZ˜yühxmmGÍ|*Ê;ZÊ5Ú`¯·Y÷ð£Xø`.´"sÎgmŽ…ýšŸ_põÊGÐŸRÏ4µs~ëçDê5ô÷h×xš-ÔwP3F±Sz‰õdíÈf®4ÊJøiNEI'±ôŠuj©>6Â›˜©	ÔtÜ,ˆ"ØYâë
+x‡-þç“zÐÎ,*ü§é€Æp*Ç"ƒq`æÌK÷üSôõÑ%2²ú­iˆ QC¿ƒ£t/ž,.=,Ù“øŸt<Hè3ËÊJð)ã¤ ´:§/Q<ñP/øÒV#½¸°Pó5b~L\Ûƒóf^v^¼wà%èýë@šBaGýcÇ(¹Ö†]´b!S7r$¨ÉX°5”Œÿ¹y¥®Û5Y¢¸f"N·ÉxØê5?|aàèæ÷lbY1Ín¾ÆªÕÄO…f?fÎgùùâ}JùVßxáÕUùË’˜Ö´Á¸óø¯ãTñoIþÈ¹ˆzâGIÑˆŸ{Ç³´ô,—T:³8	f¶XaäÛ9äUÒ¥”ó?éÒ	¬±mƒ?K@ßÝëîÝü[··HvzG‡Ý£›ÿþýn×è«Á>e(ÏÙ½– œ±˜Eè^Îâ÷B¼¾DXG ö2÷›Ë–×d/•52„qY’k\ÿ‘wÝÃÙ9ÚÝûž<!vö¶›<»°sØ½ù·›ÿµÓƒ§÷·vz½ýîl½?„'Èïßu÷š<y´³µ·ÿvVµsö%òÃw¤ù‰m¼xŸ5µjôá½WÕÂ8s]­:“‚²vÝ®¬ÅØY8KYÕº£›¿õ#`Ø-šZ#3fœâ-i†„\ì8‰¾|øy gÆôòHð+¿ï>DŠžêî<‘ÙÎR?V5SQa¦ï’’j¤Çd Y.YáöÁ³ËSæÞ*´Ùg Ï&Ð?½ %ž,¶vîiN(ŒÅ¼·uÔCÕP‹ Iû› +/gËéöîáÎîÑþµÇû¿0$^$h¨ÆÄi´ž |kb=}þP¬§úv>Œ™Õxç³(œÆOí§±ºÕÈ&Þ¯q9¦Àq;T#L¢çÉÍ½±ò 	b"þhÛÑTba(Q{wó·Aàµ§¢·l#í†™`ˆ‘nM¡.OÑùÍm²¿þÎ.áYúÇýèÃ2€f^6vq_"^¤tQ(N o…Ô¸-¬`]·ŒbHÂ¾5î!éÉr·oª¿v$³ZB7ù÷Öñå6xñjß*ŽD¶
+ÍuÒ«·Aší# ûQ¡y½œ9(n«;¢†?Njã”X×ì
+…gºÔŠè"ü`„ÑÕšŒë-Ô…Oÿû!cåùª˜ðV3¥&5¤Ô¨®-’õEò´ ÓÍDtœÝ	¼žÚ0-"\Â×s;»ùG²¶@ÃPjŠ'6Ó¬2ò’Ôßôp‹dmÕjltÓ@:Ö Hìa†àä“ÞÀÌTgËCï²³ºHÇ°³²¦>¨),™³½4$#fX`|ns›Žã½˜&Q>O/ìQëæ<Çæ˜¯ˆ–‡ï§´¶1‹ÿÄ6ÇûÈX£”Hv£›ßúLm§A_éfF—Íc î{7BºÝªÙ$ïöó2RP{Á¬9˜Á²µcÐ§`ìÆ?âE€f€ŸñäÎ77¿ûá£oF“µºrõ1!aOy˜7°MlPúý¼HnŽÉD·9ÑÍW¡í(ò­^ãEí*Úz¾à˜É[xœø™_6"ÌÂ`¢ñ5Í£q2
+ýÛ³|çpqÀÓ² ŽE/ìa§±(ñõ«•Çgž–ù"ñFL2‘iÇã,‹#‡Ú€50cxýJ€§
+åº~Èg¼3ô ¶ªßuá–!?ûäS¼êG6VKõ’5<0/õròœÔ®i™5
+Âà–VoO–Fq@;=[zÉÓ-ñHn\ï5½‰Íß:wK{‚q¡¹*EÚ‹Xu”"E¤59Ï@„½ âke+–j5îeIÏ}>ÃÌö
+‚›Â¸q–ƒçN7× Y´d;K¸,FJÇ ÓôØ=ô¿œyYêFfXw¿Pp—Ó¯€ø’ÃRäÕ»æý4õNýÞ_Ç° ÕÀO×¨;Ýð÷ÒOQŸ˜‚óóHS{™±ü&Ø?§g6í#ËËž~ò„ÌïÅ"©yÍ“ "XþîÂž¦PËÁÁû½/ÈˆÚ§| ‚4…+GàŽ‡vEÓ‹œ²dþÀš°‡}<<Ð;s1ðÞyœ,’3ï8i†µ“3Šˆgôh‰°”Ý˜D ƒœ',óZâ÷ýc@<ûp /Æ2]žs…XîØ®×$e¸arS©s?wB†KSEÄæ´LÃ”›€„õ†^’Îpé*é.M#ÚeS]u¬SQ<+.æÛ80K† 2;W˜e )|‘³zr‚KP¥x9¥“!¥	ÃåXÀ¬QLz¥¯*é3`§¯V¡Ñõlé)JiˆœÖR9´J°nO`“úMr¿ ŽíÀK»¸L<›(~ª¤|-•ý7HP(>¶ÓMùWk×›kMÉ6¼Ê ôøúõæ:>žNøüÓëÍ§Ó<ÿüzóù4Ïs½ùMƒç]NÝž%æöÎ0~žô2ª·Ù†«p&@‘ÉLÚòIÊR u¡uô¡UhQ5¨”]·¾äðKìÅÿÙÇU\Æ
+`ñ˜üñùóÏ^ŠÏ$4Fì”S89‰áÝ×H˜+>ö(‹ZÛ|ÃËÙæÑl½0]yf‘G«Ymf‘lKiÑRIfC±Û®@o©ÅÌk½êÁ ˆfÕÔª2OVqÙVý‡¾Úë ñûSÖAoa‰ëbE]¨ƒ$®ÝQ$9S[$Ö #‚…›×AâèuìÝ)¿×AR–¼n$u(¦$ò¼ŒÍ_Wh‹¡0üæ½+q´MçÁí'qUüþCJ#_‘AžÇÜg4\ÆÜŸ‘õý ‰Ë'ñEŠ¬bé†RfÀuS…ç½ˆ ù•Ebèø¾&šÿÌJfGöZYKˆ×ºèFÜ./ÃÒ5¨“¸»,˜ÂÖ›oP\¸
+„x¬þ’»<È—^iw4Úê¬à.œ`ñŸ¹w_ƒ‚vCà£1.ðãU„ÓD¶~íàïlb:8k`ÑJ'|>$q²
+	
+èåx:tV&¡F»‘¿ý^VBpC­±kÐ^%„C˜m%„Ç¢M‹XÀ_/Zà.LP‡Pt­ÕðË+X0ó2%t¿£2¥qT–)hBÛfQ¦ xíÈ;ÝEÈ{çEÞ)À†ÖEæ¦‚—ºüéZo­¬wä_@×i]F;E»3}Ù½k•m>¢ƒÒ¯'»23Åc®i¦zÌuSí+: ÛV?Öß¢‹ôùb(E}ÊL<á|Ã•œÞk£ž€'Sx]ž5ÿ7Š>Í,}œø£×¼5†yñùDV‰-–‘ŸLWj'QY¼!8É’ï³ 'CiõûNTµ-Ë¢7Ý~ëÎ–Œp¶>£ÏŠ¯E•q«ì2`˜xÁ†n52©HE™«µÅhZÝ¡jÓE® Ó¼õç6ç
+ý‹
+súÊ´IS{,ûSSÙ¿f|LdR¯G$°.os$0å?nÌf#‰fû™¸=•ùL¾C”}RÐ)7Ÿå<«#ôô²Úu[Fµ|úf›š@]¾oM-j&Ì—êÚµ§©{P×œ¦DKƒ^¸eZ3	²Ñhä¡žÃ†Ðë€–OöÉ>Ö ~“N5,)Æ
+©!E¥ÌÞÃAÌÞfÿ§JÒFœáFH0îF&Fîfc¶VG¶ghÑ=ö.l94ôEÁ»Õ.Ç[>* [ì=Åz)±çú’}/“T•1	Ëït²Âôå)oì–¦:v¦‰,MÓÛš,*>‹²Îžø6ÑVRÐ¼FÙàKÇ\¬‡õ-ñÀyÍÃ945Â"
+aBéBËÑJ##Q>Hs¤5ã2è€^ì!•Ø®¢7vUð¬á—ŠA&è}êõa¤˜	Èµ+U4BÙ8:a2 ‹ÿ•N›‘ã8ãc/ÜÄ|ðÎËúg½_`™57×K¡t‰¾£@~
+•ÏxÝ³‘EïÃ§Øœö.•ø<É´’Ç·’Õl”)$×ÉkL2zìg¾™â¥'1­R5šy>%=},~ž*ô7ÿÀµkvÊh=«Š<kwF+9™)Ïy˜–ê«‘ëGI0D¿%G¸«ÉSƒaÆÉ§ŠÀ¹ÄÇÚ2níÔ€dg~w·7>=E§nhU`‡Ä€É?á?ëhq‰Xï®à5öY*:ZdŽ>Sc…3j¢u–0ÃÜË?Ë²3ízuG#LŸ+ˆe?ÅËÕÝ(iDÊ™nVwùqÈ™Äù‹—«»¡‹
+§b€Óéûiš«|‹ugíÍQñÍe7ÇG5V”Ç‹i’µ„à<ÒŒçõÎ•TäP”Õ
+¢ó›ßBÌ)?Àde™§7úGº	eÊ/t ¨¯I$Òñ“dƒxÑ§JQsàÿ5š#¤Ý.Y¬/.)ü\˜î /0‘AD¹@{Àd÷MýaPÊÌøµtåkÌãù%ž®Ã˜¸îÂ<ÔpÍb`¦SäªÜ÷)¬òn—ÅÂ–ÖüØv´½`ì¬ åÎŒÜQzüB<zñÙÉ;¿§ãÁ`DØsÌ£93‹Ý+Øê3ëðiº3£‘dÂŽbçh[»ô¾rÔÍÚ?Gµ
+-_ÁÞ¢,‘‘('Š1•§A^q*ÇÄÇäQç–Œç_¾uÈ†Šb=yêMÅ‚NÌ>–ÆÑÜçýºtc’aš* €{FÉÍo7)FŸÉ¼>žÙ7¿%æHéd0%¤gz]€×¦6€½Ä›µè;—~Ÿ£vGÍ"·Hþå`7] þ¬UÇQ¸sÕ±ðfETg#ðÇ¡jªãÖTõ ¨Úyìr#/>ÈŠgÆðµ¦²ÊÄ§×R[U¢„Y<¨œYb?ÌüÂl ±JB£½ÊÀ#8æŸ8nwV¶ºoˆ—QM`,Êyí€¡.R¶€6z½EåK< ¨gË˜>ÑÜ÷Û¡Õ4;ÇmlËÔ:¨8‹Î|žÊÑjï¬èÅ¸ õ
+)pæ8S/À¾UŒyçG(3É0Î‚sæbâ'…ueÜý(}·$ê7`UYåÑf™´,S`×í ±Ž†îïÎlÔàÐÔõ]xr„¨ ¦;ý³ œŠö¯e‘§7€×Ñi¥SÃvfˆÒáÔÒ©T76ƒ=L§];Ü~2ðšbAØ Yâ~  ÇN¦ˆá;-EÍ*húH ³£À¤Ñ@®Ì>WVLÓ‚líž<!®X!ËcÔ7ÏÖeˆ Ã]#¡¼=.è³ÞÓi¡DešÔJUžÑDJ<Qy0®p¢ÆD¸qNGƒV¼AæŸâµZ‘F|™$Ð¨b9îG˜ÈLÌS7Cåõ(Ä|¥>¦1;â4úŠ ôêPÜß–·cú°|O¢{í·WA*ÛJ§Û|´&ßÜrû’“.G$Xñ-¿—8†ûê¯¼MÂ|Ð@~UzðO¼q›6Nút‚»lÇG¥^V'"‡­´UVG4]Ù4.8úO«k¿ê‚£ß3ï-H·ÅâV›6¬µØ*© _z”¯û?â0ŽbÑ¸ƒÅ”&
+ÆöÇI‡Ò6]“Aá©×´”ayäÞîÅ˜±Uy³ØiæyE½}áy¥wÎÛî^/S×B@ØÂ$ðPöœÛè]b…]v´T¨[¾*òp_¿ÀËYBZÓK°KÎfº­ngÏ;÷Ùê"ÁÁo½,)í-2ÐÅžtþ™y’ ^ƒÐO½Í•­¡»\ì€zœ)¯T!äº
+9Ì³®½OQß¿ÅÕÔ¢Ü¾D- S¸Ü íŸ}…ŽÆôíe¼Ÿo¯F~r„™öLÛáå¼-°0Yo<„»ÀdÒp›_È[S?¡9b¿½Â¯“ðCó$‰8ZàÙüjX«ï¼þÇñhçr'™m¹X›šk¥56,{_*ùƒ=—·ÃB¤@:ée¬«Oàã}Üìöþ;oÁ®ÿ)Å5Oè«ô+ê,¶ã‹(Œ½öc¢\Ýúó:|ÃÅS8ÜEWßÉ•ž\$ÅQ×‡ì«Ñàä}j¡/ºG]péHÁn,QÕ M´¹òõª¡8ˆVÐû×%^Ô8Hâ<;NuEMHíƒ·ÀYü*˜pïrébék¸p¶ôãËõó³ŸH^Æ£‡=1NBxè,üÈÆ™œ5r(,Åo™Ë¢”ßTç]¶2^ú“K/h–P%ýÿšÔŒÿJlYÕî™«Ÿ aŽpyaLem+ªsö´ä:‚#±È?)3Èìp‡²ìä«•³§µm=¥U¦elLûu:ÉC¹Ä6Çã´0Ñ¸VÛ‚e×_Ž‘:1„Z$ó?–Dç®«¸s	yáÛ ú¨¬¤˜Àð`iI÷8ÁÄ!¡eÝcÏ°ØßÙ’ƒ7ŸŒ=CMp’xð »Ð£à¾‚bò‰º‚fqÒ™g~äîHÛoÈAâŸþÅÜOóhšÿáèÝÛÝ7Øh‡Ým	nø«€,±oË˜ÚÿÅYÇÀÔK¾G™¹XS%æÜÔº	jŒ{°´úîmß¢7mL³ÛØœïí¶§n4‹°ã›Ö™÷Ì+à-Ÿ%þ	Ðõ27ðóšÍS\ŽÑ MÐ·OÏ›ŸíãÐM{iYiqvV,5-qŸ Ø&‹]"À£KAs¥ÏðriÍèWÚ«Ó3`\;…™?è²2Ù¥ì‚—Ç÷*^Š¶ h>ˆÿÂWfý™…Š›g_'C±™ìb1 ±>ÔûŽNý˜¦ä¹â(zÅ)Dš ëK×åÚ §;c$CÁ™8rª³hÏ!«LbYR\(?sµÅ«£Xpšr¨q²4üæ”ý½F2H1oŠå˜r˜¶—{ôjØrº+¼@‰ëúÿ   ÿÿ ×‚
+B
