@@ -1,17 +1,17 @@
 import CryptoJS from 'crypto-js';
 
-// Base application salt for persistent local storage at rest
+// Base application salt for key derivation
 const BASE_SALT = 'sebrae_diag_at_rest_v1_2026';
-const GLOBAL_STORAGE_KEY_SEED = 'sebrae_app_master_secure_storage_2026';
 
-// Persistent machine/device seed key
+// Persistent machine/device seed key in memory or unencrypted metadata
+let currentUserId: string | null = null;
 let customSessionPassword: string | null = null;
 
 /**
- * Configure optional user ID or session password
+ * Configure active User ID or session password for local storage encryption key derivation.
  */
-export function setStorageUserId(_uid: string | null) {
-  // Maintained for API compatibility, but storage encryption remains stable per device
+export function setStorageUserId(uid: string | null) {
+  currentUserId = uid;
 }
 
 export function setStorageSessionPassword(pass: string | null) {
@@ -19,43 +19,34 @@ export function setStorageSessionPassword(pass: string | null) {
 }
 
 /**
- * Gets or creates a stable browser device installation key.
+ * Gets or creates a browser device installation key.
  */
 function getDeviceKey(): string {
-  if (typeof window === 'undefined') return GLOBAL_STORAGE_KEY_SEED;
+  if (typeof window === 'undefined') return 'server_fallback_key';
   try {
     let devKey = window.localStorage.getItem('_sys_dev_key');
-    if (!devKey || devKey === 'undefined' || devKey === 'null') {
+    if (!devKey) {
       devKey = 'dev_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
       window.localStorage.setItem('_sys_dev_key', devKey);
     }
     return devKey;
   } catch (e) {
-    return GLOBAL_STORAGE_KEY_SEED;
+    return 'mem_device_key';
   }
 }
 
 /**
  * Derives the active AES-256 encryption key.
- * Uses a stable device key so data is never lost or corrupted across page reloads / auth state changes.
  */
 export function getActiveEncryptionKey(): string {
   if (customSessionPassword && customSessionPassword.trim()) {
     return CryptoJS.SHA256(`pass:${customSessionPassword}:${BASE_SALT}`).toString();
   }
+  if (currentUserId && currentUserId.trim()) {
+    return CryptoJS.SHA256(`uid:${currentUserId}:${BASE_SALT}`).toString();
+  }
   const deviceKey = getDeviceKey();
   return CryptoJS.SHA256(`dev:${deviceKey}:${BASE_SALT}`).toString();
-}
-
-/**
- * Fallback encryption keys to ensure 100% data recovery even if environment changes.
- */
-function getAllPossibleKeys(): string[] {
-  const keys: string[] = [getActiveEncryptionKey()];
-  keys.push(CryptoJS.SHA256(`dev:${getDeviceKey()}:${BASE_SALT}`).toString());
-  keys.push(CryptoJS.SHA256(GLOBAL_STORAGE_KEY_SEED).toString());
-  keys.push(CryptoJS.SHA256(BASE_SALT).toString());
-  return Array.from(new Set(keys));
 }
 
 /**
@@ -74,42 +65,49 @@ export function encryptValue(plainText: string): string {
 }
 
 /**
- * Decrypts an encrypted string value. If plain text or legacy format, returns as-is for backward compatibility.
+ * Decrypts an encrypted string value. If plain text, returns as-is for backward compatibility.
  */
 export function decryptValue(rawValue: string): string {
   if (!rawValue) return rawValue;
   if (!rawValue.startsWith('enc:v1:')) {
-    // Unencrypted plain text
+    // Unencrypted legacy plain text
     return rawValue;
   }
 
   const cipherText = rawValue.substring(7); // Remove 'enc:v1:'
-  const keysToTry = getAllPossibleKeys();
-
-  for (const key of keysToTry) {
-    try {
-      const bytes = CryptoJS.AES.decrypt(cipherText, key);
-      const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-      if (decrypted && decrypted.length > 0) {
-        return decrypted;
-      }
-    } catch (e) {
-      // Try next key
+  try {
+    const key = getActiveEncryptionKey();
+    const bytes = CryptoJS.AES.decrypt(cipherText, key);
+    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+    
+    if (decrypted && decrypted.length > 0) {
+      return decrypted;
     }
+  } catch (e) {
+    console.warn("Falha ao descriptografar com chave primária, tentando fallback device key...");
   }
 
-  // If decryption fails, check if the inner text is JSON or return fallback
-  console.warn("[CryptoStorage] Não foi possível descriptografar valor. Verificando integridade...");
+  // Fallback to device key if user key changed
+  try {
+    const fallbackKey = CryptoJS.SHA256(`dev:${getDeviceKey()}:${BASE_SALT}`).toString();
+    const bytes = CryptoJS.AES.decrypt(cipherText, fallbackKey);
+    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+    if (decrypted && decrypted.length > 0) {
+      return decrypted;
+    }
+  } catch (e) {
+    // Ignore fallback failure
+  }
+
+  // If all fails, return raw string
   return rawValue;
 }
 
-// Unencrypted keys that do not require encryption (e.g., system flags, device keys, theme)
+// Unencrypted keys that do not require encryption (e.g., system flags, device keys)
 const UNENCRYPTED_KEYS = new Set([
   '_sys_dev_key',
   'storage_mode',
-  'preferred_logo',
-  'selected_plan',
-  'custom_gemini_api_key'
+  'preferred_logo'
 ]);
 
 /**
