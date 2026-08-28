@@ -211,9 +211,28 @@
         "createdAt": { "type": "string" }
       },
       "required": ["nome"]
+    },
+    "AnaliseResultado": {
+      "title": "Análise de Resultado da Consultoria",
+      "description": "Avaliação dos problemas, soluções, impacto na gestão e satisfação com a consultoria e consultor",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "empresaId": { "type": "string" },
+        "diagnosticoId": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "dataAnalise": { "type": "string" },
+        "mediaGeral": { "type": "number" },
+        "classificacao": { "type": "string" }
+      },
+      "required": ["empresaId", "diagnosticoId", "ownerId"]
     }
   },
   "firestore": {
+    "/analises_resultado/{id}": {
+      "schema": "AnaliseResultado",
+      "description": "Coleção de análises de resultado e impacto da consultoria"
+    },
     "/areas/{areaId}": {
       "schema": "Area",
       "description": "Coleção de áreas organizacionais"

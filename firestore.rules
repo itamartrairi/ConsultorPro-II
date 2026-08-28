@@ -61,5 +61,8 @@ service cloud.firestore {
     match /maturidade_avaliacoes/{id} {
       allow read, write: if isAuthenticated();
     }
+    match /analises_resultado/{id} {
+      allow read, write: if isAuthenticated();
+    }
   }
 }
