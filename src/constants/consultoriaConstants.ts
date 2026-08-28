@@ -14,7 +14,6 @@ export const CONSULTORIA_AREAS = [
   "CRÉDITO",
   "OUTROS"
 ];
-];
 
 export const AREAS = [
   { id: 'FIN', nome: 'Financeiro' },
@@ -29,7 +28,6 @@ export const AREAS = [
   { id: 'SAC', nome: 'Atendimento' },
   { id: 'CRE', nome: 'Acesso a Crédito' },
   { id: 'CRD', nome: 'Crédito' },
-];
 ];
 
 export const IMPACTO_ORDER: Record<string, number> = { 'Baixo': 1, 'Médio': 2, 'Alto': 3 };

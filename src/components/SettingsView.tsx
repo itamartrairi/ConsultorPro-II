@@ -1,3 +1,4 @@
+export { ConnectionStatus } from "./ConnectionStatus";
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { Button } from './Button';
