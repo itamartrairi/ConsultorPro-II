@@ -7,20 +7,20 @@ service cloud.firestore {
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
-    function isDocOwner() {
-      return isAuthenticated() && request.auth.uid == resource.data.ownerId;
-    }
     function isAdmin() {
       return isAuthenticated() &&
         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
         request.auth.token.email == "itamartrairi@gmail.com");
     }
-    function isValidEmail(email) {
-      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
-    }
 
     match /users/{userId} {
       allow read, write: if isOwner(userId) || isAdmin();
+    }
+    match /system_health/{id} {
+      allow read, write: if true;
+    }
+    match /test/{id} {
+      allow read, write: if true;
     }
     match /empresas/{empresaId} {
       allow read, write: if isAuthenticated();
@@ -59,6 +59,15 @@ service cloud.firestore {
       allow read, write: if isAuthenticated();
     }
     match /maturidade_avaliacoes/{id} {
+      allow read, write: if isAuthenticated();
+    }
+    match /custom_modelos_relatorio/{id} {
+      allow read, write: if isAuthenticated();
+    }
+    match /evidencias/{id} {
+      allow read, write: if isAuthenticated();
+    }
+    match /{document=**} {
       allow read, write: if isAuthenticated();
     }
   }

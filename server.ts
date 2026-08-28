@@ -99,7 +99,7 @@ async function startServer() {
         }
       });
 
-      const testModels = ["gemini-3.7-flash", "gemini-3.1-flash-lite", "gemini-flash-latest"];
+      const testModels = ["gemini-3.1-flash-lite", "gemini-3.7-flash", "gemini-flash-latest"];
       let workingModel: string | null = null;
       let lastErr: any = null;
 
@@ -173,17 +173,17 @@ async function startServer() {
         }
       });
 
-      const GEMINI_PRIMARY = "gemini-3.7-flash";
+      const GEMINI_PRIMARY = "gemini-3.1-flash-lite";
       const GEMINI_CHAIN = [
-        "gemini-3.7-flash",
         "gemini-3.1-flash-lite",
+        "gemini-3.7-flash",
         "gemini-flash-latest"
       ];
 
       function normalizeServerModel(m?: string): string {
         if (!m) return GEMINI_PRIMARY;
         if (m.includes("2.5") || m.includes("2.0") || m.includes("1.5") || m.includes("1.0") || m.includes("3.6")) {
-          return "gemini-3.7-flash";
+          return "gemini-3.1-flash-lite";
         }
         return m;
       }
@@ -197,7 +197,7 @@ async function startServer() {
       for (const modelToTry of candidateModels) {
         try {
           const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("Tempo limite de resposta do Gemini excedido (18s)")), 18000)
+            setTimeout(() => reject(new Error("Tempo limite de resposta do Gemini excedido (15s)")), 15000)
           );
           response = await Promise.race([
             ai.models.generateContent({
