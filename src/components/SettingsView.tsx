@@ -71,7 +71,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
           {/* Indicador visual de nuvem colorida */}
           <div className={`relative p-3 rounded-2xl flex items-center justify-center transition-transform duration-300 shrink-0 ${
             status.checking
-              ? 'bg-indigo-100 text-indigo-600 animate-pulse'
+              ? 'bg-sky-100 text-sky-600 animate-pulse'
               : status.ok
                 ? 'bg-emerald-100 text-emerald-600 ring-4 ring-emerald-500/10'
                 : 'bg-amber-100 text-amber-600 ring-4 ring-amber-500/10'
@@ -87,10 +87,10 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
             {/* Ponto indicador de status (badge de pulso) */}
             <span className={`absolute -top-1 -right-1 flex h-3 w-3`}>
               <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                status.checking ? 'bg-indigo-400' : status.ok ? 'bg-emerald-400' : 'bg-amber-400'
+                status.checking ? 'bg-sky-400' : status.ok ? 'bg-emerald-400' : 'bg-amber-400'
               }`}></span>
               <span className={`relative inline-flex rounded-full h-3 w-3 ${
-                status.checking ? 'bg-indigo-500' : status.ok ? 'bg-emerald-500' : 'bg-amber-500'
+                status.checking ? 'bg-sky-500' : status.ok ? 'bg-emerald-500' : 'bg-amber-500'
               }`}></span>
             </span>
           </div>
@@ -102,7 +102,7 @@ export const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
               </h4>
               <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider ${
                 status.checking
-                  ? 'bg-indigo-100/80 text-indigo-700'
+                  ? 'bg-sky-100/80 text-sky-700'
                   : status.ok
                     ? 'bg-emerald-100 text-emerald-800'
                     : 'bg-amber-100 text-amber-800'

@@ -51,7 +51,6 @@ import { db } from '../firebase';
 import { Button } from './Button';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { sebraeLogoBase64 } from '../sebraeLogo';
 
 export interface ItemProblemaSolucao {
@@ -632,298 +631,43 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
     }
   };
 
-  // Print Report Handler
-  const handlePrintReport = () => {
-    const originalTitle = document.title;
-    const clientName = currentEmpresa?.nome || currentEmpresa?.razaoSocial || 'Cliente';
-    document.title = `Laudo_Resultado_Consultoria_${clientName.replace(/[^a-zA-Z0-9]/g, '_')}`;
-    window.print();
-    setTimeout(() => {
-      document.title = originalTitle;
-    }, 500);
-  };
-
-  // Export PDF Report with High Resolution and Official Header
+  // Export PDF Report with High Resolution and Consultancy Header
   const handleExportPDF = async () => {
-    if (!selectedEmpresaId && !currentEmpresa) {
-      alert('Por favor, selecione um Cliente antes de gerar o relatório em PDF.');
+    const reportElement = document.getElementById('consultancy-result-pdf-report');
+    if (!reportElement) {
+      alert('Elemento do relatório não encontrado.');
       return;
     }
 
     setIsExportingPdf(true);
     try {
+      const canvas = await html2canvas(reportElement, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+
+      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = 210;
-      const pageHeight = 297;
-      const margin = 14;
-      const contentWidth = pageWidth - margin * 2; // 182mm
+      const imgWidth = 190;
+      const pageHeight = 285;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 10;
 
-      // Add Logo if available
-      const logoToUse = customLogo || customConsultoraLogo || sebraeLogoBase64;
-      if (logoToUse && typeof logoToUse === 'string' && (logoToUse.startsWith('data:image') || logoToUse.startsWith('http') || logoToUse.length > 50)) {
-        try {
-          pdf.addImage(logoToUse, 'PNG', pageWidth - margin - 38, 10, 38, 14, '', 'FAST');
-        } catch (e) {
-          console.warn('Could not add logo image to PDF:', e);
-        }
-      }
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
 
-      // Top Brand Tag
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(8);
-      pdf.setTextColor(67, 56, 202); // Indigo-700
-      pdf.text('SISTEMA DE GESTÃO E CONSULTORIA EMPRESARIAL', margin, 14);
-
-      // Main Title
-      pdf.setFontSize(13);
-      pdf.setTextColor(15, 23, 42); // Slate-900
-      pdf.text('LAUDO DE AVALIAÇÃO DE RESULTADOS DA CONSULTORIA', margin, 20);
-
-      // Subtitle
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(8.5);
-      pdf.setTextColor(100, 116, 139); // Slate-500
-      pdf.text('Diagnóstico de Problemas, Soluções Implementadas e Impacto na Gestão', margin, 25);
-
-      // Divider Line
-      pdf.setDrawColor(203, 213, 225);
-      pdf.setLineWidth(0.5);
-      pdf.line(margin, 28, pageWidth - margin, 28);
-
-      // 1. Client & Attendance Information Table
-      const empNome = currentEmpresa?.nome || currentEmpresa?.razaoSocial || currentDiagnostico?.nomeEmpresa || 'Cliente';
-      const empCnpj = currentEmpresa?.cnpj ? `CNPJ: ${currentEmpresa.cnpj}` : '';
-      const empRep = currentEmpresa?.representante ? `Representante: ${currentEmpresa.representante}` : '';
-      const empEnd = currentEmpresa?.enderecoComercial ? `Endereço: ${currentEmpresa.enderecoComercial}` : '';
-      
-      const clientLines = [
-        `Empresa: ${empNome}`,
-        empCnpj,
-        empRep,
-        empEnd
-      ].filter(Boolean).join('\n');
-
-      const projNome = currentDiagnostico?.nomeProjeto || currentDiagnostico?.nome || 'Consultoria Gerencial';
-      const consultor = consultorNome || user?.displayName || 'Consultor Especialista';
-      const credenciada = credenciadaNome ? `Credenciada: ${credenciadaNome}` : '';
-      const sgfInfo = codigoSgf ? `Código SGF: ${codigoSgf}` : '';
-      const chInfo = cargaHoraria ? `Carga Horária: ${cargaHoraria}` : '';
-      const dataInfo = `Data: ${dataAnalise || new Date().toLocaleDateString('pt-BR')}`;
-      
-      const attendanceLines = [
-        `Projeto: ${projNome}`,
-        `Consultor(a): ${consultor}`,
-        credenciada,
-        [sgfInfo, chInfo, dataInfo].filter(Boolean).join(' | ')
-      ].filter(Boolean).join('\n');
-
-      autoTable(pdf, {
-        startY: 31,
-        margin: { left: margin, right: margin },
-        head: [['DADOS DA EMPRESA CLIENTE', 'DADOS DO ATENDIMENTO & CONSULTORIA']],
-        body: [[clientLines, attendanceLines]],
-        headStyles: {
-          fillColor: [241, 245, 249],
-          textColor: [51, 65, 85],
-          fontStyle: 'bold',
-          fontSize: 8,
-          cellPadding: 2
-        },
-        bodyStyles: {
-          fillColor: [248, 250, 252],
-          textColor: [30, 41, 59],
-          fontSize: 8,
-          cellPadding: 2.5,
-          lineColor: [226, 232, 240],
-          lineWidth: 0.2
-        },
-        theme: 'grid'
-      });
-
-      let currentY = (pdf as any).lastAutoTable.finalY + 4;
-
-      // 2. Executive Performance Dashboard Box
-      autoTable(pdf, {
-        startY: currentY,
-        margin: { left: margin, right: margin },
-        head: [['DESEMPENHO GERAL DA CONSULTORIA', 'AVALIAÇÃO POR DIMENSÃO (0 A 10 PTS)']],
-        body: [
-          [
-            `MÉDIA GERAL: ${mediaGeralCalculada.toFixed(1)} / 10.0 PONTOS\nClassificação: ${classificacaoGeral.label}\n\n${classificacaoGeral.desc}`,
-            `• 1. Resolução dos Problemas: ${notas.eficaciaProblemas}/10\n• 2. Impacto na Gestão: ${notas.impactoGestao}/10\n• 3. Ganhos Financeiros / Produtividade: ${notas.impactoFinanceiroProd}/10\n• 4. Engajamento da Equipe: ${notas.engajamentoEquipe}/10\n• 5. Satisfação com a Consultoria: ${notas.satisfacaoConsultoria}/10\n• 6. Satisfação com o Consultor: ${notas.satisfacaoConsultor}/10`
-          ]
-        ],
-        headStyles: {
-          fillColor: [15, 23, 42],
-          textColor: [255, 255, 255],
-          fontStyle: 'bold',
-          fontSize: 8,
-          cellPadding: 2.5
-        },
-        bodyStyles: {
-          fillColor: [248, 250, 252],
-          textColor: [15, 23, 42],
-          fontSize: 8,
-          cellPadding: 3,
-          lineColor: [203, 213, 225],
-          lineWidth: 0.2
-        },
-        columnStyles: {
-          0: { fontStyle: 'bold', textColor: [30, 41, 59], cellWidth: 90 },
-          1: { cellWidth: 92 }
-        },
-        theme: 'grid'
-      });
-
-      currentY = (pdf as any).lastAutoTable.finalY + 4;
-
-      // 3. Problem vs Solution Matrix Table
-      const tableBody = problemasSolucoes.length > 0
-        ? problemasSolucoes.map(row => [
-            row.area || 'Geral',
-            row.problema || '—',
-            row.solucaoImplementada + (row.evidenciaResultado ? `\n[Evidência: ${row.evidenciaResultado}]` : ''),
-            row.status || 'Concluído',
-            `${row.notaEficacia || 0}/10`
-          ])
-        : [[
-            'Geral',
-            'Diagnóstico empresarial executado',
-            'Implantação de melhorias operacionais e gerenciais',
-            'Concluído',
-            '10/10'
-          ]];
-
-      autoTable(pdf, {
-        startY: currentY,
-        margin: { left: margin, right: margin },
-        head: [['ÁREA', 'PROBLEMA DIAGNOSTICADO', 'SOLUÇÃO IMPLEMENTADA & EVIDÊNCIA', 'STATUS', 'EFICÁCIA']],
-        body: tableBody,
-        headStyles: {
-          fillColor: [67, 56, 202], // Indigo-700
-          textColor: [255, 255, 255],
-          fontStyle: 'bold',
-          fontSize: 8,
-          cellPadding: 2.5
-        },
-        bodyStyles: {
-          fontSize: 7.5,
-          cellPadding: 2,
-          textColor: [30, 41, 59],
-          lineColor: [226, 232, 240],
-          lineWidth: 0.2
-        },
-        columnStyles: {
-          0: { cellWidth: 24, fontStyle: 'bold' },
-          1: { cellWidth: 48 },
-          2: { cellWidth: 70 },
-          3: { cellWidth: 24, fontStyle: 'bold' },
-          4: { cellWidth: 16, halign: 'center', fontStyle: 'bold' }
-        },
-        alternateRowStyles: {
-          fillColor: [248, 250, 252]
-        },
-        theme: 'grid'
-      });
-
-      currentY = (pdf as any).lastAutoTable.finalY + 4;
-
-      // 4. Qualitative Analyses
-      const qualitativeData = [
-        ['2. IMPACTO NA GESTÃO E PROCESSOS', parecerImpactoGestao || '—'],
-        ['3. PRINCIPAIS GANHOS CONQUISTADOS', ganhosPrincipais || '—'],
-        [`4. SATISFAÇÃO COM A CONSULTORIA (${notas.satisfacaoConsultoria}/10)`, feedbackConsultoria || '—'],
-        [`5. SATISFAÇÃO COM O CONSULTOR (${notas.satisfacaoConsultor}/10)`, feedbackConsultor || '—'],
-        ['6. RECOMENDAÇÕES E PRÓXIMOS PASSOS', recomendacoesFuturas || '—']
-      ];
-
-      autoTable(pdf, {
-        startY: currentY,
-        margin: { left: margin, right: margin },
-        head: [['DIMENSÃO QUALITATIVA', 'PARECER / OBSERVAÇÃO TÉCNICA DA CONSULTORIA']],
-        body: qualitativeData,
-        headStyles: {
-          fillColor: [30, 41, 59],
-          textColor: [255, 255, 255],
-          fontStyle: 'bold',
-          fontSize: 8,
-          cellPadding: 2.5
-        },
-        bodyStyles: {
-          fontSize: 7.5,
-          cellPadding: 2.5,
-          textColor: [30, 41, 59],
-          lineColor: [226, 232, 240],
-          lineWidth: 0.2
-        },
-        columnStyles: {
-          0: { cellWidth: 50, fontStyle: 'bold', fillColor: [248, 250, 252] },
-          1: { cellWidth: 132 }
-        },
-        theme: 'grid'
-      });
-
-      currentY = (pdf as any).lastAutoTable.finalY + 6;
-
-      // 5. Signatures Block
-      if (currentY > pageHeight - 35) {
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight + 10;
         pdf.addPage();
-        currentY = 25;
-      }
-
-      const colW = (contentWidth - 10) / 2;
-      const sigY = currentY + 12;
-
-      pdf.setDrawColor(148, 163, 184);
-      pdf.setLineWidth(0.4);
-
-      // Left Signature: Consultant
-      pdf.line(margin + 5, sigY, margin + colW - 5, sigY);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(8);
-      pdf.setTextColor(15, 23, 42);
-      pdf.text(consultorNome || 'Consultor(a) Especialista', margin + colW / 2, sigY + 4, { align: 'center' });
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(7);
-      pdf.setTextColor(100, 116, 139);
-      pdf.text(credenciadaNome || 'Consultoria Empresarial', margin + colW / 2, sigY + 8, { align: 'center' });
-
-      // Right Signature: Client Representative
-      const rightX = margin + colW + 10;
-      pdf.line(rightX + 5, sigY, rightX + colW - 5, sigY);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(8);
-      pdf.setTextColor(15, 23, 42);
-      pdf.text(responsavelClienteNome || currentEmpresa?.representante || 'Representante da Empresa', rightX + colW / 2, sigY + 4, { align: 'center' });
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(7);
-      pdf.setTextColor(100, 116, 139);
-      pdf.text(`${responsavelClienteCargo || 'Diretor'} • ${empNome}`, rightX + colW / 2, sigY + 8, { align: 'center' });
-
-      // Page Numbering and Running Footers
-      const totalPages = (pdf as any).internal.getNumberOfPages();
-      for (let i = 1; i <= totalPages; i++) {
-        pdf.setPage(i);
-        pdf.setDrawColor(226, 232, 240);
-        pdf.setLineWidth(0.3);
-        pdf.line(margin, pageHeight - 10, pageWidth - margin, pageHeight - 10);
-
-        pdf.setFont('helvetica', 'normal');
-        pdf.setFontSize(7);
-        pdf.setTextColor(148, 163, 184);
-        pdf.text(
-          `Laudo de Avaliação de Resultados da Consultoria • ${empNome} • Emitido em ${new Date().toLocaleDateString('pt-BR')}`,
-          margin,
-          pageHeight - 6
-        );
-        pdf.text(`Página ${i} de ${totalPages}`, pageWidth - margin, pageHeight - 6, { align: 'right' });
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
       }
 
       const clientNameClean = (currentEmpresa?.nome || 'Cliente').replace(/[^a-zA-Z0-9]/g, '_');
       pdf.save(`Relatorio_Resultado_Consultoria_${clientNameClean}.pdf`);
-
-      setSaveSuccessMessage('Relatório em PDF gerado e baixado com sucesso!');
-      setTimeout(() => setSaveSuccessMessage(null), 4000);
     } catch (err: any) {
       console.error('PDF Export Error:', err);
       alert('Erro ao gerar relatório em PDF: ' + (err?.message || err));
@@ -941,8 +685,8 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
       <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-200 pb-5 gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
-              <Award size={13} className="text-indigo-600" />
+            <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+              <Award size={13} className="text-sky-600" />
               Módulo de Avaliação & Impacto
             </span>
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
@@ -950,7 +694,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-            <BarChart3 className="h-7 w-7 text-indigo-600" />
+            <BarChart3 className="h-7 w-7 text-sky-600" />
             Análise do Resultado da Consultoria
           </h1>
           <p className="mt-1 text-sm text-slate-500 max-w-3xl">
@@ -965,7 +709,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
               onClick={() => setActiveSubTab('form')}
               className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 ${
                 activeSubTab === 'form'
-                  ? 'bg-white text-indigo-700 shadow-sm'
+                  ? 'bg-white text-sky-700 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -976,7 +720,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
               onClick={() => setActiveSubTab('relatorio')}
               className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 ${
                 activeSubTab === 'relatorio'
-                  ? 'bg-white text-indigo-700 shadow-sm'
+                  ? 'bg-white text-sky-700 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -987,7 +731,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
               onClick={() => setActiveSubTab('historico')}
               className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 ${
                 activeSubTab === 'historico'
-                  ? 'bg-white text-indigo-700 shadow-sm'
+                  ? 'bg-white text-sky-700 shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -1038,7 +782,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
           {/* Select Empresa */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <Building2 size={14} className="text-indigo-600" />
+              <Building2 size={14} className="text-sky-600" />
               1. Selecionar Cliente
             </label>
             <select
@@ -1046,7 +790,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
               onChange={(e) => {
                 setSelectedEmpresaId(e.target.value);
               }}
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-none"
             >
               {empresas.length === 0 ? (
                 <option value="">Nenhum cliente cadastrado</option>
@@ -1063,14 +807,14 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
           {/* Select Diagnóstico */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <Briefcase size={14} className="text-indigo-600" />
+              <Briefcase size={14} className="text-sky-600" />
               2. Projeto / Diagnóstico
             </label>
             <select
               value={selectedDiagId}
               onChange={(e) => setSelectedDiagId(e.target.value)}
               disabled={availableDiagnosticos.length === 0}
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none disabled:opacity-50"
+              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-none disabled:opacity-50"
             >
               {availableDiagnosticos.length === 0 ? (
                 <option value="">Nenhum diagnóstico para este cliente</option>
@@ -1087,21 +831,21 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
           {/* Data da Análise */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <Calendar size={14} className="text-indigo-600" />
+              <Calendar size={14} className="text-sky-600" />
               Data da Avaliação
             </label>
             <input
               type="date"
               value={dataAnalise}
               onChange={(e) => setDataAnalise(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-none"
             />
           </div>
 
           {/* Carga Horária */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <Clock size={14} className="text-indigo-600" />
+              <Clock size={14} className="text-sky-600" />
               Carga Horária
             </label>
             <input
@@ -1109,7 +853,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
               placeholder="Ex: 20h, 30 horas"
               value={cargaHoraria}
               onChange={(e) => setCargaHoraria(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-none"
             />
           </div>
         </div>
@@ -1128,7 +872,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                 <span>Responsável: <strong className="text-slate-800">{currentEmpresa.representante}</strong></span>
               )}
               {codigoSgf && (
-                <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded-md font-mono font-semibold">
+                <span className="px-2 py-0.5 bg-sky-50 text-sky-700 rounded-md font-mono font-semibold">
                   SGF: {codigoSgf}
                 </span>
               )}
@@ -1137,7 +881,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
             <button
               type="button"
               onClick={autoPopulateFromDiagnosis}
-              className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors"
+              className="text-xs font-bold text-sky-600 hover:text-sky-800 flex items-center gap-1 transition-colors"
               title="Recarrega os problemas e tarefas do plano de ação"
             >
               <RefreshCw size={12} />
@@ -1152,13 +896,13 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
         <div className="space-y-8">
           {/* 1. SEÇÃO DE NOTAS DE 0 A 10 PONTOS (INDICADORES CHAVE) */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 px-6 py-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="bg-gradient-to-r from-sky-900 via-sky-800 to-slate-900 px-6 py-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2">
                   <Star className="h-5 w-5 text-amber-400 fill-amber-400" />
                   <h2 className="text-lg font-bold">1. Sistema de Pontuação dos Resultados (Escala de 0 a 10)</h2>
                 </div>
-                <p className="text-xs text-indigo-200 mt-1">
+                <p className="text-xs text-sky-200 mt-1">
                   Atribua notas de 0 (nulo/não atingido) a 10 (excelente/superou expectativas) para cada dimensão crítica da consultoria.
                 </p>
               </div>
@@ -1166,7 +910,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
               {/* Global Score Pill */}
               <div className="bg-white/10 backdrop-blur-md px-5 py-2.5 rounded-2xl border border-white/20 flex items-center gap-3">
                 <div className="text-right">
-                  <div className="text-[10px] uppercase tracking-widest text-indigo-200 font-bold">Índice Geral</div>
+                  <div className="text-[10px] uppercase tracking-widest text-sky-200 font-bold">Índice Geral</div>
                   <div className="text-2xl font-black text-amber-300">{mediaGeralCalculada.toFixed(1)} <span className="text-xs font-normal text-white/80">/ 10.0</span></div>
                 </div>
                 <div className="h-9 w-px bg-white/20" />
@@ -1184,10 +928,10 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <Target size={15} className="text-indigo-600" />
+                      <Target size={15} className="text-sky-600" />
                       1. Resolução dos Problemas
                     </span>
-                    <span className="text-xl font-black text-indigo-700 bg-white px-3 py-0.5 rounded-lg border border-indigo-200">
+                    <span className="text-xl font-black text-sky-700 bg-white px-3 py-0.5 rounded-lg border border-sky-200">
                       {notas.eficaciaProblemas}
                     </span>
                   </div>
@@ -1201,11 +945,11 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                     step={1}
                     value={notas.eficaciaProblemas}
                     onChange={(e) => handleNotaChange('eficaciaProblemas', parseInt(e.target.value))}
-                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-600"
                   />
                   <div className="flex justify-between text-[10px] font-bold text-slate-400">
                     <span>0 (Nenhum)</span>
-                    <span className="text-indigo-700 font-semibold">{NOTA_DESCRITORES[notas.eficaciaProblemas]?.label}</span>
+                    <span className="text-sky-700 font-semibold">{NOTA_DESCRITORES[notas.eficaciaProblemas]?.label}</span>
                     <span>10 (Total)</span>
                   </div>
                 </div>
@@ -1214,10 +958,10 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <TrendingUp size={15} className="text-indigo-600" />
+                      <TrendingUp size={15} className="text-sky-600" />
                       2. Impacto na Gestão
                     </span>
-                    <span className="text-xl font-black text-indigo-700 bg-white px-3 py-0.5 rounded-lg border border-indigo-200">
+                    <span className="text-xl font-black text-sky-700 bg-white px-3 py-0.5 rounded-lg border border-sky-200">
                       {notas.impactoGestao}
                     </span>
                   </div>
@@ -1231,11 +975,11 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                     step={1}
                     value={notas.impactoGestao}
                     onChange={(e) => handleNotaChange('impactoGestao', parseInt(e.target.value))}
-                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-600"
                   />
                   <div className="flex justify-between text-[10px] font-bold text-slate-400">
                     <span>0 (Nulo)</span>
-                    <span className="text-indigo-700 font-semibold">{NOTA_DESCRITORES[notas.impactoGestao]?.label}</span>
+                    <span className="text-sky-700 font-semibold">{NOTA_DESCRITORES[notas.impactoGestao]?.label}</span>
                     <span>10 (Alto)</span>
                   </div>
                 </div>
@@ -1244,10 +988,10 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <BarChart3 size={15} className="text-indigo-600" />
+                      <BarChart3 size={15} className="text-sky-600" />
                       3. Finanças & Produtividade
                     </span>
-                    <span className="text-xl font-black text-indigo-700 bg-white px-3 py-0.5 rounded-lg border border-indigo-200">
+                    <span className="text-xl font-black text-sky-700 bg-white px-3 py-0.5 rounded-lg border border-sky-200">
                       {notas.impactoFinanceiroProd}
                     </span>
                   </div>
@@ -1261,11 +1005,11 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                     step={1}
                     value={notas.impactoFinanceiroProd}
                     onChange={(e) => handleNotaChange('impactoFinanceiroProd', parseInt(e.target.value))}
-                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-600"
                   />
                   <div className="flex justify-between text-[10px] font-bold text-slate-400">
                     <span>0 (Sem Ganho)</span>
-                    <span className="text-indigo-700 font-semibold">{NOTA_DESCRITORES[notas.impactoFinanceiroProd]?.label}</span>
+                    <span className="text-sky-700 font-semibold">{NOTA_DESCRITORES[notas.impactoFinanceiroProd]?.label}</span>
                     <span>10 (Excelente)</span>
                   </div>
                 </div>
@@ -1274,10 +1018,10 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <UserCheck size={15} className="text-indigo-600" />
+                      <UserCheck size={15} className="text-sky-600" />
                       4. Adesão & Equipe
                     </span>
-                    <span className="text-xl font-black text-indigo-700 bg-white px-3 py-0.5 rounded-lg border border-indigo-200">
+                    <span className="text-xl font-black text-sky-700 bg-white px-3 py-0.5 rounded-lg border border-sky-200">
                       {notas.engajamentoEquipe}
                     </span>
                   </div>
@@ -1291,11 +1035,11 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                     step={1}
                     value={notas.engajamentoEquipe}
                     onChange={(e) => handleNotaChange('engajamentoEquipe', parseInt(e.target.value))}
-                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-600"
                   />
                   <div className="flex justify-between text-[10px] font-bold text-slate-400">
                     <span>0 (Resistência)</span>
-                    <span className="text-indigo-700 font-semibold">{NOTA_DESCRITORES[notas.engajamentoEquipe]?.label}</span>
+                    <span className="text-sky-700 font-semibold">{NOTA_DESCRITORES[notas.engajamentoEquipe]?.label}</span>
                     <span>10 (Total)</span>
                   </div>
                 </div>
@@ -1304,10 +1048,10 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <ThumbsUp size={15} className="text-indigo-600" />
+                      <ThumbsUp size={15} className="text-sky-600" />
                       5. Satisfação com a Consultoria
                     </span>
-                    <span className="text-xl font-black text-indigo-700 bg-white px-3 py-0.5 rounded-lg border border-indigo-200">
+                    <span className="text-xl font-black text-sky-700 bg-white px-3 py-0.5 rounded-lg border border-sky-200">
                       {notas.satisfacaoConsultoria}
                     </span>
                   </div>
@@ -1321,11 +1065,11 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                     step={1}
                     value={notas.satisfacaoConsultoria}
                     onChange={(e) => handleNotaChange('satisfacaoConsultoria', parseInt(e.target.value))}
-                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-600"
                   />
                   <div className="flex justify-between text-[10px] font-bold text-slate-400">
                     <span>0 (Insatisfeito)</span>
-                    <span className="text-indigo-700 font-semibold">{NOTA_DESCRITORES[notas.satisfacaoConsultoria]?.label}</span>
+                    <span className="text-sky-700 font-semibold">{NOTA_DESCRITORES[notas.satisfacaoConsultoria]?.label}</span>
                     <span>10 (Plena)</span>
                   </div>
                 </div>
@@ -1334,10 +1078,10 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                      <User size={15} className="text-indigo-600" />
+                      <User size={15} className="text-sky-600" />
                       6. Satisfação com o Consultor
                     </span>
-                    <span className="text-xl font-black text-indigo-700 bg-white px-3 py-0.5 rounded-lg border border-indigo-200">
+                    <span className="text-xl font-black text-sky-700 bg-white px-3 py-0.5 rounded-lg border border-sky-200">
                       {notas.satisfacaoConsultor}
                     </span>
                   </div>
@@ -1351,11 +1095,11 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                     step={1}
                     value={notas.satisfacaoConsultor}
                     onChange={(e) => handleNotaChange('satisfacaoConsultor', parseInt(e.target.value))}
-                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-sky-600"
                   />
                   <div className="flex justify-between text-[10px] font-bold text-slate-400">
                     <span>0 (Insatisfatório)</span>
-                    <span className="text-indigo-700 font-semibold">{NOTA_DESCRITORES[notas.satisfacaoConsultor]?.label}</span>
+                    <span className="text-sky-700 font-semibold">{NOTA_DESCRITORES[notas.satisfacaoConsultor]?.label}</span>
                     <span>10 (Exemplar)</span>
                   </div>
                 </div>
@@ -1368,7 +1112,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
               <div>
                 <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <Layers className="h-5 w-5 text-indigo-600" />
+                  <Layers className="h-5 w-5 text-sky-600" />
                   2. Matriz de Problemas Diagnosticados vs. Soluções Implementadas
                 </h2>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -1380,7 +1124,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                 type="button"
                 onClick={handleAddRow}
                 variant="outline"
-                className="text-xs font-semibold text-indigo-700 border-indigo-300 hover:bg-indigo-50 flex items-center gap-1.5"
+                className="text-xs font-semibold text-sky-700 border-sky-300 hover:bg-sky-50 flex items-center gap-1.5"
               >
                 <Plus size={14} /> Adicionar Item
               </Button>
@@ -1453,7 +1197,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                           <select
                             value={item.notaEficacia}
                             onChange={(e) => handleUpdateRow(item.id, 'notaEficacia', parseInt(e.target.value))}
-                            className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-indigo-700 text-center"
+                            className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-sky-700 text-center"
                           >
                             {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0].map(n => (
                               <option key={n} value={n}>{n}</option>
@@ -1491,7 +1235,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
             <div className="border-b border-slate-100 pb-3">
               <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <FileText className="h-5 w-5 text-indigo-600" />
+                <FileText className="h-5 w-5 text-sky-600" />
                 3. Parecer Técnico, Impacto na Gestão e Satisfação do Cliente
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -1503,7 +1247,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
               {/* Impacto na Gestão */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <TrendingUp size={14} className="text-indigo-600" />
+                  <TrendingUp size={14} className="text-sky-600" />
                   Impacto Real na Gestão do Cliente (Antes vs. Depois)
                 </label>
                 <textarea
@@ -1511,7 +1255,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                   value={parecerImpactoGestao}
                   onChange={(e) => setParecerImpactoGestao(e.target.value)}
                   placeholder="Descreva como a gestão, os processos e a maturidade da liderança evoluíram..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 focus:ring-2 focus:ring-sky-500 focus:bg-white focus:outline-none"
                 />
               </div>
 
@@ -1526,14 +1270,14 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                   value={ganhosPrincipais}
                   onChange={(e) => setGanhosPrincipais(e.target.value)}
                   placeholder="Liste as principais conquistas e números alcançados..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none font-mono"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 focus:ring-2 focus:ring-sky-500 focus:bg-white focus:outline-none font-mono"
                 />
               </div>
 
               {/* Satisfação com a Consultoria */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <ThumbsUp size={14} className="text-indigo-600" />
+                  <ThumbsUp size={14} className="text-sky-600" />
                   Satisfação do Cliente com a Consultoria & Metodologia
                 </label>
                 <textarea
@@ -1541,14 +1285,14 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                   value={feedbackConsultoria}
                   onChange={(e) => setFeedbackConsultoria(e.target.value)}
                   placeholder="Relato do cliente sobre o programa de consultoria, aplicabilidade e entregáveis..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 focus:ring-2 focus:ring-sky-500 focus:bg-white focus:outline-none"
                 />
               </div>
 
               {/* Satisfação com o Consultor */}
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <UserCheck size={14} className="text-indigo-600" />
+                  <UserCheck size={14} className="text-sky-600" />
                   Satisfação do Cliente com o Consultor (Atuação e Didática)
                 </label>
                 <textarea
@@ -1556,7 +1300,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                   value={feedbackConsultor}
                   onChange={(e) => setFeedbackConsultor(e.target.value)}
                   placeholder="Feedback sobre a pontualidade, disponibilidade, didática e clareza do consultor..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 focus:ring-2 focus:ring-sky-500 focus:bg-white focus:outline-none"
                 />
               </div>
 
@@ -1571,7 +1315,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                   value={recomendacoesFuturas}
                   onChange={(e) => setRecomendacoesFuturas(e.target.value)}
                   placeholder="Orientações para manutenção dos resultados e sugestão de novos passos..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:outline-none"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 focus:ring-2 focus:ring-sky-500 focus:bg-white focus:outline-none"
                 />
               </div>
             </div>
@@ -1619,7 +1363,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
           {/* Bottom Action Save Bar */}
           <div className="flex items-center justify-between bg-slate-900 text-white p-5 rounded-2xl shadow-xl flex-wrap gap-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-indigo-600 flex items-center justify-center font-black text-amber-300">
+              <div className="h-10 w-10 rounded-xl bg-sky-600 flex items-center justify-center font-black text-amber-300">
                 {mediaGeralCalculada.toFixed(1)}
               </div>
               <div>
@@ -1644,7 +1388,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                 type="button"
                 onClick={handleSaveAnalysis}
                 disabled={isSaving}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-6 py-2.5 rounded-xl shadow-lg flex items-center gap-2"
+                className="bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold px-6 py-2.5 rounded-xl shadow-lg flex items-center gap-2"
               >
                 {isSaving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save size={15} />}
                 {currentAnalysisId ? 'Salvar Alterações' : 'Salvar Avaliação'}
@@ -1660,7 +1404,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
           <div className="flex items-center justify-between border-b border-slate-100 pb-4">
             <div>
               <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Clock className="h-5 w-5 text-indigo-600" />
+                <Clock className="h-5 w-5 text-sky-600" />
                 Histórico de Avaliações de Resultado
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -1682,7 +1426,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                   key={item.id}
                   className={`p-5 rounded-2xl border transition-all ${
                     currentAnalysisId === item.id
-                      ? 'border-indigo-500 bg-indigo-50/40 ring-2 ring-indigo-500/20'
+                      ? 'border-sky-500 bg-sky-50/40 ring-2 ring-sky-500/20'
                       : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-md'
                   }`}
                 >
@@ -1692,7 +1436,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                       <p className="text-xs text-slate-500 line-clamp-1">{item.nomeProjeto || 'Consultoria'}</p>
                     </div>
                     <div className="text-right">
-                      <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-black bg-indigo-100 text-indigo-800">
+                      <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-black bg-sky-100 text-sky-800">
                         {item.mediaGeral ? item.mediaGeral.toFixed(1) : '9.0'} pts
                       </span>
                     </div>
@@ -1719,7 +1463,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                         loadAnalysisIntoForm(item);
                         setActiveSubTab('form');
                       }}
-                      className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+                      className="text-xs font-bold text-sky-600 hover:text-sky-800 flex items-center gap-1"
                     >
                       Abrir / Editar <ChevronRight size={14} />
                     </button>
@@ -1731,19 +1475,9 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                           setActiveSubTab('relatorio');
                         }}
                         className="p-1.5 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100"
-                        title="Ver Relatório"
+                        title="Ver Relatório PDF"
                       >
                         <FileText size={14} />
-                      </button>
-                      <button
-                        onClick={() => {
-                          loadAnalysisIntoForm(item);
-                          setTimeout(() => handleExportPDF(), 100);
-                        }}
-                        className="p-1.5 text-emerald-600 hover:text-emerald-800 rounded-lg hover:bg-emerald-50"
-                        title="Baixar Laudo em PDF"
-                      >
-                        <Download size={14} />
                       </button>
                       <button
                         onClick={() => item.id && handleDeleteSaved(item.id)}
@@ -1764,41 +1498,32 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
       {/* RELATÓRIO EXECUTIVO / LAUDO PDF COM CABEÇALHO COMPLETO */}
       {activeSubTab === 'relatorio' && (
         <div className="space-y-4">
-          <div className="bg-slate-100 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between border border-slate-200 gap-3">
+          <div className="bg-slate-100 p-4 rounded-xl flex items-center justify-between border border-slate-200">
             <div className="flex items-center gap-2 text-slate-700 text-xs font-medium">
-              <Printer size={16} className="text-indigo-600 flex-shrink-0" />
-              <span>Pré-visualização do Laudo Oficial de Resultado da Consultoria. Clique em <strong>"Baixar em PDF"</strong> para download instantâneo.</span>
+              <Printer size={16} className="text-sky-600" />
+              <span>Pré-visualização do Laudo Oficial de Resultado da Consultoria. Clique em <strong>"Gerar Laudo PDF"</strong> para baixar.</span>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Button
-                onClick={handlePrintReport}
-                className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-sm"
-              >
-                <Printer size={14} />
-                Imprimir Laudo
-              </Button>
-              <Button
-                onClick={handleExportPDF}
-                disabled={isExportingPdf}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm"
-              >
-                {isExportingPdf ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Download size={14} />}
-                Baixar em PDF
-              </Button>
-            </div>
+            <Button
+              onClick={handleExportPDF}
+              disabled={isExportingPdf}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5"
+            >
+              {isExportingPdf ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Download size={14} />}
+              Baixar em PDF
+            </Button>
           </div>
 
-          {/* O CONTAINER DE PRÉ-VISUALIZAÇÃO */}
+          {/* O CONTAINER CAPTURADO PELO HTML2CANVAS */}
           <div
             id="consultancy-result-pdf-report"
-            className="bg-white p-8 sm:p-12 rounded-2xl border border-slate-200 shadow-xl max-w-4xl mx-auto text-slate-900 space-y-6 print:shadow-none print:border-none print:p-0"
+            className="bg-white p-8 sm:p-12 rounded-2xl border border-slate-200 shadow-xl max-w-4xl mx-auto text-slate-900 space-y-6"
             style={{ minHeight: '1100px', fontFamily: 'Inter, system-ui, sans-serif' }}
           >
             {/* CABEÇALHO OFICIAL DA CONSULTORIA */}
             <div className="border-b-2 border-slate-800 pb-5">
               <div className="flex items-center justify-between gap-6">
                 <div className="flex-1">
-                  <div className="text-[11px] font-black text-indigo-900 uppercase tracking-widest mb-1">
+                  <div className="text-[11px] font-black text-sky-900 uppercase tracking-widest mb-1">
                     SISTEMA DE GESTÃO E CONSULTORIA EMPRESARIAL
                   </div>
                   <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight uppercase">
@@ -1815,7 +1540,6 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                     <img
                       src={customLogo}
                       alt="Logo SEBRAE"
-                      crossOrigin="anonymous"
                       className="h-12 max-w-[130px] object-contain"
                     />
                   ) : (!customConsultoraLogo && sebraeLogoBase64 ? (
@@ -1830,7 +1554,6 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                     <img
                       src={customConsultoraLogo}
                       alt="Logo Consultora"
-                      crossOrigin="anonymous"
                       className="h-12 max-w-[130px] object-contain"
                     />
                   )}
@@ -1864,38 +1587,38 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
             {/* PAINEL RESUMO DE NOTAS (0 A 10) */}
             <div className="bg-slate-900 text-white p-5 rounded-xl flex items-center justify-between gap-4">
               <div>
-                <div className="text-[10px] uppercase font-bold text-indigo-300 tracking-widest">Desempenho Geral da Consultoria</div>
+                <div className="text-[10px] uppercase font-bold text-sky-300 tracking-widest">Desempenho Geral da Consultoria</div>
                 <div className="text-2xl font-black text-amber-300 flex items-baseline gap-1.5 mt-0.5">
-                  {mediaGeralCalculada.toFixed(1)} <span className="text-xs text-slate-300 font-normal">/ 10.0 Pontos</span>
+                  {mediaGeralCalculada.toFixed(1)} <span className="text-xs text-white/70 font-normal">/ 10.0 Pontos</span>
                 </div>
-                <div className="text-xs font-semibold text-white mt-0.5">
+                <div className="text-xs font-semibold text-white/90 mt-0.5">
                   Classificação: <span className="text-amber-300 font-bold">{classificacaoGeral.label}</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-2 text-[10px] max-w-sm">
-                <div className="bg-slate-800 p-2 rounded-lg text-center border border-slate-700">
-                  <div className="text-slate-300 font-medium">Problemas</div>
+                <div className="bg-white/10 p-2 rounded-lg text-center">
+                  <div className="text-white/70 font-medium">Problemas</div>
                   <div className="text-sm font-black text-white">{notas.eficaciaProblemas}/10</div>
                 </div>
-                <div className="bg-slate-800 p-2 rounded-lg text-center border border-slate-700">
-                  <div className="text-slate-300 font-medium">Gestão</div>
+                <div className="bg-white/10 p-2 rounded-lg text-center">
+                  <div className="text-white/70 font-medium">Gestão</div>
                   <div className="text-sm font-black text-white">{notas.impactoGestao}/10</div>
                 </div>
-                <div className="bg-slate-800 p-2 rounded-lg text-center border border-slate-700">
-                  <div className="text-slate-300 font-medium">Finanças</div>
+                <div className="bg-white/10 p-2 rounded-lg text-center">
+                  <div className="text-white/70 font-medium">Finanças</div>
                   <div className="text-sm font-black text-white">{notas.impactoFinanceiroProd}/10</div>
                 </div>
-                <div className="bg-slate-800 p-2 rounded-lg text-center border border-slate-700">
-                  <div className="text-slate-300 font-medium">Equipe</div>
+                <div className="bg-white/10 p-2 rounded-lg text-center">
+                  <div className="text-white/70 font-medium">Equipe</div>
                   <div className="text-sm font-black text-white">{notas.engajamentoEquipe}/10</div>
                 </div>
-                <div className="bg-slate-800 p-2 rounded-lg text-center border border-slate-700">
-                  <div className="text-slate-300 font-medium">Consultoria</div>
+                <div className="bg-white/10 p-2 rounded-lg text-center">
+                  <div className="text-white/70 font-medium">Consultoria</div>
                   <div className="text-sm font-black text-white">{notas.satisfacaoConsultoria}/10</div>
                 </div>
-                <div className="bg-slate-800 p-2 rounded-lg text-center border border-slate-700">
-                  <div className="text-slate-300 font-medium">Consultor</div>
+                <div className="bg-white/10 p-2 rounded-lg text-center">
+                  <div className="text-white/70 font-medium">Consultor</div>
                   <div className="text-sm font-black text-white">{notas.satisfacaoConsultor}/10</div>
                 </div>
               </div>
@@ -1938,7 +1661,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                       <td className="p-2 border-r border-slate-200 align-top text-[10px]">
                         <span className="font-semibold">{row.status}</span>
                       </td>
-                      <td className="p-2 text-center align-top font-bold text-indigo-800">
+                      <td className="p-2 text-center align-top font-bold text-sky-800">
                         {row.notaEficacia}/10
                       </td>
                     </tr>
@@ -1973,7 +1696,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
               <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
                 <div className="text-[10px] font-black uppercase text-slate-700 tracking-wider flex items-center justify-between">
                   <span>4. Satisfação com a Consultoria</span>
-                  <span className="text-indigo-800 font-bold">{notas.satisfacaoConsultoria}/10 pts</span>
+                  <span className="text-sky-800 font-bold">{notas.satisfacaoConsultoria}/10 pts</span>
                 </div>
                 <p className="text-slate-700 leading-relaxed text-[11px]">
                   {feedbackConsultoria}
@@ -1983,7 +1706,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
               <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
                 <div className="text-[10px] font-black uppercase text-slate-700 tracking-wider flex items-center justify-between">
                   <span>5. Satisfação com o Consultor</span>
-                  <span className="text-indigo-800 font-bold">{notas.satisfacaoConsultor}/10 pts</span>
+                  <span className="text-sky-800 font-bold">{notas.satisfacaoConsultor}/10 pts</span>
                 </div>
                 <p className="text-slate-700 leading-relaxed text-[11px]">
                   {feedbackConsultor}
@@ -1992,8 +1715,8 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
             </div>
 
             {/* RECOMENDAÇÕES FINAIS */}
-            <div className="p-3.5 bg-indigo-50 border border-indigo-200 rounded-xl space-y-1.5 text-xs">
-              <div className="text-[10px] font-black uppercase text-indigo-900 tracking-wider">
+            <div className="p-3.5 bg-sky-50/50 border border-sky-200 rounded-xl space-y-1.5 text-xs">
+              <div className="text-[10px] font-black uppercase text-sky-900 tracking-wider">
                 6. Recomendações e Próximos Passos
               </div>
               <p className="text-slate-800 leading-relaxed text-[11px]">

@@ -103,29 +103,12 @@ export function decryptValue(rawValue: string): string {
   return rawValue;
 }
 
-// Unencrypted keys that do not require encryption (e.g., system flags, device keys, Firebase SDK internals)
+// Unencrypted keys that do not require encryption (e.g., system flags, device keys)
 const UNENCRYPTED_KEYS = new Set([
   '_sys_dev_key',
   'storage_mode',
   'preferred_logo'
 ]);
-
-function shouldBypassEncryption(key: string): boolean {
-  if (!key) return true;
-  if (UNENCRYPTED_KEYS.has(key)) return true;
-  if (
-    key.startsWith('firebase:') || 
-    key.startsWith('firestore:') || 
-    key.startsWith('firebase_') || 
-    key.includes('firebase') || 
-    key.includes('firestore') ||
-    key.startsWith('_sys_') ||
-    key.startsWith('loglevel:')
-  ) {
-    return true;
-  }
-  return false;
-}
 
 /**
  * Safe local storage wrapper with automatic AES-256 Encryption at Rest.
@@ -146,7 +129,7 @@ export const encryptedLocalStorage = {
     }
 
     if (!rawVal) return null;
-    if (shouldBypassEncryption(key)) return rawVal;
+    if (UNENCRYPTED_KEYS.has(key)) return rawVal;
 
     return decryptValue(rawVal);
   },
@@ -157,7 +140,7 @@ export const encryptedLocalStorage = {
       return;
     }
 
-    const valueToStore = shouldBypassEncryption(key) ? value : encryptValue(value);
+    const valueToStore = UNENCRYPTED_KEYS.has(key) ? value : encryptValue(value);
 
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
@@ -192,7 +175,7 @@ export const encryptedLocalStorage = {
       const keysToMigrate: string[] = [];
       for (let i = 0; i < window.localStorage.length; i++) {
         const k = window.localStorage.key(i);
-        if (k && !shouldBypassEncryption(k)) {
+        if (k && !UNENCRYPTED_KEYS.has(k)) {
           keysToMigrate.push(k);
         }
       }

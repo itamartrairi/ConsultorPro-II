@@ -700,15 +700,15 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
         {/* Plotting the User's Spider Polygon Profile Overlay */}
         <polygon 
           points={`${xD},${yD} ${xI},${yI} ${xS},${yS} ${xC},${yC}`} 
-          fill="rgba(99, 102, 241, 0.28)" 
-          stroke="rgb(79, 70, 229)" 
+          fill="rgba(14, 165, 233, 0.28)" 
+          stroke="rgb(2, 132, 199)" 
           strokeWidth="2.5" 
           strokeLinejoin="round"
           className="transition-all duration-700 ease-out"
         />
 
         {/* Center coordinate point */}
-        <circle cx={center} cy={center} r="4" fill="#4f46e5" />
+        <circle cx={center} cy={center} r="4" fill="#0284c7" />
 
         {/* Quadrant Titles */}
         {/* D (Dominância) */}
@@ -762,7 +762,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
       <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-100 pb-5">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-            <Award className="h-8 w-8 text-indigo-600" />
+            <Award className="h-8 w-8 text-sky-600" />
             Avaliação Comportamental DISC
           </h1>
           <p className="mt-2 text-sm text-slate-500 max-w-2xl">
@@ -774,7 +774,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
             onClick={() => { setActiveTab('assessments'); setSelectedEvaluation(null); }}
             className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all ${
               activeTab === 'assessments' && !selectedEvaluation
-                ? 'bg-indigo-600 text-white shadow-md'
+                ? 'bg-sky-600 text-white shadow-md'
                 : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
             }`}
           >
@@ -784,8 +784,8 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
             onClick={startNewWizard}
             className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all flex items-center gap-2 ${
               activeTab === 'new-wizard'
-                ? 'bg-indigo-600 text-white shadow-md'
-                : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+                ? 'bg-sky-600 text-white shadow-md'
+                : 'bg-sky-50 text-sky-600 hover:bg-sky-100'
             }`}
           >
             <Plus className="h-4 w-4" />
@@ -801,7 +801,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
           <div className="col-span-12 space-y-6">
             {loading ? (
               <div className="bg-white rounded-3xl p-12 text-center border border-slate-100 shadow-sm flex flex-col items-center justify-center gap-4">
-                <RefreshCw className="h-8 w-8 text-indigo-500 animate-spin" />
+                <RefreshCw className="h-8 w-8 text-sky-500 animate-spin" />
                 <p className="text-slate-500 text-sm">Carregando avaliações comportamentais...</p>
               </div>
             ) : evaluations.length === 0 ? (
@@ -815,7 +815,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
                 </p>
                 <button
                   onClick={startNewWizard}
-                  className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-sm transition-all"
+                  className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold bg-sky-600 text-white rounded-xl hover:bg-sky-700 shadow-sm transition-all"
                 >
                   <Plus className="h-4 w-4" />
                   Iniciar Primeira Avaliação
@@ -829,11 +829,11 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
                     <div
                       key={ev.id}
                       onClick={() => setSelectedEvaluation(ev)}
-                      className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden"
+                      className="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm hover:shadow-md hover:border-sky-100 transition-all cursor-pointer flex flex-col justify-between group relative overflow-hidden"
                     >
                       <div className="space-y-4">
                         <div className="flex justify-between items-start">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-sky-50 text-sky-600">
                             {ev.perfilPrincipal}
                           </span>
                           <button
@@ -846,7 +846,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
                         </div>
 
                         <div>
-                          <h4 className="text-lg font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">
+                          <h4 className="text-lg font-bold text-slate-800 group-hover:text-sky-600 transition-colors">
                             {ev.nomeAvaliado}
                           </h4>
                           {ev.cargo && (
@@ -875,7 +875,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
                           <Calendar className="h-3.5 w-3.5 text-slate-300" />
                           {new Date(ev.dataAvaliacao).toLocaleDateString('pt-BR')}
                         </span>
-                        <span className="text-indigo-600 font-bold group-hover:translate-x-1 transition-transform inline-flex items-center gap-0.5">
+                        <span className="text-sky-600 font-bold group-hover:translate-x-1 transition-transform inline-flex items-center gap-0.5">
                           Ver Relatório <ChevronRight className="h-3.5 w-3.5" />
                         </span>
                       </div>
@@ -904,7 +904,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
                     <select
                       value={empresaId}
                       onChange={(e) => setEmpresaId(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm text-slate-700 bg-white"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-600 text-sm text-slate-700 bg-white"
                     >
                       <option value="" disabled>Selecione uma empresa</option>
                       {empresas.map((emp) => (
@@ -920,7 +920,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
                       placeholder="Ex: João Silva"
                       value={nomeAvaliado}
                       onChange={(e) => setNomeAvaliado(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm text-slate-700"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-600 text-sm text-slate-700"
                     />
                   </div>
 
@@ -931,7 +931,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
                       placeholder="Ex: Diretor de Operações"
                       value={cargo}
                       onChange={(e) => setCargo(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 text-sm text-slate-700"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-600 text-sm text-slate-700"
                     />
                   </div>
                 </div>
@@ -949,7 +949,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
                       if (!nomeAvaliado.trim()) { alert("Por favor, preencha o nome do avaliado."); return; }
                       setWizardStep(2);
                     }}
-                    className="px-5 py-2.5 text-sm font-semibold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 shadow-sm transition-all inline-flex items-center gap-2"
+                    className="px-5 py-2.5 text-sm font-semibold bg-sky-600 text-white rounded-xl hover:bg-sky-700 shadow-sm transition-all inline-flex items-center gap-2"
                   >
                     Ir para o Questionário
                     <ArrowRight className="h-4 w-4" />
@@ -963,12 +963,12 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
               <div className="space-y-6">
                 <div className="flex justify-between items-center pb-4 border-b border-slate-50">
                   <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">Questão {currentQuestionIndex + 1} de {DISC_QUESTIONS.length}</span>
+                    <span className="text-xs font-bold uppercase tracking-wider text-sky-600">Questão {currentQuestionIndex + 1} de {DISC_QUESTIONS.length}</span>
                     <h3 className="text-base font-bold text-slate-800 mt-1">Avaliação em Andamento: {nomeAvaliado}</h3>
                   </div>
                   <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div 
-                      className="bg-indigo-600 h-full transition-all duration-300"
+                      className="bg-sky-600 h-full transition-all duration-300"
                       style={{ width: `${((currentQuestionIndex + 1) / DISC_QUESTIONS.length) * 100}%` }}
                     />
                   </div>
@@ -996,17 +996,17 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
                         }}
                         className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 hover:shadow-sm ${
                           isSelected
-                            ? 'bg-indigo-50/50 border-indigo-200 ring-2 ring-indigo-500/10'
+                            ? 'bg-sky-50/50 border-sky-200 ring-2 ring-sky-500/10'
                             : 'bg-white border-slate-200 hover:border-slate-300'
                         }`}
                       >
                         <div className={`mt-0.5 h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                          isSelected ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-slate-300 bg-white'
+                          isSelected ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-300 bg-white'
                         }`}>
                           {isSelected && <Check className="h-3 w-3 stroke-[3]" />}
                         </div>
                         <div>
-                          <p className={`text-sm font-semibold leading-relaxed ${isSelected ? 'text-indigo-900' : 'text-slate-700'}`}>
+                          <p className={`text-sm font-semibold leading-relaxed ${isSelected ? 'text-sky-900' : 'text-slate-700'}`}>
                             {opt.text}
                           </p>
                         </div>
@@ -1030,7 +1030,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
                     <button
                       disabled={!answers[DISC_QUESTIONS[currentQuestionIndex].id]}
                       onClick={() => setCurrentQuestionIndex(prev => prev + 1)}
-                      className="px-5 py-2.5 text-sm font-semibold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-2"
+                      className="px-5 py-2.5 text-sm font-semibold bg-sky-600 text-white rounded-xl hover:bg-sky-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all inline-flex items-center gap-2"
                     >
                       Próxima
                       <ArrowRight className="h-4 w-4" />
@@ -1074,7 +1074,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
                   <button
                     onClick={() => handleRefineWithAI(selectedEvaluation.id!)}
                     disabled={generatingAI}
-                    className="px-5 py-2.5 text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md transition-all inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="px-5 py-2.5 text-sm font-semibold bg-sky-600 hover:bg-sky-700 text-white rounded-xl shadow-md transition-all inline-flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     {generatingAI ? (
                       <>
@@ -1143,7 +1143,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
                 <button
                   onClick={() => handleRefineWithAI(selectedEvaluation.id!)}
                   disabled={generatingAI}
-                  className="px-4 py-2 text-sm font-semibold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-xl transition-all inline-flex items-center gap-2 disabled:opacity-50"
+                  className="px-4 py-2 text-sm font-semibold bg-sky-50 text-sky-600 hover:bg-sky-100 rounded-xl transition-all inline-flex items-center gap-2 disabled:opacity-50"
                   title="Enriquece ou reescreve o relatório com análises avançadas da Inteligência Artificial do Gemini"
                 >
                   {generatingAI ? (
@@ -1153,7 +1153,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
                     </>
                   ) : (
                     <>
-                      <Sparkles className="h-4 w-4 text-indigo-600" />
+                      <Sparkles className="h-4 w-4 text-sky-600" />
                       Refinar com IA (Gemini)
                     </>
                   )}
@@ -1197,7 +1197,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
               {/* Report Header */}
               <div className="flex flex-col md:flex-row justify-between items-start border-b border-slate-100 pb-8 gap-6">
                 <div>
-                  <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase bg-indigo-50 text-indigo-600">
+                  <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase bg-sky-50 text-sky-600">
                     {selectedEvaluation.perfilPrincipal}
                   </span>
                   <h2 className="text-3xl font-bold text-slate-900 tracking-tight mt-3">
@@ -1284,7 +1284,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
                 {/* Executive Summary & Mapped profile */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2 border-b border-slate-50 pb-2">
-                    <FileText className="h-5 w-5 text-indigo-500" />
+                    <FileText className="h-5 w-5 text-sky-500" />
                     Diagnóstico Comportamental
                   </h3>
                   <div className="text-sm text-slate-600 leading-relaxed space-y-4 whitespace-pre-wrap">
@@ -1295,7 +1295,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
                 {/* Suggestions, Weakness and PDI Action map */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2 border-b border-slate-50 pb-2">
-                    <Sparkles className="h-5 w-5 text-indigo-500" />
+                    <Sparkles className="h-5 w-5 text-sky-500" />
                     PDI e Recomendações
                   </h3>
                   <div className="text-sm text-slate-600 leading-relaxed space-y-4 whitespace-pre-wrap">

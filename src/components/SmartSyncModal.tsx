@@ -184,18 +184,18 @@ export const SmartSyncModal: React.FC<SmartSyncModalProps> = ({
                   </div>
                 </div>
 
-                <div className="p-4 bg-indigo-50/70 border border-indigo-200/80 rounded-2xl flex flex-col justify-between">
+                <div className="p-4 bg-sky-50/70 border border-sky-200/80 rounded-2xl flex flex-col justify-between">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-bold text-indigo-800 uppercase tracking-wider">
+                    <span className="text-[11px] font-bold text-sky-800 uppercase tracking-wider">
                       Já Atualizados
                     </span>
-                    <CheckCircle2 size={16} className="text-indigo-600" />
+                    <CheckCircle2 size={16} className="text-sky-600" />
                   </div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-2xl font-black text-indigo-700">
+                    <span className="text-2xl font-black text-sky-700">
                       {lastSummary.identicalOrMerged}
                     </span>
-                    <span className="text-[10px] text-indigo-600 font-bold">
+                    <span className="text-[10px] text-sky-600 font-bold">
                       em conformidade
                     </span>
                   </div>
@@ -229,7 +229,7 @@ export const SmartSyncModal: React.FC<SmartSyncModalProps> = ({
                   </div>
 
                   <div className="p-2.5 bg-white border border-slate-200/60 rounded-xl flex items-center gap-2.5">
-                    <CheckSquare size={16} className="text-indigo-600 shrink-0" />
+                    <CheckSquare size={16} className="text-sky-600 shrink-0" />
                     <div className="min-w-0">
                       <p className="font-bold text-slate-800 truncate">Respostas</p>
                       <p className="text-[11px] text-slate-500">

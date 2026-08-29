@@ -753,7 +753,7 @@ export const MacroDashboardView = ({
       { label: 'Hoje', count: todayCount, color: '#f97316', badge: 'bg-orange-50 text-orange-700 border-orange-200' },
       { label: 'Até 7 dias', count: next7Count, color: '#eab308', badge: 'bg-amber-50 text-amber-700 border-amber-200' },
       { label: '8 a 15 dias', count: next15Count, color: '#3b82f6', badge: 'bg-blue-50 text-blue-700 border-blue-200' },
-      { label: '+15 dias', count: laterCount, color: '#6366f1', badge: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+      { label: '+15 dias', count: laterCount, color: '#0ea5e9', badge: 'bg-sky-50 text-sky-700 border-sky-200' },
       { label: 'Sem data', count: noDateCount, color: '#94a3b8', badge: 'bg-slate-50 text-slate-600 border-slate-200' }
     ];
 
@@ -1124,7 +1124,7 @@ export const MacroDashboardView = ({
                   <div className="bg-slate-800/40 border border-slate-700/40 rounded-xl p-3 space-y-1.5">
                     <div className="flex items-center justify-between font-bold text-slate-200">
                       <span className="flex items-center gap-1.5">
-                        <CheckSquare size={14} className="text-indigo-400" /> Respostas
+                        <CheckSquare size={14} className="text-sky-400" /> Respostas
                       </span>
                       <span className="text-slate-400 font-mono text-[11px]">
                         {activeSummary ? (activeSummary.details.respostas.uploaded + activeSummary.details.respostas.downloaded + activeSummary.details.respostas.updated) : macroHistory.reduce((acc, h) => acc + h.totalAnswersCount, 0)}
@@ -1202,7 +1202,7 @@ export const MacroDashboardView = ({
           {/* Portfolio Metric Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="p-6 bg-white border border-slate-100 flex items-center gap-4 shadow-sm rounded-2xl">
-              <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0 border border-indigo-100/40">
+              <div className="w-12 h-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center flex-shrink-0 border border-sky-100/40">
                 <Users size={22} />
               </div>
               <div>
@@ -1258,7 +1258,7 @@ export const MacroDashboardView = ({
                   placeholder="Pesquisar por cliente..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 rounded-xl text-xs placeholder:text-slate-400 text-slate-700"
+                  className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 rounded-xl text-xs placeholder:text-slate-400 text-slate-700"
                 />
               </div>
 
@@ -1267,7 +1267,7 @@ export const MacroDashboardView = ({
                 <select
                   value={sectorFilter}
                   onChange={(e) => setSectorFilter(e.target.value)}
-                  className="bg-white border border-slate-200 text-xs font-semibold text-slate-700 px-3 py-1.5 rounded-xl outline-none focus:border-indigo-500"
+                  className="bg-white border border-slate-200 text-xs font-semibold text-slate-700 px-3 py-1.5 rounded-xl outline-none focus:border-sky-500"
                 >
                   {availableSectors.map(s => (
                     <option key={s} value={s}>{s}</option>
@@ -1290,7 +1290,7 @@ export const MacroDashboardView = ({
                 {/* Header Row */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
                   <div className="flex items-start sm:items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shrink-0">
+                    <div className="w-12 h-12 rounded-2xl bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-600 shrink-0">
                       <ListTodo size={24} />
                     </div>
                     <div>
@@ -1298,7 +1298,7 @@ export const MacroDashboardView = ({
                         <h3 className="font-extrabold text-lg text-slate-800 tracking-tight">
                           Resumo Executivo dos Planos de Ação
                         </h3>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-100">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-sky-50 text-sky-700 border border-sky-100">
                           {taskAnalytics.total} {taskAnalytics.total === 1 ? 'Tarefa' : 'Tarefas'}
                         </span>
                       </div>
@@ -1453,7 +1453,7 @@ export const MacroDashboardView = ({
                       <div className="lg:col-span-5 space-y-4 flex flex-col justify-between">
                         <div>
                           <h4 className="font-bold text-sm text-slate-800 flex items-center gap-2">
-                            <Layers size={16} className="text-indigo-600" />
+                            <Layers size={16} className="text-sky-600" />
                             Distribuição de Status e Prioridades
                           </h4>
                           <p className="text-slate-400 text-xs mt-0.5 font-sans">
@@ -1520,7 +1520,7 @@ export const MacroDashboardView = ({
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                           <div>
                             <h4 className="font-bold text-sm text-slate-800 flex items-center gap-2">
-                              <CalendarDays size={16} className="text-indigo-600" />
+                              <CalendarDays size={16} className="text-sky-600" />
                               Radar de Prazos Próximos
                             </h4>
                             <p className="text-slate-400 text-xs mt-0.5 font-sans">
@@ -1687,7 +1687,7 @@ export const MacroDashboardView = ({
                                         type="button"
                                         onClick={() => onNavigateToKanban(t.diagnosticoId)}
                                         title="Abrir no Kanban do Plano de Ação"
-                                        className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer border border-slate-200/60"
+                                        className="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-colors cursor-pointer border border-slate-200/60"
                                       >
                                         <ChevronRight size={14} />
                                       </button>
@@ -1826,7 +1826,7 @@ export const MacroDashboardView = ({
                             className={cn(
                               "flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all",
                               isSelected 
-                                ? "bg-slate-50 border-indigo-200 text-indigo-950 font-semibold"
+                                ? "bg-slate-50 border-sky-200 text-sky-950 font-semibold"
                                 : "bg-white border-slate-100 text-slate-600 hover:bg-slate-50/50"
                             )}
                           >
@@ -1842,7 +1842,7 @@ export const MacroDashboardView = ({
                                     setSelectedCompanies([...selectedCompanies, emp.id]);
                                   }
                                 }}
-                                className="w-3.5 h-3.5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/20 cursor-pointer"
+                                className="w-3.5 h-3.5 rounded border-slate-300 text-sky-600 focus:ring-sky-500/20 cursor-pointer"
                               />
                               <span className="text-xs truncate max-w-32 font-sans">{emp.nome}</span>
                             </div>
@@ -1963,24 +1963,24 @@ export const MacroDashboardView = ({
               </div>
 
               {/* AI Strategic Insights Card */}
-              <div className="p-6 bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-950 rounded-3xl text-white shadow-md relative overflow-hidden border border-indigo-800/20">
-                <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full -translate-y-1/3 translate-x-1/3 blur-3xl pointer-events-none"></div>
+              <div className="p-6 bg-gradient-to-br from-sky-900 via-sky-950 to-slate-950 rounded-3xl text-white shadow-md relative overflow-hidden border border-sky-800/20">
+                <div className="absolute top-0 right-0 w-80 h-80 bg-sky-500/10 rounded-full -translate-y-1/3 translate-x-1/3 blur-3xl pointer-events-none"></div>
                 <div className="relative z-10 space-y-4">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-300 border border-sky-500/30 flex items-center justify-center">
                         <Sparkles size={20} className="animate-pulse" />
                       </div>
                       <div>
                         <h4 className="font-bold text-base">Relatório Estratégico com Inteligência Artificial</h4>
-                        <p className="text-indigo-200 text-xs font-sans">Gere um diagnóstico avançado com recomendações seniores para a sua carteira</p>
+                        <p className="text-sky-200 text-xs font-sans">Gere um diagnóstico avançado com recomendações seniores para a sua carteira</p>
                       </div>
                     </div>
 
                     <button
                       onClick={generatePortfolioAIInsight}
                       disabled={generatingInsight}
-                      className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white hover:text-white rounded-xl text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-2 shadow-lg hover:shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white hover:text-white rounded-xl text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-2 shadow-lg hover:shadow-sky-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {generatingInsight ? (
                         <>
@@ -2000,7 +2000,7 @@ export const MacroDashboardView = ({
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="p-5 bg-white/5 border border-white/10 rounded-2xl text-xs text-indigo-100 font-sans leading-relaxed overflow-y-auto max-h-[24rem] scrollbar-thin mt-2"
+                      className="p-5 bg-white/5 border border-white/10 rounded-2xl text-xs text-sky-100 font-sans leading-relaxed overflow-y-auto max-h-[24rem] scrollbar-thin mt-2"
                     >
                       <div className="prose prose-invert prose-xs max-w-none text-slate-100">
                         {aiInsight.split('\n').map((line, idx) => {
@@ -2182,7 +2182,7 @@ export const MacroDashboardView = ({
                               <td className="px-6 py-4 text-right">
                                 <button
                                   onClick={() => onNavigateToDiagnosis(cli.diagnosticoOriginal)}
-                                  className="p-1 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer"
+                                  className="p-1 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg transition-colors cursor-pointer"
                                   title="Ver diagnóstico atual"
                                 >
                                   <ChevronRight size={18} />

@@ -306,7 +306,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
         level: "INTERMEDIÁRIO",
         range: "36 a 45 pontos",
         color: "text-blue-600 bg-blue-50 border-blue-200",
-        badge: "bg-indigo-600",
+        badge: "bg-sky-600",
         interpretation: "O empresário possui uma base de gestão sólida, mas pode aprimorar competências específicas para delegar melhor e acelerar os resultados de mercado."
       };
     } else {
@@ -517,15 +517,15 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
         {/* Plot actual user score polygon area */}
         <polygon
           points={polyPoints}
-          fill="rgba(99, 102, 241, 0.22)"
-          stroke="#4f46e5"
+          fill="rgba(14, 165, 233, 0.22)"
+          stroke="#0284c7"
           strokeWidth="2.5"
           strokeLinejoin="round"
           className="transition-all duration-700 ease-out"
         />
 
         {/* Center mark */}
-        <circle cx={center} cy={center} r="4.5" fill="#4f46e5" />
+        <circle cx={center} cy={center} r="4.5" fill="#0284c7" />
 
         {/* Vertices value labels and labels on the periphery */}
         {COMPETENCIES.map((comp, idx) => {
@@ -549,7 +549,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
                 cx={coords.x}
                 cy={coords.y}
                 r="4.5"
-                fill="#4f46e5"
+                fill="#0284c7"
                 stroke="white"
                 strokeWidth="1.5"
                 className="transition-all duration-700"
@@ -629,7 +629,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
       <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-100 pb-5 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-            <TrendingUp className="h-8 w-8 text-indigo-600" />
+            <TrendingUp className="h-8 w-8 text-sky-600" />
             Maturidade do Empresário
           </h1>
           <p className="mt-1 text-sm text-slate-500">
@@ -659,7 +659,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
             <button
               onClick={() => setActiveTab('history')}
               className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                activeTab === 'history' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                activeTab === 'history' ? 'bg-white text-sky-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Diagnóstico Atual
@@ -667,7 +667,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
             <button
               onClick={() => setActiveTab('evolution')}
               className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
-                activeTab === 'evolution' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+                activeTab === 'evolution' ? 'bg-white text-sky-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Gráfico de Evolução
@@ -675,7 +675,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
             <button
               onClick={() => setActiveTab('new-assessment')}
               className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all flex items-center gap-1 ${
-                activeTab === 'new-assessment' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+                activeTab === 'new-assessment' ? 'bg-sky-600 text-white shadow-sm' : 'bg-sky-50 text-sky-600 hover:bg-sky-100'
               }`}
             >
               <Plus className="h-3 w-3" /> Novo
@@ -704,7 +704,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
                 <p className="text-xs text-slate-400">Nenhum diagnóstico de competência registrado para esta empresa.</p>
                 <button
                   onClick={() => setActiveTab('new-assessment')}
-                  className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-100 transition-all"
+                  className="mt-4 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-sky-50 text-sky-600 rounded-lg hover:bg-sky-100 transition-all"
                 >
                   <Plus className="h-3.5 w-3.5" /> Avaliar Competências
                 </button>
@@ -721,7 +721,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
                       onClick={() => handleSelectEval(ev)}
                       className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex justify-between items-center ${
                         isSelected 
-                          ? 'border-indigo-200 bg-indigo-50/40 shadow-sm' 
+                          ? 'border-sky-200 bg-sky-50/40 shadow-sm' 
                           : 'border-slate-100 bg-slate-50/50 hover:bg-slate-50'
                       }`}
                     >
@@ -821,7 +821,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
               >
                 {!selectedEval ? (
                   <div className="bg-white rounded-[2rem] p-12 border border-slate-100 text-center shadow-sm">
-                    <div className="h-16 w-16 bg-slate-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <div className="h-16 w-16 bg-slate-50 text-sky-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
                       <TrendingUp className="h-8 w-8" />
                     </div>
                     <h3 className="text-lg font-bold text-slate-800">Nenhum diagnóstico de competência selecionado</h3>
@@ -830,7 +830,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
                     </p>
                     <button
                       onClick={() => setActiveTab('new-assessment')}
-                      className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 shadow-md transition-all"
+                      className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-sky-600 text-white rounded-xl text-sm font-semibold hover:bg-sky-700 shadow-md transition-all"
                     >
                       <Plus className="h-4 w-4" /> Registrar Nova Avaliação
                     </button>
@@ -843,7 +843,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
                       {/* Internal Header */}
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-5 gap-3">
                         <div>
-                          <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest bg-indigo-50 px-2.5 py-1 rounded-full">
+                          <span className="text-[10px] font-bold text-sky-600 uppercase tracking-widest bg-sky-50 px-2.5 py-1 rounded-full">
                             Diagnóstico de Maturidade Empresarial
                           </span>
                           <h2 className="text-xl font-extrabold text-slate-900 mt-1">
@@ -895,10 +895,10 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
                         </div>
 
                         {/* interpretation text box */}
-                        <div className="md:col-span-5 bg-indigo-50/20 border border-indigo-100 rounded-2xl p-4 flex gap-3">
-                          <Target className="h-6 w-6 text-indigo-500 shrink-0 mt-0.5" />
+                        <div className="md:col-span-5 bg-sky-50/20 border border-sky-100 rounded-2xl p-4 flex gap-3">
+                          <Target className="h-6 w-6 text-sky-500 shrink-0 mt-0.5" />
                           <div className="space-y-1 text-left">
-                            <span className="text-[10px] font-extrabold tracking-wider text-indigo-700 uppercase">
+                            <span className="text-[10px] font-extrabold tracking-wider text-sky-700 uppercase">
                               Interpretação
                             </span>
                             <p className="text-xs text-slate-600 font-medium leading-relaxed">
@@ -985,7 +985,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         
                         <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center gap-4">
-                          <div className="h-12 w-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shrink-0">
+                          <div className="h-12 w-12 bg-sky-50 text-sky-600 rounded-xl flex items-center justify-center shrink-0">
                             <Clock className="h-6 w-6" />
                           </div>
                           <div>
@@ -1017,14 +1017,14 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
                           </div>
                         </div>
 
-                        <div className="p-4 bg-indigo-600 text-white rounded-2xl flex items-center gap-4">
-                          <div className="h-12 w-12 bg-indigo-500 text-white rounded-xl flex items-center justify-center shrink-0">
+                        <div className="p-4 bg-sky-600 text-white rounded-2xl flex items-center gap-4">
+                          <div className="h-12 w-12 bg-sky-500 text-white rounded-xl flex items-center justify-center shrink-0">
                             <Sparkles className="h-6 w-6" />
                           </div>
                           <div>
-                            <span className="text-[10px] font-extrabold text-indigo-200 block uppercase">Próximo Alvo</span>
+                            <span className="text-[10px] font-extrabold text-sky-200 block uppercase">Próximo Alvo</span>
                             <span className="text-sm font-bold">Aprimorar pontos fracos</span>
-                            <p className="text-[10px] text-indigo-100 mt-0.5">Veja as ações sugeridas abaixo</p>
+                            <p className="text-[10px] text-sky-100 mt-0.5">Veja as ações sugeridas abaixo</p>
                           </div>
                         </div>
 
@@ -1074,7 +1074,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
                                             className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-extrabold transition-all ${
                                               isAdded 
                                                 ? "bg-emerald-50 text-emerald-600" 
-                                                : "bg-indigo-50 hover:bg-indigo-100 text-indigo-600 hover:shadow-sm"
+                                                : "bg-sky-50 hover:bg-sky-100 text-sky-600 hover:shadow-sm"
                                             }`}
                                           >
                                             {isAdded ? (
@@ -1118,7 +1118,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
                     Novo Diagnóstico de Competências
                   </h2>
                   <p className="text-sm text-slate-500 mt-1">
-                    Atribua uma nota de 1 a 5 para as competências essenciais de gestão para a empresa <strong className="text-indigo-600">{currentEmpresaName}</strong>.
+                    Atribua uma nota de 1 a 5 para as competências essenciais de gestão para a empresa <strong className="text-sky-600">{currentEmpresaName}</strong>.
                   </p>
                 </div>
 
@@ -1167,7 +1167,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
                             step="1"
                             value={currentScore}
                             onChange={(e) => setWizardScores(prev => ({ ...prev, [comp.id]: parseInt(e.target.value) }))}
-                            className="w-full accent-indigo-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
+                            className="w-full accent-sky-600 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer"
                           />
                           
                           {/* Colored Buttons alternative selection for rapid tapping */}
@@ -1179,7 +1179,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
                                 onClick={() => setWizardScores(prev => ({ ...prev, [comp.id]: lvl }))}
                                 className={`h-8 w-8 rounded-lg font-bold text-xs transition-all border shrink-0 ${
                                   currentScore === lvl
-                                    ? "bg-indigo-600 border-indigo-600 text-white shadow-md scale-105"
+                                    ? "bg-sky-600 border-sky-600 text-white shadow-md scale-105"
                                     : "bg-white hover:bg-slate-100 border-slate-200 text-slate-600"
                                 }`}
                               >
@@ -1201,7 +1201,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
                     placeholder="Anote pontos de destaque observados durante o teste de maturidade, histórico de reações, nível de honestidade, etc..."
                     value={wizardObservacoes}
                     onChange={(e) => setWizardObservacoes(e.target.value)}
-                    className="w-full p-4 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-slate-50 focus:bg-white transition-all"
+                    className="w-full p-4 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-slate-50 focus:bg-white transition-all"
                   />
                 </div>
 
@@ -1218,7 +1218,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
                     type="button"
                     onClick={handleSubmitAssessment}
                     disabled={savingAssessment}
-                    className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm rounded-xl shadow-md transition-all flex items-center gap-2"
+                    className="px-6 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold text-sm rounded-xl shadow-md transition-all flex items-center gap-2"
                   >
                     {savingAssessment ? (
                       <>
@@ -1261,7 +1261,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
                     </p>
                     <button
                       onClick={() => setActiveTab('new-assessment')}
-                      className="mt-2 inline-flex items-center gap-1 bg-indigo-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow hover:bg-indigo-700 transition-all"
+                      className="mt-2 inline-flex items-center gap-1 bg-sky-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow hover:bg-sky-700 transition-all"
                     >
                       <Plus className="h-3.5 w-3.5" /> Registrar Segundo Diagnóstico
                     </button>
@@ -1293,14 +1293,14 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
                           return (
                             <div key={ev.id} className="flex flex-col items-center flex-1 z-10 relative group">
                               {/* Popup display of exact points */}
-                              <span className="absolute -top-6 bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow opacity-0 group-hover:opacity-100 transition-opacity">
+                              <span className="absolute -top-6 bg-sky-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow opacity-0 group-hover:opacity-100 transition-opacity">
                                 {ev.pontuacaoTotal} pts
                               </span>
 
                               {/* Styled vertical line/bar representing progress */}
                               <div 
                                 style={{ height: `${heightPct * 1.8}px` }} 
-                                className="w-4 bg-indigo-500 hover:bg-indigo-600 rounded-t-lg transition-all shadow-sm flex items-end justify-center"
+                                className="w-4 bg-sky-500 hover:bg-sky-600 rounded-t-lg transition-all shadow-sm flex items-end justify-center"
                               >
                                 <span className="text-[9px] font-bold text-white mb-1.5 hidden sm:inline">{ev.pontuacaoTotal}</span>
                               </div>
@@ -1352,18 +1352,18 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
                         </div>
                       </div>
 
-                      <div className="p-6 bg-indigo-50/20 border border-indigo-100 rounded-[2rem] space-y-3">
+                      <div className="p-6 bg-sky-50/20 border border-sky-100 rounded-[2rem] space-y-3">
                         <div className="flex items-center gap-2">
-                          <Sparkles className="h-5 w-5 text-indigo-600" />
+                          <Sparkles className="h-5 w-5 text-sky-600" />
                           <h4 className="font-bold text-slate-800 text-sm">Análise de Evolução x Execução</h4>
                         </div>
                         
                         <div className="text-xs text-slate-600 space-y-2.5 leading-relaxed">
                           <p>
-                            Atualmente, o plano de ação deste cliente está com <strong className="text-indigo-600">{taskProgress}% de conclusão</strong>.
+                            Atualmente, o plano de ação deste cliente está com <strong className="text-sky-600">{taskProgress}% de conclusão</strong>.
                           </p>
                           <p>
-                            No histórico avaliado, nota-se que a pontuação de maturidade empresarial partiu de <strong className="text-slate-800">{companyEvaluations[companyEvaluations.length - 1].pontuacaoTotal} pontos</strong> e evoluiu para <strong className="text-indigo-600">{companyEvaluations[0].pontuacaoTotal} pontos</strong> no último diagnóstico.
+                            No histórico avaliado, nota-se que a pontuação de maturidade empresarial partiu de <strong className="text-slate-800">{companyEvaluations[companyEvaluations.length - 1].pontuacaoTotal} pontos</strong> e evoluiu para <strong className="text-sky-600">{companyEvaluations[0].pontuacaoTotal} pontos</strong> no último diagnóstico.
                           </p>
                           <p className="font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 p-2 rounded-xl border border-emerald-100 mt-2">
                             <TrendingUp className="h-4 w-4 shrink-0" />
@@ -1387,7 +1387,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
 
       {/* Bottom informational guidance banner */}
       <div className="bg-slate-50 rounded-3xl p-5 border border-slate-200 flex items-start gap-3 text-xs leading-relaxed max-w-4xl mx-auto">
-        <Info className="h-5 w-5 text-indigo-500 shrink-0 mt-0.5" />
+        <Info className="h-5 w-5 text-sky-500 shrink-0 mt-0.5" />
         <div className="text-slate-500">
           <strong className="text-slate-700">Forma de Aplicação:</strong> O empresário deve ler atenciosamente a descrição de cada critério e atribuir uma nota sincera de 1 a 5, refletindo com total honestidade sobre o seu comportamento atual no dia a dia do negócio. O consultor deve facilitar essa reflexão fazendo perguntas norteadoras cruciais que ajudem o empresário a ponderar seu real desempenho prático e gerir o avanço das competências com base no progresso das tarefas do plano de ação.
         </div>

@@ -182,7 +182,7 @@ export const BackupExportModal: React.FC<BackupExportModalProps> = ({
                       </>
                     ) : (
                       <>
-                        <Copy size={18} className="text-indigo-600" />
+                        <Copy size={18} className="text-sky-600" />
                         <span>Copiar Conteúdo (JSON)</span>
                       </>
                     )}
@@ -206,7 +206,7 @@ export const BackupExportModal: React.FC<BackupExportModalProps> = ({
                     </div>
 
                     <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center gap-2.5">
-                      <div className="p-2 bg-indigo-100 text-indigo-700 rounded-lg shrink-0">
+                      <div className="p-2 bg-sky-100 text-sky-700 rounded-lg shrink-0">
                         <ClipboardList size={16} />
                       </div>
                       <div>

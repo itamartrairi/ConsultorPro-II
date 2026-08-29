@@ -83,7 +83,7 @@ export function CopySgfConsultoriaModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-800 p-6 text-white flex items-center justify-between shrink-0">
+        <div className="bg-gradient-to-r from-blue-700 via-sky-700 to-slate-800 p-6 text-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-white/15 flex items-center justify-center backdrop-blur-xs">
               <FileSpreadsheet className="w-6 h-6 text-white" />

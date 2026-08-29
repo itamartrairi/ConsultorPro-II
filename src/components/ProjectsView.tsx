@@ -1175,7 +1175,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                     setGanttReferenceDate(minDate);
                   }
                 }}
-                className="p-2 text-indigo-600 hover:bg-indigo-50"
+                className="p-2 text-sky-600 hover:bg-sky-50"
                 title="Ir para o início do primeiro projeto"
               >
                 <RefreshCw size={15} />
@@ -1272,7 +1272,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                     return (
                       <React.Fragment key={project.id}>
                         {/* Project Row */}
-                        <div className={`flex items-stretch hover:bg-slate-50/40 transition-colors ${isExpanded ? 'bg-indigo-50/20' : ''}`}>
+                        <div className={`flex items-stretch hover:bg-slate-50/40 transition-colors ${isExpanded ? 'bg-sky-50/20' : ''}`}>
                           {/* Project row details (Left side) */}
                           <div className="w-[380px] p-5 shrink-0 border-r border-slate-100 flex flex-col justify-between space-y-3">
                             <div className="space-y-1">
@@ -1309,7 +1309,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                                     }}
                                     variant="ghost"
                                     size="sm"
-                                    className="p-1 h-7 w-7 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-full flex items-center justify-center"
+                                    className="p-1 h-7 w-7 text-slate-400 hover:text-sky-600 hover:bg-slate-100 rounded-full flex items-center justify-center"
                                     title="Editar Projeto"
                                   >
                                     <Pencil size={12} />
@@ -1353,7 +1353,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                             <div className="flex items-center justify-between gap-2 pt-1">
                               <button
                                 onClick={() => setExpandedProjectGantt(isExpanded ? null : project.id)}
-                                className="text-xs font-extrabold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 bg-indigo-50 px-2.5 py-1.5 rounded-lg transition-colors border border-indigo-100"
+                                className="text-xs font-extrabold text-sky-600 hover:text-sky-800 flex items-center gap-1 bg-sky-50 px-2.5 py-1.5 rounded-lg transition-colors border border-sky-100"
                               >
                                 {isExpanded ? 'Ocultar Ações' : `Cronograma de Ações (${projTasks.length})`}
                                 <ChevronDown size={14} className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
@@ -1410,7 +1410,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                                       <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center border shadow-sm transition-all ${
                                         step.checked 
                                           ? 'bg-emerald-500 border-emerald-600 text-white scale-110' 
-                                          : 'bg-white border-slate-200 hover:border-indigo-400 hover:bg-slate-50'
+                                          : 'bg-white border-slate-200 hover:border-sky-400 hover:bg-slate-50'
                                       }`}>
                                         {step.checked && <CheckSquare size={8} />}
                                       </div>
@@ -1464,7 +1464,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                                   const isTaskSaving = savingTaskIds.includes(task.id);
 
                                   return (
-                                    <div key={task.id} className="flex items-stretch hover:bg-indigo-50/10">
+                                    <div key={task.id} className="flex items-stretch hover:bg-sky-50/10">
                                       {/* Sub-row task details (Left Side) */}
                                       <div className="w-[380px] p-4 shrink-0 border-r border-slate-100 pl-8 flex flex-col space-y-3">
                                         <div className="space-y-1">
@@ -1489,7 +1489,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                                             <select
                                               value={task.status}
                                               onChange={(e) => handleUpdateTaskField(task.id, { status: e.target.value as any })}
-                                              className="w-full bg-white border border-slate-200 text-[10px] font-bold rounded-lg p-1.5 focus:outline-none focus:border-indigo-400"
+                                              className="w-full bg-white border border-slate-200 text-[10px] font-bold rounded-lg p-1.5 focus:outline-none focus:border-sky-400"
                                             >
                                               <option value="Pendente">Pendente</option>
                                               <option value="Em Andamento">Em Andamento</option>
@@ -1503,7 +1503,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                                             <select
                                               value={task.prioridade}
                                               onChange={(e) => handleUpdateTaskField(task.id, { prioridade: e.target.value as any })}
-                                              className="w-full bg-white border border-slate-200 text-[10px] font-bold rounded-lg p-1.5 focus:outline-none focus:border-indigo-400"
+                                              className="w-full bg-white border border-slate-200 text-[10px] font-bold rounded-lg p-1.5 focus:outline-none focus:border-sky-400"
                                             >
                                               <option value="Baixa">Baixa</option>
                                               <option value="Média">Média</option>
@@ -1575,7 +1575,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                                             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover/task:block bg-slate-800 text-white p-2 rounded-lg text-[10px] font-bold whitespace-nowrap z-50 shadow-md">
                                               <p className="font-extrabold text-white">{task.area}</p>
                                               <p className="text-slate-300 font-medium">Prazo: {taskGanttStyle.label}</p>
-                                              <p className="text-indigo-300">Status: {task.status}</p>
+                                              <p className="text-sky-300">Status: {task.status}</p>
                                             </div>
                                           </div>
                                         )}
@@ -1745,7 +1745,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                                 }}
                                 variant="ghost"
                                 size="sm"
-                                className="p-1 h-7 w-7 text-slate-400 hover:text-indigo-600 hover:bg-slate-50 rounded-full flex items-center justify-center"
+                                className="p-1 h-7 w-7 text-slate-400 hover:text-sky-600 hover:bg-slate-50 rounded-full flex items-center justify-center"
                                 title="Editar Projeto"
                               >
                                 <Pencil size={12} />
@@ -1790,7 +1790,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                             <div className="flex justify-between text-[10px] text-slate-400">
                               <span>{project.completedTasks} de {project.totalTasks} tarefas concluídas</span>
                               {project.projectEval?.kpiProgress !== undefined && (
-                                <span className="font-bold text-indigo-500">Meta KPI: {project.projectEval.kpiProgress}%</span>
+                                <span className="font-bold text-sky-500">Meta KPI: {project.projectEval.kpiProgress}%</span>
                               )}
                             </div>
                           </div>
@@ -1798,7 +1798,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                           {/* Milestones brief */}
                           <div className="bg-slate-50 p-3 rounded-2xl flex items-center justify-between border border-slate-100/50">
                             <div className="flex items-center gap-2">
-                              <CheckSquare size={14} className="text-indigo-500" />
+                              <CheckSquare size={14} className="text-sky-500" />
                               <span className="text-xs font-semibold text-slate-600">Marcos Concluídos</span>
                             </div>
                             <span className="text-xs font-bold text-slate-800 bg-white px-2.5 py-0.5 rounded-lg border border-slate-100">
@@ -1883,7 +1883,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                   value={newProjFocus}
                   className="w-full bg-slate-100 border border-slate-200 rounded-xl p-3 text-sm font-semibold text-slate-500 cursor-not-allowed"
                 />
-                <p className="text-[11px] text-indigo-600 font-medium">
+                <p className="text-[11px] text-sky-600 font-medium">
                   💡 Definido automaticamente com base no Tipo de Negócio do Cliente.
                 </p>
               </div>
@@ -1974,7 +1974,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
               {/* 1. Quantitative Evaluation */}
               <div className="space-y-4">
                 <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                  <BarChart3 size={16} className="text-indigo-500" />
+                  <BarChart3 size={16} className="text-sky-500" />
                   Avaliação Quantitativa (Metas & KPI)
                 </h4>
 
@@ -2004,7 +2004,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                 <div className="space-y-2 pt-2">
                   <div className="flex justify-between text-xs font-bold">
                     <span className="text-slate-500">Progresso do Alcance da Meta:</span>
-                    <span className="text-indigo-600">{kpiProgress}%</span>
+                    <span className="text-sky-600">{kpiProgress}%</span>
                   </div>
                   <input
                     type="range"
@@ -2012,7 +2012,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                     max="100"
                     value={kpiProgress}
                     onChange={(e) => setKpiProgress(Number(e.target.value))}
-                    className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                    className="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-sky-500"
                   />
                   <div className="flex justify-between text-[10px] text-slate-400">
                     <span>0% (Sem evolução)</span>
@@ -2218,7 +2218,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
               </div>
 
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-xs text-slate-500 flex gap-2">
-                <Info size={16} className="text-indigo-500 shrink-0" />
+                <Info size={16} className="text-sky-500 shrink-0" />
                 <span>Clique em cada marco para atualizar o progresso de etapas da consultoria. Lembre-se de salvar as alterações.</span>
               </div>
             </div>
@@ -2238,7 +2238,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
             >
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                  <Briefcase className="text-indigo-600" size={20} />
+                  <Briefcase className="text-sky-600" size={20} />
                   Editar Detalhes do Projeto
                 </h2>
                 <button 
@@ -2259,7 +2259,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                     value={editProjName}
                     onChange={(e) => setEditProjName(e.target.value)}
                     placeholder="Ex: Diagnóstico Operacional, Projeto - Empresa X"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 font-medium"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-sky-500 font-medium"
                     required
                   />
                 </div>
@@ -2271,7 +2271,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                   <select
                     value={editProjClient}
                     onChange={(e) => setEditProjClient(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 font-medium"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-sky-500 font-medium"
                     required
                   >
                     <option value="">Selecione um Cliente</option>
@@ -2290,7 +2290,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                   <select
                     value={editProjFocus}
                     onChange={(e) => setEditProjFocus(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 font-medium"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-sky-500 font-medium"
                   >
                     <option value="Geral">Diagnóstico Geral</option>
                     <option value="Carcinicultura">Carcinicultura</option>
@@ -2308,7 +2308,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                       type="date"
                       value={editProjDate}
                       onChange={(e) => setEditProjDate(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 font-mono"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-sky-500 font-mono"
                       required
                     />
                   </div>
@@ -2320,7 +2320,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                     <select
                       value={editProjStatus}
                       onChange={(e) => setEditProjStatus(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-indigo-500 font-medium"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-800 focus:outline-none focus:border-sky-500 font-medium"
                     >
                       <option value="Planejamento">Planejamento</option>
                       <option value="Em Andamento">Em Andamento</option>
