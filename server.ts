@@ -40,7 +40,7 @@ function getSystemGeminiApiKey(): string | undefined {
 async function startServer() {
   console.log("Environment Keys on Server Startup:", Object.keys(process.env).filter(k => k.toLowerCase().includes("gemini") || k.toLowerCase().includes("key") || k.toLowerCase().includes("kei")));
   const app = reportExpressErrorsAndStart();
-  const PORT = 3000;
+  const PORT = Number(process.env.PORT) || 3000;
 
   function reportExpressErrorsAndStart() {
     return express();
