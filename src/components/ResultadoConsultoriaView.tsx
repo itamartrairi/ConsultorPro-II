@@ -51,6 +51,7 @@ import { db } from '../firebase';
 import { Button } from './Button';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { sebraeLogoBase64 } from '../sebraeLogo';
 
 export interface ItemProblemaSolucao {
@@ -631,43 +632,298 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
     }
   };
 
-  // Export PDF Report with High Resolution and Consultancy Header
+  // Print Report Handler
+  const handlePrintReport = () => {
+    const originalTitle = document.title;
+    const clientName = currentEmpresa?.nome || currentEmpresa?.razaoSocial || 'Cliente';
+    document.title = `Laudo_Resultado_Consultoria_${clientName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    window.print();
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 500);
+  };
+
+  // Export PDF Report with High Resolution and Official Header
   const handleExportPDF = async () => {
-    const reportElement = document.getElementById('consultancy-result-pdf-report');
-    if (!reportElement) {
-      alert('Elemento do relatório não encontrado.');
+    if (!selectedEmpresaId && !currentEmpresa) {
+      alert('Por favor, selecione um Cliente antes de gerar o relatório em PDF.');
       return;
     }
 
     setIsExportingPdf(true);
     try {
-      const canvas = await html2canvas(reportElement, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 14;
+      const contentWidth = pageWidth - margin * 2; // 182mm
+
+      // Add Logo if available
+      const logoToUse = customLogo || customConsultoraLogo || sebraeLogoBase64;
+      if (logoToUse && typeof logoToUse === 'string' && (logoToUse.startsWith('data:image') || logoToUse.startsWith('http') || logoToUse.length > 50)) {
+        try {
+          pdf.addImage(logoToUse, 'PNG', pageWidth - margin - 38, 10, 38, 14, '', 'FAST');
+        } catch (e) {
+          console.warn('Could not add logo image to PDF:', e);
+        }
+      }
+
+      // Top Brand Tag
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(8);
+      pdf.setTextColor(67, 56, 202); // Indigo-700
+      pdf.text('SISTEMA DE GESTÃO E CONSULTORIA EMPRESARIAL', margin, 14);
+
+      // Main Title
+      pdf.setFontSize(13);
+      pdf.setTextColor(15, 23, 42); // Slate-900
+      pdf.text('LAUDO DE AVALIAÇÃO DE RESULTADOS DA CONSULTORIA', margin, 20);
+
+      // Subtitle
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8.5);
+      pdf.setTextColor(100, 116, 139); // Slate-500
+      pdf.text('Diagnóstico de Problemas, Soluções Implementadas e Impacto na Gestão', margin, 25);
+
+      // Divider Line
+      pdf.setDrawColor(203, 213, 225);
+      pdf.setLineWidth(0.5);
+      pdf.line(margin, 28, pageWidth - margin, 28);
+
+      // 1. Client & Attendance Information Table
+      const empNome = currentEmpresa?.nome || currentEmpresa?.razaoSocial || currentDiagnostico?.nomeEmpresa || 'Cliente';
+      const empCnpj = currentEmpresa?.cnpj ? `CNPJ: ${currentEmpresa.cnpj}` : '';
+      const empRep = currentEmpresa?.representante ? `Representante: ${currentEmpresa.representante}` : '';
+      const empEnd = currentEmpresa?.enderecoComercial ? `Endereço: ${currentEmpresa.enderecoComercial}` : '';
+      
+      const clientLines = [
+        `Empresa: ${empNome}`,
+        empCnpj,
+        empRep,
+        empEnd
+      ].filter(Boolean).join('\n');
+
+      const projNome = currentDiagnostico?.nomeProjeto || currentDiagnostico?.nome || 'Consultoria Gerencial';
+      const consultor = consultorNome || user?.displayName || 'Consultor Especialista';
+      const credenciada = credenciadaNome ? `Credenciada: ${credenciadaNome}` : '';
+      const sgfInfo = codigoSgf ? `Código SGF: ${codigoSgf}` : '';
+      const chInfo = cargaHoraria ? `Carga Horária: ${cargaHoraria}` : '';
+      const dataInfo = `Data: ${dataAnalise || new Date().toLocaleDateString('pt-BR')}`;
+      
+      const attendanceLines = [
+        `Projeto: ${projNome}`,
+        `Consultor(a): ${consultor}`,
+        credenciada,
+        [sgfInfo, chInfo, dataInfo].filter(Boolean).join(' | ')
+      ].filter(Boolean).join('\n');
+
+      autoTable(pdf, {
+        startY: 31,
+        margin: { left: margin, right: margin },
+        head: [['DADOS DA EMPRESA CLIENTE', 'DADOS DO ATENDIMENTO & CONSULTORIA']],
+        body: [[clientLines, attendanceLines]],
+        headStyles: {
+          fillColor: [241, 245, 249],
+          textColor: [51, 65, 85],
+          fontStyle: 'bold',
+          fontSize: 8,
+          cellPadding: 2
+        },
+        bodyStyles: {
+          fillColor: [248, 250, 252],
+          textColor: [30, 41, 59],
+          fontSize: 8,
+          cellPadding: 2.5,
+          lineColor: [226, 232, 240],
+          lineWidth: 0.2
+        },
+        theme: 'grid'
       });
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 190;
-      const pageHeight = 285;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 10;
+      let currentY = (pdf as any).lastAutoTable.finalY + 4;
 
-      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+      // 2. Executive Performance Dashboard Box
+      autoTable(pdf, {
+        startY: currentY,
+        margin: { left: margin, right: margin },
+        head: [['DESEMPENHO GERAL DA CONSULTORIA', 'AVALIAÇÃO POR DIMENSÃO (0 A 10 PTS)']],
+        body: [
+          [
+            `MÉDIA GERAL: ${mediaGeralCalculada.toFixed(1)} / 10.0 PONTOS\nClassificação: ${classificacaoGeral.label}\n\n${classificacaoGeral.desc}`,
+            `• 1. Resolução dos Problemas: ${notas.eficaciaProblemas}/10\n• 2. Impacto na Gestão: ${notas.impactoGestao}/10\n• 3. Ganhos Financeiros / Produtividade: ${notas.impactoFinanceiroProd}/10\n• 4. Engajamento da Equipe: ${notas.engajamentoEquipe}/10\n• 5. Satisfação com a Consultoria: ${notas.satisfacaoConsultoria}/10\n• 6. Satisfação com o Consultor: ${notas.satisfacaoConsultor}/10`
+          ]
+        ],
+        headStyles: {
+          fillColor: [15, 23, 42],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 8,
+          cellPadding: 2.5
+        },
+        bodyStyles: {
+          fillColor: [248, 250, 252],
+          textColor: [15, 23, 42],
+          fontSize: 8,
+          cellPadding: 3,
+          lineColor: [203, 213, 225],
+          lineWidth: 0.2
+        },
+        columnStyles: {
+          0: { fontStyle: 'bold', textColor: [30, 41, 59], cellWidth: 90 },
+          1: { cellWidth: 92 }
+        },
+        theme: 'grid'
+      });
 
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight + 10;
+      currentY = (pdf as any).lastAutoTable.finalY + 4;
+
+      // 3. Problem vs Solution Matrix Table
+      const tableBody = problemasSolucoes.length > 0
+        ? problemasSolucoes.map(row => [
+            row.area || 'Geral',
+            row.problema || '—',
+            row.solucaoImplementada + (row.evidenciaResultado ? `\n[Evidência: ${row.evidenciaResultado}]` : ''),
+            row.status || 'Concluído',
+            `${row.notaEficacia || 0}/10`
+          ])
+        : [[
+            'Geral',
+            'Diagnóstico empresarial executado',
+            'Implantação de melhorias operacionais e gerenciais',
+            'Concluído',
+            '10/10'
+          ]];
+
+      autoTable(pdf, {
+        startY: currentY,
+        margin: { left: margin, right: margin },
+        head: [['ÁREA', 'PROBLEMA DIAGNOSTICADO', 'SOLUÇÃO IMPLEMENTADA & EVIDÊNCIA', 'STATUS', 'EFICÁCIA']],
+        body: tableBody,
+        headStyles: {
+          fillColor: [67, 56, 202], // Indigo-700
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 8,
+          cellPadding: 2.5
+        },
+        bodyStyles: {
+          fontSize: 7.5,
+          cellPadding: 2,
+          textColor: [30, 41, 59],
+          lineColor: [226, 232, 240],
+          lineWidth: 0.2
+        },
+        columnStyles: {
+          0: { cellWidth: 24, fontStyle: 'bold' },
+          1: { cellWidth: 48 },
+          2: { cellWidth: 70 },
+          3: { cellWidth: 24, fontStyle: 'bold' },
+          4: { cellWidth: 16, halign: 'center', fontStyle: 'bold' }
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252]
+        },
+        theme: 'grid'
+      });
+
+      currentY = (pdf as any).lastAutoTable.finalY + 4;
+
+      // 4. Qualitative Analyses
+      const qualitativeData = [
+        ['2. IMPACTO NA GESTÃO E PROCESSOS', parecerImpactoGestao || '—'],
+        ['3. PRINCIPAIS GANHOS CONQUISTADOS', ganhosPrincipais || '—'],
+        [`4. SATISFAÇÃO COM A CONSULTORIA (${notas.satisfacaoConsultoria}/10)`, feedbackConsultoria || '—'],
+        [`5. SATISFAÇÃO COM O CONSULTOR (${notas.satisfacaoConsultor}/10)`, feedbackConsultor || '—'],
+        ['6. RECOMENDAÇÕES E PRÓXIMOS PASSOS', recomendacoesFuturas || '—']
+      ];
+
+      autoTable(pdf, {
+        startY: currentY,
+        margin: { left: margin, right: margin },
+        head: [['DIMENSÃO QUALITATIVA', 'PARECER / OBSERVAÇÃO TÉCNICA DA CONSULTORIA']],
+        body: qualitativeData,
+        headStyles: {
+          fillColor: [30, 41, 59],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+          fontSize: 8,
+          cellPadding: 2.5
+        },
+        bodyStyles: {
+          fontSize: 7.5,
+          cellPadding: 2.5,
+          textColor: [30, 41, 59],
+          lineColor: [226, 232, 240],
+          lineWidth: 0.2
+        },
+        columnStyles: {
+          0: { cellWidth: 50, fontStyle: 'bold', fillColor: [248, 250, 252] },
+          1: { cellWidth: 132 }
+        },
+        theme: 'grid'
+      });
+
+      currentY = (pdf as any).lastAutoTable.finalY + 6;
+
+      // 5. Signatures Block
+      if (currentY > pageHeight - 35) {
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+        currentY = 25;
+      }
+
+      const colW = (contentWidth - 10) / 2;
+      const sigY = currentY + 12;
+
+      pdf.setDrawColor(148, 163, 184);
+      pdf.setLineWidth(0.4);
+
+      // Left Signature: Consultant
+      pdf.line(margin + 5, sigY, margin + colW - 5, sigY);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(8);
+      pdf.setTextColor(15, 23, 42);
+      pdf.text(consultorNome || 'Consultor(a) Especialista', margin + colW / 2, sigY + 4, { align: 'center' });
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(7);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text(credenciadaNome || 'Consultoria Empresarial', margin + colW / 2, sigY + 8, { align: 'center' });
+
+      // Right Signature: Client Representative
+      const rightX = margin + colW + 10;
+      pdf.line(rightX + 5, sigY, rightX + colW - 5, sigY);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(8);
+      pdf.setTextColor(15, 23, 42);
+      pdf.text(responsavelClienteNome || currentEmpresa?.representante || 'Representante da Empresa', rightX + colW / 2, sigY + 4, { align: 'center' });
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(7);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text(`${responsavelClienteCargo || 'Diretor'} • ${empNome}`, rightX + colW / 2, sigY + 8, { align: 'center' });
+
+      // Page Numbering and Running Footers
+      const totalPages = (pdf as any).internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        pdf.setPage(i);
+        pdf.setDrawColor(226, 232, 240);
+        pdf.setLineWidth(0.3);
+        pdf.line(margin, pageHeight - 10, pageWidth - margin, pageHeight - 10);
+
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(7);
+        pdf.setTextColor(148, 163, 184);
+        pdf.text(
+          `Laudo de Avaliação de Resultados da Consultoria • ${empNome} • Emitido em ${new Date().toLocaleDateString('pt-BR')}`,
+          margin,
+          pageHeight - 6
+        );
+        pdf.text(`Página ${i} de ${totalPages}`, pageWidth - margin, pageHeight - 6, { align: 'right' });
       }
 
       const clientNameClean = (currentEmpresa?.nome || 'Cliente').replace(/[^a-zA-Z0-9]/g, '_');
       pdf.save(`Relatorio_Resultado_Consultoria_${clientNameClean}.pdf`);
+
+      setSaveSuccessMessage('Relatório em PDF gerado e baixado com sucesso!');
+      setTimeout(() => setSaveSuccessMessage(null), 4000);
     } catch (err: any) {
       console.error('PDF Export Error:', err);
       alert('Erro ao gerar relatório em PDF: ' + (err?.message || err));
@@ -1475,9 +1731,19 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                           setActiveSubTab('relatorio');
                         }}
                         className="p-1.5 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-100"
-                        title="Ver Relatório PDF"
+                        title="Ver Relatório"
                       >
                         <FileText size={14} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          loadAnalysisIntoForm(item);
+                          setTimeout(() => handleExportPDF(), 100);
+                        }}
+                        className="p-1.5 text-emerald-600 hover:text-emerald-800 rounded-lg hover:bg-emerald-50"
+                        title="Baixar Laudo em PDF"
+                      >
+                        <Download size={14} />
                       </button>
                       <button
                         onClick={() => item.id && handleDeleteSaved(item.id)}
@@ -1498,25 +1764,34 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
       {/* RELATÓRIO EXECUTIVO / LAUDO PDF COM CABEÇALHO COMPLETO */}
       {activeSubTab === 'relatorio' && (
         <div className="space-y-4">
-          <div className="bg-slate-100 p-4 rounded-xl flex items-center justify-between border border-slate-200">
+          <div className="bg-slate-100 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between border border-slate-200 gap-3">
             <div className="flex items-center gap-2 text-slate-700 text-xs font-medium">
-              <Printer size={16} className="text-indigo-600" />
-              <span>Pré-visualização do Laudo Oficial de Resultado da Consultoria. Clique em <strong>"Gerar Laudo PDF"</strong> para baixar.</span>
+              <Printer size={16} className="text-indigo-600 flex-shrink-0" />
+              <span>Pré-visualização do Laudo Oficial de Resultado da Consultoria. Clique em <strong>"Baixar em PDF"</strong> para download instantâneo.</span>
             </div>
-            <Button
-              onClick={handleExportPDF}
-              disabled={isExportingPdf}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5"
-            >
-              {isExportingPdf ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Download size={14} />}
-              Baixar em PDF
-            </Button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                onClick={handlePrintReport}
+                className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-bold px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-sm"
+              >
+                <Printer size={14} />
+                Imprimir Laudo
+              </Button>
+              <Button
+                onClick={handleExportPDF}
+                disabled={isExportingPdf}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-sm"
+              >
+                {isExportingPdf ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Download size={14} />}
+                Baixar em PDF
+              </Button>
+            </div>
           </div>
 
-          {/* O CONTAINER CAPTURADO PELO HTML2CANVAS */}
+          {/* O CONTAINER DE PRÉ-VISUALIZAÇÃO */}
           <div
             id="consultancy-result-pdf-report"
-            className="bg-white p-8 sm:p-12 rounded-2xl border border-slate-200 shadow-xl max-w-4xl mx-auto text-slate-900 space-y-6"
+            className="bg-white p-8 sm:p-12 rounded-2xl border border-slate-200 shadow-xl max-w-4xl mx-auto text-slate-900 space-y-6 print:shadow-none print:border-none print:p-0"
             style={{ minHeight: '1100px', fontFamily: 'Inter, system-ui, sans-serif' }}
           >
             {/* CABEÇALHO OFICIAL DA CONSULTORIA */}
@@ -1540,6 +1815,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                     <img
                       src={customLogo}
                       alt="Logo SEBRAE"
+                      crossOrigin="anonymous"
                       className="h-12 max-w-[130px] object-contain"
                     />
                   ) : (!customConsultoraLogo && sebraeLogoBase64 ? (
@@ -1554,6 +1830,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                     <img
                       src={customConsultoraLogo}
                       alt="Logo Consultora"
+                      crossOrigin="anonymous"
                       className="h-12 max-w-[130px] object-contain"
                     />
                   )}
@@ -1589,36 +1866,36 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
               <div>
                 <div className="text-[10px] uppercase font-bold text-indigo-300 tracking-widest">Desempenho Geral da Consultoria</div>
                 <div className="text-2xl font-black text-amber-300 flex items-baseline gap-1.5 mt-0.5">
-                  {mediaGeralCalculada.toFixed(1)} <span className="text-xs text-white/70 font-normal">/ 10.0 Pontos</span>
+                  {mediaGeralCalculada.toFixed(1)} <span className="text-xs text-slate-300 font-normal">/ 10.0 Pontos</span>
                 </div>
-                <div className="text-xs font-semibold text-white/90 mt-0.5">
+                <div className="text-xs font-semibold text-white mt-0.5">
                   Classificação: <span className="text-amber-300 font-bold">{classificacaoGeral.label}</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-2 text-[10px] max-w-sm">
-                <div className="bg-white/10 p-2 rounded-lg text-center">
-                  <div className="text-white/70 font-medium">Problemas</div>
+                <div className="bg-slate-800 p-2 rounded-lg text-center border border-slate-700">
+                  <div className="text-slate-300 font-medium">Problemas</div>
                   <div className="text-sm font-black text-white">{notas.eficaciaProblemas}/10</div>
                 </div>
-                <div className="bg-white/10 p-2 rounded-lg text-center">
-                  <div className="text-white/70 font-medium">Gestão</div>
+                <div className="bg-slate-800 p-2 rounded-lg text-center border border-slate-700">
+                  <div className="text-slate-300 font-medium">Gestão</div>
                   <div className="text-sm font-black text-white">{notas.impactoGestao}/10</div>
                 </div>
-                <div className="bg-white/10 p-2 rounded-lg text-center">
-                  <div className="text-white/70 font-medium">Finanças</div>
+                <div className="bg-slate-800 p-2 rounded-lg text-center border border-slate-700">
+                  <div className="text-slate-300 font-medium">Finanças</div>
                   <div className="text-sm font-black text-white">{notas.impactoFinanceiroProd}/10</div>
                 </div>
-                <div className="bg-white/10 p-2 rounded-lg text-center">
-                  <div className="text-white/70 font-medium">Equipe</div>
+                <div className="bg-slate-800 p-2 rounded-lg text-center border border-slate-700">
+                  <div className="text-slate-300 font-medium">Equipe</div>
                   <div className="text-sm font-black text-white">{notas.engajamentoEquipe}/10</div>
                 </div>
-                <div className="bg-white/10 p-2 rounded-lg text-center">
-                  <div className="text-white/70 font-medium">Consultoria</div>
+                <div className="bg-slate-800 p-2 rounded-lg text-center border border-slate-700">
+                  <div className="text-slate-300 font-medium">Consultoria</div>
                   <div className="text-sm font-black text-white">{notas.satisfacaoConsultoria}/10</div>
                 </div>
-                <div className="bg-white/10 p-2 rounded-lg text-center">
-                  <div className="text-white/70 font-medium">Consultor</div>
+                <div className="bg-slate-800 p-2 rounded-lg text-center border border-slate-700">
+                  <div className="text-slate-300 font-medium">Consultor</div>
                   <div className="text-sm font-black text-white">{notas.satisfacaoConsultor}/10</div>
                 </div>
               </div>
@@ -1715,7 +1992,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
             </div>
 
             {/* RECOMENDAÇÕES FINAIS */}
-            <div className="p-3.5 bg-indigo-50/50 border border-indigo-200 rounded-xl space-y-1.5 text-xs">
+            <div className="p-3.5 bg-indigo-50 border border-indigo-200 rounded-xl space-y-1.5 text-xs">
               <div className="text-[10px] font-black uppercase text-indigo-900 tracking-wider">
                 6. Recomendações e Próximos Passos
               </div>

@@ -2,11 +2,6 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { 
   getFirestore, 
-  initializeFirestore, 
-  persistentLocalCache, 
-  persistentSingleTabManager,
-  memoryLocalCache,
-  Firestore,
   collection, 
   getDocs, 
   addDoc, 
@@ -21,16 +16,16 @@ import firebaseConfig from '../firebase-applet-config.json';
 if (typeof window !== 'undefined' && window.localStorage) {
   try {
     const keysToRemove: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i);
       if (key && (key.startsWith('firebase:') || key.startsWith('firestore:') || key.includes('firestore') || key.includes('applet_token'))) {
-        const val = localStorage.getItem(key);
-        if (val && (val.startsWith('enc:') || val === 'undefined' || val === 'null' || !val.startsWith('{') && !val.startsWith('[') && !val.startsWith('"') && !val.startsWith("'"))) {
+        const val = window.localStorage.getItem(key);
+        if (val && (val.startsWith('enc:') || val === 'undefined' || val === 'null' || (!val.startsWith('{') && !val.startsWith('[') && !val.startsWith('"') && !val.startsWith("'")))) {
           keysToRemove.push(key);
         }
       }
     }
-    keysToRemove.forEach(k => localStorage.removeItem(k));
+    keysToRemove.forEach(k => window.localStorage.removeItem(k));
   } catch (e) {
     // Ignore storage cleaning errors
   }
@@ -40,35 +35,10 @@ if (typeof window !== 'undefined' && window.localStorage) {
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 const firestoreDbId = (firebaseConfig as any).firestoreDatabaseId;
 
-function initFirestoreInstance(): Firestore {
-  try {
-    if (firestoreDbId && firestoreDbId !== '(default)') {
-      return initializeFirestore(app, {
-        localCache: persistentLocalCache({
-          tabManager: persistentSingleTabManager({})
-        })
-      }, firestoreDbId);
-    }
-    return initializeFirestore(app, {
-      localCache: persistentLocalCache({
-        tabManager: persistentSingleTabManager({})
-      })
-    });
-  } catch {
-    try {
-      if (firestoreDbId && firestoreDbId !== '(default)') {
-        return getFirestore(app, firestoreDbId);
-      }
-      return getFirestore(app);
-    } catch {
-      return initializeFirestore(app, {
-        localCache: memoryLocalCache({})
-      }, firestoreDbId && firestoreDbId !== '(default)' ? firestoreDbId : undefined);
-    }
-  }
-}
+export const db = firestoreDbId && firestoreDbId !== '(default)'
+  ? getFirestore(app, firestoreDbId)
+  : getFirestore(app);
 
-export const db = initFirestoreInstance();
 export const auth = getAuth(app);
 
 // Connection verification helper for UI diagnostics
