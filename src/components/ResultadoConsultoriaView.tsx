@@ -1535,15 +1535,29 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                 </div>
 
                 {/* Logotipo */}
-                {activeLogoSrc && (
-                  <div className="flex-shrink-0">
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  {customLogo ? (
                     <img
-                      src={activeLogoSrc}
-                      alt="Logo"
-                      className="h-14 max-w-[150px] object-contain"
+                      src={customLogo}
+                      alt="Logo SEBRAE"
+                      className="h-12 max-w-[130px] object-contain"
                     />
-                  </div>
-                )}
+                  ) : (!customConsultoraLogo && sebraeLogoBase64 ? (
+                    <img
+                      src={sebraeLogoBase64}
+                      alt="Logo SEBRAE"
+                      className="h-12 max-w-[130px] object-contain"
+                    />
+                  ) : null)}
+
+                  {customConsultoraLogo && (
+                    <img
+                      src={customConsultoraLogo}
+                      alt="Logo Consultora"
+                      className="h-12 max-w-[130px] object-contain"
+                    />
+                  )}
+                </div>
               </div>
 
               {/* Grid com Dados da Consultoria e do Cliente */}
