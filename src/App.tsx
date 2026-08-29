@@ -12417,6 +12417,29 @@ export default function App() {
     }
   };
 
+  const [expandedMenu, setExpandedMenu] = useState<{ [key: string]: boolean }>({
+    gestao: true,
+    diagnosticos: true,
+    diagnosticoAtivo: true,
+    licencas: true,
+  });
+
+  const toggleGroup = (key: string) => {
+    setExpandedMenu(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  useEffect(() => {
+    if (['companies', 'projects', 'agenda', 'credenciadas'].includes(view)) {
+      setExpandedMenu(prev => ({ ...prev, gestao: true }));
+    } else if (['maturity-assessment', 'disc-assessment', 'resultado-consultoria', 'premises'].includes(view) || (view === 'dashboard' && !selectedDiagnostico)) {
+      setExpandedMenu(prev => ({ ...prev, diagnosticos: true }));
+    } else if (['dados-consultoria', 'cronograma', 'relatorio'].includes(view)) {
+      setExpandedMenu(prev => ({ ...prev, diagnosticoAtivo: true }));
+    } else if (['licenses', 'licensing'].includes(view)) {
+      setExpandedMenu(prev => ({ ...prev, licencas: true }));
+    }
+  }, [view, selectedDiagnostico]);
+
   const NavItem = ({ icon: Icon, label, active, onClick }: any) => (
     <button
       onClick={() => {
@@ -12435,6 +12458,39 @@ export default function App() {
     </button>
   );
 
+  const NavGroup = ({ icon: Icon, label, groupKey, count, children }: any) => {
+    const isOpen = !!expandedMenu[groupKey];
+    return (
+      <div className="space-y-1">
+        <button
+          onClick={() => toggleGroup(groupKey)}
+          className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-all duration-200"
+        >
+          <span className="flex items-center gap-3 min-w-0">
+            <Icon size={18} className="text-slate-500 shrink-0" />
+            <span className="text-sm font-bold text-slate-700 truncate">{label}</span>
+          </span>
+          <span className="flex items-center gap-2 shrink-0">
+            {typeof count === 'number' && (
+              <span className="text-[11px] font-bold bg-white text-slate-500 px-2 py-0.5 rounded-full border border-slate-200">
+                {count}
+              </span>
+            )}
+            <ChevronRight
+              size={16}
+              className={cn("text-slate-400 transition-transform duration-200", isOpen ? "-rotate-90" : "rotate-90")}
+            />
+          </span>
+        </button>
+        {isOpen && (
+          <div className="space-y-1">
+            {children}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const Sidebar = () => (
     <div className={cn(
       "fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-100 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 print:hidden",
@@ -12451,7 +12507,7 @@ export default function App() {
           </div>
         </div>
 
-        <nav className="flex-1 space-y-2">
+        <nav className="flex-1 space-y-2 overflow-y-auto">
           <NavItem 
             icon={Home} 
             label="Início" 
@@ -12459,31 +12515,84 @@ export default function App() {
             onClick={() => { setView('home'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }} 
           />
           <NavItem 
-            icon={Building2} 
-            label="Clientes" 
-            active={view === 'companies'} 
-            onClick={() => { setView('companies'); setSelectedEmpresa(null); }} 
+            icon={Settings} 
+            label="Configurações" 
+            active={view === 'settings'} 
+            onClick={() => setView('settings')} 
           />
-          <NavItem 
-            icon={Briefcase} 
-            label="Projetos" 
-            active={view === 'projects'} 
-            onClick={() => { setView('projects'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }} 
-          />
-          <NavItem 
-            icon={CalendarDays} 
-            label="Agenda do Consultor" 
-            active={view === 'agenda'} 
-            onClick={() => { setView('agenda'); }} 
-          />
-          <NavItem 
-            icon={Building2} 
-            label="Credenciadas" 
-            active={view === 'credenciadas'} 
-            onClick={() => { setView('credenciadas'); }} 
-          />
+
+          <div className="pt-2" />
+
+          <NavGroup icon={Briefcase} label="Gestão & Atendimento" groupKey="gestao" count={4}>
+            <NavItem 
+              icon={Building2} 
+              label="Clientes" 
+              active={view === 'companies'} 
+              onClick={() => { setView('companies'); setSelectedEmpresa(null); }} 
+            />
+            <NavItem 
+              icon={Briefcase} 
+              label="Projetos" 
+              active={view === 'projects'} 
+              onClick={() => { setView('projects'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }} 
+            />
+            <NavItem 
+              icon={CalendarDays} 
+              label="Agenda do Consultor" 
+              active={view === 'agenda'} 
+              onClick={() => { setView('agenda'); }} 
+            />
+            <NavItem 
+              icon={Building2} 
+              label="Credenciadas" 
+              active={view === 'credenciadas'} 
+              onClick={() => { setView('credenciadas'); }} 
+            />
+          </NavGroup>
+
+          <NavGroup icon={TrendingUp} label="Diagnósticos & Avaliação" groupKey="diagnosticos" count={5}>
+            <NavItem 
+              icon={TrendingUp} 
+              label="Maturidade Empresarial" 
+              active={view === 'maturity-assessment'} 
+              onClick={() => { setView('maturity-assessment'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }} 
+            />
+            <NavItem 
+              icon={Award} 
+              label="Avaliação DISC" 
+              active={view === 'disc-assessment'} 
+              onClick={() => { setView('disc-assessment'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }} 
+            />
+            <NavItem 
+              icon={CheckSquare} 
+              label="Resultado da Consultoria" 
+              active={view === 'resultado-consultoria'} 
+              onClick={() => { setView('resultado-consultoria'); }} 
+            />
+            <NavItem 
+              icon={History} 
+              label="Histórico" 
+              active={view === 'dashboard' && !selectedDiagnostico} 
+              onClick={() => { setView('companies'); }} 
+            />
+            <NavItem 
+              icon={FileText} 
+              label="Biblioteca de Premissas" 
+              active={view === 'premises'} 
+              onClick={() => setView('premises')} 
+            />
+          </NavGroup>
+
+          <button
+            onClick={() => { setView('macro-dashboard'); setSelectedEmpresa(null); setSelectedDiagnostico(null); setIsSidebarOpen(false); }}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-600 text-white font-bold shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all duration-200"
+          >
+            <BarChart3 size={20} />
+            <span>Dashboard Macro</span>
+          </button>
+
           {isAdmin && (
-            <>
+            <NavGroup icon={Trophy} label="Licenças & Acesso" groupKey="licencas" count={2}>
               <NavItem 
                 icon={ShieldCheck} 
                 label="Gestão de Licenças" 
@@ -12496,52 +12605,11 @@ export default function App() {
                 active={view === 'licensing'} 
                 onClick={() => setView('licensing')} 
               />
-            </>
+            </NavGroup>
           )}
-          <NavItem 
-            icon={BarChart3} 
-            label="Dashboard Macro" 
-            active={view === 'macro-dashboard'} 
-            onClick={() => { setView('macro-dashboard'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }} 
-          />
-          <NavItem 
-            icon={Award} 
-            label="Avaliação DISC" 
-            active={view === 'disc-assessment'} 
-            onClick={() => { setView('disc-assessment'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }} 
-          />
-          <NavItem 
-            icon={TrendingUp} 
-            label="Maturidade" 
-            active={view === 'maturity-assessment'} 
-            onClick={() => { setView('maturity-assessment'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }} 
-          />
-          <NavItem 
-            icon={CheckSquare} 
-            label="Resultado da Consultoria" 
-            active={view === 'resultado-consultoria'} 
-            onClick={() => { setView('resultado-consultoria'); }} 
-          />
-          <NavItem 
-            icon={History} 
-            label="Histórico" 
-            active={view === 'dashboard' && !selectedDiagnostico} 
-            onClick={() => { setView('companies'); }} 
-          />
-          <NavItem 
-            icon={FileText} 
-            label="Biblioteca" 
-            active={view === 'premises'} 
-            onClick={() => setView('premises')} 
-          />
-          <NavItem 
-            icon={Settings} 
-            label="Configurações" 
-            active={view === 'settings'} 
-            onClick={() => setView('settings')} 
-          />
+
           {selectedDiagnostico && (
-            <>
+            <NavGroup icon={FileSpreadsheet} label="Diagnóstico Ativo" groupKey="diagnosticoAtivo" count={3}>
               <NavItem 
                 icon={FileSpreadsheet} 
                 label="Dados da Consultoria" 
@@ -12560,7 +12628,7 @@ export default function App() {
                 active={view === 'relatorio'} 
                 onClick={() => setView('relatorio')} 
               />
-            </>
+            </NavGroup>
           )}
         </nav>
 
