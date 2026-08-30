@@ -17833,6 +17833,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     setView={setView}
                     customLogo={customLogo}
                     customConsultoraLogo={customConsultoraLogo}
+                    logoChoice={logoChoice}
                   />
                 </motion.div>
               )}

@@ -175,6 +175,7 @@ interface ResultadoConsultoriaViewProps {
   setView?: (view: any) => void;
   customLogo?: string | null;
   customConsultoraLogo?: string | null;
+  logoChoice?: 'sebrae' | 'consultora' | 'none';
 }
 
 const NOTA_DESCRITORES: Record<number, { label: string; color: string }> = {
@@ -200,7 +201,8 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
   selectedEmpresa: initialEmpresa,
   selectedDiagnostico: initialDiagnostico,
   customLogo,
-  customConsultoraLogo
+  customConsultoraLogo,
+  logoChoice = 'sebrae'
 }) => {
   // State for Selection
   const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>(
@@ -692,7 +694,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
   };
 
   // Active logo determination
-  const activeLogoSrc = customLogo || customConsultoraLogo || sebraeLogoBase64;
+  const activeLogoSrc = logoChoice === 'sebrae' ? (customLogo || sebraeLogoBase64) : logoChoice === 'consultora' ? customConsultoraLogo : null;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -1551,24 +1553,10 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
 
                 {/* Logotipo */}
                 <div className="flex items-center gap-3 flex-shrink-0">
-                  {customLogo ? (
+                  {activeLogoSrc && (
                     <img
-                      src={customLogo}
-                      alt="Logo SEBRAE"
-                      className="h-12 max-w-[130px] object-contain"
-                    />
-                  ) : (!customConsultoraLogo && sebraeLogoBase64 ? (
-                    <img
-                      src={sebraeLogoBase64}
-                      alt="Logo SEBRAE"
-                      className="h-12 max-w-[130px] object-contain"
-                    />
-                  ) : null)}
-
-                  {customConsultoraLogo && (
-                    <img
-                      src={customConsultoraLogo}
-                      alt="Logo Consultora"
+                      src={activeLogoSrc}
+                      alt={logoChoice === 'consultora' ? 'Logo Consultora' : 'Logo SEBRAE'}
                       className="h-12 max-w-[130px] object-contain"
                     />
                   )}
