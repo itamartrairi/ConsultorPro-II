@@ -641,6 +641,16 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
 
     setIsExportingPdf(true);
     try {
+      // Measure page-break-avoid blocks BEFORE capturing (DOM is still live/laid out)
+      const containerTop = reportElement.getBoundingClientRect().top;
+      const blockRanges = Array.from(reportElement.querySelectorAll('[data-pdf-block="true"]')).map((el) => {
+        const rect = el.getBoundingClientRect();
+        return {
+          top: rect.top - containerTop,
+          bottom: rect.bottom - containerTop,
+        };
+      });
+
       const canvas = await html2canvas(reportElement, {
         scale: 2,
         useCORS: true,
@@ -653,18 +663,41 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
       const imgWidth = 190;
       const pageHeight = 285;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 10;
+      const topMargin = 10;
 
-      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+      // Scale factor from DOM px (measured above) to mm in the final image
+      const mmPerDomPx = imgHeight / reportElement.scrollHeight;
+      const blockRangesMm = blockRanges.map((b) => ({
+        top: b.top * mmPerDomPx,
+        bottom: b.bottom * mmPerDomPx,
+      }));
 
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight + 10;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      // Compute page break offsets (in mm of image height) that never cut a marked block in half
+      const breaks: number[] = [];
+      let cursor = 0;
+      while (cursor < imgHeight) {
+        let end = Math.min(cursor + pageHeight, imgHeight);
+        for (const block of blockRangesMm) {
+          // If a block starts within this page but would be cut by "end", push it to the next page
+          if (block.top > cursor + 1 && block.top < end && block.bottom > end) {
+            end = block.top;
+          }
+        }
+        // Safety net: avoid an infinite loop / near-empty pages if a single block is taller than a page
+        if (end <= cursor) {
+          end = Math.min(cursor + pageHeight, imgHeight);
+        }
+        breaks.push(end);
+        cursor = end;
       }
+
+      // Render each page using the same full image, shifted up so the right slice shows
+      let offset = 0;
+      breaks.forEach((end, idx) => {
+        if (idx > 0) pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 10, topMargin - offset, imgWidth, imgHeight);
+        offset = end;
+      });
 
       const clientNameClean = (currentEmpresa?.nome || 'Cliente').replace(/[^a-zA-Z0-9]/g, '_');
       pdf.save(`Relatorio_Resultado_Consultoria_${clientNameClean}.pdf`);
@@ -1585,7 +1618,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
             </div>
 
             {/* PAINEL RESUMO DE NOTAS (0 A 10) */}
-            <div className="bg-slate-900 text-white p-5 rounded-xl flex items-center justify-between gap-4">
+            <div data-pdf-block="true" className="bg-slate-900 text-white p-5 rounded-xl flex items-center justify-between gap-4">
               <div>
                 <div className="text-[10px] uppercase font-bold text-sky-300 tracking-widest">Desempenho Geral da Consultoria</div>
                 <div className="text-2xl font-black text-amber-300 flex items-baseline gap-1.5 mt-0.5">
@@ -1672,7 +1705,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
 
             {/* PARECER TÉCNICO E IMPACTO NA GESTÃO */}
             <div className="grid grid-cols-2 gap-4 text-xs">
-              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+              <div data-pdf-block="true" className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
                 <div className="text-[10px] font-black uppercase text-slate-700 tracking-wider">
                   2. Impacto na Gestão e Processos
                 </div>
@@ -1681,7 +1714,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                 </p>
               </div>
 
-              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+              <div data-pdf-block="true" className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
                 <div className="text-[10px] font-black uppercase text-slate-700 tracking-wider">
                   3. Principais Ganhos Conquistados
                 </div>
@@ -1693,7 +1726,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
 
             {/* SATISFAÇÃO COM A CONSULTORIA E COM O CONSULTOR */}
             <div className="grid grid-cols-2 gap-4 text-xs">
-              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+              <div data-pdf-block="true" className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
                 <div className="text-[10px] font-black uppercase text-slate-700 tracking-wider flex items-center justify-between">
                   <span>4. Satisfação com a Consultoria</span>
                   <span className="text-sky-800 font-bold">{notas.satisfacaoConsultoria}/10 pts</span>
@@ -1703,7 +1736,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                 </p>
               </div>
 
-              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+              <div data-pdf-block="true" className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
                 <div className="text-[10px] font-black uppercase text-slate-700 tracking-wider flex items-center justify-between">
                   <span>5. Satisfação com o Consultor</span>
                   <span className="text-sky-800 font-bold">{notas.satisfacaoConsultor}/10 pts</span>
@@ -1715,7 +1748,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
             </div>
 
             {/* RECOMENDAÇÕES FINAIS */}
-            <div className="p-3.5 bg-sky-50/50 border border-sky-200 rounded-xl space-y-1.5 text-xs">
+            <div data-pdf-block="true" className="p-3.5 bg-sky-50/50 border border-sky-200 rounded-xl space-y-1.5 text-xs">
               <div className="text-[10px] font-black uppercase text-sky-900 tracking-wider">
                 6. Recomendações e Próximos Passos
               </div>
@@ -1725,7 +1758,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
             </div>
 
             {/* BLOCO DE ASSINATURAS */}
-            <div className="pt-8 border-t border-slate-200 grid grid-cols-2 gap-12 text-center text-xs">
+            <div data-pdf-block="true" className="pt-8 border-t border-slate-200 grid grid-cols-2 gap-12 text-center text-xs">
               <div>
                 <div className="border-b border-slate-400 pb-1 mb-1.5 w-4/5 mx-auto" />
                 <div className="font-bold text-slate-900">{consultorNome || 'Consultor Responsável'}</div>
