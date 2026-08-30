@@ -6192,8 +6192,13 @@ const RelatorioView = ({
               )}
             </div>
           </div>
-          <div className="hidden md:block">
-            {/* Logo removed as requested */}
+          <div className="hidden md:block shrink-0">
+            {(() => {
+              const activeLogoSrc = logoChoice === 'sebrae' ? customLogo : logoChoice === 'consultora' ? customConsultoraLogo : null;
+              return activeLogoSrc && activeLogoSrc.startsWith('data:') ? (
+                <img src={activeLogoSrc} alt="Logo" className="h-16 max-w-[160px] object-contain" />
+              ) : null;
+            })()}
           </div>
         </div>
 
@@ -10513,8 +10518,14 @@ export default function App() {
   const [calculatingMaturity, setCalculatingMaturity] = useState(false);
   const [generatingPlan, setGeneratingPlan] = useState(false);
   const [view, setView] = useState<'home' | 'companies' | 'credenciadas' | 'licenses' | 'diagnosis' | 'dashboard' | 'premises' | 'cronograma' | 'relatorio' | 'kanban' | 'settings' | 'landing' | 'checkout' | 'licensing' | 'dados-consultoria' | 'agenda' | 'macro-dashboard' | 'maturity-assessment' | 'projects' | 'plan' | 'resultado-consultoria'>('landing');
-  const [customLogo, setCustomLogo] = useState<string | null>(localStorage.getItem('sebrae_custom_logo'));
-  const [customConsultoraLogo, setCustomConsultoraLogo] = useState<string | null>(localStorage.getItem('consultora_custom_logo'));
+  const [customLogo, setCustomLogo] = useState<string | null>(() => {
+    const v = localStorage.getItem('sebrae_custom_logo');
+    return v && v.startsWith('data:') ? v : null;
+  });
+  const [customConsultoraLogo, setCustomConsultoraLogo] = useState<string | null>(() => {
+    const v = localStorage.getItem('consultora_custom_logo');
+    return v && v.startsWith('data:') ? v : null;
+  });
   const [logoChoice, setLogoChoice] = useState<'sebrae' | 'consultora' | 'none'>(() => {
     return (localStorage.getItem('preferred_logo') as 'sebrae' | 'consultora' | 'none') || 'sebrae';
   });
@@ -11722,6 +11733,19 @@ export default function App() {
       setLoading(false);
       setStorageUserId(u ? u.uid : null);
       encryptedLocalStorage.migrateAllToEncrypted();
+
+      // The logo images were read from encrypted storage during the very first render,
+      // before Firebase confirmed the logged-in user (and therefore before the correct
+      // decryption key was available). Re-read them now that the right key is set, so
+      // logos uploaded in a previous session actually show up instead of looking "lost".
+      try {
+        const freshLogo = encryptedLocalStorage.getItem('sebrae_custom_logo');
+        setCustomLogo(freshLogo && freshLogo.startsWith('data:') ? freshLogo : null);
+      } catch {}
+      try {
+        const freshConsultoraLogo = encryptedLocalStorage.getItem('consultora_custom_logo');
+        setCustomConsultoraLogo(freshConsultoraLogo && freshConsultoraLogo.startsWith('data:') ? freshConsultoraLogo : null);
+      } catch {}
 
       if (u) {
         // Check if user is admin based on email (case-insensitive)
