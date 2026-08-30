@@ -18082,8 +18082,23 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
                             <div className="space-y-1 mb-2">
                               {emp.cnpj && (
-                                <p className="text-xs font-medium text-slate-500 flex items-center gap-1">
+                                <p className="text-xs font-medium text-slate-500 flex items-center gap-1 flex-wrap">
                                   <span className="font-bold text-slate-400 uppercase text-[9px]">CNPJ:</span> {emp.cnpj}
+                                  {emp.situacaoCadastral && (
+                                    <span className={cn(
+                                      "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
+                                      emp.situacaoCadastral.toUpperCase().includes('ATIVA')
+                                        ? "bg-emerald-100 text-emerald-700"
+                                        : "bg-rose-100 text-rose-700"
+                                    )}>
+                                      {emp.situacaoCadastral}
+                                    </span>
+                                  )}
+                                </p>
+                              )}
+                              {(emp.porteEmpresa || emp.naturezaJuridica) && (
+                                <p className="text-xs font-medium text-slate-500 flex items-center gap-1">
+                                  <span className="font-bold text-slate-400 uppercase text-[9px]">Tipo:</span> {[emp.porteEmpresa, emp.naturezaJuridica].filter(Boolean).join(' — ')}
                                 </p>
                               )}
                               {emp.cafNumero && (
@@ -19694,65 +19709,85 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                   </div>
 
                   {/* --- Dados da Receita Federal (preenchidos automaticamente ao digitar o CNPJ) --- */}
-                  {(empresaForm.situacaoCadastral || empresaForm.naturezaJuridica || empresaForm.cnaePrincipalDescricao || empresaForm.logradouro) && (
+                  {(empresaForm.situacaoCadastral || empresaForm.naturezaJuridica || empresaForm.cnaePrincipalDescricao || empresaForm.logradouro || (empresaForm.cnpj && isValidCNPJ(empresaForm.cnpj))) && (
                     <div className="p-3.5 bg-sky-50/50 border border-sky-100 rounded-xl space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-black text-sky-700 uppercase tracking-widest flex items-center gap-1.5">
                           <ShieldCheck size={12} /> Dados da Receita Federal
                         </span>
-                        {empresaForm.situacaoCadastral && (
-                          <span className={cn(
-                            "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase",
-                            empresaForm.situacaoCadastral.toUpperCase().includes('ATIVA')
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "bg-rose-100 text-rose-700"
-                          )}>
-                            {empresaForm.situacaoCadastral}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {empresaForm.situacaoCadastral && (
+                            <span className={cn(
+                              "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase",
+                              empresaForm.situacaoCadastral.toUpperCase().includes('ATIVA')
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-rose-100 text-rose-700"
+                            )}>
+                              {empresaForm.situacaoCadastral}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            title="Atualizar dados direto da Receita Federal"
+                            disabled={isFetchingCnpjData || !empresaForm.cnpj}
+                            onClick={() => {
+                              lastLookedUpCnpjRef.current = null;
+                              if (empresaForm.cnpj) fetchCnpjData(empresaForm.cnpj);
+                            }}
+                            className="text-sky-500 hover:text-sky-700 disabled:opacity-40 transition-colors"
+                          >
+                            <RefreshCw size={12} className={isFetchingCnpjData ? "animate-spin" : ""} />
+                          </button>
+                        </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3 text-xs">
-                        <div>
-                          <p className="text-[9px] font-bold text-slate-400 uppercase">Natureza Jurídica</p>
-                          <p className="font-semibold text-slate-700">{empresaForm.naturezaJuridica || '—'}</p>
+                      {(empresaForm.naturezaJuridica || empresaForm.cnaePrincipalDescricao || empresaForm.logradouro) ? (
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Natureza Jurídica</p>
+                            <p className="font-semibold text-slate-700">{empresaForm.naturezaJuridica || '—'}</p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Porte</p>
+                            <p className="font-semibold text-slate-700">{empresaForm.porteEmpresa || '—'}</p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Data de Abertura</p>
+                            <p className="font-semibold text-slate-700">
+                              {empresaForm.dataAberturaReceita ? formatFirestoreDate(empresaForm.dataAberturaReceita, 'dd/MM/yyyy') : '—'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Capital Social</p>
+                            <p className="font-semibold text-slate-700">
+                              {empresaForm.capitalSocial ? `R$ ${Number(empresaForm.capitalSocial).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}
+                            </p>
+                          </div>
+                          <div className="col-span-2">
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Atividade Principal (CNAE)</p>
+                            <p className="font-semibold text-slate-700">
+                              {empresaForm.cnaePrincipalCodigo ? `${empresaForm.cnaePrincipalCodigo} - ` : ''}{empresaForm.cnaePrincipalDescricao || '—'}
+                            </p>
+                          </div>
+                          <div className="col-span-2">
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Endereço</p>
+                            <p className="font-semibold text-slate-700">
+                              {[
+                                empresaForm.logradouro,
+                                empresaForm.numeroEndereco,
+                                empresaForm.complementoEndereco,
+                                empresaForm.bairro,
+                                empresaForm.municipio && empresaForm.uf ? `${empresaForm.municipio}/${empresaForm.uf}` : null,
+                                empresaForm.cep ? `CEP ${empresaForm.cep}` : null,
+                              ].filter(Boolean).join(', ') || '—'}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-[9px] font-bold text-slate-400 uppercase">Porte</p>
-                          <p className="font-semibold text-slate-700">{empresaForm.porteEmpresa || '—'}</p>
-                        </div>
-                        <div>
-                          <p className="text-[9px] font-bold text-slate-400 uppercase">Data de Abertura</p>
-                          <p className="font-semibold text-slate-700">
-                            {empresaForm.dataAberturaReceita ? formatFirestoreDate(empresaForm.dataAberturaReceita, 'dd/MM/yyyy') : '—'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-[9px] font-bold text-slate-400 uppercase">Capital Social</p>
-                          <p className="font-semibold text-slate-700">
-                            {empresaForm.capitalSocial ? `R$ ${Number(empresaForm.capitalSocial).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}
-                          </p>
-                        </div>
-                        <div className="col-span-2">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase">Atividade Principal (CNAE)</p>
-                          <p className="font-semibold text-slate-700">
-                            {empresaForm.cnaePrincipalCodigo ? `${empresaForm.cnaePrincipalCodigo} - ` : ''}{empresaForm.cnaePrincipalDescricao || '—'}
-                          </p>
-                        </div>
-                        <div className="col-span-2">
-                          <p className="text-[9px] font-bold text-slate-400 uppercase">Endereço</p>
-                          <p className="font-semibold text-slate-700">
-                            {[
-                              empresaForm.logradouro,
-                              empresaForm.numeroEndereco,
-                              empresaForm.complementoEndereco,
-                              empresaForm.bairro,
-                              empresaForm.municipio && empresaForm.uf ? `${empresaForm.municipio}/${empresaForm.uf}` : null,
-                              empresaForm.cep ? `CEP ${empresaForm.cep}` : null,
-                            ].filter(Boolean).join(', ') || '—'}
-                          </p>
-                        </div>
-                      </div>
+                      ) : (
+                        <p className="text-[11px] text-slate-500 italic flex items-center gap-1.5">
+                          <Info size={12} /> Dados ainda não consultados. Clique no ícone de atualizar acima para buscar direto da Receita Federal.
+                        </p>
+                      )}
                     </div>
                   )}
 
