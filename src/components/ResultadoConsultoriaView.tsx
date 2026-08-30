@@ -33,7 +33,8 @@ import {
   Phone,
   Mail,
   FileSpreadsheet,
-  Printer
+  Printer,
+  Lightbulb
 } from 'lucide-react';
 import {
   collection,
@@ -49,8 +50,6 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Button } from './Button';
-import html2canvas from 'html2canvas-pro';
-import jsPDF from 'jspdf';
 import { sebraeLogoBase64 } from '../sebraeLogo';
 
 export interface ItemProblemaSolucao {
@@ -631,7 +630,8 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
     }
   };
 
-  // Export PDF Report with High Resolution and Consultancy Header
+  // Open the report in a print-ready window so the user can adjust margins, scale
+  // and paper size in the browser's native print dialog before saving as PDF.
   const handleExportPDF = async () => {
     const reportElement = document.getElementById('consultancy-result-pdf-report');
     if (!reportElement) {
@@ -641,69 +641,51 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
 
     setIsExportingPdf(true);
     try {
-      // Measure page-break-avoid blocks BEFORE capturing (DOM is still live/laid out)
-      const containerTop = reportElement.getBoundingClientRect().top;
-      const blockRanges = Array.from(reportElement.querySelectorAll('[data-pdf-block="true"]')).map((el) => {
-        const rect = el.getBoundingClientRect();
-        return {
-          top: rect.top - containerTop,
-          bottom: rect.bottom - containerTop,
-        };
-      });
-
-      const canvas = await html2canvas(reportElement, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 190;
-      const pageHeight = 285;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      const topMargin = 10;
-
-      // Scale factor from DOM px (measured above) to mm in the final image
-      const mmPerDomPx = imgHeight / reportElement.scrollHeight;
-      const blockRangesMm = blockRanges.map((b) => ({
-        top: b.top * mmPerDomPx,
-        bottom: b.bottom * mmPerDomPx,
-      }));
-
-      // Compute page break offsets (in mm of image height) that never cut a marked block in half
-      const breaks: number[] = [];
-      let cursor = 0;
-      while (cursor < imgHeight) {
-        let end = Math.min(cursor + pageHeight, imgHeight);
-        for (const block of blockRangesMm) {
-          // If a block starts within this page but would be cut by "end", push it to the next page
-          if (block.top > cursor + 1 && block.top < end && block.bottom > end) {
-            end = block.top;
-          }
-        }
-        // Safety net: avoid an infinite loop / near-empty pages if a single block is taller than a page
-        if (end <= cursor) {
-          end = Math.min(cursor + pageHeight, imgHeight);
-        }
-        breaks.push(end);
-        cursor = end;
+      const printWindow = window.open('', '_blank', 'width=900,height=1000');
+      if (!printWindow) {
+        alert('Não foi possível abrir a janela de impressão. Verifique se o bloqueador de pop-ups do navegador está ativado para este site.');
+        return;
       }
 
-      // Render each page using the same full image, shifted up so the right slice shows
-      let offset = 0;
-      breaks.forEach((end, idx) => {
-        if (idx > 0) pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 10, topMargin - offset, imgWidth, imgHeight);
-        offset = end;
-      });
+      // Carry over every stylesheet/style tag so the report looks identical to the preview
+      const styleTags = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+        .map((el) => el.outerHTML)
+        .join('\n');
 
-      const clientNameClean = (currentEmpresa?.nome || 'Cliente').replace(/[^a-zA-Z0-9]/g, '_');
-      pdf.save(`Relatorio_Resultado_Consultoria_${clientNameClean}.pdf`);
+      const clientNameClean = (currentEmpresa?.nome || 'Cliente');
+
+      printWindow.document.open();
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+          <head>
+            <meta charset="UTF-8" />
+            <title>Laudo de Resultado da Consultoria - ${clientNameClean}</title>
+            ${styleTags}
+            <style>
+              @page { margin: 15mm; }
+              html, body { background: #fff; margin: 0; padding: 0; }
+              body { display: flex; justify-content: center; padding: 16px; }
+              [data-pdf-block="true"] { break-inside: avoid; page-break-inside: avoid; }
+            </style>
+          </head>
+          <body>
+            ${reportElement.outerHTML}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+
+      // Wait for stylesheets/fonts/logo images to finish loading before opening the print dialog
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.focus();
+          printWindow.print();
+        }, 300);
+      };
     } catch (err: any) {
       console.error('PDF Export Error:', err);
-      alert('Erro ao gerar relatório em PDF: ' + (err?.message || err));
+      alert('Erro ao abrir a visualização de impressão: ' + (err?.message || err));
     } finally {
       setIsExportingPdf(false);
     }
@@ -781,9 +763,9 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
             {isExportingPdf ? (
               <RefreshCw className="h-4 w-4 animate-spin" />
             ) : (
-              <Download className="h-4 w-4" />
+              <Printer className="h-4 w-4" />
             )}
-            Gerar Laudo PDF
+            Visualizar e Imprimir PDF
           </Button>
         </div>
       </div>
@@ -1534,15 +1516,15 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
           <div className="bg-slate-100 p-4 rounded-xl flex items-center justify-between border border-slate-200">
             <div className="flex items-center gap-2 text-slate-700 text-xs font-medium">
               <Printer size={16} className="text-sky-600" />
-              <span>Pré-visualização do Laudo Oficial de Resultado da Consultoria. Clique em <strong>"Gerar Laudo PDF"</strong> para baixar.</span>
+              <span>Pré-visualização do Laudo Oficial de Resultado da Consultoria. Clique em <strong>"Visualizar e Imprimir PDF"</strong> para abrir a janela de impressão (você pode ajustar margens, escala e papel antes de salvar).</span>
             </div>
             <Button
               onClick={handleExportPDF}
               disabled={isExportingPdf}
               className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-1.5"
             >
-              {isExportingPdf ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Download size={14} />}
-              Baixar em PDF
+              {isExportingPdf ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Printer size={14} />}
+              Visualizar e Imprimir PDF
             </Button>
           </div>
 
@@ -1617,50 +1599,69 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
               </div>
             </div>
 
-            {/* PAINEL RESUMO DE NOTAS (0 A 10) */}
-            <div data-pdf-block="true" className="bg-slate-900 text-white p-5 rounded-xl flex items-center justify-between gap-4">
-              <div>
-                <div className="text-[10px] uppercase font-bold text-sky-300 tracking-widest">Desempenho Geral da Consultoria</div>
-                <div className="text-2xl font-black text-amber-300 flex items-baseline gap-1.5 mt-0.5">
-                  {mediaGeralCalculada.toFixed(1)} <span className="text-xs text-white/70 font-normal">/ 10.0 Pontos</span>
+            {/* 1. SISTEMA DE PONTUAÇÃO DOS RESULTADOS (0 A 10) */}
+            <div data-pdf-block="true" className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <div className="bg-gradient-to-r from-sky-900 via-sky-800 to-slate-900 px-5 py-4 text-white flex items-center justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
+                    <h3 className="text-sm font-bold">1. Sistema de Pontuação dos Resultados (Escala de 0 a 10)</h3>
+                  </div>
+                  <p className="text-[10px] text-sky-200 mt-0.5">
+                    Nota de 0 (nulo/não atingido) a 10 (excelente/superou expectativas) para cada dimensão crítica da consultoria.
+                  </p>
                 </div>
-                <div className="text-xs font-semibold text-white/90 mt-0.5">
-                  Classificação: <span className="text-amber-300 font-bold">{classificacaoGeral.label}</span>
+                <div className="bg-white/10 px-4 py-2 rounded-xl border border-white/20 flex items-center gap-3 shrink-0">
+                  <div className="text-right">
+                    <div className="text-[8px] uppercase tracking-widest text-sky-200 font-bold">Índice Geral</div>
+                    <div className="text-lg font-black text-amber-300 leading-tight">{mediaGeralCalculada.toFixed(1)} <span className="text-[10px] font-normal text-white/80">/ 10.0</span></div>
+                  </div>
+                  <div className="h-7 w-px bg-white/20" />
+                  <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-bold whitespace-nowrap ${classificacaoGeral.badge}`}>
+                    {classificacaoGeral.label}
+                  </span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 text-[10px] max-w-sm">
-                <div className="bg-white/10 p-2 rounded-lg text-center">
-                  <div className="text-white/70 font-medium">Problemas</div>
-                  <div className="text-sm font-black text-white">{notas.eficaciaProblemas}/10</div>
-                </div>
-                <div className="bg-white/10 p-2 rounded-lg text-center">
-                  <div className="text-white/70 font-medium">Gestão</div>
-                  <div className="text-sm font-black text-white">{notas.impactoGestao}/10</div>
-                </div>
-                <div className="bg-white/10 p-2 rounded-lg text-center">
-                  <div className="text-white/70 font-medium">Finanças</div>
-                  <div className="text-sm font-black text-white">{notas.impactoFinanceiroProd}/10</div>
-                </div>
-                <div className="bg-white/10 p-2 rounded-lg text-center">
-                  <div className="text-white/70 font-medium">Equipe</div>
-                  <div className="text-sm font-black text-white">{notas.engajamentoEquipe}/10</div>
-                </div>
-                <div className="bg-white/10 p-2 rounded-lg text-center">
-                  <div className="text-white/70 font-medium">Consultoria</div>
-                  <div className="text-sm font-black text-white">{notas.satisfacaoConsultoria}/10</div>
-                </div>
-                <div className="bg-white/10 p-2 rounded-lg text-center">
-                  <div className="text-white/70 font-medium">Consultor</div>
-                  <div className="text-sm font-black text-white">{notas.satisfacaoConsultor}/10</div>
-                </div>
+              <div className="p-4 grid grid-cols-3 gap-3">
+                {[
+                  { icon: Target, label: '1. Resolução dos Problemas', desc: 'Efetividade na eliminação ou mitigação das dores e gargalos identificados no diagnóstico inicial.', value: notas.eficaciaProblemas, min: '0 (Nenhum)', max: '10 (Total)' },
+                  { icon: TrendingUp, label: '2. Impacto na Gestão', desc: 'Evolução estrutural em processos, governança, rotinas de controle e tomadas de decisão.', value: notas.impactoGestao, min: '0 (Nulo)', max: '10 (Alto)' },
+                  { icon: BarChart3, label: '3. Finanças & Produtividade', desc: 'Ganhos palpáveis em margens, redução de desperdícios, fluxo de caixa e agilidade operacional.', value: notas.impactoFinanceiroProd, min: '0 (Sem Ganho)', max: '10 (Excelente)' },
+                  { icon: UserCheck, label: '4. Adesão & Equipe', desc: 'Nível de comprometimento, assiduidade e execução das tarefas pela equipe do cliente.', value: notas.engajamentoEquipe, min: '0 (Resistência)', max: '10 (Total)' },
+                  { icon: ThumbsUp, label: '5. Satisfação com a Consultoria', desc: 'Avaliação do cliente quanto à metodologia, cronograma, ferramentas e entregáveis.', value: notas.satisfacaoConsultoria, min: '0 (Insatisfeito)', max: '10 (Plena)' },
+                  { icon: User, label: '6. Satisfação com o Consultor', desc: 'Postura profissional, didática, pontualidade, domínio técnico e relacionamento interpessoal.', value: notas.satisfacaoConsultor, min: '0 (Insatisfatório)', max: '10 (Exemplar)' },
+                ].map((dim, i) => (
+                  <div key={i} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="text-[9px] font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1 leading-tight">
+                        <dim.icon size={11} className="text-sky-600 shrink-0" />
+                        {dim.label}
+                      </span>
+                      <span className="text-sm font-black text-sky-700 bg-white px-1.5 py-0.5 rounded border border-sky-200 shrink-0">
+                        {dim.value}
+                      </span>
+                    </div>
+                    <p className="text-[9px] text-slate-500 leading-snug">
+                      {dim.desc}
+                    </p>
+                    <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-sky-600 rounded-full" style={{ width: `${(dim.value / 10) * 100}%` }} />
+                    </div>
+                    <div className="flex justify-between text-[7px] font-bold text-slate-400">
+                      <span>{dim.min}</span>
+                      <span className="text-sky-700 font-semibold">{NOTA_DESCRITORES[dim.value]?.label}</span>
+                      <span>{dim.max}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
             {/* TABELA DE PROBLEMAS DIAGNOSTICADOS VS SOLUÇÕES IMPLEMENTADAS */}
             <div className="space-y-2">
               <h3 className="text-xs font-black uppercase text-slate-800 tracking-wider border-b border-slate-200 pb-1 flex items-center justify-between">
-                <span>1. Matriz de Problemas Diagnosticados e Soluções Implementadas</span>
+                <span>Matriz de Problemas Diagnosticados e Soluções Implementadas</span>
                 <span className="text-[10px] text-slate-500 font-normal">Total: {problemasSolucoes.length} itens</span>
               </h3>
 
@@ -1703,11 +1704,19 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
               </table>
             </div>
 
+            {/* 3. PARECER TÉCNICO, IMPACTO NA GESTÃO E SATISFAÇÃO DO CLIENTE */}
+            <div className="space-y-2">
+              <h3 className="text-xs font-black uppercase text-slate-800 tracking-wider border-b border-slate-200 pb-1 flex items-center gap-1.5">
+                <FileText size={13} className="text-slate-500" />
+                3. Parecer Técnico, Impacto na Gestão e Satisfação do Cliente
+              </h3>
+            </div>
+
             {/* PARECER TÉCNICO E IMPACTO NA GESTÃO */}
             <div className="grid grid-cols-2 gap-4 text-xs">
               <div data-pdf-block="true" className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
-                <div className="text-[10px] font-black uppercase text-slate-700 tracking-wider">
-                  2. Impacto na Gestão e Processos
+                <div className="text-[10px] font-black uppercase text-teal-700 tracking-wider flex items-center gap-1.5">
+                  <TrendingUp size={12} /> Impacto Real na Gestão do Cliente (Antes vs. Depois)
                 </div>
                 <p className="text-slate-700 leading-relaxed text-[11px]">
                   {parecerImpactoGestao}
@@ -1715,8 +1724,8 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
               </div>
 
               <div data-pdf-block="true" className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
-                <div className="text-[10px] font-black uppercase text-slate-700 tracking-wider">
-                  3. Principais Ganhos Conquistados
+                <div className="text-[10px] font-black uppercase text-emerald-700 tracking-wider flex items-center gap-1.5">
+                  <CheckCircle2 size={12} /> Principais Ganhos Tangíveis e Intangíveis
                 </div>
                 <p className="text-slate-700 leading-relaxed text-[11px] whitespace-pre-line font-mono">
                   {ganhosPrincipais}
@@ -1727,9 +1736,9 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
             {/* SATISFAÇÃO COM A CONSULTORIA E COM O CONSULTOR */}
             <div className="grid grid-cols-2 gap-4 text-xs">
               <div data-pdf-block="true" className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
-                <div className="text-[10px] font-black uppercase text-slate-700 tracking-wider flex items-center justify-between">
-                  <span>4. Satisfação com a Consultoria</span>
-                  <span className="text-sky-800 font-bold">{notas.satisfacaoConsultoria}/10 pts</span>
+                <div className="text-[10px] font-black uppercase text-sky-700 tracking-wider flex items-center justify-between">
+                  <span className="flex items-center gap-1.5"><ThumbsUp size={12} /> Satisfação do Cliente com a Consultoria &amp; Metodologia</span>
+                  <span className="text-sky-800 font-bold whitespace-nowrap">{notas.satisfacaoConsultoria}/10 pts</span>
                 </div>
                 <p className="text-slate-700 leading-relaxed text-[11px]">
                   {feedbackConsultoria}
@@ -1737,9 +1746,9 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
               </div>
 
               <div data-pdf-block="true" className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
-                <div className="text-[10px] font-black uppercase text-slate-700 tracking-wider flex items-center justify-between">
-                  <span>5. Satisfação com o Consultor</span>
-                  <span className="text-sky-800 font-bold">{notas.satisfacaoConsultor}/10 pts</span>
+                <div className="text-[10px] font-black uppercase text-violet-700 tracking-wider flex items-center justify-between">
+                  <span className="flex items-center gap-1.5"><User size={12} /> Satisfação do Cliente com o Consultor (Atuação e Didática)</span>
+                  <span className="text-sky-800 font-bold whitespace-nowrap">{notas.satisfacaoConsultor}/10 pts</span>
                 </div>
                 <p className="text-slate-700 leading-relaxed text-[11px]">
                   {feedbackConsultor}
@@ -1749,8 +1758,8 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
 
             {/* RECOMENDAÇÕES FINAIS */}
             <div data-pdf-block="true" className="p-3.5 bg-sky-50/50 border border-sky-200 rounded-xl space-y-1.5 text-xs">
-              <div className="text-[10px] font-black uppercase text-sky-900 tracking-wider">
-                6. Recomendações e Próximos Passos
+              <div className="text-[10px] font-black uppercase text-amber-700 tracking-wider flex items-center gap-1.5">
+                <Lightbulb size={12} /> Recomendações Finais e Próximos Ciclos Estratégicos
               </div>
               <p className="text-slate-800 leading-relaxed text-[11px]">
                 {recomendacoesFuturas}

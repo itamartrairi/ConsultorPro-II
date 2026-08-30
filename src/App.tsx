@@ -6463,10 +6463,10 @@ const RelatorioView = ({
                         </h3>
                       </div>
 
-                      <div className="space-y-5 pl-2 md:pl-6 border-l border-slate-100 print:border-none print:pl-0">
+                      <div className="space-y-3 pl-2 md:pl-6 border-l border-slate-100 print:border-none print:pl-0">
                         {problems.map(({ probId, noResponses, yesResponses, solution }, idx) => (
-                        <div key={probId + idx} className="bg-white rounded-xl p-6 border border-slate-150 print:bg-transparent print:border-b print:rounded-none print:p-0 print:pb-6 print:mb-6 break-inside-avoid shadow-sm print:shadow-none">
-                          <div className="flex items-start justify-between gap-4 mb-6">
+                        <div key={probId + idx} className="bg-white rounded-xl p-4 border border-slate-150 print:bg-transparent print:border-b print:rounded-none print:p-0 print:pb-3 print:mb-3 break-inside-avoid shadow-sm print:shadow-none">
+                          <div className="flex items-start justify-between gap-4 mb-3">
                             <div className="flex items-start gap-4">
                               <div className="w-8 h-8 bg-emerald-600 text-white rounded-xl flex items-center justify-center text-xs font-black shrink-0 mt-0.5 shadow-sm shadow-emerald-600/20">
                                 {idx + 1}º
@@ -6477,14 +6477,14 @@ const RelatorioView = ({
                             </div>
                           </div>
 
-                          <div className="space-y-6">
+                          <div className="space-y-3">
                             {/* --- Success Section --- */}
                             {yesResponses.length > 0 && (
-                              <div className="bg-emerald-50/40 p-4 rounded-lg border border-emerald-100">
-                                <h5 className="text-xs font-bold text-emerald-700 uppercase tracking-widest mb-3 flex items-center gap-2">
+                              <div className="bg-emerald-50/40 p-3 rounded-lg border border-emerald-100">
+                                <h5 className="text-xs font-bold text-emerald-700 uppercase tracking-widest mb-2 flex items-center gap-2">
                                   <Trophy size={14} /> Pontos Fortes / Sucessos
                                 </h5>
-                                <ul className="space-y-2 mb-4">
+                                <ul className="space-y-1.5 mb-2">
                                   {yesResponses.map((r, i) => (
                                     <li key={i} className="text-slate-700 text-sm flex items-start gap-2">
                                       <span className="text-emerald-500 mt-0.5">•</span>
@@ -6493,7 +6493,7 @@ const RelatorioView = ({
                                   ))}
                                 </ul>
                                 {solution?.comentario_sucesso && (
-                                  <div className="bg-white p-3 rounded border border-emerald-100 italic text-sm text-slate-600">
+                                  <div className="bg-white p-2.5 rounded border border-emerald-100 italic text-sm text-slate-600">
                                     <span className="font-bold text-emerald-600 not-italic mr-1">Reconhecimento:</span>
                                     {solution.comentario_sucesso}
                                   </div>
@@ -6503,26 +6503,26 @@ const RelatorioView = ({
 
                             {/* --- Critical Section --- */}
                             {noResponses.length > 0 && (
-                              <div className="bg-rose-50/40 p-6 rounded-xl border border-rose-100">
-                                <h5 className="text-sm font-bold text-rose-700 uppercase tracking-widest mb-4 flex items-center gap-2">
+                              <div className="bg-rose-50/40 p-3 rounded-xl border border-rose-100">
+                                <h5 className="text-sm font-bold text-rose-700 uppercase tracking-widest mb-2 flex items-center gap-2">
                                   <AlertTriangle size={16} /> Pontos Críticos / Oportunidades
                                 </h5>
                                 <div className="overflow-x-auto">
                                   <table className="w-full text-sm text-left border-collapse">
                                     <thead>
                                       <tr className="border-b border-rose-200">
-                                        <th className="py-2 pr-4 font-bold text-rose-800 uppercase text-[10px]">Pergunta / Detalhes</th>
-                                        <th className="py-2 text-right font-bold text-rose-800 uppercase text-[10px]">Status</th>
+                                        <th className="py-1.5 pr-4 font-bold text-rose-800 uppercase text-[10px]">Pergunta / Detalhes</th>
+                                        <th className="py-1.5 text-right font-bold text-rose-800 uppercase text-[10px]">Status</th>
                                       </tr>
                                     </thead>
                                     <tbody className="divide-y divide-rose-100">
                                       {noResponses.map((r, i) => (
                                         <tr key={i}>
-                                          <td className="py-3 pr-4 align-top text-slate-600">
-                                            <div className="font-semibold text-slate-800 text-sm mb-1">{r.pergunta}</div>
-                                            {r.observacao && <div className="text-xs italic text-slate-500 mt-1 flex items-center gap-1"><Info size={10} /> {r.observacao}</div>}
+                                          <td className="py-1.5 pr-4 align-top text-slate-600">
+                                            <div className="font-semibold text-slate-800 text-sm mb-0.5">{r.pergunta}</div>
+                                            {r.observacao && <div className="text-xs italic text-slate-500 mt-0.5 flex items-center gap-1"><Info size={10} /> {r.observacao}</div>}
                                           </td>
-                                          <td className="py-3 text-right align-top">
+                                          <td className="py-1.5 text-right align-top">
                                             <span className="px-2 py-0.5 bg-rose-100 text-rose-700 text-[10px] font-bold rounded uppercase whitespace-nowrap font-mono">
                                               {r.resposta}
                                             </span>
@@ -6534,11 +6534,11 @@ const RelatorioView = ({
                                 </div>
 
                                 {solution ? (
-                                  <div className="mt-4 bg-white p-4 rounded-lg border border-emerald-100 shadow-sm print:border-slate-200 print:shadow-none">
-                                    <h5 className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                  <div className="mt-2 bg-white p-3 rounded-lg border border-emerald-100 shadow-sm print:border-slate-200 print:shadow-none">
+                                    <h5 className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2 flex items-center gap-2">
                                       <CheckCircle2 size={16} /> Solução e Recomendações Propostas
                                     </h5>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
                                       <div>
                                         <p className="text-[10px] font-bold text-slate-400 uppercase">Solução / Ação Recomendada</p>
                                         <p className="text-sm font-semibold text-slate-800">{solution.solucao_recomendada || 'Não informada'}</p>
@@ -6550,12 +6550,12 @@ const RelatorioView = ({
                                     </div>
                                     <div>
                                       <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Passo a Passo / Recomendações</p>
-                                      <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed bg-slate-50/70 p-3.5 rounded-lg border border-slate-100 font-sans">{solution.acoes_sugeridas || 'Nenhuma recomendação detalhada cadastrada.'}</p>
+                                      <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed bg-slate-50/70 p-2.5 rounded-lg border border-slate-100 font-sans">{solution.acoes_sugeridas || 'Nenhuma recomendação detalhada cadastrada.'}</p>
                                     </div>
 
                                   </div>
                                 ) : (
-                                  <div className="mt-6 bg-amber-50 p-4 rounded-lg border border-amber-100 text-amber-800 text-sm italic flex items-center gap-2">
+                                  <div className="mt-3 bg-amber-50 p-3 rounded-lg border border-amber-100 text-amber-800 text-sm italic flex items-center gap-2">
                                     <AlertCircle size={16} /> Nenhuma solução mapeada para este problema.
                                   </div>
                                 )}
