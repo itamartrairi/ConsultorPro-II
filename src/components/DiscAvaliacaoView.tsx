@@ -22,7 +22,7 @@ import {
   HelpCircle,
   Printer
 } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 import jsPDF from 'jspdf';
 
 // Structure of a DISC Question

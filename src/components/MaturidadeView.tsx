@@ -25,7 +25,7 @@ import {
   FileText,
   Printer
 } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 import jsPDF from 'jspdf';
 
 // Definition of Maturity Assessment from Image and Firestore Schema

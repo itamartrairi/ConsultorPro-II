@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx';
 import React, { useState, useEffect, useMemo, Component, useRef } from 'react';
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 import { 
   collection, 
   query, 

@@ -49,7 +49,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { Button } from './Button';
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 import jsPDF from 'jspdf';
 import { sebraeLogoBase64 } from '../sebraeLogo';
 
