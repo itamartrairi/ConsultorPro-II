@@ -12519,7 +12519,7 @@ export default function App() {
 
   const Sidebar = () => (
     <div className={cn(
-      "fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-100 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 print:hidden",
+      "fixed inset-y-0 left-0 z-50 w-80 bg-white border-r border-slate-100 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 print:hidden",
       isSidebarOpen ? "translate-x-0" : "-translate-x-full"
     )}>
       <div className="flex flex-col h-full p-6">
