@@ -261,6 +261,31 @@ export function isValidCNPJ(val?: string | null): boolean {
 }
 
 /**
+ * Calcula o status de vencimento do Cadastro MDA a partir da data de validade (YYYY-MM-DD).
+ */
+export function getMdaExpirationStatus(dataValidade?: string | null): { status: 'vencido' | 'proximo' | 'valido'; diasRestantes: number; label: string } | null {
+  if (!dataValidade) return null;
+  const validade = new Date(dataValidade + 'T00:00:00');
+  if (isNaN(validade.getTime())) return null;
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const diasRestantes = Math.ceil((validade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+  if (diasRestantes < 0) return { status: 'vencido', diasRestantes, label: `Vencido há ${Math.abs(diasRestantes)} dia(s)` };
+  if (diasRestantes <= 30) return { status: 'proximo', diasRestantes, label: `Vence em ${diasRestantes} dia(s)` };
+  return { status: 'valido', diasRestantes, label: 'Válido' };
+}
+
+/**
+ * Aplica a máscara brasileira de CEP: 00000-000
+ */
+export function formatCEP(val?: string | null): string {
+  const digits = cleanDigits(val).slice(0, 8);
+  if (!digits) return '';
+  if (digits.length > 5) return digits.slice(0, 5) + '-' + digits.slice(5, 8);
+  return digits;
+}
+
+/**
  * Aplica a máscara brasileira de CPF: 000.000.000-00
  */
 export function formatCPF(val?: string | null): string {
@@ -691,6 +716,25 @@ export interface Empresa {
   tipoEmpresa?: string;
   ramoAtividade?: string;
   cafNumero?: string;
+  // --- Dados da Receita Federal (preenchidos automaticamente pela consulta de CNPJ) ---
+  situacaoCadastral?: string;
+  dataSituacaoCadastral?: string;
+  naturezaJuridica?: string;
+  porteEmpresa?: string;
+  capitalSocial?: string;
+  cnaePrincipalCodigo?: string;
+  cnaePrincipalDescricao?: string;
+  dataAberturaReceita?: string;
+  logradouro?: string;
+  numeroEndereco?: string;
+  complementoEndereco?: string;
+  bairro?: string;
+  municipio?: string;
+  uf?: string;
+  cep?: string;
+  // --- Cadastro MDA (Ministério do Desenvolvimento Agrário) vinculado à CAF ---
+  mdaNumeroCadastro?: string;
+  mdaDataValidade?: string;
 }
 
 export interface Premissa {
@@ -10564,6 +10608,9 @@ export default function App() {
   const [inputValue, setInputValue] = useState('');
   const [historicalData, setHistoricalData] = useState<any[]>([]);
   const [empresaForm, setEmpresaForm] = useState<Partial<Empresa>>({});
+  const [isFetchingCnpjData, setIsFetchingCnpjData] = useState(false);
+  const [cnpjLookupError, setCnpjLookupError] = useState<string | null>(null);
+  const lastLookedUpCnpjRef = useRef<string | null>(null);
   const [credenciadaForm, setCredenciadaForm] = useState<Partial<EmpresaCredenciada>>({});
   const [diagnosticoForm, setDiagnosticoForm] = useState<Partial<DadosConsultoria>>({});
   const [selectedAreasForDiagnosis, setSelectedAreasForDiagnosis] = useState<string[]>([]);
@@ -12693,6 +12740,63 @@ export default function App() {
       </div>
     </div>
   );
+
+  // Consulta os dados públicos do CNPJ na Receita Federal (via BrasilAPI) e
+  // preenche automaticamente os campos do cadastro da empresa.
+  const fetchCnpjData = async (rawCnpj: string) => {
+    const digits = cleanDigits(rawCnpj);
+    if (digits.length !== 14 || !isValidCNPJ(digits)) return;
+    if (lastLookedUpCnpjRef.current === digits) return; // evita repetir a mesma consulta
+    lastLookedUpCnpjRef.current = digits;
+
+    setIsFetchingCnpjData(true);
+    setCnpjLookupError(null);
+    try {
+      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
+      if (!response.ok) {
+        throw new Error(response.status === 404 ? 'CNPJ não encontrado na Receita Federal.' : 'Não foi possível consultar o CNPJ agora.');
+      }
+      const data = await response.json();
+
+      setEmpresaForm(prev => ({
+        ...prev,
+        razaoSocial: prev?.razaoSocial?.trim() ? prev.razaoSocial : (data.razao_social || prev?.razaoSocial),
+        nomeFantasia: data.nome_fantasia || prev?.nomeFantasia,
+        situacaoCadastral: data.descricao_situacao_cadastral || prev?.situacaoCadastral,
+        dataSituacaoCadastral: data.data_situacao_cadastral || prev?.dataSituacaoCadastral,
+        naturezaJuridica: data.natureza_juridica || prev?.naturezaJuridica,
+        porteEmpresa: data.porte || prev?.porteEmpresa,
+        capitalSocial: data.capital_social != null ? String(data.capital_social) : prev?.capitalSocial,
+        cnaePrincipalCodigo: data.cnae_fiscal ? String(data.cnae_fiscal) : prev?.cnaePrincipalCodigo,
+        cnaePrincipalDescricao: data.cnae_fiscal_descricao || prev?.cnaePrincipalDescricao,
+        dataAberturaReceita: data.data_inicio_atividade || prev?.dataAberturaReceita,
+        mesAnoAbertura: data.data_inicio_atividade
+          ? `${data.data_inicio_atividade.slice(5, 7)}/${data.data_inicio_atividade.slice(0, 4)}`
+          : prev?.mesAnoAbertura,
+        logradouro: [data.descricao_tipo_de_logradouro, data.logradouro].filter(Boolean).join(' ') || prev?.logradouro,
+        numeroEndereco: data.numero || prev?.numeroEndereco,
+        complementoEndereco: data.complemento || prev?.complementoEndereco,
+        bairro: data.bairro || prev?.bairro,
+        municipio: data.municipio || prev?.municipio,
+        uf: data.uf || prev?.uf,
+        cep: data.cep ? formatCEP(String(data.cep)) : prev?.cep,
+        enderecoComercial: prev?.enderecoComercial?.trim() ? prev.enderecoComercial : [
+          [data.descricao_tipo_de_logradouro, data.logradouro].filter(Boolean).join(' '),
+          data.numero,
+          data.bairro,
+          data.municipio && data.uf ? `${data.municipio}/${data.uf}` : null,
+          data.cep ? `CEP ${formatCEP(String(data.cep))}` : null,
+        ].filter(Boolean).join(', '),
+        telefoneFixo: prev?.telefoneFixo?.trim() ? prev.telefoneFixo : (data.ddd_telefone_1 || prev?.telefoneFixo),
+        email: prev?.email?.trim() ? prev.email : (data.email || prev?.email),
+      }));
+    } catch (err: any) {
+      console.error('Erro ao consultar CNPJ:', err);
+      setCnpjLookupError(err?.message || 'Erro ao consultar o CNPJ. Verifique sua conexão e tente novamente.');
+    } finally {
+      setIsFetchingCnpjData(false);
+    }
+  };
 
   const createEmpresa = async () => {
     if (!empresaForm.razaoSocial?.trim()) {
@@ -17987,6 +18091,18 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                   <span className="font-bold text-slate-400 uppercase text-[9px]">CAF:</span> {emp.cafNumero}
                                 </p>
                               )}
+                              {emp.mdaDataValidade && (() => {
+                                const mdaStatus = getMdaExpirationStatus(emp.mdaDataValidade);
+                                if (!mdaStatus || mdaStatus.status === 'valido') return null;
+                                return (
+                                  <span className={cn(
+                                    "inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5",
+                                    mdaStatus.status === 'vencido' ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"
+                                  )}>
+                                    <AlertTriangle size={10} /> MDA: {mdaStatus.label}
+                                  </span>
+                                );
+                              })()}
                             </div>
                             
                             <div className="flex items-center justify-between pt-4 border-t border-slate-50">
@@ -19526,7 +19642,11 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">CNPJ</label>
-                        {empresaForm.cnpj && cleanDigits(empresaForm.cnpj).length === 14 && (
+                        {isFetchingCnpjData ? (
+                          <span className="text-[10px] font-bold text-sky-600 flex items-center gap-1">
+                            <RefreshCw size={10} className="animate-spin" /> Consultando Receita Federal...
+                          </span>
+                        ) : empresaForm.cnpj && cleanDigits(empresaForm.cnpj).length === 14 && (
                           isValidCNPJ(empresaForm.cnpj) ? (
                             <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
                               ✓ Válido
@@ -19551,10 +19671,90 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                             : "border-slate-200 focus:ring-sky-500/20 focus:border-sky-500"
                         )}
                         value={empresaForm.cnpj || ''}
-                        onChange={(e) => setEmpresaForm({...empresaForm, cnpj: formatCNPJ(e.target.value)})}
+                        onChange={(e) => {
+                          const formatted = formatCNPJ(e.target.value);
+                          setEmpresaForm({...empresaForm, cnpj: formatted});
+                          setCnpjLookupError(null);
+                          if (cleanDigits(formatted).length === 14 && isValidCNPJ(formatted)) {
+                            fetchCnpjData(formatted);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (cleanDigits(e.target.value).length === 14 && isValidCNPJ(e.target.value)) {
+                            fetchCnpjData(e.target.value);
+                          }
+                        }}
                       />
+                      {cnpjLookupError && (
+                        <p className="text-[10px] font-semibold text-amber-600 mt-1 flex items-center gap-1">
+                          <AlertTriangle size={10} /> {cnpjLookupError}
+                        </p>
+                      )}
                     </div>
                   </div>
+
+                  {/* --- Dados da Receita Federal (preenchidos automaticamente ao digitar o CNPJ) --- */}
+                  {(empresaForm.situacaoCadastral || empresaForm.naturezaJuridica || empresaForm.cnaePrincipalDescricao || empresaForm.logradouro) && (
+                    <div className="p-3.5 bg-sky-50/50 border border-sky-100 rounded-xl space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black text-sky-700 uppercase tracking-widest flex items-center gap-1.5">
+                          <ShieldCheck size={12} /> Dados da Receita Federal
+                        </span>
+                        {empresaForm.situacaoCadastral && (
+                          <span className={cn(
+                            "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase",
+                            empresaForm.situacaoCadastral.toUpperCase().includes('ATIVA')
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-rose-100 text-rose-700"
+                          )}>
+                            {empresaForm.situacaoCadastral}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase">Natureza Jurídica</p>
+                          <p className="font-semibold text-slate-700">{empresaForm.naturezaJuridica || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase">Porte</p>
+                          <p className="font-semibold text-slate-700">{empresaForm.porteEmpresa || '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase">Data de Abertura</p>
+                          <p className="font-semibold text-slate-700">
+                            {empresaForm.dataAberturaReceita ? formatFirestoreDate(empresaForm.dataAberturaReceita, 'dd/MM/yyyy') : '—'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase">Capital Social</p>
+                          <p className="font-semibold text-slate-700">
+                            {empresaForm.capitalSocial ? `R$ ${Number(empresaForm.capitalSocial).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-[9px] font-bold text-slate-400 uppercase">Atividade Principal (CNAE)</p>
+                          <p className="font-semibold text-slate-700">
+                            {empresaForm.cnaePrincipalCodigo ? `${empresaForm.cnaePrincipalCodigo} - ` : ''}{empresaForm.cnaePrincipalDescricao || '—'}
+                          </p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-[9px] font-bold text-slate-400 uppercase">Endereço</p>
+                          <p className="font-semibold text-slate-700">
+                            {[
+                              empresaForm.logradouro,
+                              empresaForm.numeroEndereco,
+                              empresaForm.complementoEndereco,
+                              empresaForm.bairro,
+                              empresaForm.municipio && empresaForm.uf ? `${empresaForm.municipio}/${empresaForm.uf}` : null,
+                              empresaForm.cep ? `CEP ${empresaForm.cep}` : null,
+                            ].filter(Boolean).join(', ') || '—'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -19576,6 +19776,59 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                         value={empresaForm.mesAnoAbertura || ''}
                         onChange={(e) => setEmpresaForm({...empresaForm, mesAnoAbertura: e.target.value})}
                       />
+                    </div>
+                  </div>
+
+                  {/* --- Cadastro MDA (Ministério do Desenvolvimento Agrário), vinculado à CAF --- */}
+                  <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-1.5">
+                        <ShieldCheck size={12} className="text-emerald-600" /> Cadastro MDA (vinculado à CAF)
+                      </span>
+                      {empresaForm.mdaDataValidade && (() => {
+                        const mdaStatus = getMdaExpirationStatus(empresaForm.mdaDataValidade);
+                        if (!mdaStatus) return null;
+                        if (mdaStatus.status === 'vencido') {
+                          return (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 flex items-center gap-1">
+                              <AlertTriangle size={10} /> {mdaStatus.label}
+                            </span>
+                          );
+                        }
+                        if (mdaStatus.status === 'proximo') {
+                          return (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 flex items-center gap-1">
+                              <AlertTriangle size={10} /> {mdaStatus.label}
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                            {mdaStatus.label}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Número do Cadastro MDA</label>
+                        <input 
+                          type="text" 
+                          placeholder="Ex: MDA-000000000"
+                          className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white placeholder-slate-300"
+                          value={empresaForm.mdaNumeroCadastro || ''}
+                          onChange={(e) => setEmpresaForm({...empresaForm, mdaNumeroCadastro: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Data de Validade</label>
+                        <input 
+                          type="date" 
+                          className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
+                          value={empresaForm.mdaDataValidade || ''}
+                          onChange={(e) => setEmpresaForm({...empresaForm, mdaDataValidade: e.target.value})}
+                        />
+                      </div>
                     </div>
                   </div>
 
