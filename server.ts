@@ -4,6 +4,7 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 import { dbRouter } from "./src/db/routes";
+import { handleKiwifyWebhook } from "./src/server/kiwifyWebhook";
 
 dotenv.config();
 
@@ -50,6 +51,10 @@ async function startServer() {
 
   // Netlify Database / PostgreSQL API
   app.use("/api/db", dbRouter);
+
+  // Kiwify — libera automaticamente o plano comprado (Mensal/Anual) quando o
+  // pagamento é aprovado. Veja instruções de configuração em src/server/kiwifyWebhook.ts
+  app.post("/api/webhooks/kiwify", handleKiwifyWebhook);
 
   // Check system API Key status
   app.get("/api/gemini/config", (req, res) => {
