@@ -43,6 +43,7 @@ import { ResultadoConsultoriaView } from './components/ResultadoConsultoriaView'
 import { SmartSyncModal, type SyncSummary } from './components/SmartSyncModal';
 import { BackupExportModal, type BackupExportStats } from './components/BackupExportModal';
 import { ConnectionStatus } from './components/SettingsView';
+import { GeminiApiKeyTutorialModal } from './components/GeminiApiKeyTutorialModal';
 import { getCachedAI, setCachedAI, generateAICacheKey } from './lib/aiCache';
 import { 
   Plus, 
@@ -3079,7 +3080,7 @@ const CronogramaView = ({
       }`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.1-flash-lite",
+        model: "gemini-2.5-flash",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -8155,6 +8156,57 @@ const SettingsView = ({
   const [dailyReminderTime, setDailyReminderTime] = React.useState(() => localStorage.getItem('daily_reminder_time') || '09:00');
   const [cloudStatus, setCloudStatus] = React.useState<{ checking: boolean; ok?: boolean; message?: string; details?: string } | null>(null);
   const [copiedRules, setCopiedRules] = React.useState(false);
+  const [geminiApiKeyInput, setGeminiApiKeyInput] = React.useState(() => {
+    return localStorage.getItem('custom_gemini_api_key') || '';
+  });
+  const [isGeminiKeyVisible, setIsGeminiKeyVisible] = React.useState(false);
+  const [testingGemini, setTestingGemini] = React.useState(false);
+  const [geminiStatus, setGeminiStatus] = React.useState<{ ok?: boolean; message?: string } | null>(null);
+
+  const handleSaveGeminiKey = () => {
+    const cleanKey = geminiApiKeyInput.trim();
+    if (!cleanKey) {
+      localStorage.removeItem('custom_gemini_api_key');
+      setGeminiStatus(null);
+      alert('Chave da API do Gemini removida com sucesso!');
+      return;
+    }
+    localStorage.setItem('custom_gemini_api_key', cleanKey);
+    setGeminiStatus({ ok: true, message: 'Chave salva com sucesso no dispositivo!' });
+    alert('Chave salva com sucesso no seu dispositivo! Ela será utilizada para gerar planos e análises.');
+  };
+
+  const handleTestGeminiKey = async () => {
+    const keyToTest = geminiApiKeyInput.trim() || localStorage.getItem('custom_gemini_api_key')?.trim();
+    if (!keyToTest) {
+      alert('Por favor, digite ou cole uma chave do Google Gemini antes de testar.');
+      return;
+    }
+    setTestingGemini(true);
+    setGeminiStatus(null);
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${keyToTest}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: "Responda apenas 'OK'." }] }]
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error?.message || `Erro HTTP ${res.status}`);
+      }
+      setGeminiStatus({ ok: true, message: 'Conexão ativa! O modelo gemini-2.5-flash respondeu com sucesso.' });
+      alert('Sucesso! A chave de API do Gemini está conectada e operacional com o modelo gemini-2.5-flash.');
+    } catch (e: any) {
+      const err = e?.message || String(e);
+      setGeminiStatus({ ok: false, message: 'Falha: ' + err });
+      alert('Erro ao testar a chave do Gemini:\n\n' + err);
+    } finally {
+      setTestingGemini(false);
+    }
+  };
 
   const handleTestConnection = React.useCallback(async () => {
     setCloudStatus({ checking: true });
@@ -8246,6 +8298,118 @@ const SettingsView = ({
       <div>
         <h2 className="text-2xl font-bold text-slate-800">Configurações</h2>
         <p className="text-slate-500 text-sm">Personalize sua experiência na plataforma</p>
+      </div>
+
+      {/* Bloco de Inteligência Artificial Google Gemini */}
+      <div className="max-w-5xl">
+        <Card className="p-6 border-2 border-indigo-100 bg-gradient-to-br from-indigo-50/40 via-white to-sky-50/30">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <h3 className="text-base font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+              <Sparkles className="text-indigo-600" size={20} />
+              Inteligência Artificial (Google Gemini)
+            </h3>
+            <span className={`text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider self-start sm:self-auto ${
+              geminiApiKeyInput.trim()
+                ? 'bg-emerald-100 text-emerald-800'
+                : isSystemKeyActive
+                  ? 'bg-sky-100 text-sky-800'
+                  : 'bg-amber-100 text-amber-800'
+            }`}>
+              {geminiApiKeyInput.trim() 
+                ? '✓ Chave Própria Configurada' 
+                : isSystemKeyActive 
+                  ? '✓ Chave do Sistema Ativa' 
+                  : '⚠ Chave Não Configurada'}
+            </span>
+          </div>
+
+          <p className="text-xs text-slate-600 mb-5 leading-relaxed">
+            A IA do Gemini é utilizada para sugerir planos de trabalho, analisar a maturidade do negócio, gerar relatórios comportamentais DISC e prever recomendações estratégicas.
+          </p>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <Key size={14} className="text-indigo-600" />
+                Chave da API do Google Gemini (GEMINI_API_KEY)
+              </label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type={isGeminiKeyVisible ? "text" : "password"}
+                    placeholder="Cole sua chave aqui (inicia com AQ. ou AIzaSy...)"
+                    className="w-full px-4 py-2.5 pr-10 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono bg-white text-slate-800"
+                    value={geminiApiKeyInput}
+                    onChange={(e) => setGeminiApiKeyInput(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setIsGeminiKeyVisible(!isGeminiKeyVisible)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-semibold cursor-pointer"
+                  >
+                    {isGeminiKeyVisible ? "Ocultar" : "Ver"}
+                  </button>
+                </div>
+                <Button
+                  onClick={handleSaveGeminiKey}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shrink-0 flex items-center gap-1.5"
+                >
+                  <Save size={14} />
+                  Salvar Chave
+                </Button>
+                <Button
+                  onClick={handleTestGeminiKey}
+                  disabled={testingGemini}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shrink-0 flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <RefreshCw size={14} className={testingGemini ? "animate-spin" : ""} />
+                  {testingGemini ? "Testando..." : "Testar Conexão"}
+                </Button>
+              </div>
+            </div>
+
+            {geminiStatus && (
+              <div className={`p-3 rounded-xl text-xs flex items-start gap-2 ${
+                geminiStatus.ok 
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
+                  : 'bg-rose-50 text-rose-800 border border-rose-200'
+              }`}>
+                {geminiStatus.ok ? <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" /> : <AlertCircle size={16} className="text-rose-600 shrink-0 mt-0.5" />}
+                <span>{geminiStatus.message}</span>
+              </div>
+            )}
+
+            <div className="p-3.5 bg-indigo-50/70 rounded-xl border border-indigo-100/80 text-[11px] text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} className="text-indigo-600 shrink-0" />
+                <span>Primeira vez ou compartilhando com outro consultor?</span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      window.dispatchEvent(new CustomEvent('open-gemini-tutorial-modal'));
+                    }
+                  }}
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-[11px] shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <HelpCircle size={13} />
+                  <span>Tutorial Passo a Passo da IA</span>
+                </button>
+                <a
+                  href="https://aistudio.google.com/app/apikey"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-lg font-bold text-[11px] flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <span>Google AI Studio</span>
+                  <ExternalLink size={12} />
+                </a>
+              </div>
+            </div>
+          </div>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl">
@@ -9634,8 +9798,15 @@ export const extractAndParseJSON = (text: string, defaultValue: any = null): any
   return defaultValue;
 };
 
-// Chave de API global do Gemini (fallback conectado)
-const HARDCODED_GEMINI_API_KEY = "";
+// Chave de API global do Gemini (fornecida pelo criador para funcionamento imediato)
+export const HARDCODED_DEFAULT_GEMINI_KEY = "AQ.Ab8RN6LGK4um2g_8db72CBQC-9NFFnIDWCj4hg4m7xl7MxcEFA";
+
+export function isValidGeminiApiKey(k: any): boolean {
+  if (!k || typeof k !== 'string') return false;
+  const t = k.trim();
+  if (t === '' || t === 'undefined' || t === 'null') return false;
+  return t.startsWith('AQ.') || t.startsWith('AIzaSy') || t.length >= 15;
+}
 
 let aiInstance: any = null;
 export const getAI = () => {
@@ -9654,38 +9825,39 @@ export const getAI = () => {
         }
 
         let rawSavedKey = localStorage.getItem('custom_gemini_api_key') || "";
-        if (rawSavedKey === "undefined" || rawSavedKey === "null" || rawSavedKey.startsWith("AQ.") || rawSavedKey.length < 15) {
-          try {
-            localStorage.removeItem('custom_gemini_api_key');
-          } catch (e) {}
+        if (!isValidGeminiApiKey(rawSavedKey)) {
           rawSavedKey = "";
         }
         const savedKey = rawSavedKey.trim();
+
         let envKey = "";
         try {
           envKey = (import.meta.env.VITE_GEMINI_API_KEY || "").trim();
         } catch (e) {}
-        if (!envKey) {
+        if (!isValidGeminiApiKey(envKey)) {
           try {
             envKey = (process.env.GEMINI_API_KEY || "").trim();
           } catch (e) {}
         }
-        if (!envKey) {
+        if (!isValidGeminiApiKey(envKey)) {
           try {
             envKey = (process.env.VITE_GEMINI_API_KEY || "").trim();
           } catch (e) {}
         }
-        if (envKey === "undefined" || envKey === "null" || envKey.startsWith("AQ.")) {
+        if (!isValidGeminiApiKey(envKey)) {
           envKey = "";
         }
+
+        // Determina a chave ativa com prioridade para a configurada pelo usuário
+        const activeKey = savedKey || envKey || HARDCODED_DEFAULT_GEMINI_KEY;
         
         // 2. Try the backend proxy first (available in Container/Full-stack environments)
         try {
           const headers: Record<string, string> = {
             "Content-Type": "application/json"
           };
-          if (savedKey && savedKey.startsWith("AIzaSy")) {
-            headers["x-custom-api-key"] = savedKey;
+          if (activeKey) {
+            headers["x-custom-api-key"] = activeKey;
           }
 
           const response = await fetch("/api/gemini/generate", {
@@ -9719,13 +9891,16 @@ export const getAI = () => {
           if (!isNetworkOr404) {
             throw e;
           }
-          console.warn("[Gemini] Proxy indisponível ou estático. Tentando fallback direto do cliente.");
+          console.warn("[Gemini] Proxy indisponível ou estático. Tentando chamada direta com a chave configurada.");
         }
 
-        // 3. Fallback: Client-side Direct Call (for Netlify, Vercel, static pages, etc.)
-        const finalKey = (savedKey && savedKey.startsWith("AIzaSy") ? savedKey : "") || (envKey && envKey.startsWith("AIzaSy") ? envKey : "");
-        if (!finalKey || finalKey.trim() === "") {
-          throw new Error("Não foi possível conectar com o serviço de IA.\n\nSe você estiver acessando através de uma hospedagem estática (Netlify/Vercel):\n1. Acesse o menu Configurações da aplicação e insira sua chave oficial do Google AI Studio (iniciando com 'AIzaSy...').\n2. Obtenha sua chave gratuita em: https://aistudio.google.com/app/apikey");
+        // 3. Fallback: Client-side Direct Call (for Netlify, Electron desktop, static pages, etc.)
+        const finalKey = activeKey;
+        if (!finalKey || !isValidGeminiApiKey(finalKey)) {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('open-gemini-tutorial-modal'));
+          }
+          throw new Error("Chave da API do Google Gemini não configurada.\n\nPor favor, insira sua chave gratuita no menu Configurações ou siga o passo a passo na tela para gerar uma no Google AI Studio (começando com 'AQ.' ou 'AIzaSy...').");
         }
 
         const GEMINI_PRIMARY = "gemini-3.6-flash";
@@ -9878,7 +10053,7 @@ const generateAIFeedback = async (resposta: string, pergunta: string, problema: 
     const ai = getAI();
     if (!ai) return null;
     const response = await ai.models.generateContent({ 
-      model: "gemini-3.6-flash", 
+      model: "gemini-2.5-flash", 
       contents: prompt,
     });
     const result = response.text?.trim() || "";
@@ -9938,7 +10113,7 @@ const generateAIMaturityLevel = async (respostas: Resposta[], scorePercent: numb
     const ai = getAI();
     if (!ai) return null;
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: "gemini-2.5-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -9998,7 +10173,7 @@ const generateAISuggestions = async (probNome: string, noResponses: Resposta[], 
     const ai = getAI();
     if (!ai) return null;
     const response = await ai.models.generateContent({ 
-      model: "gemini-3.6-flash",
+      model: "gemini-2.5-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json"
@@ -10165,6 +10340,18 @@ export default function App() {
     }
   });
 
+  // Gemini AI Key Tutorial Modal State
+  const [isGeminiTutorialModalOpen, setIsGeminiTutorialModalOpen] = useState(false);
+  const [customGeminiKey, setCustomGeminiKey] = useState<string>(() => {
+    return localStorage.getItem('custom_gemini_api_key') || '';
+  });
+
+  useEffect(() => {
+    const handler = () => setIsGeminiTutorialModalOpen(true);
+    window.addEventListener('open-gemini-tutorial-modal', handler);
+    return () => window.removeEventListener('open-gemini-tutorial-modal', handler);
+  }, []);
+
   // Dedicated Backup Export & Access State
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isExportingBackup, setIsExportingBackup] = useState(false);
@@ -10172,9 +10359,9 @@ export default function App() {
   const [backupFileName, setBackupFileName] = useState<string>('consultoria_pro_backup.json');
   const [backupJsonString, setBackupJsonString] = useState<string>('');
 
-  // Storage Mode State (Cloud vs. Local)
+  // Storage Mode State (Cloud vs. Local - default to local for on-device persistence)
   const [storageMode, setStorageMode] = useState<'cloud' | 'local'>(() => {
-    return (localStorage.getItem('storage_mode') as 'cloud' | 'local') || 'cloud';
+    return (localStorage.getItem('storage_mode') as 'cloud' | 'local') || 'local';
   });
 
   const handleSetStorageMode = (mode: 'cloud' | 'local') => {
@@ -14280,7 +14467,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       `;
       
       const response = await ai.models.generateContent({
-        model: "gemini-3.6-flash",
+        model: "gemini-2.5-flash",
         contents: prompt,
         config: {
             responseMimeType: "application/json",
@@ -21299,6 +21486,17 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
           if (backupJsonString) {
             triggerDownloadBackupFile(backupJsonString, backupFileName);
           }
+        }}
+      />
+
+      <GeminiApiKeyTutorialModal
+        isOpen={isGeminiTutorialModalOpen}
+        onClose={() => setIsGeminiTutorialModalOpen(false)}
+        currentKey={customGeminiKey}
+        systemDefaultKey={HARDCODED_DEFAULT_GEMINI_KEY}
+        onKeySaved={(k) => {
+          setCustomGeminiKey(k);
+          showToast('Chave da API do Gemini configurada com sucesso!', 'success');
         }}
       />
 

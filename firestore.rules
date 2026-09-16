@@ -64,5 +64,8 @@ service cloud.firestore {
     match /analises_resultado/{id} {
       allow read, write: if isAuthenticated();
     }
+    match /system_health/{id} {
+      allow read, write: if isAuthenticated();
+    }
   }
 }

@@ -8,15 +8,24 @@ import { handleKiwifyWebhook } from "./src/server/kiwifyWebhook";
 
 dotenv.config();
 
-function getSystemGeminiApiKey(): string | undefined {
-  if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'undefined' && process.env.GEMINI_API_KEY !== 'null' && process.env.GEMINI_API_KEY.trim() !== '') {
-    return process.env.GEMINI_API_KEY.trim();
+const DEFAULT_SYSTEM_GEMINI_KEY = "AQ.Ab8RN6LGK4um2g_8db72CBQC-9NFFnIDWCj4hg4m7xl7MxcEFA";
+
+function isValidApiKey(val: any): boolean {
+  return typeof val === 'string' && 
+         val.trim() !== '' && 
+         val !== 'undefined' && 
+         val !== 'null' && 
+         (val.trim().startsWith('AIzaSy') || val.trim().startsWith('AQ.') || val.trim().length >= 15);
+}
+
+function getSystemGeminiApiKey(): string {
+  if (isValidApiKey(process.env.GEMINI_API_KEY)) {
+    return process.env.GEMINI_API_KEY!.trim();
   }
 
   // Look through all environment keys
   for (const envKey of Object.keys(process.env)) {
     const lKey = envKey.toLowerCase();
-    // Match any version of gemini key spelling, such as Gemini_api_kei, Gemini_api_key, etc.
     if (
       lKey === 'gemini_api_key' ||
       lKey === 'gemini_api_kei' ||
@@ -29,13 +38,14 @@ function getSystemGeminiApiKey(): string | undefined {
       lKey.includes('gemini_kei')
     ) {
       const val = process.env[envKey];
-      if (typeof val === 'string' && val.trim() !== '' && val !== 'undefined' && val !== 'null') {
+      if (isValidApiKey(val)) {
         console.log(`[Gemini Config] Detected API key under environment variable: ${envKey}`);
-        return val.trim();
+        return val!.trim();
       }
     }
   }
-  return undefined;
+
+  return DEFAULT_SYSTEM_GEMINI_KEY;
 }
 
 async function startServer() {
@@ -84,8 +94,8 @@ async function startServer() {
       const rawCustomKey = req.headers['x-custom-api-key'] || req.headers['X-Custom-Api-Key'];
       const systemKey = getSystemGeminiApiKey();
       let apiKey = systemKey;
-      if (typeof rawCustomKey === 'string' && rawCustomKey.trim().startsWith('AIzaSy')) {
-        apiKey = rawCustomKey.trim();
+      if (isValidApiKey(rawCustomKey)) {
+        apiKey = String(rawCustomKey).trim();
       }
 
       if (!apiKey || apiKey === "undefined" || apiKey.trim() === "") {
@@ -144,8 +154,8 @@ async function startServer() {
       const rawCustomKey = req.headers['x-custom-api-key'] || req.headers['X-Custom-Api-Key'];
       const systemKey = getSystemGeminiApiKey();
       let apiKey = systemKey;
-      if (typeof rawCustomKey === 'string' && rawCustomKey.trim().startsWith('AIzaSy')) {
-        apiKey = rawCustomKey.trim();
+      if (isValidApiKey(rawCustomKey)) {
+        apiKey = String(rawCustomKey).trim();
       }
 
       if (!apiKey || apiKey === "undefined" || apiKey.trim() === "") {

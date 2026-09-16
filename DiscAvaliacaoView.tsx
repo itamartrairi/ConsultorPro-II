@@ -519,7 +519,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "gemini-3.6-flash",
+          model: "gemini-2.5-flash",
           contents: prompt
         })
       });

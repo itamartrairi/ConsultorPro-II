@@ -28,7 +28,8 @@ import {
   signOut,
   User,
   createUserWithEmailAndPassword,
-  signInWithEmailAndPassword
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 import { db, auth, seedPremissasIfEmpty, checkCloudConnection } from './firebase';
 import { ProjectsView } from './components/ProjectsView';
@@ -42,6 +43,7 @@ import { ResultadoConsultoriaView } from './components/ResultadoConsultoriaView'
 import { SmartSyncModal, type SyncSummary } from './components/SmartSyncModal';
 import { BackupExportModal, type BackupExportStats } from './components/BackupExportModal';
 import { ConnectionStatus } from './components/SettingsView';
+import { GeminiApiKeyTutorialModal } from './components/GeminiApiKeyTutorialModal';
 import { getCachedAI, setCachedAI, generateAICacheKey } from './lib/aiCache';
 import { 
   Plus, 
@@ -258,6 +260,31 @@ export function isValidCNPJ(val?: string | null): boolean {
   if (result !== parseInt(checkDigits.charAt(1), 10)) return false;
 
   return true;
+}
+
+/**
+ * Calcula o status de vencimento do Cadastro MDA a partir da data de validade (YYYY-MM-DD).
+ */
+export function getMdaExpirationStatus(dataValidade?: string | null): { status: 'vencido' | 'proximo' | 'valido'; diasRestantes: number; label: string } | null {
+  if (!dataValidade) return null;
+  const validade = new Date(dataValidade + 'T00:00:00');
+  if (isNaN(validade.getTime())) return null;
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const diasRestantes = Math.ceil((validade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+  if (diasRestantes < 0) return { status: 'vencido', diasRestantes, label: `Vencido há ${Math.abs(diasRestantes)} dia(s)` };
+  if (diasRestantes <= 30) return { status: 'proximo', diasRestantes, label: `Vence em ${diasRestantes} dia(s)` };
+  return { status: 'valido', diasRestantes, label: 'Válido' };
+}
+
+/**
+ * Aplica a máscara brasileira de CEP: 00000-000
+ */
+export function formatCEP(val?: string | null): string {
+  const digits = cleanDigits(val).slice(0, 8);
+  if (!digits) return '';
+  if (digits.length > 5) return digits.slice(0, 5) + '-' + digits.slice(5, 8);
+  return digits;
 }
 
 /**
@@ -691,6 +718,25 @@ export interface Empresa {
   tipoEmpresa?: string;
   ramoAtividade?: string;
   cafNumero?: string;
+  // --- Dados da Receita Federal (preenchidos automaticamente pela consulta de CNPJ) ---
+  situacaoCadastral?: string;
+  dataSituacaoCadastral?: string;
+  naturezaJuridica?: string;
+  porteEmpresa?: string;
+  capitalSocial?: string;
+  cnaePrincipalCodigo?: string;
+  cnaePrincipalDescricao?: string;
+  dataAberturaReceita?: string;
+  logradouro?: string;
+  numeroEndereco?: string;
+  complementoEndereco?: string;
+  bairro?: string;
+  municipio?: string;
+  uf?: string;
+  cep?: string;
+  // --- Cadastro MDA (Ministério do Desenvolvimento Agrário) vinculado à CAF ---
+  mdaNumeroCadastro?: string;
+  mdaDataValidade?: string;
 }
 
 export interface Premissa {
@@ -3034,7 +3080,7 @@ const CronogramaView = ({
       }`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.1-flash-lite",
+        model: "gemini-2.5-flash",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -6192,8 +6238,13 @@ const RelatorioView = ({
               )}
             </div>
           </div>
-          <div className="hidden md:block">
-            {/* Logo removed as requested */}
+          <div className="hidden md:block shrink-0">
+            {(() => {
+              const activeLogoSrc = logoChoice === 'sebrae' ? customLogo : logoChoice === 'consultora' ? customConsultoraLogo : null;
+              return activeLogoSrc && activeLogoSrc.startsWith('data:') ? (
+                <img src={activeLogoSrc} alt="Logo" className="h-16 max-w-[160px] object-contain" />
+              ) : null;
+            })()}
           </div>
         </div>
 
@@ -6463,10 +6514,10 @@ const RelatorioView = ({
                         </h3>
                       </div>
 
-                      <div className="space-y-5 pl-2 md:pl-6 border-l border-slate-100 print:border-none print:pl-0">
+                      <div className="space-y-3 pl-2 md:pl-6 border-l border-slate-100 print:border-none print:pl-0">
                         {problems.map(({ probId, noResponses, yesResponses, solution }, idx) => (
-                        <div key={probId + idx} className="bg-white rounded-xl p-6 border border-slate-150 print:bg-transparent print:border-b print:rounded-none print:p-0 print:pb-6 print:mb-6 break-inside-avoid shadow-sm print:shadow-none">
-                          <div className="flex items-start justify-between gap-4 mb-6">
+                        <div key={probId + idx} className="bg-white rounded-xl p-4 border border-slate-150 print:bg-transparent print:border-b print:rounded-none print:p-0 print:pb-3 print:mb-3 break-inside-avoid shadow-sm print:shadow-none">
+                          <div className="flex items-start justify-between gap-4 mb-3">
                             <div className="flex items-start gap-4">
                               <div className="w-8 h-8 bg-emerald-600 text-white rounded-xl flex items-center justify-center text-xs font-black shrink-0 mt-0.5 shadow-sm shadow-emerald-600/20">
                                 {idx + 1}º
@@ -6477,14 +6528,14 @@ const RelatorioView = ({
                             </div>
                           </div>
 
-                          <div className="space-y-6">
+                          <div className="space-y-3">
                             {/* --- Success Section --- */}
                             {yesResponses.length > 0 && (
-                              <div className="bg-emerald-50/40 p-4 rounded-lg border border-emerald-100">
-                                <h5 className="text-xs font-bold text-emerald-700 uppercase tracking-widest mb-3 flex items-center gap-2">
+                              <div className="bg-emerald-50/40 p-3 rounded-lg border border-emerald-100">
+                                <h5 className="text-xs font-bold text-emerald-700 uppercase tracking-widest mb-2 flex items-center gap-2">
                                   <Trophy size={14} /> Pontos Fortes / Sucessos
                                 </h5>
-                                <ul className="space-y-2 mb-4">
+                                <ul className="space-y-1.5 mb-2">
                                   {yesResponses.map((r, i) => (
                                     <li key={i} className="text-slate-700 text-sm flex items-start gap-2">
                                       <span className="text-emerald-500 mt-0.5">•</span>
@@ -6493,7 +6544,7 @@ const RelatorioView = ({
                                   ))}
                                 </ul>
                                 {solution?.comentario_sucesso && (
-                                  <div className="bg-white p-3 rounded border border-emerald-100 italic text-sm text-slate-600">
+                                  <div className="bg-white p-2.5 rounded border border-emerald-100 italic text-sm text-slate-600">
                                     <span className="font-bold text-emerald-600 not-italic mr-1">Reconhecimento:</span>
                                     {solution.comentario_sucesso}
                                   </div>
@@ -6503,26 +6554,26 @@ const RelatorioView = ({
 
                             {/* --- Critical Section --- */}
                             {noResponses.length > 0 && (
-                              <div className="bg-rose-50/40 p-6 rounded-xl border border-rose-100">
-                                <h5 className="text-sm font-bold text-rose-700 uppercase tracking-widest mb-4 flex items-center gap-2">
+                              <div className="bg-rose-50/40 p-3 rounded-xl border border-rose-100">
+                                <h5 className="text-sm font-bold text-rose-700 uppercase tracking-widest mb-2 flex items-center gap-2">
                                   <AlertTriangle size={16} /> Pontos Críticos / Oportunidades
                                 </h5>
                                 <div className="overflow-x-auto">
                                   <table className="w-full text-sm text-left border-collapse">
                                     <thead>
                                       <tr className="border-b border-rose-200">
-                                        <th className="py-2 pr-4 font-bold text-rose-800 uppercase text-[10px]">Pergunta / Detalhes</th>
-                                        <th className="py-2 text-right font-bold text-rose-800 uppercase text-[10px]">Status</th>
+                                        <th className="py-1.5 pr-4 font-bold text-rose-800 uppercase text-[10px]">Pergunta / Detalhes</th>
+                                        <th className="py-1.5 text-right font-bold text-rose-800 uppercase text-[10px]">Status</th>
                                       </tr>
                                     </thead>
                                     <tbody className="divide-y divide-rose-100">
                                       {noResponses.map((r, i) => (
                                         <tr key={i}>
-                                          <td className="py-3 pr-4 align-top text-slate-600">
-                                            <div className="font-semibold text-slate-800 text-sm mb-1">{r.pergunta}</div>
-                                            {r.observacao && <div className="text-xs italic text-slate-500 mt-1 flex items-center gap-1"><Info size={10} /> {r.observacao}</div>}
+                                          <td className="py-1.5 pr-4 align-top text-slate-600">
+                                            <div className="font-semibold text-slate-800 text-sm mb-0.5">{r.pergunta}</div>
+                                            {r.observacao && <div className="text-xs italic text-slate-500 mt-0.5 flex items-center gap-1"><Info size={10} /> {r.observacao}</div>}
                                           </td>
-                                          <td className="py-3 text-right align-top">
+                                          <td className="py-1.5 text-right align-top">
                                             <span className="px-2 py-0.5 bg-rose-100 text-rose-700 text-[10px] font-bold rounded uppercase whitespace-nowrap font-mono">
                                               {r.resposta}
                                             </span>
@@ -6534,11 +6585,11 @@ const RelatorioView = ({
                                 </div>
 
                                 {solution ? (
-                                  <div className="mt-4 bg-white p-4 rounded-lg border border-emerald-100 shadow-sm print:border-slate-200 print:shadow-none">
-                                    <h5 className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-3 flex items-center gap-2">
+                                  <div className="mt-2 bg-white p-3 rounded-lg border border-emerald-100 shadow-sm print:border-slate-200 print:shadow-none">
+                                    <h5 className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2 flex items-center gap-2">
                                       <CheckCircle2 size={16} /> Solução e Recomendações Propostas
                                     </h5>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
                                       <div>
                                         <p className="text-[10px] font-bold text-slate-400 uppercase">Solução / Ação Recomendada</p>
                                         <p className="text-sm font-semibold text-slate-800">{solution.solucao_recomendada || 'Não informada'}</p>
@@ -6550,12 +6601,12 @@ const RelatorioView = ({
                                     </div>
                                     <div>
                                       <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Passo a Passo / Recomendações</p>
-                                      <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed bg-slate-50/70 p-3.5 rounded-lg border border-slate-100 font-sans">{solution.acoes_sugeridas || 'Nenhuma recomendação detalhada cadastrada.'}</p>
+                                      <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed bg-slate-50/70 p-2.5 rounded-lg border border-slate-100 font-sans">{solution.acoes_sugeridas || 'Nenhuma recomendação detalhada cadastrada.'}</p>
                                     </div>
 
                                   </div>
                                 ) : (
-                                  <div className="mt-6 bg-amber-50 p-4 rounded-lg border border-amber-100 text-amber-800 text-sm italic flex items-center gap-2">
+                                  <div className="mt-3 bg-amber-50 p-3 rounded-lg border border-amber-100 text-amber-800 text-sm italic flex items-center gap-2">
                                     <AlertCircle size={16} /> Nenhuma solução mapeada para este problema.
                                   </div>
                                 )}
@@ -7923,130 +7974,23 @@ const LandingPage = ({ setView }: { setView: (v: any) => void }) => {
   );
 };
 
+// Links de checkout reais da Kiwify (gerados no painel da Kiwify: Produtos > Links de Pagamento)
+const KIWIFY_CHECKOUT_LINKS: Record<'monthly' | 'annual', string> = {
+  monthly: 'https://pay.kiwify.com.br/Pfq45hH',
+  annual: 'https://pay.kiwify.com.br/CNpHFtN',
+};
+
 const CheckoutPage = ({ setView, plan = 'annual' }: { setView: (v: any) => void, plan?: 'monthly' | 'annual' }) => {
-  const [step, setStep] = useState(1);
-  const [isCopied, setIsCopied] = useState(false);
-  const [comprovante, setComprovante] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    cnpj: '',
-    card: '',
-    expiry: '',
-    cvv: ''
-  });
+  const loggedEmail = auth.currentUser?.email || '';
+  const loggedName = auth.currentUser?.displayName || '';
 
-  const validateCNPJ = (cnpj: string) => {
-    cnpj = cnpj.replace(/[^\d]+/g, '');
-    if (cnpj === '') return false;
-    if (cnpj.length !== 14) return false;
-    if (/^(\d)\1+$/.test(cnpj)) return false;
-    
-    let size = cnpj.length - 2;
-    let numbers = cnpj.substring(0, size);
-    let digits = cnpj.substring(size);
-    let sum = 0;
-    let pos = size - 7;
-    for (let i = size; i >= 1; i--) {
-      sum += parseInt(numbers.charAt(size - i)) * pos--;
-      if (pos < 2) pos = 9;
-    }
-    let result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
-    if (result !== parseInt(digits.charAt(0))) return false;
-    
-    size = size + 1;
-    numbers = cnpj.substring(0, size);
-    sum = 0;
-    pos = size - 7;
-    for (let i = size; i >= 1; i--) {
-      sum += parseInt(numbers.charAt(size - i)) * pos--;
-      if (pos < 2) pos = 9;
-    }
-    result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
-    if (result !== parseInt(digits.charAt(1))) return false;
-    
-    return true;
-  };
-
-  const handleCNPJChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value.replace(/[^\d]/g, "");
-    if (val.length > 14) val = val.substring(0, 14);
-    
-    let masked = val;
-    if (val.length > 2) masked = val.substring(0, 2) + "." + val.substring(2);
-    if (val.length > 5) masked = masked.substring(0, 6) + "." + masked.substring(6);
-    if (val.length > 8) masked = masked.substring(0, 10) + "/" + masked.substring(10);
-    if (val.length > 12) masked = masked.substring(0, 15) + "-" + masked.substring(15);
-    
-    setFormData({...formData, cnpj: masked});
-  };
-
-  const handleFinish = async () => {
-    if (!validateCNPJ(formData.cnpj)) {
-      alert("CNPJ Inválido. Por favor, verifique os números digitados.");
-      return;
-    }
-
-    if (!comprovante) {
-      alert("Por favor, anexe o comprovante do pagamento PIX antes de finalizar.");
-      return;
-    }
-
-    setIsVerifying(true);
-
-    // Simula validação em tempo real
-    await new Promise(resolve => setTimeout(resolve, 2200));
-
-    // Tenta atualizar a licença do usuário se ele estiver logado
-    const currentUser = auth.currentUser;
-    if (currentUser) {
-      try {
-        // Busca a credenciada vinculada ao usuário
-        const q = query(collection(db, 'empresas_credenciadas'), where('ownerId', '==', currentUser.uid));
-        const querySnapshot = await getDocs(q);
-        
-        const planoEscolhido = plan === 'monthly' ? 'Mensal' : 'Anual';
-        
-        if (!querySnapshot.empty) {
-          const docId = querySnapshot.docs[0].id;
-          const currentData = querySnapshot.docs[0].data();
-          await updateDoc(doc(db, 'empresas_credenciadas', docId), {
-            razaoSocial: formData.name || currentData.razaoSocial || 'Novo Cliente',
-            cnpj: formData.cnpj,
-            email: formData.email || currentUser.email || '',
-            tipoPlano: planoEscolhido,
-            dataCadastro: serverTimestamp(), // Reseta a data para iniciar o novo período
-            status: 'Ativa',
-            comprovanteNome: comprovante.name,
-            dataComprovante: serverTimestamp()
-          });
-        } else {
-          // caso não exista, cria uma nova empresa_credenciada para o usuário logado
-          await addDoc(collection(db, 'empresas_credenciadas'), {
-            razaoSocial: formData.name || 'Novo Cliente',
-            cnpj: formData.cnpj,
-            email: formData.email || currentUser.email || '',
-            tipoPlano: planoEscolhido,
-            dataCadastro: serverTimestamp(),
-            ownerId: currentUser.uid,
-            status: 'Ativa',
-            role: 'cliente',
-            comprovanteNome: comprovante.name,
-            dataComprovante: serverTimestamp()
-          });
-        }
-      } catch (error) {
-        console.error("Erro ao atualizar licença:", error);
-      }
-    }
-
-    setIsVerifying(false);
-    playSuccessSound();
-    alert(`Sucesso! O comprovante do PIX foi recebido e validado com sucesso. Sua licença ${plan === 'monthly' ? 'Mensal' : 'Anual'} está ativa e o sistema foi LIBERADO!`);
-    setView('home');
+  const handleGoToKiwify = () => {
+    const baseUrl = KIWIFY_CHECKOUT_LINKS[plan];
+    const params = new URLSearchParams();
+    if (loggedEmail) params.set('email', loggedEmail);
+    if (loggedName) params.set('name', loggedName);
+    const url = params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl;
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -8061,261 +8005,45 @@ const CheckoutPage = ({ setView, plan = 'annual' }: { setView: (v: any) => void,
         </button>
 
         <Card className="p-8 md:p-12 shadow-sm border border-slate-100 rounded-3xl">
-          <div className="flex items-center justify-between mb-12">
-            <h2 className="text-2xl font-bold text-slate-800">Finalizar Assinatura</h2>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-emerald-500" />
-              <div className="w-8 h-1 bg-slate-100 rounded-full overflow-hidden">
-                <div className={`h-full bg-emerald-500 transition-all duration-300 ${step >= 2 ? 'w-full' : 'w-0'}`} />
-              </div>
-              <div className={`w-3 h-3 rounded-full transition-colors duration-300 ${step >= 2 ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+          <h2 className="text-2xl font-bold text-slate-800 mb-8">Finalizar Assinatura</h2>
+
+          <div className="bg-slate-50 border border-slate-100 p-5 rounded-2xl flex justify-between items-center mb-6">
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Você assinará</p>
+              <p className="font-sans font-bold text-slate-800 text-sm">
+                {plan === 'annual' ? 'Master Consultant (Anual)' : 'Consultor Pró (Mensal)'}
+              </p>
             </div>
+            <p className="font-sans font-extrabold text-slate-800 text-sm">
+              {plan === 'annual' ? 'R$ 497,90/ano' : 'R$ 47,90/mês'}
+            </p>
           </div>
 
-          <AnimatePresence mode="wait">
-            {step === 1 ? (
-              <motion.div
-                key="step1"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="space-y-6"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Nome da Empresa</label>
-                    <input 
-                      type="text" 
-                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-sans"
-                      placeholder="Sua Consultoria Ltda"
-                      value={formData.name}
-                      onChange={e => setFormData({...formData, name: e.target.value})}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">CNPJ</label>
-                    <input 
-                      type="text" 
-                      className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-sans"
-                      placeholder="00.000.000/0000-00"
-                      value={formData.cnpj}
-                      onChange={handleCNPJChange}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500">E-mail para Acesso</label>
-                  <input 
-                    type="email" 
-                    className="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-sans"
-                    placeholder="contato@suaempresa.com.br"
-                    value={formData.email}
-                    onChange={e => setFormData({...formData, email: e.target.value})}
-                  />
-                </div>
+          {loggedEmail ? (
+            <div className="bg-sky-50 border border-sky-100 p-4 rounded-xl mb-6 text-sm text-sky-900 flex items-start gap-2.5">
+              <Info size={16} className="shrink-0 mt-0.5 text-sky-500" />
+              <p>
+                O pagamento será feito em ambiente seguro da <strong>Kiwify</strong>. Use o e-mail <strong className="font-mono">{loggedEmail}</strong> (o mesmo do seu login) na hora de pagar — assim que a Kiwify confirmar a compra, seu plano é liberado automaticamente aqui no sistema, sem precisar fazer mais nada.
+              </p>
+            </div>
+          ) : (
+            <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl mb-6 text-sm text-amber-900 flex items-start gap-2.5">
+              <AlertTriangle size={16} className="shrink-0 mt-0.5 text-amber-500" />
+              <p>Faça login antes de continuar, para que o e-mail da compra seja vinculado à sua conta e o plano seja liberado automaticamente.</p>
+            </div>
+          )}
 
-                <div className="bg-slate-50 border border-slate-100 p-5 rounded-2xl flex justify-between items-center mt-6">
-                  <div>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Você assinará</p>
-                    <p className="font-sans font-bold text-slate-800 text-sm">
-                      {plan === 'annual' ? 'Master Consultant (Anual)' : 'Consultor Pró (Mensal)'}
-                    </p>
-                  </div>
-                  <p className="font-sans font-extrabold text-slate-800 text-sm">
-                    {plan === 'annual' ? 'R$ 41,49/mês (R$ 497,90 à vista ou 12x)' : 'R$ 47,90/mês'}
-                  </p>
-                </div>
+          <Button 
+            onClick={handleGoToKiwify}
+            className="w-full h-14 text-xs font-bold uppercase tracking-wider bg-[#6fc2a4] hover:bg-[#59ba97] text-white rounded-2xl border-none transition-all shadow-sm flex items-center justify-center gap-2"
+          >
+            Ir para Pagamento Seguro (Kiwify)
+            <ArrowRight size={16} />
+          </Button>
 
-                <Button 
-                  onClick={() => setStep(2)}
-                  className="w-full h-14 text-xs font-bold uppercase tracking-wider mt-8 bg-[#6fc2a4] hover:bg-[#59ba97] text-white rounded-2xl border-none transition-all shadow-sm"
-                  disabled={!formData.name || !formData.email || !formData.cnpj}
-                >
-                  Continuar para Pagamento
-                </Button>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="step2"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="space-y-6"
-              >
-                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-left">
-                  <h4 className="font-extrabold text-amber-900 text-sm mb-1">Passo Final: Ativação PIX</h4>
-                  <p className="text-amber-800 text-xs leading-relaxed">
-                    Transfira o valor de <strong className="font-extrabold font-sans text-slate-900">R$ {plan === 'annual' ? '497,90' : '47,90'}</strong> para a chave PIX abaixo. Nosso sistema identificará o pagamento imediatamente.
-                  </p>
-                </div>
-
-                <div className="flex flex-col items-center justify-center py-4">
-                  <div className="w-56 h-56 bg-slate-50 border border-slate-100 rounded-3xl flex items-center justify-center p-6 mb-6 shadow-sm">
-                    {/* Dynamic styled QR Code graphic mimicking the exact brand identity block from screenshot */}
-                    <svg viewBox="0 0 100 100" className="w-full h-full text-slate-800">
-                      {/* Top left marker */}
-                      <path d="M 5 5 H 30 V 30 H 5 Z M 10 10 V 25 H 25 V 10 Z" fill="currentColor" />
-                      <rect x="14" y="14" width="7" height="7" fill="currentColor" />
-                      
-                      {/* Top right marker */}
-                      <path d="M 70 5 H 95 V 30 H 70 Z M 75 10 V 25 H 90 V 10 Z" fill="currentColor" />
-                      <rect x="79" y="14" width="7" height="7" fill="currentColor" />
-                      
-                      {/* Bottom left marker */}
-                      <path d="M 5 70 H 30 V 95 H 5 Z M 10 75 V 90 H 25 V 75 Z" fill="currentColor" />
-                      <rect x="14" y="79" width="7" height="7" fill="currentColor" />
-
-                      {/* Center piece / brand identity dot from screenshot */}
-                      <rect x="42" y="42" width="16" height="16" rx="4" fill="#a7f3d0" className="text-emerald-500" />
-                      <rect x="47" y="47" width="6" height="6" rx="2" fill="#10b981" />
-
-                      {/* Random QR structures */}
-                      <rect x="40" y="10" width="5" height="15" fill="currentColor" />
-                      <rect x="50" y="5" width="10" height="5" fill="currentColor" />
-                      <rect x="45" y="25" width="20" height="5" fill="currentColor" />
-                      <rect x="10" y="40" width="5" height="15" fill="currentColor" />
-                      <rect x="25" y="45" width="10" height="5" fill="currentColor" />
-                      <rect x="5" y="55" width="20" height="5" fill="currentColor" />
-
-                      <rect x="70" y="40" width="15" height="5" fill="currentColor" />
-                      <rect x="80" y="48" width="5" height="10" fill="currentColor" />
-                      <rect x="90" y="42" width="5" height="5" fill="#10b981" />
-                      <rect x="75" y="60" width="20" height="5" fill="currentColor" />
-
-                      <rect x="40" y="70" width="10" height="10" fill="currentColor" />
-                      <rect x="45" y="85" width="15" height="5" fill="currentColor" />
-                      <rect x="55" y="75" width="5" height="10" fill="currentColor" />
-
-                      <rect x="68" y="70" width="27" height="27" rx="6" fill="#f8fafc" />
-                      {/* Let's draw bottom right marker standard */}
-                      <path d="M 70 70 H 95 V 95 H 70 Z M 75 75 V 90 H 90 V 75 Z" fill="currentColor" />
-                    </svg>
-                  </div>
-
-                  <div className="w-full bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between p-4 px-6 mb-2">
-                    <span className="font-mono text-slate-700 text-sm font-semibold select-all">itamartrairi@gmail.com</span>
-                    <button 
-                      onClick={() => {
-                        navigator.clipboard.writeText('itamartrairi@gmail.com');
-                        setIsCopied(true);
-                        setTimeout(() => setIsCopied(false), 2000);
-                      }}
-                      type="button"
-                      className="text-emerald-600 font-black text-xs uppercase tracking-widest hover:text-emerald-700 transition-colors focus:outline-none"
-                    >
-                      {isCopied ? 'COPIADO!' : 'COPIAR'}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-3 text-left">
-                  <label className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 flex items-center gap-1">
-                    Anexar Comprovante do PIX <span className="text-red-500 font-bold">*</span>
-                  </label>
-                  
-                  {comprovante ? (
-                    <div className="border border-emerald-200 bg-emerald-50/50 rounded-2xl p-4 flex items-center justify-between transition-all">
-                      <div className="flex items-center gap-3">
-                        {isUploading ? (
-                          <div className="w-10 h-10 bg-emerald-100/50 text-emerald-600 rounded-xl flex items-center justify-center animate-spin">
-                            <Loader2 size={20} />
-                          </div>
-                        ) : (
-                          <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center">
-                            <CheckCircle2 size={20} />
-                          </div>
-                        )}
-                        <div className="text-left">
-                          <p className="font-bold text-slate-800 text-sm max-w-[200px] truncate">{comprovante.name}</p>
-                          <p className="text-[10px] text-emerald-600 font-medium font-sans">
-                            {(comprovante.size / 1024).toFixed(1)} KB • Pronto para validação
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setComprovante(null);
-                        }}
-                        type="button"
-                        className="text-[10px] uppercase font-bold tracking-widest text-rose-500 hover:text-rose-700 px-3 py-1.5 hover:bg-rose-50 rounded-lg transition-colors focus:outline-none"
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  ) : (
-                    <div 
-                      onClick={() => fileInputRef.current?.click()}
-                      className="border-2 border-dashed border-slate-200 hover:border-[#6fc2a4] focus:outline-none transition-all rounded-2xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer bg-slate-50/50 hover:bg-[#6fc2a4]/5"
-                    >
-                      <input 
-                        type="file" 
-                        ref={fileInputRef} 
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files[0]) {
-                            const file = e.target.files[0];
-                            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
-                            const fileExtension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
-                            const allowedExtensions = ['.jpg', '.jpeg', '.png', '.pdf'];
-                            
-                            const isValidType = allowedTypes.includes(file.type) || allowedExtensions.includes(fileExtension);
-                            if (!isValidType) {
-                              alert("Formato de arquivo inválido! Envie apenas comprovantes em formato PDF ou Imagem (JPEG/PNG).");
-                              e.target.value = ''; // Reset input
-                              return;
-                            }
-
-                            setIsUploading(true);
-                            setComprovante(file);
-                            setTimeout(() => {
-                              setIsUploading(false);
-                            }, 800);
-                          }
-                        }}
-                        className="hidden" 
-                        accept="image/jpeg,image/png,application/pdf"
-                      />
-                      <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center mb-1">
-                        <Upload size={22} className="text-slate-400" />
-                      </div>
-                      <p className="text-xs font-bold text-slate-700">Clique para selecionar ou arraste o comprovante</p>
-                      <p className="text-[10px] text-slate-400 font-medium">Formatos aceitos: PDF, Imagens (JPEG, PNG)</p>
-                    </div>
-                  )}
-                </div>
-
-                <Button 
-                  onClick={handleFinish}
-                  disabled={!comprovante || isUploading || isVerifying}
-                  className={`w-full h-14 text-white font-extrabold text-xs uppercase tracking-widest transition-all rounded-2xl border-none mb-4 ${
-                    comprovante && !isUploading && !isVerifying
-                      ? 'bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 shadow-md cursor-pointer' 
-                      : 'bg-slate-300 text-slate-400 cursor-not-allowed shadow-none'
-                  }`}
-                >
-                  {isVerifying ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <Loader2 size={16} className="animate-spin" />
-                      Validando comprovante...
-                    </span>
-                  ) : comprovante ? (
-                    'Confirmar Pagamento e Liberar Sistema'
-                  ) : (
-                    'Anexe o comprovante para liberar'
-                  )}
-                </Button>
-
-                <div className="text-center">
-                  <button 
-                    onClick={() => setStep(1)}
-                    type="button"
-                    className="text-slate-400 font-extrabold text-[10px] uppercase tracking-widest hover:text-slate-600 transition-colors focus:outline-none"
-                  >
-                    Alterar dados cadastrais
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <p className="text-center text-slate-400 text-[10px] font-medium mt-4">
+            Você será redirecionado para pay.kiwify.com.br para concluir o pagamento com cartão, PIX ou boleto.
+          </p>
         </Card>
 
         <p className="text-center text-slate-400 text-[11px] font-bold uppercase tracking-wider mt-8">
@@ -8428,6 +8156,57 @@ const SettingsView = ({
   const [dailyReminderTime, setDailyReminderTime] = React.useState(() => localStorage.getItem('daily_reminder_time') || '09:00');
   const [cloudStatus, setCloudStatus] = React.useState<{ checking: boolean; ok?: boolean; message?: string; details?: string } | null>(null);
   const [copiedRules, setCopiedRules] = React.useState(false);
+  const [geminiApiKeyInput, setGeminiApiKeyInput] = React.useState(() => {
+    return localStorage.getItem('custom_gemini_api_key') || '';
+  });
+  const [isGeminiKeyVisible, setIsGeminiKeyVisible] = React.useState(false);
+  const [testingGemini, setTestingGemini] = React.useState(false);
+  const [geminiStatus, setGeminiStatus] = React.useState<{ ok?: boolean; message?: string } | null>(null);
+
+  const handleSaveGeminiKey = () => {
+    const cleanKey = geminiApiKeyInput.trim();
+    if (!cleanKey) {
+      localStorage.removeItem('custom_gemini_api_key');
+      setGeminiStatus(null);
+      alert('Chave da API do Gemini removida com sucesso!');
+      return;
+    }
+    localStorage.setItem('custom_gemini_api_key', cleanKey);
+    setGeminiStatus({ ok: true, message: 'Chave salva com sucesso no dispositivo!' });
+    alert('Chave salva com sucesso no seu dispositivo! Ela será utilizada para gerar planos e análises.');
+  };
+
+  const handleTestGeminiKey = async () => {
+    const keyToTest = geminiApiKeyInput.trim() || localStorage.getItem('custom_gemini_api_key')?.trim();
+    if (!keyToTest) {
+      alert('Por favor, digite ou cole uma chave do Google Gemini antes de testar.');
+      return;
+    }
+    setTestingGemini(true);
+    setGeminiStatus(null);
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${keyToTest}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: "Responda apenas 'OK'." }] }]
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error?.message || `Erro HTTP ${res.status}`);
+      }
+      setGeminiStatus({ ok: true, message: 'Conexão ativa! O modelo gemini-2.5-flash respondeu com sucesso.' });
+      alert('Sucesso! A chave de API do Gemini está conectada e operacional com o modelo gemini-2.5-flash.');
+    } catch (e: any) {
+      const err = e?.message || String(e);
+      setGeminiStatus({ ok: false, message: 'Falha: ' + err });
+      alert('Erro ao testar a chave do Gemini:\n\n' + err);
+    } finally {
+      setTestingGemini(false);
+    }
+  };
 
   const handleTestConnection = React.useCallback(async () => {
     setCloudStatus({ checking: true });
@@ -8519,6 +8298,118 @@ const SettingsView = ({
       <div>
         <h2 className="text-2xl font-bold text-slate-800">Configurações</h2>
         <p className="text-slate-500 text-sm">Personalize sua experiência na plataforma</p>
+      </div>
+
+      {/* Bloco de Inteligência Artificial Google Gemini */}
+      <div className="max-w-5xl">
+        <Card className="p-6 border-2 border-indigo-100 bg-gradient-to-br from-indigo-50/40 via-white to-sky-50/30">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <h3 className="text-base font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+              <Sparkles className="text-indigo-600" size={20} />
+              Inteligência Artificial (Google Gemini)
+            </h3>
+            <span className={`text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider self-start sm:self-auto ${
+              geminiApiKeyInput.trim()
+                ? 'bg-emerald-100 text-emerald-800'
+                : isSystemKeyActive
+                  ? 'bg-sky-100 text-sky-800'
+                  : 'bg-amber-100 text-amber-800'
+            }`}>
+              {geminiApiKeyInput.trim() 
+                ? '✓ Chave Própria Configurada' 
+                : isSystemKeyActive 
+                  ? '✓ Chave do Sistema Ativa' 
+                  : '⚠ Chave Não Configurada'}
+            </span>
+          </div>
+
+          <p className="text-xs text-slate-600 mb-5 leading-relaxed">
+            A IA do Gemini é utilizada para sugerir planos de trabalho, analisar a maturidade do negócio, gerar relatórios comportamentais DISC e prever recomendações estratégicas.
+          </p>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <Key size={14} className="text-indigo-600" />
+                Chave da API do Google Gemini (GEMINI_API_KEY)
+              </label>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type={isGeminiKeyVisible ? "text" : "password"}
+                    placeholder="Cole sua chave aqui (inicia com AQ. ou AIzaSy...)"
+                    className="w-full px-4 py-2.5 pr-10 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono bg-white text-slate-800"
+                    value={geminiApiKeyInput}
+                    onChange={(e) => setGeminiApiKeyInput(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setIsGeminiKeyVisible(!isGeminiKeyVisible)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-semibold cursor-pointer"
+                  >
+                    {isGeminiKeyVisible ? "Ocultar" : "Ver"}
+                  </button>
+                </div>
+                <Button
+                  onClick={handleSaveGeminiKey}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shrink-0 flex items-center gap-1.5"
+                >
+                  <Save size={14} />
+                  Salvar Chave
+                </Button>
+                <Button
+                  onClick={handleTestGeminiKey}
+                  disabled={testingGemini}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shrink-0 flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <RefreshCw size={14} className={testingGemini ? "animate-spin" : ""} />
+                  {testingGemini ? "Testando..." : "Testar Conexão"}
+                </Button>
+              </div>
+            </div>
+
+            {geminiStatus && (
+              <div className={`p-3 rounded-xl text-xs flex items-start gap-2 ${
+                geminiStatus.ok 
+                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
+                  : 'bg-rose-50 text-rose-800 border border-rose-200'
+              }`}>
+                {geminiStatus.ok ? <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" /> : <AlertCircle size={16} className="text-rose-600 shrink-0 mt-0.5" />}
+                <span>{geminiStatus.message}</span>
+              </div>
+            )}
+
+            <div className="p-3.5 bg-indigo-50/70 rounded-xl border border-indigo-100/80 text-[11px] text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} className="text-indigo-600 shrink-0" />
+                <span>Primeira vez ou compartilhando com outro consultor?</span>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      window.dispatchEvent(new CustomEvent('open-gemini-tutorial-modal'));
+                    }
+                  }}
+                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-[11px] shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <HelpCircle size={13} />
+                  <span>Tutorial Passo a Passo da IA</span>
+                </button>
+                <a
+                  href="https://aistudio.google.com/app/apikey"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-lg font-bold text-[11px] flex items-center gap-1 transition-colors cursor-pointer"
+                >
+                  <span>Google AI Studio</span>
+                  <ExternalLink size={12} />
+                </a>
+              </div>
+            </div>
+          </div>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl">
@@ -9542,8 +9433,8 @@ const LicensingDataView = ({ setView }: { setView?: (v: any) => void }) => {
             <Trophy size={24} />
           </div>
           <div>
-            <h3 className="font-bold text-amber-950 text-base">Faturamento & Ativação PIX</h3>
-            <p className="text-amber-800 text-sm">Utilize a chave PIX <strong className="font-semibold select-all font-mono">itamartrairi@gmail.com</strong> para recebimento de transferências e ativação manual das licenças.</p>
+            <h3 className="font-bold text-amber-950 text-base">Faturamento & Ativação Automática (Kiwify)</h3>
+            <p className="text-amber-800 text-sm">Os planos Mensal e Anual são vendidos pela Kiwify e liberados <strong>automaticamente</strong> via webhook assim que o pagamento é aprovado. A ativação manual abaixo continua disponível como alternativa/exceção.</p>
           </div>
         </div>
       </div>
@@ -9907,8 +9798,15 @@ export const extractAndParseJSON = (text: string, defaultValue: any = null): any
   return defaultValue;
 };
 
-// Chave de API global do Gemini (fallback conectado)
-const HARDCODED_GEMINI_API_KEY = "";
+// Chave de API global do Gemini (fornecida pelo criador para funcionamento imediato)
+export const HARDCODED_DEFAULT_GEMINI_KEY = "AQ.Ab8RN6LGK4um2g_8db72CBQC-9NFFnIDWCj4hg4m7xl7MxcEFA";
+
+export function isValidGeminiApiKey(k: any): boolean {
+  if (!k || typeof k !== 'string') return false;
+  const t = k.trim();
+  if (t === '' || t === 'undefined' || t === 'null') return false;
+  return t.startsWith('AQ.') || t.startsWith('AIzaSy') || t.length >= 15;
+}
 
 let aiInstance: any = null;
 export const getAI = () => {
@@ -9927,38 +9825,39 @@ export const getAI = () => {
         }
 
         let rawSavedKey = localStorage.getItem('custom_gemini_api_key') || "";
-        if (rawSavedKey === "undefined" || rawSavedKey === "null" || rawSavedKey.startsWith("AQ.") || rawSavedKey.length < 15) {
-          try {
-            localStorage.removeItem('custom_gemini_api_key');
-          } catch (e) {}
+        if (!isValidGeminiApiKey(rawSavedKey)) {
           rawSavedKey = "";
         }
         const savedKey = rawSavedKey.trim();
+
         let envKey = "";
         try {
           envKey = (import.meta.env.VITE_GEMINI_API_KEY || "").trim();
         } catch (e) {}
-        if (!envKey) {
+        if (!isValidGeminiApiKey(envKey)) {
           try {
             envKey = (process.env.GEMINI_API_KEY || "").trim();
           } catch (e) {}
         }
-        if (!envKey) {
+        if (!isValidGeminiApiKey(envKey)) {
           try {
             envKey = (process.env.VITE_GEMINI_API_KEY || "").trim();
           } catch (e) {}
         }
-        if (envKey === "undefined" || envKey === "null" || envKey.startsWith("AQ.")) {
+        if (!isValidGeminiApiKey(envKey)) {
           envKey = "";
         }
+
+        // Determina a chave ativa com prioridade para a configurada pelo usuário
+        const activeKey = savedKey || envKey || HARDCODED_DEFAULT_GEMINI_KEY;
         
         // 2. Try the backend proxy first (available in Container/Full-stack environments)
         try {
           const headers: Record<string, string> = {
             "Content-Type": "application/json"
           };
-          if (savedKey && savedKey.startsWith("AIzaSy")) {
-            headers["x-custom-api-key"] = savedKey;
+          if (activeKey) {
+            headers["x-custom-api-key"] = activeKey;
           }
 
           const response = await fetch("/api/gemini/generate", {
@@ -9992,13 +9891,16 @@ export const getAI = () => {
           if (!isNetworkOr404) {
             throw e;
           }
-          console.warn("[Gemini] Proxy indisponível ou estático. Tentando fallback direto do cliente.");
+          console.warn("[Gemini] Proxy indisponível ou estático. Tentando chamada direta com a chave configurada.");
         }
 
-        // 3. Fallback: Client-side Direct Call (for Netlify, Vercel, static pages, etc.)
-        const finalKey = (savedKey && savedKey.startsWith("AIzaSy") ? savedKey : "") || (envKey && envKey.startsWith("AIzaSy") ? envKey : "");
-        if (!finalKey || finalKey.trim() === "") {
-          throw new Error("Não foi possível conectar com o serviço de IA.\n\nSe você estiver acessando através de uma hospedagem estática (Netlify/Vercel):\n1. Acesse o menu Configurações da aplicação e insira sua chave oficial do Google AI Studio (iniciando com 'AIzaSy...').\n2. Obtenha sua chave gratuita em: https://aistudio.google.com/app/apikey");
+        // 3. Fallback: Client-side Direct Call (for Netlify, Electron desktop, static pages, etc.)
+        const finalKey = activeKey;
+        if (!finalKey || !isValidGeminiApiKey(finalKey)) {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('open-gemini-tutorial-modal'));
+          }
+          throw new Error("Chave da API do Google Gemini não configurada.\n\nPor favor, insira sua chave gratuita no menu Configurações ou siga o passo a passo na tela para gerar uma no Google AI Studio (começando com 'AQ.' ou 'AIzaSy...').");
         }
 
         const GEMINI_PRIMARY = "gemini-3.6-flash";
@@ -10151,7 +10053,7 @@ const generateAIFeedback = async (resposta: string, pergunta: string, problema: 
     const ai = getAI();
     if (!ai) return null;
     const response = await ai.models.generateContent({ 
-      model: "gemini-3.6-flash", 
+      model: "gemini-2.5-flash", 
       contents: prompt,
     });
     const result = response.text?.trim() || "";
@@ -10211,7 +10113,7 @@ const generateAIMaturityLevel = async (respostas: Resposta[], scorePercent: numb
     const ai = getAI();
     if (!ai) return null;
     const response = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: "gemini-2.5-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -10271,7 +10173,7 @@ const generateAISuggestions = async (probNome: string, noResponses: Resposta[], 
     const ai = getAI();
     if (!ai) return null;
     const response = await ai.models.generateContent({ 
-      model: "gemini-3.6-flash",
+      model: "gemini-2.5-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json"
@@ -10438,6 +10340,18 @@ export default function App() {
     }
   });
 
+  // Gemini AI Key Tutorial Modal State
+  const [isGeminiTutorialModalOpen, setIsGeminiTutorialModalOpen] = useState(false);
+  const [customGeminiKey, setCustomGeminiKey] = useState<string>(() => {
+    return localStorage.getItem('custom_gemini_api_key') || '';
+  });
+
+  useEffect(() => {
+    const handler = () => setIsGeminiTutorialModalOpen(true);
+    window.addEventListener('open-gemini-tutorial-modal', handler);
+    return () => window.removeEventListener('open-gemini-tutorial-modal', handler);
+  }, []);
+
   // Dedicated Backup Export & Access State
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isExportingBackup, setIsExportingBackup] = useState(false);
@@ -10445,9 +10359,9 @@ export default function App() {
   const [backupFileName, setBackupFileName] = useState<string>('consultoria_pro_backup.json');
   const [backupJsonString, setBackupJsonString] = useState<string>('');
 
-  // Storage Mode State (Cloud vs. Local)
+  // Storage Mode State (Cloud vs. Local - default to local for on-device persistence)
   const [storageMode, setStorageMode] = useState<'cloud' | 'local'>(() => {
-    return (localStorage.getItem('storage_mode') as 'cloud' | 'local') || 'cloud';
+    return (localStorage.getItem('storage_mode') as 'cloud' | 'local') || 'local';
   });
 
   const handleSetStorageMode = (mode: 'cloud' | 'local') => {
@@ -10513,8 +10427,14 @@ export default function App() {
   const [calculatingMaturity, setCalculatingMaturity] = useState(false);
   const [generatingPlan, setGeneratingPlan] = useState(false);
   const [view, setView] = useState<'home' | 'companies' | 'credenciadas' | 'licenses' | 'diagnosis' | 'dashboard' | 'premises' | 'cronograma' | 'relatorio' | 'kanban' | 'settings' | 'landing' | 'checkout' | 'licensing' | 'dados-consultoria' | 'agenda' | 'macro-dashboard' | 'maturity-assessment' | 'projects' | 'plan' | 'resultado-consultoria'>('landing');
-  const [customLogo, setCustomLogo] = useState<string | null>(localStorage.getItem('sebrae_custom_logo'));
-  const [customConsultoraLogo, setCustomConsultoraLogo] = useState<string | null>(localStorage.getItem('consultora_custom_logo'));
+  const [customLogo, setCustomLogo] = useState<string | null>(() => {
+    const v = localStorage.getItem('sebrae_custom_logo');
+    return v && v.startsWith('data:') ? v : null;
+  });
+  const [customConsultoraLogo, setCustomConsultoraLogo] = useState<string | null>(() => {
+    const v = localStorage.getItem('consultora_custom_logo');
+    return v && v.startsWith('data:') ? v : null;
+  });
   const [logoChoice, setLogoChoice] = useState<'sebrae' | 'consultora' | 'none'>(() => {
     return (localStorage.getItem('preferred_logo') as 'sebrae' | 'consultora' | 'none') || 'sebrae';
   });
@@ -10524,10 +10444,12 @@ export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDeletingDiagnostico, setIsDeletingDiagnostico] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const [authMode, setAuthMode] = useState<'login' | 'register' | 'reset'>('login');
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [authError, setAuthError] = useState('');
+  const [authSuccess, setAuthSuccess] = useState('');
+  const [isSendingResetEmail, setIsSendingResetEmail] = useState(false);
   const [modalType, setModalType] = useState<'create' | 'edit' | 'delete' | 'createCredenciada' | 'editCredenciada' | 'deleteCredenciada' | 'createPremissa' | 'editPremissa' | 'deletePremissa' | 'createProblema' | 'editProblema' | 'deleteProblema' | 'deleteAllProblemas' | 'deleteAllPremissas' | 'createSolucao' | 'editSolucao' | 'deleteSolucao' | 'deleteAllSolucoes' | 'deleteAllBiblioteca' | 'deleteArea' | 'renameArea' | 'createArea' | 'createSegmento' | 'deleteSegmento' | 'renameSegmento' | 'deleteDiagnostico' | 'deletePlanoAcao' | 'importSuccess' | 'selectAreas' | 'createTarefa' | 'editTarefa' | 'deleteTarefa' | 'confirmImportCompanyType' | 'viewMaturityDetails' | null>(null);
   const [modalData, setModalData] = useState<any>(null);
   const [areaToDelete, setAreaToDelete] = useState('');
@@ -10553,6 +10475,9 @@ export default function App() {
   const [inputValue, setInputValue] = useState('');
   const [historicalData, setHistoricalData] = useState<any[]>([]);
   const [empresaForm, setEmpresaForm] = useState<Partial<Empresa>>({});
+  const [isFetchingCnpjData, setIsFetchingCnpjData] = useState(false);
+  const [cnpjLookupError, setCnpjLookupError] = useState<string | null>(null);
+  const lastLookedUpCnpjRef = useRef<string | null>(null);
   const [credenciadaForm, setCredenciadaForm] = useState<Partial<EmpresaCredenciada>>({});
   const [diagnosticoForm, setDiagnosticoForm] = useState<Partial<DadosConsultoria>>({});
   const [selectedAreasForDiagnosis, setSelectedAreasForDiagnosis] = useState<string[]>([]);
@@ -11723,6 +11648,19 @@ export default function App() {
       setStorageUserId(u ? u.uid : null);
       encryptedLocalStorage.migrateAllToEncrypted();
 
+      // The logo images were read from encrypted storage during the very first render,
+      // before Firebase confirmed the logged-in user (and therefore before the correct
+      // decryption key was available). Re-read them now that the right key is set, so
+      // logos uploaded in a previous session actually show up instead of looking "lost".
+      try {
+        const freshLogo = encryptedLocalStorage.getItem('sebrae_custom_logo');
+        setCustomLogo(freshLogo && freshLogo.startsWith('data:') ? freshLogo : null);
+      } catch {}
+      try {
+        const freshConsultoraLogo = encryptedLocalStorage.getItem('consultora_custom_logo');
+        setCustomConsultoraLogo(freshConsultoraLogo && freshConsultoraLogo.startsWith('data:') ? freshConsultoraLogo : null);
+      } catch {}
+
       if (u) {
         // Check if user is admin based on email (case-insensitive)
         const userEmailClean = (u.email || '').toLowerCase().trim();
@@ -12202,9 +12140,39 @@ export default function App() {
     }
   };
 
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError('');
+    setAuthSuccess('');
+    if (!authEmail.trim()) {
+      setAuthError('Informe seu e-mail para recuperar a senha.');
+      return;
+    }
+    setIsSendingResetEmail(true);
+    try {
+      await sendPasswordResetEmail(auth, authEmail.trim());
+      setAuthSuccess(`Enviamos um link de recuperação de senha para ${authEmail.trim()}. Verifique sua caixa de entrada (e o spam).`);
+    } catch (error: any) {
+      console.error('Password reset failed', error);
+      if (error.code === 'auth/user-not-found') {
+        // Por segurança, não revelamos se o e-mail existe ou não na base.
+        setAuthSuccess(`Se houver uma conta cadastrada com o e-mail ${authEmail.trim()}, enviamos um link de recuperação de senha para ela.`);
+      } else if (error.code === 'auth/invalid-email') {
+        setAuthError('Digite um e-mail válido.');
+      } else if (error.code === 'auth/too-many-requests') {
+        setAuthError('Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente.');
+      } else {
+        setAuthError(error.message || 'Não foi possível enviar o e-mail de recuperação. Tente novamente.');
+      }
+    } finally {
+      setIsSendingResetEmail(false);
+    }
+  };
+
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
+    setAuthSuccess('');
     try {
       if (authMode === 'register') {
         const userCredential = await createUserWithEmailAndPassword(auth, authEmail, authPassword);
@@ -12495,7 +12463,7 @@ export default function App() {
 
   const Sidebar = () => (
     <div className={cn(
-      "fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-100 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 print:hidden",
+      "fixed inset-y-0 left-0 z-50 w-80 bg-white border-r border-slate-100 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 print:hidden",
       isSidebarOpen ? "translate-x-0" : "-translate-x-full"
     )}>
       <div className="flex flex-col h-full p-6">
@@ -12669,6 +12637,63 @@ export default function App() {
       </div>
     </div>
   );
+
+  // Consulta os dados públicos do CNPJ na Receita Federal (via BrasilAPI) e
+  // preenche automaticamente os campos do cadastro da empresa.
+  const fetchCnpjData = async (rawCnpj: string) => {
+    const digits = cleanDigits(rawCnpj);
+    if (digits.length !== 14 || !isValidCNPJ(digits)) return;
+    if (lastLookedUpCnpjRef.current === digits) return; // evita repetir a mesma consulta
+    lastLookedUpCnpjRef.current = digits;
+
+    setIsFetchingCnpjData(true);
+    setCnpjLookupError(null);
+    try {
+      const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
+      if (!response.ok) {
+        throw new Error(response.status === 404 ? 'CNPJ não encontrado na Receita Federal.' : 'Não foi possível consultar o CNPJ agora.');
+      }
+      const data = await response.json();
+
+      setEmpresaForm(prev => ({
+        ...prev,
+        razaoSocial: prev?.razaoSocial?.trim() ? prev.razaoSocial : (data.razao_social || prev?.razaoSocial),
+        nomeFantasia: data.nome_fantasia || prev?.nomeFantasia,
+        situacaoCadastral: data.descricao_situacao_cadastral || prev?.situacaoCadastral,
+        dataSituacaoCadastral: data.data_situacao_cadastral || prev?.dataSituacaoCadastral,
+        naturezaJuridica: data.natureza_juridica || prev?.naturezaJuridica,
+        porteEmpresa: data.porte || prev?.porteEmpresa,
+        capitalSocial: data.capital_social != null ? String(data.capital_social) : prev?.capitalSocial,
+        cnaePrincipalCodigo: data.cnae_fiscal ? String(data.cnae_fiscal) : prev?.cnaePrincipalCodigo,
+        cnaePrincipalDescricao: data.cnae_fiscal_descricao || prev?.cnaePrincipalDescricao,
+        dataAberturaReceita: data.data_inicio_atividade || prev?.dataAberturaReceita,
+        mesAnoAbertura: data.data_inicio_atividade
+          ? `${data.data_inicio_atividade.slice(5, 7)}/${data.data_inicio_atividade.slice(0, 4)}`
+          : prev?.mesAnoAbertura,
+        logradouro: [data.descricao_tipo_de_logradouro, data.logradouro].filter(Boolean).join(' ') || prev?.logradouro,
+        numeroEndereco: data.numero || prev?.numeroEndereco,
+        complementoEndereco: data.complemento || prev?.complementoEndereco,
+        bairro: data.bairro || prev?.bairro,
+        municipio: data.municipio || prev?.municipio,
+        uf: data.uf || prev?.uf,
+        cep: data.cep ? formatCEP(String(data.cep)) : prev?.cep,
+        enderecoComercial: prev?.enderecoComercial?.trim() ? prev.enderecoComercial : [
+          [data.descricao_tipo_de_logradouro, data.logradouro].filter(Boolean).join(' '),
+          data.numero,
+          data.bairro,
+          data.municipio && data.uf ? `${data.municipio}/${data.uf}` : null,
+          data.cep ? `CEP ${formatCEP(String(data.cep))}` : null,
+        ].filter(Boolean).join(', '),
+        telefoneFixo: prev?.telefoneFixo?.trim() ? prev.telefoneFixo : (data.ddd_telefone_1 || prev?.telefoneFixo),
+        email: prev?.email?.trim() ? prev.email : (data.email || prev?.email),
+      }));
+    } catch (err: any) {
+      console.error('Erro ao consultar CNPJ:', err);
+      setCnpjLookupError(err?.message || 'Erro ao consultar o CNPJ. Verifique sua conexão e tente novamente.');
+    } finally {
+      setIsFetchingCnpjData(false);
+    }
+  };
 
   const createEmpresa = async () => {
     if (!empresaForm.razaoSocial?.trim()) {
@@ -14442,7 +14467,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       `;
       
       const response = await ai.models.generateContent({
-        model: "gemini-3.6-flash",
+        model: "gemini-2.5-flash",
         contents: prompt,
         config: {
             responseMimeType: "application/json",
@@ -17269,87 +17294,155 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
           </div>
           <h1 className="text-2xl font-bold text-slate-900 mb-2">Diagnóstico Empresarial</h1>
           <p className="text-slate-500 mb-6">
-            {authMode === 'login' ? 'Faça login para gerenciar seus clientes.' : 'Crie sua conta para começar.'}
+            {authMode === 'login' ? 'Faça login para gerenciar seus clientes.' : authMode === 'register' ? 'Crie sua conta para começar.' : 'Informe seu e-mail para recuperar o acesso.'}
           </p>
 
           {authError && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm text-left">
               {authError}
             </div>
           )}
-
-          <form onSubmit={handleEmailAuth} className="space-y-4 mb-6">
-            <div>
-              <input
-                type="email"
-                placeholder="Seu e-mail"
-                value={authEmail}
-                onChange={(e) => setAuthEmail(e.target.value)}
-                className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-left"
-                required
-              />
+          {authSuccess && (
+            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg text-sm text-left flex items-start gap-2">
+              <CheckCircle2 size={16} className="shrink-0 mt-0.5" />
+              <span>{authSuccess}</span>
             </div>
-            <div>
-              <input
-                type="password"
-                placeholder="Sua senha"
-                value={authPassword}
-                onChange={(e) => setAuthPassword(e.target.value)}
-                className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-left"
-                required
-                minLength={6}
-              />
-            </div>
-            <Button type="submit" className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-colors">
-              {authMode === 'login' ? 'Entrar' : 'Criar Conta'}
-            </Button>
-          </form>
+          )}
 
-          {authMode === 'login' ? (
-            <div className="space-y-4">
-              <Button 
-                type="button" 
-                variant="outline" 
+          {authMode === 'reset' ? (
+            <>
+              <form onSubmit={handlePasswordReset} className="space-y-4 mb-6">
+                <div>
+                  <input
+                    type="email"
+                    placeholder="Seu e-mail"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-left"
+                    required
+                    autoFocus
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={isSendingResetEmail}
+                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  {isSendingResetEmail ? (
+                    <>
+                      <RefreshCw size={16} className="animate-spin" /> Enviando...
+                    </>
+                  ) : (
+                    'Enviar Link de Recuperação'
+                  )}
+                </Button>
+              </form>
+              <Button
+                type="button"
+                variant="ghost"
                 onClick={() => {
-                  setAuthMode('register');
+                  setAuthMode('login');
                   setAuthError('');
-                }} 
-                className="w-full py-3 border-emerald-200 text-emerald-700 hover:bg-emerald-50 font-semibold"
+                  setAuthSuccess('');
+                }}
+                className="w-full py-3 text-slate-500 hover:text-slate-800"
               >
-                Cadastro de Usuário
+                Voltar para o Login
               </Button>
-
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-slate-500">Ou continue com</span>
-                </div>
-              </div>
-
-              <Button onClick={handleGoogleLogin} variant="outline" className="w-full py-3 flex items-center justify-center gap-2">
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                </svg>
-                Google
-              </Button>
-            </div>
+            </>
           ) : (
-            <Button 
-              type="button" 
-              variant="ghost" 
-              onClick={() => {
-                setAuthMode('login');
-                setAuthError('');
-              }} 
-              className="w-full py-3 text-slate-500 hover:text-slate-800"
-            >
-              Voltar para o Login
-            </Button>
+            <>
+              <form onSubmit={handleEmailAuth} className="space-y-4 mb-2">
+                <div>
+                  <input
+                    type="email"
+                    placeholder="Seu e-mail"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-left"
+                    required
+                  />
+                </div>
+                <div>
+                  <input
+                    type="password"
+                    placeholder="Sua senha"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-left"
+                    required
+                    minLength={6}
+                  />
+                </div>
+                {authMode === 'login' && (
+                  <div className="text-right -mt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMode('reset');
+                        setAuthError('');
+                        setAuthSuccess('');
+                      }}
+                      className="text-xs font-semibold text-emerald-600 hover:text-emerald-800 hover:underline"
+                    >
+                      Esqueci minha senha
+                    </button>
+                  </div>
+                )}
+                <Button type="submit" className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-colors">
+                  {authMode === 'login' ? 'Entrar' : 'Criar Conta'}
+                </Button>
+              </form>
+
+              {authMode === 'login' ? (
+                <div className="space-y-4 mt-4">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => {
+                      setAuthMode('register');
+                      setAuthError('');
+                      setAuthSuccess('');
+                    }} 
+                    className="w-full py-3 border-emerald-200 text-emerald-700 hover:bg-emerald-50 font-semibold"
+                  >
+                    Cadastro de Usuário
+                  </Button>
+
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-slate-200"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-2 bg-white text-slate-500">Ou continue com</span>
+                    </div>
+                  </div>
+
+                  <Button onClick={handleGoogleLogin} variant="outline" className="w-full py-3 flex items-center justify-center gap-2">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                      <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                    </svg>
+                    Google
+                  </Button>
+                </div>
+              ) : (
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  onClick={() => {
+                    setAuthMode('login');
+                    setAuthError('');
+                    setAuthSuccess('');
+                  }} 
+                  className="w-full py-3 text-slate-500 hover:text-slate-800"
+                >
+                  Voltar para o Login
+                </Button>
+              )}
+            </>
           )}
         </Card>
       </div>
@@ -17705,6 +17798,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     setView={setView}
                     customLogo={customLogo}
                     customConsultoraLogo={customConsultoraLogo}
+                    logoChoice={logoChoice}
                   />
                 </motion.div>
               )}
@@ -17954,8 +18048,23 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
                             <div className="space-y-1 mb-2">
                               {emp.cnpj && (
-                                <p className="text-xs font-medium text-slate-500 flex items-center gap-1">
+                                <p className="text-xs font-medium text-slate-500 flex items-center gap-1 flex-wrap">
                                   <span className="font-bold text-slate-400 uppercase text-[9px]">CNPJ:</span> {emp.cnpj}
+                                  {emp.situacaoCadastral && (
+                                    <span className={cn(
+                                      "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
+                                      emp.situacaoCadastral.toUpperCase().includes('ATIVA')
+                                        ? "bg-emerald-100 text-emerald-700"
+                                        : "bg-rose-100 text-rose-700"
+                                    )}>
+                                      {emp.situacaoCadastral}
+                                    </span>
+                                  )}
+                                </p>
+                              )}
+                              {(emp.porteEmpresa || emp.naturezaJuridica) && (
+                                <p className="text-xs font-medium text-slate-500 flex items-center gap-1">
+                                  <span className="font-bold text-slate-400 uppercase text-[9px]">Tipo:</span> {[emp.porteEmpresa, emp.naturezaJuridica].filter(Boolean).join(' — ')}
                                 </p>
                               )}
                               {emp.cafNumero && (
@@ -17963,6 +18072,18 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                   <span className="font-bold text-slate-400 uppercase text-[9px]">CAF:</span> {emp.cafNumero}
                                 </p>
                               )}
+                              {emp.mdaDataValidade && (() => {
+                                const mdaStatus = getMdaExpirationStatus(emp.mdaDataValidade);
+                                if (!mdaStatus || mdaStatus.status === 'valido') return null;
+                                return (
+                                  <span className={cn(
+                                    "inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5",
+                                    mdaStatus.status === 'vencido' ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"
+                                  )}>
+                                    <AlertTriangle size={10} /> MDA: {mdaStatus.label}
+                                  </span>
+                                );
+                              })()}
                             </div>
                             
                             <div className="flex items-center justify-between pt-4 border-t border-slate-50">
@@ -19502,7 +19623,11 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">CNPJ</label>
-                        {empresaForm.cnpj && cleanDigits(empresaForm.cnpj).length === 14 && (
+                        {isFetchingCnpjData ? (
+                          <span className="text-[10px] font-bold text-sky-600 flex items-center gap-1">
+                            <RefreshCw size={10} className="animate-spin" /> Consultando Receita Federal...
+                          </span>
+                        ) : empresaForm.cnpj && cleanDigits(empresaForm.cnpj).length === 14 && (
                           isValidCNPJ(empresaForm.cnpj) ? (
                             <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
                               ✓ Válido
@@ -19527,10 +19652,110 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                             : "border-slate-200 focus:ring-sky-500/20 focus:border-sky-500"
                         )}
                         value={empresaForm.cnpj || ''}
-                        onChange={(e) => setEmpresaForm({...empresaForm, cnpj: formatCNPJ(e.target.value)})}
+                        onChange={(e) => {
+                          const formatted = formatCNPJ(e.target.value);
+                          setEmpresaForm({...empresaForm, cnpj: formatted});
+                          setCnpjLookupError(null);
+                          if (cleanDigits(formatted).length === 14 && isValidCNPJ(formatted)) {
+                            fetchCnpjData(formatted);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (cleanDigits(e.target.value).length === 14 && isValidCNPJ(e.target.value)) {
+                            fetchCnpjData(e.target.value);
+                          }
+                        }}
                       />
+                      {cnpjLookupError && (
+                        <p className="text-[10px] font-semibold text-amber-600 mt-1 flex items-center gap-1">
+                          <AlertTriangle size={10} /> {cnpjLookupError}
+                        </p>
+                      )}
                     </div>
                   </div>
+
+                  {/* --- Dados da Receita Federal (preenchidos automaticamente ao digitar o CNPJ) --- */}
+                  {(empresaForm.situacaoCadastral || empresaForm.naturezaJuridica || empresaForm.cnaePrincipalDescricao || empresaForm.logradouro || (empresaForm.cnpj && isValidCNPJ(empresaForm.cnpj))) && (
+                    <div className="p-3.5 bg-sky-50/50 border border-sky-100 rounded-xl space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black text-sky-700 uppercase tracking-widest flex items-center gap-1.5">
+                          <ShieldCheck size={12} /> Dados da Receita Federal
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {empresaForm.situacaoCadastral && (
+                            <span className={cn(
+                              "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase",
+                              empresaForm.situacaoCadastral.toUpperCase().includes('ATIVA')
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-rose-100 text-rose-700"
+                            )}>
+                              {empresaForm.situacaoCadastral}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            title="Atualizar dados direto da Receita Federal"
+                            disabled={isFetchingCnpjData || !empresaForm.cnpj}
+                            onClick={() => {
+                              lastLookedUpCnpjRef.current = null;
+                              if (empresaForm.cnpj) fetchCnpjData(empresaForm.cnpj);
+                            }}
+                            className="text-sky-500 hover:text-sky-700 disabled:opacity-40 transition-colors"
+                          >
+                            <RefreshCw size={12} className={isFetchingCnpjData ? "animate-spin" : ""} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {(empresaForm.naturezaJuridica || empresaForm.cnaePrincipalDescricao || empresaForm.logradouro) ? (
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Natureza Jurídica</p>
+                            <p className="font-semibold text-slate-700">{empresaForm.naturezaJuridica || '—'}</p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Porte</p>
+                            <p className="font-semibold text-slate-700">{empresaForm.porteEmpresa || '—'}</p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Data de Abertura</p>
+                            <p className="font-semibold text-slate-700">
+                              {empresaForm.dataAberturaReceita ? formatFirestoreDate(empresaForm.dataAberturaReceita, 'dd/MM/yyyy') : '—'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Capital Social</p>
+                            <p className="font-semibold text-slate-700">
+                              {empresaForm.capitalSocial ? `R$ ${Number(empresaForm.capitalSocial).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}
+                            </p>
+                          </div>
+                          <div className="col-span-2">
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Atividade Principal (CNAE)</p>
+                            <p className="font-semibold text-slate-700">
+                              {empresaForm.cnaePrincipalCodigo ? `${empresaForm.cnaePrincipalCodigo} - ` : ''}{empresaForm.cnaePrincipalDescricao || '—'}
+                            </p>
+                          </div>
+                          <div className="col-span-2">
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Endereço</p>
+                            <p className="font-semibold text-slate-700">
+                              {[
+                                empresaForm.logradouro,
+                                empresaForm.numeroEndereco,
+                                empresaForm.complementoEndereco,
+                                empresaForm.bairro,
+                                empresaForm.municipio && empresaForm.uf ? `${empresaForm.municipio}/${empresaForm.uf}` : null,
+                                empresaForm.cep ? `CEP ${empresaForm.cep}` : null,
+                              ].filter(Boolean).join(', ') || '—'}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-slate-500 italic flex items-center gap-1.5">
+                          <Info size={12} /> Dados ainda não consultados. Clique no ícone de atualizar acima para buscar direto da Receita Federal.
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -19552,6 +19777,59 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                         value={empresaForm.mesAnoAbertura || ''}
                         onChange={(e) => setEmpresaForm({...empresaForm, mesAnoAbertura: e.target.value})}
                       />
+                    </div>
+                  </div>
+
+                  {/* --- Cadastro MDA (Ministério do Desenvolvimento Agrário), vinculado à CAF --- */}
+                  <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-1.5">
+                        <ShieldCheck size={12} className="text-emerald-600" /> Cadastro MDA (vinculado à CAF)
+                      </span>
+                      {empresaForm.mdaDataValidade && (() => {
+                        const mdaStatus = getMdaExpirationStatus(empresaForm.mdaDataValidade);
+                        if (!mdaStatus) return null;
+                        if (mdaStatus.status === 'vencido') {
+                          return (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 flex items-center gap-1">
+                              <AlertTriangle size={10} /> {mdaStatus.label}
+                            </span>
+                          );
+                        }
+                        if (mdaStatus.status === 'proximo') {
+                          return (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 flex items-center gap-1">
+                              <AlertTriangle size={10} /> {mdaStatus.label}
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                            {mdaStatus.label}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Número do Cadastro MDA</label>
+                        <input 
+                          type="text" 
+                          placeholder="Ex: MDA-000000000"
+                          className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white placeholder-slate-300"
+                          value={empresaForm.mdaNumeroCadastro || ''}
+                          onChange={(e) => setEmpresaForm({...empresaForm, mdaNumeroCadastro: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Data de Validade</label>
+                        <input 
+                          type="date" 
+                          className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
+                          value={empresaForm.mdaDataValidade || ''}
+                          onChange={(e) => setEmpresaForm({...empresaForm, mdaDataValidade: e.target.value})}
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -21208,6 +21486,17 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
           if (backupJsonString) {
             triggerDownloadBackupFile(backupJsonString, backupFileName);
           }
+        }}
+      />
+
+      <GeminiApiKeyTutorialModal
+        isOpen={isGeminiTutorialModalOpen}
+        onClose={() => setIsGeminiTutorialModalOpen(false)}
+        currentKey={customGeminiKey}
+        systemDefaultKey={HARDCODED_DEFAULT_GEMINI_KEY}
+        onKeySaved={(k) => {
+          setCustomGeminiKey(k);
+          showToast('Chave da API do Gemini configurada com sucesso!', 'success');
         }}
       />
 
