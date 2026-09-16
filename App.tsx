@@ -64,6 +64,7 @@ import {
   Search,
   History,
   Info,
+  HelpCircle,
   Menu,
   X,
   Upload,
