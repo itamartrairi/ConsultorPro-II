@@ -12542,7 +12542,7 @@ export default function App() {
             />
             <NavItem 
               icon={FileText} 
-              label="Biblioteca de Premissas" 
+              label="Biblioteca de Perguntas" 
               active={view === 'premises'} 
               onClick={() => setView('premises')} 
             />
