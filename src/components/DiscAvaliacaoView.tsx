@@ -515,27 +515,57 @@ Por favor, escreva o relatório em português brasileiro (PT-BR) contendo as seg
 Retorne estritamente o relatório estruturado em formato Markdown de alta qualidade profissional, sem cabeçalhos irrelevantes ou metadados de sistema.`;
 
     try {
-      const response = await fetch("/api/gemini/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "gemini-2.5-flash",
-          contents: prompt
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error("Erro na resposta do servidor de IA");
+      let aiText = "";
+      const customKey = (localStorage.getItem('custom_gemini_api_key') || "").trim();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (customKey) {
+        headers["x-custom-api-key"] = customKey;
       }
 
-      const data = await response.json();
-      if (data.error) {
-        throw new Error(data.error);
+      try {
+        const response = await fetch("/api/gemini/generate", {
+          method: "POST",
+          headers: headers,
+          body: JSON.stringify({
+            model: "gemini-3.6-flash",
+            contents: prompt
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.text) {
+            aiText = data.text;
+          }
+        }
+      } catch (e) {
+        console.warn("[DISC AI] Proxy indisponível, tentando chamada direta:", e);
       }
 
-      if (data.text) {
-        // Split text in two parts or keep it fully inside 'relatorio' and suggestions
-        const fullAIResponse = data.text;
+      if (!aiText) {
+        const activeKey = customKey || "AQ.Ab8RN6LGK4um2g_8db72CBQC-9NFFnIDWCj4hg4m7xl7MxcEFA";
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${activeKey}`;
+        const directRes = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+          })
+        });
+        if (!directRes.ok) {
+          const errData = await directRes.json().catch(() => ({}));
+          throw new Error(errData.error?.message || `Erro HTTP ${directRes.status}`);
+        }
+        const directData = await directRes.json();
+        aiText = directData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      }
+
+      if (!aiText) {
+        throw new Error("Não foi possível obter uma resposta do Gemini.");
+      }
+
+      if (aiText) {
+        const fullAIResponse = aiText;
         
         // Split by some common markers, or just keep it structured
         let aiRelatorio = fullAIResponse;
