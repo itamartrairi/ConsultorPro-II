@@ -1931,7 +1931,9 @@ const DadosConsultoriaView = ({
   setSelectedDiagnostico,
   setDiagnosticos,
   setView,
-  playSuccessSound
+  playSuccessSound,
+  customConsultoriaAreas = [],
+  onAddCustomConsultoriaArea
 }: {
   selectedDiagnostico: Diagnostico | null;
   selectedEmpresa: Empresa | null;
@@ -1943,6 +1945,8 @@ const DadosConsultoriaView = ({
   setDiagnosticos: React.Dispatch<React.SetStateAction<Diagnostico[]>>;
   setView: (v: string) => void;
   playSuccessSound: () => void;
+  customConsultoriaAreas?: string[];
+  onAddCustomConsultoriaArea?: (area: string) => void;
 }) => {
   const [dadosConsultoria, setDadosConsultoria] = useState<DadosConsultoria>(
     selectedDiagnostico?.dadosConsultoria || {}
@@ -1950,7 +1954,17 @@ const DadosConsultoriaView = ({
   const [isSavingLocal, setIsSavingLocal] = useState(false);
   const [saveSuccessLocal, setSaveSuccessLocal] = useState(false);
   const [isCopySgfModalOpen, setIsCopySgfModalOpen] = useState(false);
+  const [isNewAreaModalOpen, setIsNewAreaModalOpen] = useState(false);
+  const [newAreaInput, setNewAreaInput] = useState('');
   const currentClientName = selectedEmpresa?.nome || selectedDiagnostico?.nomeEmpresa || selectedDiagnostico?.tipoEmpresa || 'Cliente Selecionado';
+
+  const allConsultoriaAreas = useMemo(() => {
+    return Array.from(new Set([
+      ...CONSULTORIA_AREAS,
+      ...(customConsultoriaAreas || []),
+      ...(dadosConsultoria.areaConsultoria ? [dadosConsultoria.areaConsultoria] : [])
+    ]));
+  }, [customConsultoriaAreas, dadosConsultoria.areaConsultoria]);
 
   // --- Mandatory Fields & Diagnostic Progress Calculations ---
   const mandatoryFields = useMemo(() => [
@@ -2470,16 +2484,34 @@ const DadosConsultoriaView = ({
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Área da Consultoria</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[10px] font-bold text-slate-400 uppercase">Área da Consultoria</label>
+              <button
+                type="button"
+                onClick={() => { setNewAreaInput(''); setIsNewAreaModalOpen(true); }}
+                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase flex items-center gap-1 cursor-pointer transition-colors"
+                title="Cadastrar nova área de consultoria"
+              >
+                <Plus size={11} /> Nova Área
+              </button>
+            </div>
             <select 
               className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
               value={dadosConsultoria.areaConsultoria || ''}
-              onChange={(e) => setDadosConsultoria({...dadosConsultoria, areaConsultoria: e.target.value})}
+              onChange={(e) => {
+                if (e.target.value === '__nova_area__') {
+                  setNewAreaInput('');
+                  setIsNewAreaModalOpen(true);
+                } else {
+                  setDadosConsultoria({...dadosConsultoria, areaConsultoria: e.target.value});
+                }
+              }}
             >
               <option value="">Selecione uma área</option>
-              {CONSULTORIA_AREAS.map(area => (
+              {allConsultoriaAreas.map(area => (
                 <option key={area} value={area}>{area}</option>
               ))}
+              <option value="__nova_area__" className="text-blue-600 font-bold">+ Adicionar Nova Área...</option>
             </select>
           </div>
 
@@ -2684,6 +2716,71 @@ const DadosConsultoriaView = ({
         empresas={empresas}
         onSelectDadosConsultoria={handleCopySgfData}
       />
+
+      {/* Modal para Adicionar Nova Área da Consultoria */}
+      {isNewAreaModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border border-slate-100 animate-in fade-in">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+              <h3 className="font-bold text-slate-800 text-base">Nova Área da Consultoria</h3>
+              <button 
+                type="button" 
+                onClick={() => { setIsNewAreaModalOpen(false); setNewAreaInput(''); }}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <p className="text-xs text-slate-500 mb-3 font-medium">
+              Digite o nome da nova área de consultoria para incluir nos formulários e relatórios:
+            </p>
+            <input 
+              type="text"
+              autoFocus
+              className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold uppercase text-slate-800 focus:ring-2 focus:ring-blue-500 outline-none mb-6"
+              placeholder="Ex: ESG E CONFORMIDADE"
+              value={newAreaInput}
+              onChange={(e) => setNewAreaInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const clean = newAreaInput.trim().toUpperCase();
+                  if (clean) {
+                    onAddCustomConsultoriaArea?.(clean);
+                    setDadosConsultoria(prev => ({ ...prev, areaConsultoria: clean }));
+                    setIsNewAreaModalOpen(false);
+                    setNewAreaInput('');
+                  }
+                }
+              }}
+            />
+            <div className="flex justify-end gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => { setIsNewAreaModalOpen(false); setNewAreaInput(''); }}
+                className="text-xs"
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={() => {
+                  const clean = newAreaInput.trim().toUpperCase();
+                  if (clean) {
+                    onAddCustomConsultoriaArea?.(clean);
+                    setDadosConsultoria(prev => ({ ...prev, areaConsultoria: clean }));
+                    setIsNewAreaModalOpen(false);
+                    setNewAreaInput('');
+                  }
+                }}
+                disabled={!newAreaInput.trim()}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold"
+              >
+                Adicionar Área
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -10545,6 +10642,21 @@ export default function App() {
       return saved ? JSON.parse(saved) : [];
     } catch { return []; }
   });
+  const [allSystemCredenciadas, setAllSystemCredenciadas] = useState<EmpresaCredenciada[]>([]);
+  const [customConsultoriaAreas, setCustomConsultoriaAreas] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('local_custom_consultoria_areas');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('local_custom_consultoria_areas', JSON.stringify(customConsultoriaAreas));
+    } catch (e) {
+      console.error("Error saving local_custom_consultoria_areas:", e);
+    }
+  }, [customConsultoriaAreas]);
   const [diagnosticos, setDiagnosticos] = useState<Diagnostico[]>(() => {
     try {
       const saved = localStorage.getItem('local_diagnosticos');
@@ -10695,8 +10807,8 @@ export default function App() {
 
       const batchQueue = createBatchQueue();
 
-      // --- A. Sync Empresas ---
-      const cloudEmpresasSnap = await getDocs(isAdmin ? query(collection(db, 'empresas')) : query(collection(db, 'empresas'), where('ownerId', '==', user.uid)));
+      // --- A. Sync Empresas (Isolado por usuário) ---
+      const cloudEmpresasSnap = await getDocs(query(collection(db, 'empresas'), where('ownerId', '==', user.uid)));
       const cloudEmpresasMap = new Map<string, Empresa>();
       cloudEmpresasSnap.forEach(d => {
         cloudEmpresasMap.set(d.id, { id: d.id, ...d.data() } as Empresa);
@@ -10750,8 +10862,8 @@ export default function App() {
       setEmpresas(finalEmpresas);
       localStorage.setItem('local_empresas', JSON.stringify(finalEmpresas));
 
-      // --- B. Sync Diagnósticos ---
-      const cloudDiagsSnap = await getDocs(isAdmin ? query(collection(db, 'diagnosticos')) : query(collection(db, 'diagnosticos'), where('ownerId', '==', user.uid)));
+      // --- B. Sync Diagnósticos (Isolado por usuário) ---
+      const cloudDiagsSnap = await getDocs(query(collection(db, 'diagnosticos'), where('ownerId', '==', user.uid)));
       const cloudDiagsMap = new Map<string, Diagnostico>();
       cloudDiagsSnap.forEach(d => {
         cloudDiagsMap.set(d.id, { id: d.id, ...d.data() } as Diagnostico);
@@ -10805,8 +10917,8 @@ export default function App() {
       setDiagnosticos(finalDiagnosticos);
       localStorage.setItem('local_diagnosticos', JSON.stringify(finalDiagnosticos));
 
-      // --- C. Sync Respostas ---
-      const cloudRespsSnap = await getDocs(isAdmin ? query(collection(db, 'respostas'), limit(5000)) : query(collection(db, 'respostas'), where('ownerId', '==', user.uid)));
+      // --- C. Sync Respostas (Isolado por usuário) ---
+      const cloudRespsSnap = await getDocs(query(collection(db, 'respostas'), where('ownerId', '==', user.uid)));
       const cloudRespsMap = new Map<string, Resposta>();
       cloudRespsSnap.forEach(d => {
         cloudRespsMap.set(d.id, { id: d.id, ...d.data() } as Resposta);
@@ -10869,8 +10981,8 @@ export default function App() {
         setRespostas(finalRespostas.filter(r => r.diagnosticoId === selectedDiagnostico.id));
       }
 
-      // --- D. Sync Tarefas Plano ---
-      const cloudTasksSnap = await getDocs(isAdmin ? query(collection(db, 'tarefas_plano')) : query(collection(db, 'tarefas_plano'), where('ownerId', '==', user.uid)));
+      // --- D. Sync Tarefas Plano (Isolado por usuário) ---
+      const cloudTasksSnap = await getDocs(query(collection(db, 'tarefas_plano'), where('ownerId', '==', user.uid)));
       const cloudTasksMap = new Map<string, TarefaPlanoAcao>();
       cloudTasksSnap.forEach(d => {
         cloudTasksMap.set(d.id, { id: d.id, ...d.data() } as TarefaPlanoAcao);
@@ -10923,6 +11035,63 @@ export default function App() {
       }
       setTarefasPlano(finalTasks);
       localStorage.setItem('local_tarefas_plano', JSON.stringify(finalTasks));
+
+      // --- D2. Sync Empresas Credenciadas do Usuário (Isolado por usuário) ---
+      const cloudCredSnap = await getDocs(query(collection(db, 'empresas_credenciadas'), where('ownerId', '==', user.uid)));
+      const cloudCredMap = new Map<string, EmpresaCredenciada>();
+      cloudCredSnap.forEach(d => {
+        cloudCredMap.set(d.id, { id: d.id, ...d.data() } as EmpresaCredenciada);
+      });
+
+      const localCredMap = new Map<string, EmpresaCredenciada>();
+      empresasCredenciadas.filter(c => !c.ownerId || c.ownerId === 'local' || c.ownerId === user.uid).forEach(c => localCredMap.set(c.id, c));
+      try {
+        const savedCredStr = localStorage.getItem('local_empresas_credenciadas');
+        if (savedCredStr) {
+          const parsed = JSON.parse(savedCredStr);
+          if (Array.isArray(parsed)) {
+            parsed.filter((c: any) => !c.ownerId || c.ownerId === 'local' || c.ownerId === user.uid).forEach((c: any) => localCredMap.set(c.id, c));
+          }
+        }
+      } catch {}
+
+      const allCredIds = Array.from(new Set([...Array.from(localCredMap.keys()), ...Array.from(cloudCredMap.keys())]));
+      const finalCreds: EmpresaCredenciada[] = [];
+
+      for (const id of allCredIds) {
+        summary.totalAnalyzed++;
+        const local = localCredMap.get(id);
+        const cloud = cloudCredMap.get(id);
+
+        if (local && !cloud) {
+          batchQueue.pushItem(doc(db, 'empresas_credenciadas', id), { ...local, ownerId: user.uid, updatedAt: (local as any).updatedAt || new Date().toISOString() });
+          summary.uploadedToCloud++;
+          summary.details.outros.uploaded++;
+          finalCreds.push(local);
+        } else if (!local && cloud) {
+          summary.downloadedFromCloud++;
+          summary.details.outros.downloaded++;
+          finalCreds.push(cloud);
+        } else if (local && cloud) {
+          const tLocal = extractItemTimestamp(local);
+          const tCloud = extractItemTimestamp(cloud);
+          if (tLocal > tCloud) {
+            batchQueue.pushItem(doc(db, 'empresas_credenciadas', id), { ...cloud, ...local, ownerId: user.uid, updatedAt: new Date().toISOString() });
+            summary.updatedInCloud++;
+            summary.details.outros.updated++;
+            finalCreds.push({ ...cloud, ...local });
+          } else if (tCloud > tLocal) {
+            summary.updatedInLocal++;
+            summary.details.outros.downloaded++;
+            finalCreds.push({ ...local, ...cloud });
+          } else {
+            summary.identicalOrMerged++;
+            finalCreds.push({ ...cloud, ...local });
+          }
+        }
+      }
+      setEmpresasCredenciadas(finalCreds);
+      localStorage.setItem('local_empresas_credenciadas', JSON.stringify(finalCreds));
 
       // --- E. Sync Metodologia/Biblioteca (Premissas, Problemas, Soluções, Áreas, Segmentos) ---
       const syncBiblioItem = async (colName: string, localList: any[], setter: (val: any) => void, storageKey: string) => {
@@ -11103,37 +11272,14 @@ export default function App() {
           ]);
         };
 
-        const empQuery = isAdmin 
-          ? query(collection(db, 'empresas')) 
-          : query(collection(db, 'empresas'), where('ownerId', '==', user.uid));
-
-        const diagQuery = isAdmin
-          ? query(collection(db, 'diagnosticos'))
-          : query(collection(db, 'diagnosticos'), where('ownerId', '==', user.uid));
-
-        const respQuery = isAdmin
-          ? query(collection(db, 'respostas'), limit(2000))
-          : query(collection(db, 'respostas'), where('ownerId', '==', user.uid));
-
-        const tarefasQuery = isAdmin
-          ? query(collection(db, 'tarefas_plano'))
-          : query(collection(db, 'tarefas_plano'), where('ownerId', '==', user.uid));
-
-        const agendaQuery = isAdmin
-          ? query(collection(db, 'agenda_eventos'))
-          : query(collection(db, 'agenda_eventos'), where('ownerId', '==', user.uid));
-
-        const discQuery = isAdmin
-          ? query(collection(db, 'disc_avaliacoes'))
-          : query(collection(db, 'disc_avaliacoes'), where('ownerId', '==', user.uid));
-
-        const matQuery = isAdmin
-          ? query(collection(db, 'maturidade_avaliacoes'))
-          : query(collection(db, 'maturidade_avaliacoes'), where('ownerId', '==', user.uid));
-
-        const credQuery = isAdmin
-          ? query(collection(db, 'empresas_credenciadas'))
-          : query(collection(db, 'empresas_credenciadas'), where('ownerId', '==', user.uid));
+        const empQuery = query(collection(db, 'empresas'), where('ownerId', '==', user.uid));
+        const diagQuery = query(collection(db, 'diagnosticos'), where('ownerId', '==', user.uid));
+        const respQuery = query(collection(db, 'respostas'), where('ownerId', '==', user.uid));
+        const tarefasQuery = query(collection(db, 'tarefas_plano'), where('ownerId', '==', user.uid));
+        const agendaQuery = query(collection(db, 'agenda_eventos'), where('ownerId', '==', user.uid));
+        const discQuery = query(collection(db, 'disc_avaliacoes'), where('ownerId', '==', user.uid));
+        const matQuery = query(collection(db, 'maturidade_avaliacoes'), where('ownerId', '==', user.uid));
+        const credQuery = query(collection(db, 'empresas_credenciadas'), where('ownerId', '==', user.uid));
 
         try {
           const [
@@ -11211,6 +11357,35 @@ export default function App() {
       const userPrefix = user?.email ? user.email.split('@')[0].replace(/[^a-zA-Z0-9_-]/g, '_') + '_' : '';
       const genFileName = `consultoria_backup_${userPrefix}${nowFormatted}.json`;
 
+      let exportModelosRelatorio: any[] = [];
+      try {
+        const savedModelos = localStorage.getItem('custom_modelos_relatorio_v2');
+        if (savedModelos) {
+          const parsed = JSON.parse(savedModelos);
+          if (Array.isArray(parsed)) exportModelosRelatorio = parsed;
+        }
+      } catch (e) {}
+
+      let exportCustomConsultoriaAreas: string[] = [...customConsultoriaAreas];
+      let exportDeletedAreas: string[] = [...deletedAreas];
+
+      // Local storage DISC and Maturidade fallbacks
+      try {
+        const localDisc = localStorage.getItem('local_disc_avaliacoes');
+        if (localDisc && exportDiscAvaliacoes.length === 0) {
+          const parsed = JSON.parse(localDisc);
+          if (Array.isArray(parsed)) exportDiscAvaliacoes = parsed;
+        }
+      } catch (e) {}
+
+      try {
+        const localMat = localStorage.getItem('local_maturidade_avaliacoes');
+        if (localMat && exportMaturidadeAvaliacoes.length === 0) {
+          const parsed = JSON.parse(localMat);
+          if (Array.isArray(parsed)) exportMaturidadeAvaliacoes = parsed;
+        }
+      } catch (e) {}
+
       const backupData = {
         app: 'Consultoria Pro - SEBRAE',
         version: '2.0',
@@ -11231,7 +11406,9 @@ export default function App() {
           totalCredenciadas: exportCredenciadas.length,
           totalPremissas: exportPremissas.length,
           totalProblemas: exportProblemas.length,
-          totalSolucoes: exportSolucoes.length
+          totalSolucoes: exportSolucoes.length,
+          totalModelosRelatorio: exportModelosRelatorio.length,
+          totalCustomAreas: exportCustomConsultoriaAreas.length
         },
         empresas: exportEmpresas,
         diagnosticos: exportDiagnosticos,
@@ -11246,6 +11423,15 @@ export default function App() {
         solucoes: exportSolucoes,
         dbAreas: exportDbAreas,
         dbSegmentos: exportDbSegmentos,
+        modelosRelatorio: exportModelosRelatorio,
+        customConsultoriaAreas: exportCustomConsultoriaAreas,
+        deletedAreas: exportDeletedAreas,
+        settings: {
+          storageMode: localStorage.getItem('storage_mode') || 'local',
+          preferredLogo: localStorage.getItem('preferred_logo') || 'sebrae',
+          dailyReminderEnabled: localStorage.getItem('daily_reminder_enabled') === 'true',
+          dailyReminderTime: localStorage.getItem('daily_reminder_time') || '09:00'
+        },
         customLogo,
         customConsultoraLogo
       };
@@ -11384,6 +11570,32 @@ export default function App() {
         if (data.customConsultoraLogo) {
           setCustomConsultoraLogo(data.customConsultoraLogo);
           try { localStorage.setItem('consultora_custom_logo', data.customConsultoraLogo); } catch {}
+        }
+
+        const importedModelosRelatorio = data.modelosRelatorio || [];
+        if (Array.isArray(importedModelosRelatorio) && importedModelosRelatorio.length > 0) {
+          try { localStorage.setItem('custom_modelos_relatorio_v2', JSON.stringify(importedModelosRelatorio)); } catch {}
+        }
+
+        const importedCustomAreas = data.customConsultoriaAreas || data.custom_consultoria_areas || [];
+        if (Array.isArray(importedCustomAreas) && importedCustomAreas.length > 0) {
+          setCustomConsultoriaAreas(prev => Array.from(new Set([...prev, ...importedCustomAreas])));
+          try { localStorage.setItem('local_custom_consultoria_areas', JSON.stringify(importedCustomAreas)); } catch {}
+        }
+
+        const importedDeletedAreas = data.deletedAreas || data.deleted_areas || [];
+        if (Array.isArray(importedDeletedAreas) && importedDeletedAreas.length > 0) {
+          setDeletedAreas(importedDeletedAreas);
+          try { localStorage.setItem('deleted_areas', JSON.stringify(importedDeletedAreas)); } catch {}
+        }
+
+        const importedSettings = data.settings || {};
+        if (importedSettings.storageMode) {
+          try { localStorage.setItem('storage_mode', importedSettings.storageMode); } catch {}
+        }
+        if (importedSettings.preferredLogo) {
+          try { localStorage.setItem('preferred_logo', importedSettings.preferredLogo); } catch {}
+          setLogoChoice(importedSettings.preferredLogo);
         }
 
         try { localStorage.setItem('local_backup_data', content); } catch {}
@@ -11663,6 +11875,28 @@ export default function App() {
       } catch {}
 
       if (u) {
+        // Sanitização automática: expurga do cache local registros com ownerId de terceiros
+        setEmpresasCredenciadas(prev => {
+          const filtered = prev.filter(c => !c.ownerId || c.ownerId === 'local' || c.ownerId === u.uid);
+          try { localStorage.setItem('local_empresas_credenciadas', JSON.stringify(filtered)); } catch {}
+          return filtered;
+        });
+        setEmpresas(prev => {
+          const filtered = prev.filter(e => !e.ownerId || e.ownerId === 'local' || e.ownerId === u.uid);
+          try { localStorage.setItem('local_empresas', JSON.stringify(filtered)); } catch {}
+          return filtered;
+        });
+        setDiagnosticos(prev => {
+          const filtered = prev.filter(d => !d.ownerId || d.ownerId === 'local' || d.ownerId === u.uid);
+          try { localStorage.setItem('local_diagnosticos', JSON.stringify(filtered)); } catch {}
+          return filtered;
+        });
+        setTarefasPlano(prev => {
+          const filtered = prev.filter(t => !t.ownerId || t.ownerId === 'local' || t.ownerId === u.uid);
+          try { localStorage.setItem('local_tarefas_plano', JSON.stringify(filtered)); } catch {}
+          return filtered;
+        });
+
         // Check if user is admin based on email (case-insensitive)
         const userEmailClean = (u.email || '').toLowerCase().trim();
         const isUserAdminEmail = userEmailClean === 'itamartrairi@gmail.com';
@@ -11715,10 +11949,8 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
 
-    // Se admin, escuta todas as empresas; caso contrário, escuta as do usuário
-    const qEmpresas = isAdmin
-      ? query(collection(db, 'empresas'))
-      : query(collection(db, 'empresas'), where('ownerId', '==', user.uid));
+    // O workspace operacional do consultor SEMPRE é restrito ao seu próprio ownerId
+    const qEmpresas = query(collection(db, 'empresas'), where('ownerId', '==', user.uid));
 
     const unsubEmpresas = onSnapshot(qEmpresas, (snap) => {
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Empresa));
@@ -11733,15 +11965,31 @@ export default function App() {
       }
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'empresas'));
 
-    const qCredenciadas = isAdmin 
-      ? query(collection(db, 'empresas_credenciadas'))
-      : query(collection(db, 'empresas_credenciadas'), where('ownerId', '==', user.uid));
+    // As credenciadas operacionais do consultor SEMPRE são filtradas por ownerId == user.uid
+    const qCredenciadas = query(collection(db, 'empresas_credenciadas'), where('ownerId', '==', user.uid));
     
     const unsubCredenciadas = onSnapshot(qCredenciadas, (snap) => {
       const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as EmpresaCredenciada));
       data.sort((a, b) => (a.razaoSocial || '').localeCompare(b.razaoSocial || ''));
-      setEmpresasCredenciadas(data);
+      setEmpresasCredenciadas(prev => {
+        const cloudIds = new Set(data.map(d => d.id));
+        const localOnly = prev.filter(c => (!c.ownerId || c.ownerId === 'local' || c.ownerId === user.uid) && !cloudIds.has(c.id));
+        const merged = [...data, ...localOnly];
+        try { localStorage.setItem('local_empresas_credenciadas', JSON.stringify(merged)); } catch {}
+        return merged;
+      });
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'empresas_credenciadas'));
+
+    // Se admin, escuta TODAS as credenciadas do sistema EXCLUSIVAMENTE para a tela de Gestão de Licenças
+    let unsubAllCred: (() => void) | undefined;
+    if (isAdmin) {
+      const qAllCred = query(collection(db, 'empresas_credenciadas'));
+      unsubAllCred = onSnapshot(qAllCred, (snap) => {
+        const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as EmpresaCredenciada));
+        data.sort((a, b) => (a.razaoSocial || '').localeCompare(b.razaoSocial || ''));
+        setAllSystemCredenciadas(data);
+      }, (error) => handleFirestoreError(error, OperationType.LIST, 'empresas_credenciadas_admin'));
+    }
 
     // Biblioteca metodológica compartilhada (Premissas, Problemas, Soluções, Áreas, Segmentos)
     const qPremissas = query(collection(db, 'premissas'));
@@ -11775,9 +12023,8 @@ export default function App() {
       });
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'solucoes'));
 
-    const qTarefas = isAdmin
-      ? query(collection(db, 'tarefas_plano'))
-      : query(collection(db, 'tarefas_plano'), where('ownerId', '==', user.uid));
+    // Tarefas do plano de ação restritas ao usuário
+    const qTarefas = query(collection(db, 'tarefas_plano'), where('ownerId', '==', user.uid));
     const unsubTarefas = onSnapshot(qTarefas, (snap) => {
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as TarefaPlanoAcao));
       setTarefasPlano(docs);
@@ -11798,6 +12045,7 @@ export default function App() {
     return () => {
       unsubEmpresas();
       unsubCredenciadas();
+      unsubAllCred?.();
       unsubPremissas();
       unsubProblemas();
       unsubSolucoes();
@@ -11897,14 +12145,12 @@ export default function App() {
     }
   }, [user, view, loading]);
 
-  // Listen to All Diagnosticos for the user (or all if admin)
+  // Listen to All Diagnosticos for the user (sempre isolado pelo ownerId)
   useEffect(() => {
     if (!user) {
       return;
     }
-    const q = isAdmin
-      ? query(collection(db, 'diagnosticos'))
-      : query(collection(db, 'diagnosticos'), where('ownerId', '==', user.uid));
+    const q = query(collection(db, 'diagnosticos'), where('ownerId', '==', user.uid));
 
     return onSnapshot(q, (snap) => {
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Diagnostico));
@@ -17878,7 +18124,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                   exit={{ opacity: 0, scale: 0.98 }}
                 >
                   <LicenseManagementView 
-                    empresasCredenciadas={empresasCredenciadas}
+                    empresasCredenciadas={allSystemCredenciadas.length > 0 ? allSystemCredenciadas : empresasCredenciadas}
                     onUpdateCredenciadaStatus={updateCredenciadaStatus}
                     onUpdateCredenciadaPlano={updateCredenciadaPlano}
                     onUpdateCredenciadaDiasTeste={updateCredenciadaDiasTeste}
@@ -19299,6 +19545,8 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                 setDiagnosticos={setDiagnosticos}
                 setView={setView}
                 playSuccessSound={playSuccessSound}
+                customConsultoriaAreas={customConsultoriaAreas}
+                onAddCustomConsultoriaArea={(newArea) => setCustomConsultoriaAreas(prev => Array.from(new Set([...prev, newArea])))}
               />
             </motion.div>
           )}
