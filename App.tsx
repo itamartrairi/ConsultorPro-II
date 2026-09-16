@@ -11947,13 +11947,36 @@ export default function App() {
       return;
     }
 
-    // 2. Real-time Firestore sync
+    // 2. Real-time Firestore sync (merges cloud docs into local state without discarding unanswered questions)
     const q = query(collection(db, 'respostas'), where('diagnosticoId', '==', selectedDiagnostico.id));
     return onSnapshot(q, (snap) => {
       const cloudDocs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Resposta));
       if (cloudDocs.length > 0) {
-        setRespostas(cloudDocs);
-        saveAllLocalRespostas(cloudDocs);
+        setRespostas(prev => {
+          const map = new Map<string, Resposta>();
+          // Preserve all current local/cached responses for this diagnosis
+          const baseList = prev.length > 0 ? prev : localCached;
+          baseList.forEach(r => {
+            if (r.diagnosticoId === selectedDiagnostico.id) {
+              map.set(r.id, r);
+            }
+          });
+          // Merge incoming cloud responses
+          cloudDocs.forEach(c => {
+            const matchKey = Array.from(map.keys()).find(k => {
+              const item = map.get(k)!;
+              return item.id === c.id || (c.premissaId && item.premissaId === c.premissaId);
+            });
+            if (matchKey) {
+              map.set(matchKey, { ...map.get(matchKey)!, ...c, id: matchKey });
+            } else {
+              map.set(c.id, c);
+            }
+          });
+          const merged = Array.from(map.values());
+          saveAllLocalRespostas(merged);
+          return merged;
+        });
       } else if (localCached.length > 0) {
         setRespostas(localCached);
       }
@@ -15711,6 +15734,8 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       // Optimistically update local state immediately (ensuring no duplicate IDs)
       setDiagnosticos(prev => [newDiagObj, ...prev.filter(d => d.id !== newDiagId)]);
       setRespostas(prev => [...localRespostasToInsert, ...prev]);
+      saveAllLocalRespostas(localRespostasToInsert);
+      setActiveDiagArea('');
 
       if (emp) {
         setSelectedEmpresa(emp);
@@ -15924,6 +15949,8 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               ownerId: user.uid,
               diagnosticoId: resp.diagnosticoId || selectedDiagnostico?.id || '',
               premissaId: resp.premissaId || resp.id,
+              idProblema: resp.idProblema || '',
+              problema: resp.problema || '',
               pergunta: resp.pergunta,
               area: resp.area
             }), { merge: true });
@@ -15939,37 +15966,47 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
     setLastSavedTime(new Date());
   };
 
-  const updateResposta = (id: string, val: 'Sim' | 'Não' | 'Parcial' | '' = '', obs: string = '', peso: number = 1) => {
+  const updateResposta = (
+    id: string, 
+    val: 'Sim' | 'Não' | 'Parcial' | '' = '', 
+    obs: string = '', 
+    peso: number = 1,
+    extraData?: Partial<Resposta>
+  ) => {
     // Score calculation: Sim=2, Parcial=1, Não=0
     const points = val === 'Sim' ? 2 : val === 'Parcial' ? 1 : 0;
     const score = points * peso;
 
-    const targetItem = respostas.find(r => r.id === id);
-    const updatedResp: Resposta = targetItem ? {
-      ...targetItem,
+    const targetItem = respostas.find(r => r.id === id || (extraData?.premissaId && r.premissaId === extraData.premissaId));
+    const finalId = targetItem?.id || extraData?.id || id;
+
+    const updatedResp: Resposta = {
+      id: finalId,
+      diagnosticoId: targetItem?.diagnosticoId || extraData?.diagnosticoId || selectedDiagnostico?.id || '',
+      premissaId: targetItem?.premissaId || extraData?.premissaId || id,
+      idProblema: targetItem?.idProblema || extraData?.idProblema || '',
+      problema: targetItem?.problema || extraData?.problema || '',
+      pergunta: targetItem?.pergunta || extraData?.pergunta || '',
+      area: targetItem?.area || extraData?.area || 'Geral',
+      peso: targetItem?.peso !== undefined ? targetItem.peso : (extraData?.peso !== undefined ? extraData.peso : peso),
       resposta: val,
       observacao: obs,
       score,
-      peso,
-      ownerId: user?.uid || targetItem.ownerId || 'local'
-    } : {
-      id,
-      diagnosticoId: selectedDiagnostico?.id || '',
-      premissaId: id,
-      pergunta: '',
-      area: 'Geral',
-      resposta: val,
-      observacao: obs,
-      score,
-      peso,
-      ownerId: user?.uid || 'local'
+      ownerId: user?.uid || targetItem?.ownerId || extraData?.ownerId || 'local'
     };
 
     // 1. Immediate in-memory React state update (0ms UI latency, instantaneous feedback)
-    setRespostas(prev => prev.map(r => r.id === id ? updatedResp : r));
+    setRespostas(prev => {
+      const exists = prev.some(r => r.id === finalId || (updatedResp.premissaId && r.premissaId === updatedResp.premissaId));
+      if (exists) {
+        return prev.map(r => (r.id === finalId || (updatedResp.premissaId && r.premissaId === updatedResp.premissaId)) ? updatedResp : r);
+      } else {
+        return [...prev, updatedResp];
+      }
+    });
 
     // 2. Buffer change into debounce queue
-    pendingResponsesBuffer.current.set(id, updatedResp);
+    pendingResponsesBuffer.current.set(finalId, updatedResp);
     setSaveStatus('saving');
 
     // 3. Reset debounce timer (500ms) to minimize disk/network I/O on low-memory devices
@@ -18390,8 +18427,63 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
               <div className="space-y-12">
                 {(() => {
-                  // 1. Deduplicate responses so every question appears only once, prioritizing answered ones
-                  const uniqueRespostas = deduplicateRespostas(respostas);
+                  // 1. Get responses for this specific diagnosis
+                  const currentDiagRespostas = (respostas || []).filter(r => r.diagnosticoId === selectedDiagnostico.id);
+
+                  // 2. Ensure all applicable questions from premissas are present for this diagnosis
+                  const diagAreas = selectedDiagnostico.areasDiagnostico || [];
+                  const companyTypeFilter = (selectedDiagnostico.tipoEmpresa || 'Geral').trim().toLowerCase();
+
+                  const existingMap = new Map<string, Resposta>();
+                  currentDiagRespostas.forEach(r => {
+                    if (r.premissaId) existingMap.set(`id:${r.premissaId}`, r);
+                    if (r.pergunta) existingMap.set(`q:${r.pergunta.trim().toLowerCase()}`, r);
+                  });
+
+                  const fullQuestionsList: Resposta[] = [...currentDiagRespostas];
+
+                  premissas.forEach(p => {
+                    const normQ = (p.pergunta || '').trim().toLowerCase();
+                    const prob = problemas.find(prob => prob.id === p.idProblema || prob.descricao_problemas === p.problema);
+                    const pType = (p.tipoEmpresa || prob?.tipoEmpresa || 'Geral').trim().toLowerCase();
+
+                    if (companyTypeFilter && companyTypeFilter !== 'geral' && companyTypeFilter !== '') {
+                      if (pType !== companyTypeFilter && pType !== 'geral' && pType !== '') return;
+                    } else {
+                      if (pType !== 'geral' && pType !== '') return;
+                    }
+
+                    const area = prob?.area || p.area || 'Geral';
+                    const normArea = normalizeAndFormatArea(area).toLowerCase();
+                    if (diagAreas.length > 0) {
+                      const isAreaSelected = diagAreas.some(a => normalizeAndFormatArea(a).toLowerCase() === normArea);
+                      if (!isAreaSelected) return;
+                    }
+
+                    const hasMatch = (p.id && existingMap.has(`id:${p.id}`)) || (normQ && existingMap.has(`q:${normQ}`));
+                    if (!hasMatch) {
+                      const unasked: Resposta = {
+                        id: `q_${selectedDiagnostico.id}_${p.id}`,
+                        diagnosticoId: selectedDiagnostico.id,
+                        premissaId: p.id,
+                        idProblema: p.idProblema || prob?.id || '',
+                        problema: p.problema || prob?.descricao_problemas || '',
+                        pergunta: p.pergunta || '',
+                        peso: p?.peso !== undefined ? p.peso : 1,
+                        area: area,
+                        observacao: '',
+                        score: 0,
+                        resposta: '',
+                        ownerId: user?.uid || 'local'
+                      };
+                      fullQuestionsList.push(unasked);
+                      if (p.id) existingMap.set(`id:${p.id}`, unasked);
+                      if (normQ) existingMap.set(`q:${normQ}`, unasked);
+                    }
+                  });
+
+                  // 3. Deduplicate responses so every question appears only once, prioritizing answered ones
+                  const uniqueRespostas = deduplicateRespostas(fullQuestionsList);
 
                   // 2. Group deduplicated answers by Area
                   const groupedByAreaDiag: Record<string, Resposta[]> = {};
@@ -18603,13 +18695,13 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                           <div className="flex flex-wrap gap-2">
                                             <button 
                                               onClick={async () => {
-                                                await updateResposta(resp.id, 'Sim', resp.observacao, resp.peso);
+                                                await updateResposta(resp.id, 'Sim', resp.observacao, resp.peso, resp);
                                                 if (!resp.observacao || resp.observacao.trim() === '') {
                                                   setGeneratingAction(resp.id);
                                                   try {
                                                     const feedback = await generateAIFeedback('Sim', resp.pergunta, resp.problema);
                                                     if (feedback) {
-                                                      await updateResposta(resp.id, 'Sim', feedback, resp.peso);
+                                                      await updateResposta(resp.id, 'Sim', feedback, resp.peso, resp);
                                                       setCompletedAction(resp.id);
                                                       setTimeout(() => {
                                                         setCompletedAction(prev => prev === resp.id ? null : prev);
@@ -18633,13 +18725,13 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                             </button>
                                             <button 
                                               onClick={async () => {
-                                                await updateResposta(resp.id, 'Parcial', resp.observacao, resp.peso);
+                                                await updateResposta(resp.id, 'Parcial', resp.observacao, resp.peso, resp);
                                                 if (!resp.observacao || resp.observacao.trim() === '') {
                                                   setGeneratingAction(resp.id);
                                                   try {
                                                     const feedback = await generateAIFeedback('Parcial', resp.pergunta, resp.problema);
                                                     if (feedback) {
-                                                      await updateResposta(resp.id, 'Parcial', feedback, resp.peso);
+                                                      await updateResposta(resp.id, 'Parcial', feedback, resp.peso, resp);
                                                       setCompletedAction(resp.id);
                                                       setTimeout(() => {
                                                         setCompletedAction(prev => prev === resp.id ? null : prev);
@@ -18663,13 +18755,13 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                             </button>
                                             <button 
                                               onClick={async () => {
-                                                await updateResposta(resp.id, 'Não', resp.observacao, resp.peso);
+                                                await updateResposta(resp.id, 'Não', resp.observacao, resp.peso, resp);
                                                 if (!resp.observacao || resp.observacao.trim() === '') {
                                                   setGeneratingAction(resp.id);
                                                   try {
                                                     const feedback = await generateAIFeedback('Não', resp.pergunta, resp.problema);
                                                     if (feedback) {
-                                                      await updateResposta(resp.id, 'Não', feedback, resp.peso);
+                                                      await updateResposta(resp.id, 'Não', feedback, resp.peso, resp);
                                                       setCompletedAction(resp.id);
                                                       setTimeout(() => {
                                                         setCompletedAction(prev => prev === resp.id ? null : prev);
@@ -18710,7 +18802,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                                   }
                                                   const feedback = await generateAIFeedback(resp.resposta || 'Não', resp.pergunta, resp.problema);
                                                   if (feedback) {
-                                                    await updateResposta(resp.id, resp.resposta || 'Não', feedback, resp.peso);
+                                                    await updateResposta(resp.id, resp.resposta || 'Não', feedback, resp.peso, resp);
                                                     setCompletedAction(resp.id);
                                                     setTimeout(() => {
                                                       setCompletedAction(prev => prev === resp.id ? null : prev);
@@ -18756,7 +18848,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                             className="w-full h-24 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all font-sans"
                                             placeholder="Digite aqui pontos de melhoria ou use o botão 'Gerar com IA' acima..."
                                             value={resp.observacao || ''}
-                                            onChange={(e) => updateResposta(resp.id, resp.resposta, e.target.value, resp.peso)}
+                                            onChange={(e) => updateResposta(resp.id, resp.resposta, e.target.value, resp.peso, resp)}
                                           />
                                           <div className="mt-2 flex items-center justify-between">
                                             <div className="flex items-center gap-2">
