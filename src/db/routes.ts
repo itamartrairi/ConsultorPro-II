@@ -1,12 +1,27 @@
 import { Router } from 'express';
 import { getDatabase, initPostgresTables } from './index';
 import { empresas, diagnosticos, respostas, tarefasPlano, empresasCredenciadas, appMetadata } from './schema';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
+import type { Request, Response, NextFunction } from 'express';
+import { verifyFirebaseUser } from '../server/firebaseAdmin';
+
+// Identidade verificada no servidor a partir do token do Firebase Auth.
+// Antes, userId e isAdmin vinham do corpo da requisição — qualquer pessoa podia
+// enviar isAdmin: true e baixar os dados de todos os consultores.
+async function requireFirebaseUser(req: Request, res: Response, next: NextFunction) {
+  const user = await verifyFirebaseUser(req.headers.authorization);
+  if (!user) {
+    return res.status(401).json({ ok: false, error: 'Login necessário ou sessão expirada. Entre novamente.' });
+  }
+  (res.locals as any).uid = user.uid;
+  (res.locals as any).isAdmin = user.isAdmin;
+  next();
+}
 
 export const dbRouter = Router();
 
 // Test & Probe Netlify Database connection
-dbRouter.get('/status', async (req, res) => {
+dbRouter.get('/status', requireFirebaseUser, async (req, res) => {
   const dbClient = getDatabase();
   const hasEnv = !!(process.env.NETLIFY_DATABASE_URL || process.env.DATABASE_URL || process.env.POSTGRES_URL);
 
@@ -46,7 +61,7 @@ dbRouter.get('/status', async (req, res) => {
 });
 
 // Sync data endpoint: pulls and updates records
-dbRouter.post('/sync', async (req, res) => {
+dbRouter.post('/sync', requireFirebaseUser, async (req, res) => {
   const dbClient = getDatabase();
   if (!dbClient) {
     return res.status(400).json({
@@ -56,15 +71,18 @@ dbRouter.post('/sync', async (req, res) => {
   }
 
   const { db, sql } = dbClient;
-  const { 
-    userId, 
-    isAdmin, 
+  const userId: string = (res.locals as any).uid;
+  const isAdmin: boolean = (res.locals as any).isAdmin;
+  const {
     localEmpresas = [], 
     localDiagnosticos = [], 
     localRespostas = [], 
     localTarefas = [],
     localCredenciadas = []
   } = req.body;
+
+  // Consultor comum só grava registros em seu próprio nome; admin preserva o dono original.
+  const ownerFor = (item: any): string => (isAdmin ? item.ownerId || userId : userId);
 
   try {
     await initPostgresTables();
@@ -97,7 +115,7 @@ dbRouter.post('/sync', async (req, res) => {
       if (!existing || (emp.updatedAt && (!existing.updatedAt || new Date(emp.updatedAt) > new Date(existing.updatedAt)))) {
         await sql`
           INSERT INTO empresas (id, owner_id, nome, cnpj, tipo_empresa, status, telefone, email, cidade, estado, created_at, updated_at, data)
-          VALUES (${emp.id}, ${emp.ownerId || userId || ''}, ${emp.nome || ''}, ${emp.cnpj || ''}, ${emp.tipoEmpresa || ''}, ${emp.status || 'Ativa'}, ${emp.telefone || ''}, ${emp.email || ''}, ${emp.cidade || ''}, ${emp.estado || ''}, ${emp.createdAt || ''}, ${emp.updatedAt || ''}, ${JSON.stringify(emp)}::jsonb)
+          VALUES (${emp.id}, ${ownerFor(emp)}, ${emp.nome || ''}, ${emp.cnpj || ''}, ${emp.tipoEmpresa || ''}, ${emp.status || 'Ativa'}, ${emp.telefone || ''}, ${emp.email || ''}, ${emp.cidade || ''}, ${emp.estado || ''}, ${emp.createdAt || ''}, ${emp.updatedAt || ''}, ${JSON.stringify(emp)}::jsonb)
           ON CONFLICT (id) DO UPDATE SET
             nome = EXCLUDED.nome,
             cnpj = EXCLUDED.cnpj,
@@ -108,7 +126,8 @@ dbRouter.post('/sync', async (req, res) => {
             cidade = EXCLUDED.cidade,
             estado = EXCLUDED.estado,
             updated_at = EXCLUDED.updated_at,
-            data = EXCLUDED.data;
+            data = EXCLUDED.data
+          WHERE ${isAdmin}::boolean OR empresas.owner_id = ${userId};
         `;
       }
     }
@@ -119,7 +138,7 @@ dbRouter.post('/sync', async (req, res) => {
       if (!existing || (diag.updatedAt && (!existing.updatedAt || new Date(diag.updatedAt) > new Date(existing.updatedAt)))) {
         await sql`
           INSERT INTO diagnosticos (id, owner_id, empresa_id, tipo_empresa, data_diagnostico, status, nome_projeto, percentual_geral, areas_diagnostico, created_at, updated_at, data)
-          VALUES (${diag.id}, ${diag.ownerId || userId || ''}, ${diag.empresaId || ''}, ${diag.tipoEmpresa || ''}, ${diag.dataDiagnostico || ''}, ${diag.status || ''}, ${diag.nomeProjeto || diag.nome || ''}, ${diag.percentualGeral || 0}, ${JSON.stringify(diag.areasDiagnostico || [])}::jsonb, ${diag.createdAt || ''}, ${diag.updatedAt || ''}, ${JSON.stringify(diag)}::jsonb)
+          VALUES (${diag.id}, ${ownerFor(diag)}, ${diag.empresaId || ''}, ${diag.tipoEmpresa || ''}, ${diag.dataDiagnostico || ''}, ${diag.status || ''}, ${diag.nomeProjeto || diag.nome || ''}, ${diag.percentualGeral || 0}, ${JSON.stringify(diag.areasDiagnostico || [])}::jsonb, ${diag.createdAt || ''}, ${diag.updatedAt || ''}, ${JSON.stringify(diag)}::jsonb)
           ON CONFLICT (id) DO UPDATE SET
             empresa_id = EXCLUDED.empresa_id,
             tipo_empresa = EXCLUDED.tipo_empresa,
@@ -129,7 +148,8 @@ dbRouter.post('/sync', async (req, res) => {
             percentual_geral = EXCLUDED.percentual_geral,
             areas_diagnostico = EXCLUDED.areas_diagnostico,
             updated_at = EXCLUDED.updated_at,
-            data = EXCLUDED.data;
+            data = EXCLUDED.data
+          WHERE ${isAdmin}::boolean OR diagnosticos.owner_id = ${userId};
         `;
       }
     }
@@ -138,13 +158,14 @@ dbRouter.post('/sync', async (req, res) => {
       if (!resp.id) continue;
       await sql`
         INSERT INTO respostas (id, owner_id, diagnostico_id, premissa_id, area, resposta, observacao, peso, created_at, updated_at, data)
-        VALUES (${resp.id}, ${resp.ownerId || userId || ''}, ${resp.diagnosticoId || ''}, ${resp.premissaId || ''}, ${resp.area || ''}, ${resp.resposta || ''}, ${resp.observacao || ''}, ${resp.peso || 1}, ${resp.createdAt || ''}, ${resp.updatedAt || ''}, ${JSON.stringify(resp)}::jsonb)
+        VALUES (${resp.id}, ${ownerFor(resp)}, ${resp.diagnosticoId || ''}, ${resp.premissaId || ''}, ${resp.area || ''}, ${resp.resposta || ''}, ${resp.observacao || ''}, ${resp.peso || 1}, ${resp.createdAt || ''}, ${resp.updatedAt || ''}, ${JSON.stringify(resp)}::jsonb)
         ON CONFLICT (id) DO UPDATE SET
           resposta = EXCLUDED.resposta,
           observacao = EXCLUDED.observacao,
           peso = EXCLUDED.peso,
           updated_at = EXCLUDED.updated_at,
-          data = EXCLUDED.data;
+          data = EXCLUDED.data
+          WHERE ${isAdmin}::boolean OR respostas.owner_id = ${userId};
       `;
     }
 
@@ -152,7 +173,7 @@ dbRouter.post('/sync', async (req, res) => {
       if (!t.id) continue;
       await sql`
         INSERT INTO tarefas_plano (id, owner_id, diagnostico_id, area, acao, responsavel, prazo, status, prioridade, created_at, updated_at, data)
-        VALUES (${t.id}, ${t.ownerId || userId || ''}, ${t.diagnosticoId || ''}, ${t.area || ''}, ${t.acao || ''}, ${t.responsavel || ''}, ${t.prazo || ''}, ${t.status || 'Pendente'}, ${t.prioridade || 'Média'}, ${t.createdAt || ''}, ${t.updatedAt || ''}, ${JSON.stringify(t)}::jsonb)
+        VALUES (${t.id}, ${ownerFor(t)}, ${t.diagnosticoId || ''}, ${t.area || ''}, ${t.acao || ''}, ${t.responsavel || ''}, ${t.prazo || ''}, ${t.status || 'Pendente'}, ${t.prioridade || 'Média'}, ${t.createdAt || ''}, ${t.updatedAt || ''}, ${JSON.stringify(t)}::jsonb)
         ON CONFLICT (id) DO UPDATE SET
           area = EXCLUDED.area,
           acao = EXCLUDED.acao,
@@ -161,7 +182,8 @@ dbRouter.post('/sync', async (req, res) => {
           status = EXCLUDED.status,
           prioridade = EXCLUDED.prioridade,
           updated_at = EXCLUDED.updated_at,
-          data = EXCLUDED.data;
+          data = EXCLUDED.data
+          WHERE ${isAdmin}::boolean OR tarefas_plano.owner_id = ${userId};
       `;
     }
 
