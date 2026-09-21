@@ -29,7 +29,7 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
   onClose,
   onKeySaved,
   currentKey = '',
-  systemDefaultKey = 'AQ.Ab8RN6LGK4um2g_8db72CBQC-9NFFnIDWCj4hg4m7xl7MxcEFA'
+  systemDefaultKey = ''
 }) => {
   const [apiKeyInput, setApiKeyInput] = useState(currentKey);
   const [isKeyVisible, setIsKeyVisible] = useState(false);
@@ -95,10 +95,11 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
     onClose();
   };
 
+  // Volta a usar a chave do sistema, que fica guardada só no servidor.
   const handleUseSystemDefault = () => {
-    setApiKeyInput(systemDefaultKey);
-    localStorage.setItem('custom_gemini_api_key', systemDefaultKey);
-    onKeySaved(systemDefaultKey);
+    setApiKeyInput('');
+    localStorage.removeItem('custom_gemini_api_key');
+    onKeySaved('');
     onClose();
   };
 
@@ -248,7 +249,7 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
             <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type={isKeyVisible ? 'text' : 'password'}
-                placeholder="Cole aqui (ex: AQ.Ab8RN6... ou AIzaSy...)"
+                placeholder="Cole aqui sua chave (ex: AIzaSy... ou AQ....)"
                 value={apiKeyInput}
                 onChange={(e) => {
                   setApiKeyInput(e.target.value);
@@ -292,7 +293,7 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
             onClick={handleUseSystemDefault}
             className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 underline cursor-pointer"
           >
-            Usar Chave Padrão do Criador
+            Usar Chave do Sistema
           </button>
           
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">

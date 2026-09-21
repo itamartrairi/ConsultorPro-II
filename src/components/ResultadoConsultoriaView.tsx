@@ -47,7 +47,7 @@ import {
   deleteDoc,
   getDocs,
   serverTimestamp
-} from 'firebase/firestore';
+} from '../lib/firestoreOwned';
 import { db } from '../firebase';
 import { Button } from './Button';
 import { sebraeLogoBase64 } from '../sebraeLogo';

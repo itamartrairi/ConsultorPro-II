@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db, auth } from '../firebase';
-import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc, getDocs } from '../lib/firestoreOwned';
 import {
   TrendingUp,
   Award,
