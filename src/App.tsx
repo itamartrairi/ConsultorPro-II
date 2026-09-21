@@ -17497,6 +17497,8 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
   };
 
   const subStatus = checkSubscriptionExpiration();
+  // Planos comprados: o card de compra fica oculto até a licença vencer.
+  const isPaidPlan = (plan: string) => ['Mensal', 'Anual', 'Definitiva'].includes(plan);
   const isUserBlocked = !isAdmin && empresasCredenciadas.length > 0 && empresasCredenciadas.some(e => e.ownerId === user?.uid && e.status === 'Bloqueada');
   const isPlanExpired = subStatus.expired;
 
@@ -17819,8 +17821,10 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                 </label>
               </div>
             </div>
-            {/* Warning Banner for Client */}
-            {!isAdmin && subStatus.daysLeft <= 3 && subStatus.daysLeft >= 0 && (
+            {/* Warning Banner for Client — card de compra só aparece no período de TESTE.
+                Quem já comprou (Mensal/Anual) não vê este card; ao vencer, aparece a tela
+                "Plano Expirado" com o botão "Renovar Assinatura". */}
+            {!isAdmin && !isPaidPlan(subStatus.plan) && subStatus.daysLeft <= 3 && subStatus.daysLeft >= 0 && (
               <motion.div 
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
