@@ -1,3 +1,10 @@
+import { auth } from '../firebase';
+
+async function authHeaders(): Promise<Record<string, string>> {
+  const token = await auth.currentUser?.getIdToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export interface DbSyncResult {
   ok: boolean;
   empresas?: any[];
@@ -10,7 +17,7 @@ export interface DbSyncResult {
 
 export async function checkNetlifyDatabaseStatus(): Promise<{ ok: boolean; configured: boolean; message: string; provider?: string }> {
   try {
-    const res = await fetch('/api/db/status');
+    const res = await fetch('/api/db/status', { headers: await authHeaders() });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       return {
@@ -29,9 +36,8 @@ export async function checkNetlifyDatabaseStatus(): Promise<{ ok: boolean; confi
   }
 }
 
+// A identidade (usuário/admin) é verificada no servidor pelo token do Firebase.
 export async function syncWithNetlifyDatabase(payload: {
-  userId: string;
-  isAdmin: boolean;
   localEmpresas: any[];
   localDiagnosticos: any[];
   localRespostas: any[];
@@ -40,7 +46,7 @@ export async function syncWithNetlifyDatabase(payload: {
 }): Promise<DbSyncResult> {
   const res = await fetch('/api/db/sync', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
     body: JSON.stringify(payload)
   });
 

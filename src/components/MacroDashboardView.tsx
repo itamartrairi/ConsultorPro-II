@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, ownerFilter } from '../lib/firestoreOwned';
 import { db } from '../firebase';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -235,7 +235,7 @@ export const MacroDashboardView = ({
 
     const fetchTasksFromCloud = async () => {
       try {
-        const snap = await getDocs(collection(db, 'tarefas_plano'));
+        const snap = await getDocs(query(collection(db, 'tarefas_plano'), ownerFilter()));
         if (!snap.empty) {
           const list: TarefaPlanoAcao[] = [];
           snap.docs.forEach(docSnap => {
@@ -290,7 +290,7 @@ export const MacroDashboardView = ({
         
         for (const chunk of chunks) {
           const ids = chunk.map(d => d.id);
-          const qRes = query(collection(db, 'respostas'), where('diagnosticoId', 'in', ids));
+          const qRes = query(collection(db, 'respostas'), ownerFilter(), where('diagnosticoId', 'in', ids));
           const snap = await getDocs(qRes);
           snap.docs.forEach(docSnap => {
             const data = docSnap.data();

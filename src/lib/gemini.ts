@@ -1,0 +1,46 @@
+import { auth } from '../firebase';
+
+export function isValidGeminiApiKey(k: any): boolean {
+  if (!k || typeof k !== 'string') return false;
+  const t = k.trim();
+  if (t === '' || t === 'undefined' || t === 'null') return false;
+  return t.startsWith('AQ.') || t.startsWith('AIzaSy') || t.length >= 15;
+}
+
+// Prefixo da chave antiga que ficou pública — removida do navegador de quem a salvou.
+const LEAKED_GEMINI_KEY_PREFIX = "AQ.Ab8RN6LGK4um2g";
+
+export function readCustomGeminiKey(): string {
+  try {
+    const raw = (localStorage.getItem('custom_gemini_api_key') || '').trim();
+    if (raw.startsWith(LEAKED_GEMINI_KEY_PREFIX)) {
+      localStorage.removeItem('custom_gemini_api_key');
+      return '';
+    }
+    return isValidGeminiApiKey(raw) ? raw : '';
+  } catch {
+    return '';
+  }
+}
+
+// Token de login do Firebase, exigido pelo proxy do Gemini (evita uso da chave por terceiros).
+export async function geminiAuthHeaders(): Promise<Record<string, string>> {
+  try {
+    const token = await auth.currentUser?.getIdToken();
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch {
+    return {};
+  }
+}
+
+
+// No app desktop (Electron) a página abre como arquivo local e não existe "/api".
+// Defina VITE_API_BASE_URL=https://SEU-SITE.netlify.app no build do desktop para usar
+// as Netlify Functions do site publicado.
+export function apiUrl(path: string): string {
+  const base = ((import.meta as any).env?.VITE_API_BASE_URL || '').replace(/\/+$/, '');
+  if (base && typeof window !== 'undefined' && window.location.protocol === 'file:') {
+    return base + path;
+  }
+  return path;
+}

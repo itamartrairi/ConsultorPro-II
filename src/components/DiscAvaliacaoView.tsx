@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db, auth } from '../firebase';
-import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { readCustomGeminiKey, geminiAuthHeaders, apiUrl } from '../lib/gemini';
+import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc, updateDoc } from '../lib/firestoreOwned';
 import {
   User,
   FileText,
@@ -516,14 +517,14 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
 
     try {
       let aiText = "";
-      const customKey = (localStorage.getItem('custom_gemini_api_key') || "").trim();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const customKey = readCustomGeminiKey();
+      const headers: Record<string, string> = { "Content-Type": "application/json", ...(await geminiAuthHeaders()) };
       if (customKey) {
         headers["x-custom-api-key"] = customKey;
       }
 
       try {
-        const response = await fetch("/api/gemini/generate", {
+        const response = await fetch(apiUrl("/api/gemini/generate"), {
           method: "POST",
           headers: headers,
           body: JSON.stringify({
@@ -543,7 +544,11 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
       }
 
       if (!aiText) {
-        const activeKey = customKey || "AQ.Ab8RN6LGK4um2g_8db72CBQC-9NFFnIDWCj4hg4m7xl7MxcEFA";
+        // Chamada direta só é possível com a chave própria do usuário.
+        const activeKey = customKey;
+        if (!activeKey) {
+          throw new Error("Não foi possível falar com o servidor de IA. Verifique sua conexão ou cadastre sua própria chave do Gemini em Configurações.");
+        }
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${activeKey}`;
         const directRes = await fetch(url, {
           method: "POST",

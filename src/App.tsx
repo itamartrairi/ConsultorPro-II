@@ -19,8 +19,7 @@ import {
   setDoc,
   getDocFromServer,
   deleteField,
-  runTransaction
-} from 'firebase/firestore';
+  runTransaction, ownerFilter } from './lib/firestoreOwned';
 import { 
   signInWithPopup, 
   GoogleAuthProvider, 
@@ -557,6 +556,18 @@ export const getActivityDateStr = (diagDate: any, index: number): string => {
   result.setDate(result.getDate() + (index * 7));
   return result.toISOString().split('T')[0];
 };
+
+const LICENSE_FIELDS = ['status', 'tipoPlano', 'diasTeste', 'validadeLicenca', 'role', 'dataCadastro', 'kiwifyOrderId', 'dataAtivacaoKiwify', 'dataCancelamentoKiwify'] as const;
+
+// Retorna apenas os campos de licença presentes no documento da nuvem.
+export function pickLicenseFields(item: any): Record<string, any> {
+  const out: Record<string, any> = {};
+  if (!item) return out;
+  for (const k of LICENSE_FIELDS) {
+    if (item[k] !== undefined) out[k] = item[k];
+  }
+  return out;
+}
 
 export function extractItemTimestamp(item: any): number {
   if (!item) return 0;
@@ -3423,7 +3434,7 @@ const CronogramaView = ({
                 updatedAt: new Date().toISOString()
               });
 
-              const qCurrentTasks = query(collection(db, 'tarefas_plano'), where('diagnosticoId', '==', selectedDiagnostico.id));
+              const qCurrentTasks = query(collection(db, 'tarefas_plano'), ownerFilter(), where('diagnosticoId', '==', selectedDiagnostico.id));
               const snapCurrentTasks = await getDocs(qCurrentTasks);
               const existingDocs = snapCurrentTasks?.docs || [];
 
@@ -3516,7 +3527,7 @@ const CronogramaView = ({
       try {
         await updateDoc(doc(db, 'diagnosticos', selectedDiagnostico.id), { cronograma: sanitizedAtv });
 
-        const qTask = query(collection(db, 'tarefas_plano'), where('diagnosticoId', '==', selectedDiagnostico.id));
+        const qTask = query(collection(db, 'tarefas_plano'), ownerFilter(), where('diagnosticoId', '==', selectedDiagnostico.id));
         const snap = await getDocs(qTask);
         const batch = writeBatch(db);
         snap.docs.forEach(docSnap => {
@@ -5161,7 +5172,7 @@ const CronogramaView = ({
               await updateDoc(doc(db, 'diagnosticos', selectedDiagnostico.id), { cronograma: sanitized });
               setSelectedDiagnostico({ ...selectedDiagnostico, cronograma: sanitized });
 
-              const qTask = query(collection(db, 'tarefas_plano'), where('diagnosticoId', '==', selectedDiagnostico.id));
+              const qTask = query(collection(db, 'tarefas_plano'), ownerFilter(), where('diagnosticoId', '==', selectedDiagnostico.id));
               const snap = await getDocs(qTask);
               const batch = writeBatch(db);
               snap.docs.forEach(docSnap => {
@@ -9896,15 +9907,15 @@ export const extractAndParseJSON = (text: string, defaultValue: any = null): any
   return defaultValue;
 };
 
-// Chave de API global do Gemini (fornecida pelo criador para funcionamento imediato)
-export const HARDCODED_DEFAULT_GEMINI_KEY = "AQ.Ab8RN6LGK4um2g_8db72CBQC-9NFFnIDWCj4hg4m7xl7MxcEFA";
+// A chave do criador NÃO fica mais no código do navegador: ela mora apenas no servidor
+// (variável GEMINI_API_KEY na Netlify Function /api/gemini/*). Quem quiser pode usar a
+// própria chave em Configurações; ela vai no cabeçalho x-custom-api-key.
+import { readCustomGeminiKey, geminiAuthHeaders, apiUrl } from './lib/gemini';
+import { selectLibraryForDeletion } from './lib/librarySelection';
+export { readCustomGeminiKey, geminiAuthHeaders };
 
-export function isValidGeminiApiKey(k: any): boolean {
-  if (!k || typeof k !== 'string') return false;
-  const t = k.trim();
-  if (t === '' || t === 'undefined' || t === 'null') return false;
-  return t.startsWith('AQ.') || t.startsWith('AIzaSy') || t.length >= 15;
-}
+export { isValidGeminiApiKey } from './lib/gemini';
+import { isValidGeminiApiKey } from './lib/gemini';
 
 let aiInstance: any = null;
 export const getAI = () => {
@@ -9922,43 +9933,21 @@ export const getAI = () => {
           console.warn("[AICache] Cache lookup error:", e);
         }
 
-        let rawSavedKey = localStorage.getItem('custom_gemini_api_key') || "";
-        if (!isValidGeminiApiKey(rawSavedKey)) {
-          rawSavedKey = "";
-        }
-        const savedKey = rawSavedKey.trim();
-
-        let envKey = "";
-        try {
-          envKey = (import.meta.env.VITE_GEMINI_API_KEY || "").trim();
-        } catch (e) {}
-        if (!isValidGeminiApiKey(envKey)) {
-          try {
-            envKey = (process.env.GEMINI_API_KEY || "").trim();
-          } catch (e) {}
-        }
-        if (!isValidGeminiApiKey(envKey)) {
-          try {
-            envKey = (process.env.VITE_GEMINI_API_KEY || "").trim();
-          } catch (e) {}
-        }
-        if (!isValidGeminiApiKey(envKey)) {
-          envKey = "";
-        }
-
-        // Determina a chave ativa com prioridade para a configurada pelo usuário
-        const activeKey = savedKey || envKey || HARDCODED_DEFAULT_GEMINI_KEY;
+        const savedKey = readCustomGeminiKey();
+        // Só a chave própria do usuário é usada fora do servidor.
+        const activeKey = savedKey;
         
         // 2. Try the backend proxy first (available in Container/Full-stack environments)
         try {
           const headers: Record<string, string> = {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            ...(await geminiAuthHeaders())
           };
           if (activeKey) {
             headers["x-custom-api-key"] = activeKey;
           }
 
-          const response = await fetch("/api/gemini/generate", {
+          const response = await fetch(apiUrl("/api/gemini/generate"), {
             method: "POST",
             headers: headers,
             body: JSON.stringify({ model: model || "gemini-3.6-flash", contents, config })
@@ -10440,9 +10429,7 @@ export default function App() {
 
   // Gemini AI Key Tutorial Modal State
   const [isGeminiTutorialModalOpen, setIsGeminiTutorialModalOpen] = useState(false);
-  const [customGeminiKey, setCustomGeminiKey] = useState<string>(() => {
-    return localStorage.getItem('custom_gemini_api_key') || '';
-  });
+  const [customGeminiKey, setCustomGeminiKey] = useState<string>(() => readCustomGeminiKey());
 
   useEffect(() => {
     const handler = () => setIsGeminiTutorialModalOpen(true);
@@ -11076,17 +11063,20 @@ export default function App() {
           const tLocal = extractItemTimestamp(local);
           const tCloud = extractItemTimestamp(cloud);
           if (tLocal > tCloud) {
-            batchQueue.pushItem(doc(db, 'empresas_credenciadas', id), { ...cloud, ...local, ownerId: user.uid, updatedAt: new Date().toISOString() });
+            // Os campos de licença são definidos pelo servidor (webhook Kiwify) ou pelo admin.
+            // Uma cópia local antiga nunca pode sobrescrevê-los (ex.: desfazer um plano recém-pago).
+            const merged = { ...cloud, ...local, ...pickLicenseFields(cloud) };
+            batchQueue.pushItem(doc(db, 'empresas_credenciadas', id), { ...merged, ownerId: user.uid, updatedAt: new Date().toISOString() });
             summary.updatedInCloud++;
             summary.details.outros.updated++;
-            finalCreds.push({ ...cloud, ...local });
+            finalCreds.push(merged);
           } else if (tCloud > tLocal) {
             summary.updatedInLocal++;
             summary.details.outros.downloaded++;
             finalCreds.push({ ...local, ...cloud });
           } else {
             summary.identicalOrMerged++;
-            finalCreds.push({ ...cloud, ...local });
+            finalCreds.push({ ...cloud, ...local, ...pickLicenseFields(cloud) });
           }
         }
       }
@@ -11917,7 +11907,7 @@ export default function App() {
 
   // Check system API Key status from backend config on mount
   useEffect(() => {
-    fetch("/api/gemini/config")
+    fetch(apiUrl("/api/gemini/config"))
       .then(res => res.json())
       .then(data => {
         if (data && typeof data.hasSystemKey === 'boolean') {
@@ -11992,7 +11982,7 @@ export default function App() {
     }
 
     // Biblioteca metodológica compartilhada (Premissas, Problemas, Soluções, Áreas, Segmentos)
-    const qPremissas = query(collection(db, 'premissas'));
+    const qPremissas = query(collection(db, 'premissas'), ownerFilter());
     const unsubPremissas = onSnapshot(qPremissas, (snap) => {
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Premissa));
       setPremissas(prev => {
@@ -12003,7 +11993,7 @@ export default function App() {
       });
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'premissas'));
 
-    const qProblemas = query(collection(db, 'problemas'));
+    const qProblemas = query(collection(db, 'problemas'), ownerFilter());
     const unsubProblemas = onSnapshot(qProblemas, (snap) => {
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Problema));
       setProblemas(prev => {
@@ -12013,7 +12003,7 @@ export default function App() {
       });
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'problemas'));
 
-    const qSolucoes = query(collection(db, 'solucoes'));
+    const qSolucoes = query(collection(db, 'solucoes'), ownerFilter());
     const unsubSolucoes = onSnapshot(qSolucoes, (snap) => {
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Solucao));
       setSolucoes(prev => {
@@ -12030,13 +12020,13 @@ export default function App() {
       setTarefasPlano(docs);
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'tarefas_plano'));
 
-    const qAreas = query(collection(db, 'areas'));
+    const qAreas = query(collection(db, 'areas'), ownerFilter());
     const unsubAreas = onSnapshot(qAreas, (snap) => {
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as { id: string, nome: string }));
       setDbAreas(docs);
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'areas'));
 
-    const qSegmentos = query(collection(db, 'segmentos'));
+    const qSegmentos = query(collection(db, 'segmentos'), ownerFilter());
     const unsubSegmentos = onSnapshot(qSegmentos, (snap) => {
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as { id: string, nome: string }));
       setDbSegmentos(docs);
@@ -12194,7 +12184,7 @@ export default function App() {
     }
 
     // 2. Real-time Firestore sync (merges cloud docs into local state without discarding unanswered questions)
-    const q = query(collection(db, 'respostas'), where('diagnosticoId', '==', selectedDiagnostico.id));
+    const q = query(collection(db, 'respostas'), ownerFilter(), where('diagnosticoId', '==', selectedDiagnostico.id));
     return onSnapshot(q, (snap) => {
       const cloudDocs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Resposta));
       if (cloudDocs.length > 0) {
@@ -12332,7 +12322,7 @@ export default function App() {
           const lastDiags = [...companyDiags].reverse().slice(-5); // Last 5, ordered by date
           
           for (const diag of lastDiags) {
-            const qRes = query(collection(db, 'respostas'), where('diagnosticoId', '==', diag.id));
+            const qRes = query(collection(db, 'respostas'), ownerFilter(), where('diagnosticoId', '==', diag.id));
             const snap = await getDocs(qRes);
             const resps = snap.docs.map(d => d.data());
             const totalScore = resps.reduce((acc, r) => acc + (r.score || 0), 0);
@@ -13407,33 +13397,15 @@ export default function App() {
     }
   };
 
+  // Exclui APENAS os documentos do próprio usuário. Antes, esta função também varria a
+  // coleção inteira e, para o admin, apagava os dados de todos os consultores.
   const safeDeleteDocs = async (colName: string, userId?: string) => {
+    if (!userId) return;
     try {
       const colRef = collection(db, colName);
       const docsToDelete: any[] = [];
-      
-      if (userId) {
-        try {
-          const snapUser = await getDocs(query(colRef, where('ownerId', '==', userId)));
-          snapUser.docs.forEach(d => docsToDelete.push(d));
-        } catch (e) {
-          console.warn(`Query by ownerId on ${colName} notice:`, e);
-        }
-      }
-
-      try {
-        const snapAll = await getDocs(colRef);
-        for (const d of snapAll.docs) {
-          const data = d.data();
-          if (!userId || isAdmin || !data.ownerId || data.ownerId === 'local' || data.ownerId === userId) {
-            if (!docsToDelete.some(existing => existing.id === d.id)) {
-              docsToDelete.push(d);
-            }
-          }
-        }
-      } catch (e) {
-        console.warn(`Scan on ${colName} notice:`, e);
-      }
+      const snapUser = await getDocs(query(colRef, where('ownerId', '==', userId)));
+      snapUser.docs.forEach(d => docsToDelete.push(d));
 
       if (docsToDelete.length > 0) {
         for (let i = 0; i < docsToDelete.length; i += 400) {
@@ -13470,7 +13442,7 @@ export default function App() {
           console.warn("Direct delete of premissa by id failed:", e);
         }
         try {
-          const snap = await getDocs(collection(db, 'premissas'));
+          const snap = await getDocs(query(collection(db, 'premissas'), ownerFilter()));
           for (const d of snap.docs) {
             const data = d.data();
             const matchesOwner = !data.ownerId || data.ownerId === 'local' || data.ownerId === user.uid || isAdmin;
@@ -13570,7 +13542,7 @@ export default function App() {
           console.warn("Direct delete of problema by id failed:", e);
         }
         try {
-          const snap = await getDocs(collection(db, 'problemas'));
+          const snap = await getDocs(query(collection(db, 'problemas'), ownerFilter()));
           for (const d of snap.docs) {
             const data = d.data();
             const matchesOwner = !data.ownerId || data.ownerId === 'local' || data.ownerId === user.uid || isAdmin;
@@ -13585,25 +13557,59 @@ export default function App() {
     }
   };
 
+  // --- Exclusão da biblioteca pela seleção (Tipo de Empresa + Área) ---
+  // Calcula exatamente o que será excluído com os filtros atuais da Biblioteca.
+  const getLibrarySelectionToDelete = () => selectLibraryForDeletion(
+    { problemas, premissas, solucoes },
+    { area: selectedAreaFilter, tipo: selectedTipoEmpresaFilter, tag: selectedTagFilter }
+  );
+
   const deleteAllProblemas = async () => {
-    const idsToDelete = problemas.map(p => p.id);
-    setProblemas([]);
+    if (!selectedAreaFilter || !selectedTipoEmpresaFilter) {
+      showToast("Selecione o Tipo de Empresa e a Área antes de excluir.", "error");
+      return;
+    }
+    const { probs, prems, sols } = getLibrarySelectionToDelete();
+    const probIds = new Set<string>(probs.map(p => p.id));
+    const premIds = new Set<string>(prems.map(p => p.id));
+    const solIds = new Set<string>(sols.map(s => s.id));
+
+    const nextProblemas = problemas.filter(p => !probIds.has(p.id));
+    const nextPremissas = premissas.filter(p => !premIds.has(p.id));
+    const nextSolucoes = solucoes.filter(s => !solIds.has(s.id));
+    setProblemas(nextProblemas);
+    setPremissas(nextPremissas);
+    setSolucoes(nextSolucoes);
     try {
-      localStorage.setItem('local_problemas', '[]');
-      localStorage.setItem('user_cleared_problemas', 'true');
+      localStorage.setItem('local_problemas', JSON.stringify(nextProblemas));
+      localStorage.setItem('local_premissas', JSON.stringify(nextPremissas));
+      localStorage.setItem('local_solucoes', JSON.stringify(nextSolucoes));
     } catch {}
 
     setIsModalOpen(false);
     setModalType(null);
     setModalData(null);
     playSuccessSound();
-    showToast("Todos os problemas foram excluídos com sucesso!", "success");
+    showToast(`Excluídos ${probs.length} problema(s), ${prems.length} pergunta(s) e ${sols.length} solução(ões) de ${selectedTipoEmpresaFilter} / ${selectedAreaFilter}.`, "success");
 
     if (user) {
-      for (const id of idsToDelete) {
-        deleteDoc(doc(db, 'problemas', id)).catch(() => {});
+      // Exclui somente os documentos selecionados (por id), nunca a coleção inteira.
+      const refs = [
+        ...Array.from(probIds).map(id => doc(db, 'problemas', id)),
+        ...Array.from(premIds).map(id => doc(db, 'premissas', id)),
+        ...Array.from(solIds).map(id => doc(db, 'solucoes', id)),
+      ];
+      try {
+        for (let i = 0; i < refs.length; i += 400) {
+          const batch = writeBatch(db);
+          refs.slice(i, i + 400).forEach(r => batch.delete(r));
+          await batch.commit();
+        }
+      } catch (e) {
+        console.error("Erro ao excluir itens selecionados da biblioteca na nuvem:", e);
+        // Algum item pode não existir mais na nuvem (id local); tenta um a um.
+        for (const r of refs) await deleteDoc(r).catch(() => {});
       }
-      await safeDeleteDocs('problemas', user.uid);
     }
   };
 
@@ -13718,7 +13724,7 @@ export default function App() {
           console.warn("Direct delete of solucao by id failed:", e);
         }
         try {
-          const snap = await getDocs(collection(db, 'solucoes'));
+          const snap = await getDocs(query(collection(db, 'solucoes'), ownerFilter()));
           for (const d of snap.docs) {
             const data = d.data();
             const matchesOwner = !data.ownerId || data.ownerId === 'local' || data.ownerId === user.uid || isAdmin;
@@ -13861,28 +13867,28 @@ export default function App() {
 
     (async () => {
       try {
-        const areaSnap = await getDocs(collection(db, 'areas'));
+        const areaSnap = await getDocs(query(collection(db, 'areas'), ownerFilter()));
         for (const d of areaSnap.docs) {
           if (normalizeAndFormatArea(d.data().nome).toLowerCase() === normTarget) {
             await deleteDoc(d.ref);
           }
         }
 
-        const probSnap = await getDocs(collection(db, 'problemas'));
+        const probSnap = await getDocs(query(collection(db, 'problemas'), ownerFilter()));
         for (const d of probSnap.docs) {
           if (normalizeAndFormatArea(d.data().area).toLowerCase() === normTarget) {
             await deleteDoc(d.ref);
           }
         }
 
-        const solSnap = await getDocs(collection(db, 'solucoes'));
+        const solSnap = await getDocs(query(collection(db, 'solucoes'), ownerFilter()));
         for (const d of solSnap.docs) {
           if (normalizeAndFormatArea(d.data().area).toLowerCase() === normTarget) {
             await deleteDoc(d.ref);
           }
         }
 
-        const premSnap = await getDocs(collection(db, 'premissas'));
+        const premSnap = await getDocs(query(collection(db, 'premissas'), ownerFilter()));
         for (const d of premSnap.docs) {
           const pData = d.data();
           if (
@@ -13936,7 +13942,7 @@ export default function App() {
 
     (async () => {
       try {
-        const areaSnap = await getDocs(collection(db, 'areas'));
+        const areaSnap = await getDocs(query(collection(db, 'areas'), ownerFilter()));
         let foundInDb = false;
         for (const d of areaSnap.docs) {
           if (normalizeAndFormatArea(d.data().nome).toLowerCase() === normOld) {
@@ -13948,21 +13954,21 @@ export default function App() {
           await addDoc(collection(db, 'areas'), { nome: formattedNew, createdAt: new Date().toISOString() });
         }
 
-        const probSnap = await getDocs(collection(db, 'problemas'));
+        const probSnap = await getDocs(query(collection(db, 'problemas'), ownerFilter()));
         for (const d of probSnap.docs) {
           if (normalizeAndFormatArea(d.data().area).toLowerCase() === normOld) {
             await updateDoc(d.ref, { area: formattedNew });
           }
         }
 
-        const solSnap = await getDocs(collection(db, 'solucoes'));
+        const solSnap = await getDocs(query(collection(db, 'solucoes'), ownerFilter()));
         for (const d of solSnap.docs) {
           if (normalizeAndFormatArea(d.data().area).toLowerCase() === normOld) {
             await updateDoc(d.ref, { area: formattedNew });
           }
         }
 
-        const resSnap = await getDocs(collection(db, 'respostas'));
+        const resSnap = await getDocs(query(collection(db, 'respostas'), ownerFilter()));
         for (const d of resSnap.docs) {
           if (d.data().area && normalizeAndFormatArea(d.data().area).toLowerCase() === normOld) {
             await updateDoc(d.ref, { area: formattedNew });
@@ -14045,7 +14051,7 @@ export default function App() {
 
     (async () => {
       try {
-        const segSnap = await getDocs(collection(db, 'segmentos'));
+        const segSnap = await getDocs(query(collection(db, 'segmentos'), ownerFilter()));
         for (const d of segSnap.docs) {
           if (d.data().nome && d.data().nome.trim().toLowerCase() === normTarget) {
             await deleteDoc(d.ref);
@@ -14078,7 +14084,7 @@ export default function App() {
 
     (async () => {
       try {
-        const segSnap = await getDocs(collection(db, 'segmentos'));
+        const segSnap = await getDocs(query(collection(db, 'segmentos'), ownerFilter()));
         let foundInDb = false;
         for (const d of segSnap.docs) {
           if (d.data().nome && d.data().nome.trim().toLowerCase() === normOld) {
@@ -14143,7 +14149,7 @@ export default function App() {
     if (user) {
       (async () => {
         try {
-          const q = query(collection(db, 'tarefas_plano'), where('diagnosticoId', '==', diagId));
+          const q = query(collection(db, 'tarefas_plano'), ownerFilter(), where('diagnosticoId', '==', diagId));
           const snap = await getDocs(q);
           const batch = writeBatch(db);
           snap.docs.forEach(d => batch.delete(d.ref));
@@ -14212,11 +14218,11 @@ export default function App() {
 
             // Delete child docs in batch
             const [snapRes, snapTasks1, snapTasks2, snapAgenda, snapMat] = await Promise.all([
-              getDocs(query(collection(db, 'respostas'), where('diagnosticoId', '==', dupId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'tarefas_plano'), where('diagnosticoId', '==', dupId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'tarefas_plano'), where('projetoId', '==', dupId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'agenda_eventos'), where('diagnosticoId', '==', dupId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'maturidade_avaliacoes'), where('diagnosticoId', '==', dupId))).catch(() => ({ docs: [] as any[] }))
+              getDocs(query(collection(db, 'respostas'), ownerFilter(), where('diagnosticoId', '==', dupId))).catch(() => ({ docs: [] as any[] })),
+              getDocs(query(collection(db, 'tarefas_plano'), ownerFilter(), where('diagnosticoId', '==', dupId))).catch(() => ({ docs: [] as any[] })),
+              getDocs(query(collection(db, 'tarefas_plano'), ownerFilter(), where('projetoId', '==', dupId))).catch(() => ({ docs: [] as any[] })),
+              getDocs(query(collection(db, 'agenda_eventos'), ownerFilter(), where('diagnosticoId', '==', dupId))).catch(() => ({ docs: [] as any[] })),
+              getDocs(query(collection(db, 'maturidade_avaliacoes'), ownerFilter(), where('diagnosticoId', '==', dupId))).catch(() => ({ docs: [] as any[] }))
             ]);
 
             const allDocs = [...snapRes.docs, ...snapTasks1.docs, ...snapTasks2.docs, ...snapAgenda.docs, ...snapMat.docs];
@@ -14304,11 +14310,11 @@ export default function App() {
 
             // Fetch and delete dependent documents across collections in parallel
             const [snapRes, snapTasks1, snapTasks2, snapAgenda, snapMat] = await Promise.all([
-              getDocs(query(collection(db, 'respostas'), where('diagnosticoId', '==', diagId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'tarefas_plano'), where('diagnosticoId', '==', diagId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'tarefas_plano'), where('projetoId', '==', diagId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'agenda_eventos'), where('diagnosticoId', '==', diagId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'maturidade_avaliacoes'), where('diagnosticoId', '==', diagId))).catch(() => ({ docs: [] as any[] }))
+              getDocs(query(collection(db, 'respostas'), ownerFilter(), where('diagnosticoId', '==', diagId))).catch(() => ({ docs: [] as any[] })),
+              getDocs(query(collection(db, 'tarefas_plano'), ownerFilter(), where('diagnosticoId', '==', diagId))).catch(() => ({ docs: [] as any[] })),
+              getDocs(query(collection(db, 'tarefas_plano'), ownerFilter(), where('projetoId', '==', diagId))).catch(() => ({ docs: [] as any[] })),
+              getDocs(query(collection(db, 'agenda_eventos'), ownerFilter(), where('diagnosticoId', '==', diagId))).catch(() => ({ docs: [] as any[] })),
+              getDocs(query(collection(db, 'maturidade_avaliacoes'), ownerFilter(), where('diagnosticoId', '==', diagId))).catch(() => ({ docs: [] as any[] }))
             ]);
 
             const allDocsToDelete = [
@@ -14389,7 +14395,7 @@ export default function App() {
           try {
             // Delete all respostas of the associated diagnostics
             for (const dId of diagIds) {
-              const qRes = query(collection(db, 'respostas'), where('diagnosticoId', '==', dId));
+              const qRes = query(collection(db, 'respostas'), ownerFilter(), where('diagnosticoId', '==', dId));
               const snapRes = await getDocs(qRes);
               for (let i = 0; i < snapRes.docs.length; i += 400) {
                 const batch = writeBatch(db);
@@ -14399,7 +14405,7 @@ export default function App() {
             }
 
             // Delete all tarefas_plano for this empresa
-            const qTasks = query(collection(db, 'tarefas_plano'), where('empresaId', '==', empresaId));
+            const qTasks = query(collection(db, 'tarefas_plano'), ownerFilter(), where('empresaId', '==', empresaId));
             const snapTasks = await getDocs(qTasks);
             for (let i = 0; i < snapTasks.docs.length; i += 400) {
               const batch = writeBatch(db);
@@ -14409,7 +14415,7 @@ export default function App() {
 
             // Delete all agenda_eventos for this empresa
             try {
-              const qAgenda = query(collection(db, 'agenda_eventos'), where('empresaId', '==', empresaId));
+              const qAgenda = query(collection(db, 'agenda_eventos'), ownerFilter(), where('empresaId', '==', empresaId));
               const snapAgenda = await getDocs(qAgenda);
               for (let i = 0; i < snapAgenda.docs.length; i += 400) {
                 const batch = writeBatch(db);
@@ -14420,7 +14426,7 @@ export default function App() {
 
             // Delete maturidade_avaliacoes for this empresa
             try {
-              const qMat = query(collection(db, 'maturidade_avaliacoes'), where('empresaId', '==', empresaId));
+              const qMat = query(collection(db, 'maturidade_avaliacoes'), ownerFilter(), where('empresaId', '==', empresaId));
               const snapMat = await getDocs(qMat);
               for (let i = 0; i < snapMat.docs.length; i += 400) {
                 const batch = writeBatch(db);
@@ -14431,7 +14437,7 @@ export default function App() {
 
             // Delete disc_avaliacoes for this empresa
             try {
-              const qDisc = query(collection(db, 'disc_avaliacoes'), where('empresaId', '==', empresaId));
+              const qDisc = query(collection(db, 'disc_avaliacoes'), ownerFilter(), where('empresaId', '==', empresaId));
               const snapDisc = await getDocs(qDisc);
               for (let i = 0; i < snapDisc.docs.length; i += 400) {
                 const batch = writeBatch(db);
@@ -14441,7 +14447,7 @@ export default function App() {
             } catch (e) {}
 
             // Delete all diagnosticos for this empresa
-            const qDiags = query(collection(db, 'diagnosticos'), where('empresaId', '==', empresaId));
+            const qDiags = query(collection(db, 'diagnosticos'), ownerFilter(), where('empresaId', '==', empresaId));
             const snapDiags = await getDocs(qDiags);
             for (let i = 0; i < snapDiags.docs.length; i += 400) {
               const batch = writeBatch(db);
@@ -14510,7 +14516,7 @@ export default function App() {
       }
       if (sourceAnswers.length === 0 && user) {
         try {
-          const qSnap = await getDocs(query(collection(db, 'respostas'), where('diagnosticoId', '==', sourceDiagId)));
+          const qSnap = await getDocs(query(collection(db, 'respostas'), ownerFilter(), where('diagnosticoId', '==', sourceDiagId)));
           sourceAnswers = qSnap.docs.map(d => ({ id: d.id, ...d.data() } as Resposta));
         } catch (e) {
           console.warn("Could not query source answers from cloud:", e);
@@ -14686,7 +14692,7 @@ export default function App() {
     setGeneratingPlan(true);
     try {
       // 1. Fetch answers 'respostas' related to this diagnosis
-      const q = query(collection(db, 'respostas'), where('diagnosticoId', '==', selectedDiagnostico.id));
+      const q = query(collection(db, 'respostas'), ownerFilter(), where('diagnosticoId', '==', selectedDiagnostico.id));
       const snap = await getDocs(q);
       const allRespostas = snap.docs.map(d => d.data());
       
@@ -14865,7 +14871,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       const adjustedActivities = adjustActivitiesMax4Hours(sourceActivities, totalCargaHoraria);
 
       // 3. Clear existing tasks for current diagnostic
-      const currentTasksQ = query(collection(db, 'tarefas_plano'), where('diagnosticoId', '==', selectedDiagnostico.id));
+      const currentTasksQ = query(collection(db, 'tarefas_plano'), ownerFilter(), where('diagnosticoId', '==', selectedDiagnostico.id));
       const currentTasksSnap = await getDocs(currentTasksQ);
       const ops: { type: 'set' | 'update' | 'delete', ref: any, data?: any }[] = [];
       
@@ -16585,10 +16591,20 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               )}
               {libraryTab === 'problemas' ? (
                 <>
-                  <Button variant="outline" className="text-rose-600 border-rose-100 hover:bg-rose-50" onClick={() => {
-                    setModalType('deleteAllProblemas');
-                    setIsModalOpen(true);
-                  }}>
+                  <Button
+                    variant="outline"
+                    className="text-rose-600 border-rose-100 hover:bg-rose-50"
+                    title="Exclui os problemas, perguntas e soluções do Tipo de Empresa e da Área selecionados nos filtros"
+                    onClick={() => {
+                      if (!selectedAreaFilter || !selectedTipoEmpresaFilter) {
+                        showToast("Selecione o Tipo de Empresa e a Área nos filtros para excluir somente essa seleção.", "error");
+                        document.getElementById('library-filter-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        return;
+                      }
+                      setModalType('deleteAllProblemas');
+                      setIsModalOpen(true);
+                    }}
+                  >
                     <Trash2 size={18} /> Excluir Problemas
                   </Button>
                   <Button onClick={() => {
@@ -20758,25 +20774,30 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
         </Modal>
       )}
 
-       {isModalOpen && modalType === 'deleteAllProblemas' && (
+       {isModalOpen && modalType === 'deleteAllProblemas' && (() => {
+        const { probs, prems, sols } = getLibrarySelectionToDelete();
+        return (
         <Modal 
-          title="Excluir Todos os Problemas" 
+          title="Excluir Problemas da Seleção" 
           onClose={() => setIsModalOpen(false)}
           onConfirm={deleteAllProblemas}
-          confirmText="Excluir Tudo"
+          confirmText="Excluir Seleção"
           variant="danger"
         >
           <div className="space-y-3">
             <p className="text-slate-700 font-medium">
-              Tem certeza que deseja excluir <span className="font-bold text-rose-600">TODOS</span> os problemas cadastrados?
+              Excluir os itens de <span className="font-bold text-rose-600">{selectedTipoEmpresaFilter}</span> na área <span className="font-bold text-rose-600">{selectedAreaFilter}</span>{selectedTagFilter ? <> com a tag <span className="font-bold text-rose-600">{selectedTagFilter}</span></> : null}?
             </p>
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 space-y-1">
-              <p className="font-semibold text-slate-800">• Os problemas da biblioteca serão removidos.</p>
-              <p className="font-semibold text-emerald-700">• Suas Áreas e Tipos de Negócio cadastrados serão preservados intactos.</p>
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 space-y-1">
+              <p className="font-bold">• {probs.length} problema(s)</p>
+              <p className="font-bold">• {prems.length} pergunta(s)</p>
+              <p className="font-bold">• {sols.length} solução(ões)</p>
+              <p className="font-medium text-slate-700 mt-2">• Itens de outros tipos e áreas, suas Áreas e Tipos de Negócio são preservados.</p>
             </div>
           </div>
         </Modal>
-      )}
+        );
+      })()}
 
       {isModalOpen && modalType === 'deleteAllPremissas' && (
         <Modal 
@@ -21834,10 +21855,9 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
         isOpen={isGeminiTutorialModalOpen}
         onClose={() => setIsGeminiTutorialModalOpen(false)}
         currentKey={customGeminiKey}
-        systemDefaultKey={HARDCODED_DEFAULT_GEMINI_KEY}
         onKeySaved={(k) => {
           setCustomGeminiKey(k);
-          showToast('Chave da API do Gemini configurada com sucesso!', 'success');
+          showToast(k ? 'Chave da API do Gemini configurada com sucesso!' : 'Usando a chave do sistema (servidor).', 'success');
         }}
       />
 

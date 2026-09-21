@@ -27,7 +27,7 @@ import {
   deleteDoc, 
   doc, 
   orderBy 
-} from 'firebase/firestore';
+} from '../lib/firestoreOwned';
 import { db } from '../firebase';
 import { Button } from './Button';
 
