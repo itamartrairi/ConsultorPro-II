@@ -2,9 +2,19 @@
   command = "npm run build"
   publish = "dist"
 
+# A varredura de segredos do Netlify fica LIGADA para barrar chaves no código.
+# A chave web do Firebase (firebase-applet-config.json) é pública por natureza e fica liberada.
 [build.environment]
-  SECRETS_SCAN_SMART_DETECTION_ENABLED = "false"
-  SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIzaSyBQlA65FOI8FwnOUslKpUpo7iUw7iyfhNY"
+  SECRETS_SCAN_SMART_DETECTION_OMIT_VALUES = "AIzaSyDtS66jOXnUEa4_bA__dfB6S8aGUdpSGDU,AIzaSyBQlA65FOI8FwnOUslKpUpo7iUw7iyfhNY"
+
+# Netlify Functions (proxy do Gemini e webhook da Kiwify). As rotas /api/* são
+# definidas em cada função (export const config = { path }) e têm prioridade sobre
+# o redirecionamento da SPA abaixo.
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  external_node_modules = ["firebase-admin", "@google/genai"]
+  included_files = ["firebase-applet-config.json"]
 
 [[redirects]]
   from = "/*"
