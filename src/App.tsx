@@ -569,6 +569,9 @@ export function pickLicenseFields(item: any): Record<string, any> {
   return out;
 }
 
+import { toJsDate, computeLicenseDaysLeft } from './lib/licenseDays';
+export { toJsDate, computeLicenseDaysLeft };
+
 export function extractItemTimestamp(item: any): number {
   if (!item) return 0;
   
@@ -9015,33 +9018,15 @@ const LicenseManagementView = ({
   const formatItemDate = (dateVal: any) => {
     if (!dateVal) return null;
     try {
-      const d = dateVal.toDate ? dateVal.toDate() : new Date(dateVal);
-      if (isNaN(d.getTime())) return null;
+      const d = toJsDate(dateVal);
+      if (!d) return null;
       return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
     } catch {
       return null;
     }
   };
 
-  const calculateDaysLeft = (emp: EmpresaCredenciada) => {
-    const plano = emp.tipoPlano || 'Teste';
-    if (plano === 'Definitiva') {
-      return 99999;
-    }
-    if (emp.validadeLicenca) {
-      const validadeDate = emp.validadeLicenca.toDate ? emp.validadeLicenca.toDate() : new Date(emp.validadeLicenca);
-      const diffTime = validadeDate.getTime() - new Date().getTime();
-      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    }
-    const limitDays = emp.diasTeste || (plano === 'Mensal' ? 30 : plano === 'Anual' ? 365 : 30);
-    if (emp.dataCadastro) {
-      const cadastroDate = emp.dataCadastro.toDate ? emp.dataCadastro.toDate() : new Date(emp.dataCadastro);
-      const diffTime = new Date().getTime() - cadastroDate.getTime();
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      return limitDays - diffDays;
-    }
-    return limitDays;
-  };
+  const calculateDaysLeft = (emp: EmpresaCredenciada) => computeLicenseDaysLeft(emp);
 
   const handleAddDays = async (emp: EmpresaCredenciada, daysToAdd: number) => {
     const currentLimit = emp.diasTeste || (emp.tipoPlano === 'Mensal' ? 30 : emp.tipoPlano === 'Anual' ? 365 : 30);
@@ -9184,7 +9169,7 @@ const LicenseManagementView = ({
                 const daysLeft = calculateDaysLeft(emp);
                 const isExpired = !isDefinitive && daysLeft <= 0;
                 const isExpiringSoon = !isDefinitive && daysLeft > 0 && daysLeft <= 5;
-                const totalLimitDays = emp.diasTeste || (emp.tipoPlano === 'Mensal' ? 30 : emp.tipoPlano === 'Anual' ? 365 : 30);
+                const totalLimitDays = (Number(emp.diasTeste) > 0 ? Number(emp.diasTeste) : 0) || (emp.tipoPlano === 'Mensal' ? 30 : emp.tipoPlano === 'Anual' ? 365 : 30);
                 const cadastroFormatted = formatItemDate(emp.dataCadastro);
                 const loginFormatted = formatItemDate(emp.ultimoLogin);
                 const isCurrentUser = currentUser?.uid === emp.ownerId;
@@ -17506,34 +17491,9 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       return { expired: false, daysLeft: 99999, plan: 'Definitiva' };
     }
 
-    // 1. If an explicit license expiration date is set, check against it
-    if (myCredenciada.validadeLicenca) {
-      const validadeDate = myCredenciada.validadeLicenca.toDate ? myCredenciada.validadeLicenca.toDate() : new Date(myCredenciada.validadeLicenca);
-      const diffTime = validadeDate.getTime() - new Date().getTime();
-      const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return { 
-        expired: daysLeft <= 0, 
-        daysLeft: Math.max(0, daysLeft), 
-        plan: plano 
-      };
-    }
-
-    // 2. Otherwise calculate based on configured test days or standard plan limits
-    let limitDays = myCredenciada.diasTeste || (plano === 'Mensal' ? 30 : plano === 'Anual' ? 365 : 30);
-    
-    if (myCredenciada.dataCadastro) {
-      const cadastroDate = myCredenciada.dataCadastro.toDate ? myCredenciada.dataCadastro.toDate() : new Date(myCredenciada.dataCadastro);
-      const diffTime = new Date().getTime() - cadastroDate.getTime();
-      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-      
-      const daysLeft = limitDays - diffDays;
-      return { 
-        expired: diffDays >= limitDays, 
-        daysLeft, 
-        plan: plano 
-      };
-    }
-    return { expired: false, daysLeft: 99999, plan: plano };
+    // Dias restantes calculados de forma robusta (nunca NaN — antes um NaN fazia o teste nunca vencer).
+    const daysLeft = computeLicenseDaysLeft(myCredenciada);
+    return { expired: daysLeft <= 0, daysLeft: Math.max(0, daysLeft), plan: plano };
   };
 
   const subStatus = checkSubscriptionExpiration();
@@ -17888,21 +17848,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               (() => {
                 const expiringSoon = empresasCredenciadas.filter(emp => {
                   if (emp.tipoPlano === 'Definitiva') return false;
-                  let limitDays = emp.diasTeste || (emp.tipoPlano === 'Mensal' ? 30 : emp.tipoPlano === 'Anual' ? 365 : 30);
-                  
-                  if (emp.validadeLicenca) {
-                    const validadeDate = emp.validadeLicenca.toDate ? emp.validadeLicenca.toDate() : new Date(emp.validadeLicenca);
-                    const diffDays = Math.ceil((validadeDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                    return diffDays <= 3;
-                  }
-
-                  if (emp.dataCadastro) {
-                    const cadastroDate = emp.dataCadastro.toDate ? emp.dataCadastro.toDate() : new Date(emp.dataCadastro);
-                    const diffDays = Math.floor((new Date().getTime() - cadastroDate.getTime()) / (1000 * 60 * 60 * 24));
-                    const daysLeft = limitDays - diffDays;
-                    return daysLeft <= 3;
-                  }
-                  return false;
+                  return computeLicenseDaysLeft(emp) <= 3;
                 });
 
                 if (expiringSoon.length > 0) {
