@@ -1,5 +1,7 @@
 import type { Request, Response } from 'express';
 import admin from 'firebase-admin';
+import { timingSafeEqual, createHmac } from 'crypto';
+import { getAdminDb } from './firebaseAdmin';
 
 /**
  * ------------------------------------------------------------------------------------
@@ -8,7 +10,7 @@ import admin from 'firebase-admin';
  *
  * Como configurar (uma única vez, no painel da Kiwify):
  *   1. Acesse Apps → Webhooks → Criar Webhook.
- *   2. URL do Webhook:
+ *   2. URL do Webhook (funciona no Netlify e no server.ts):
  *        https://SEU-DOMINIO/api/webhooks/kiwify?token=SEU_TOKEN_SECRETO
  *      (defina SEU_TOKEN_SECRETO livremente e coloque o mesmo valor na variável de
  *       ambiente KIWIFY_WEBHOOK_TOKEN do servidor)
@@ -22,7 +24,8 @@ import admin from 'firebase-admin';
  *      que aparece no log de teste.
  *
  * Variáveis de ambiente necessárias no servidor:
- *   - KIWIFY_WEBHOOK_TOKEN            → o token secreto escolhido acima
+ *   - KIWIFY_WEBHOOK_TOKEN            → o token secreto escolhido acima (OBRIGATÓRIO:
+ *                                       sem ele o webhook recusa todas as chamadas)
  *   - FIREBASE_SERVICE_ACCOUNT_JSON   → o conteúdo JSON de uma Service Account do
  *                                       Firebase (Console → Configurações do Projeto →
  *                                       Contas de Serviço → Gerar nova chave privada),
@@ -38,27 +41,6 @@ import admin from 'firebase-admin';
  * ------------------------------------------------------------------------------------
  */
 
-let adminApp: admin.app.App | null = null;
-
-function getAdminApp(): admin.app.App | null {
-  if (adminApp) return adminApp;
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-  if (!raw) {
-    console.error('[Kiwify Webhook] FIREBASE_SERVICE_ACCOUNT_JSON não configurada — não é possível acessar o Firestore.');
-    return null;
-  }
-  try {
-    const serviceAccount = JSON.parse(raw);
-    adminApp = admin.apps.length
-      ? (admin.app() as admin.app.App)
-      : admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
-    return adminApp;
-  } catch (e) {
-    console.error('[Kiwify Webhook] Falha ao inicializar o Firebase Admin:', e);
-    return null;
-  }
-}
-
 // Tenta extrair um valor de várias possíveis localizações no payload, já que o
 // formato exato pode variar um pouco entre contas/versões da Kiwify.
 function pick(obj: any, paths: string[]): any {
@@ -69,20 +51,34 @@ function pick(obj: any, paths: string[]): any {
   return undefined;
 }
 
-function normalizeApprovedStatus(body: any): boolean {
-  const status = String(
-    pick(body, ['order_status', 'webhook_event_type', 'Subscription.status', 'status', 'event']) || ''
+function eventStatus(body: any): string {
+  return String(
+    pick(body, ['webhook_event_type', 'order_status', 'Subscription.status', 'status', 'event']) || ''
   ).toLowerCase();
-  return ['paid', 'approved', 'compra_aprovada', 'aprovado', 'active'].some((s) => status.includes(s));
 }
 
+// Verificado ANTES da aprovação: um evento de cancelamento/reembolso pode vir com
+// order_status "paid" do pedido original, e não pode reativar o acesso.
 function normalizeCanceledStatus(body: any): boolean {
-  const status = String(
-    pick(body, ['order_status', 'webhook_event_type', 'Subscription.status', 'status', 'event']) || ''
-  ).toLowerCase();
-  return ['refunded', 'refund', 'chargeback', 'canceled', 'cancelled', 'reembolsad', 'atrasad', 'late'].some((s) =>
+  const status = eventStatus(body);
+  return ['refunded', 'refund', 'chargeback', 'canceled', 'cancelled', 'reembolsad', 'atrasad', 'late', 'inactive'].some((s) =>
     status.includes(s)
   );
+}
+
+function normalizeApprovedStatus(body: any): boolean {
+  const status = eventStatus(body);
+  // Compara por palavra inteira para que "inactive" não seja lido como "active".
+  // Ex.: "order_approved" → ["order", "approved"]; "compra_aprovada" → ["compra", "aprovada"].
+  const words = status.split(/[^a-z]+/).filter(Boolean);
+  return words.some((w) => ['paid', 'approved', 'aprovada', 'aprovado', 'active', 'renewed'].includes(w));
+}
+
+function tokenMatches(provided: unknown, expected: string): boolean {
+  if (typeof provided !== 'string') return false;
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 function resolvePlano(body: any): 'Mensal' | 'Anual' {
@@ -94,16 +90,45 @@ function resolvePlano(body: any): 'Mensal' | 'Anual' {
   return 'Mensal';
 }
 
-export async function handleKiwifyWebhook(req: Request, res: Response) {
+export interface WebhookResult {
+  status: number;
+  body: any;
+}
+
+/**
+ * Núcleo do webhook, independente do servidor (Express ou Netlify Function).
+ * Autenticação: ?token=KIWIFY_WEBHOOK_TOKEN na URL, ou assinatura HMAC-SHA1 do corpo
+ * (?signature=...) calculada com o mesmo token, quando o corpo bruto estiver disponível.
+ */
+export async function processKiwifyWebhook(input: {
+  token?: unknown;
+  signature?: unknown;
+  rawBody?: string;
+  body: any;
+}): Promise<WebhookResult> {
+  const res = {
+    _status: 200,
+    status(code: number) { this._status = code; return this; },
+    json(payload: any): WebhookResult { return { status: this._status, body: payload }; },
+  };
   try {
     const expectedToken = process.env.KIWIFY_WEBHOOK_TOKEN;
-    const providedToken = req.query.token;
-    if (expectedToken && providedToken !== expectedToken) {
+    const providedToken = input.token;
+    if (!expectedToken) {
+      // Sem token configurado, qualquer pessoa poderia liberar licenças chamando esta URL.
+      console.error('[Kiwify Webhook] KIWIFY_WEBHOOK_TOKEN não configurada — webhook recusado.');
+      return res.status(503).json({ ok: false, error: 'Webhook não configurado no servidor.' });
+    }
+    const signatureOk =
+      typeof input.signature === 'string' &&
+      typeof input.rawBody === 'string' &&
+      tokenMatches(input.signature, createHmac('sha1', expectedToken).update(input.rawBody).digest('hex'));
+    if (!signatureOk && !tokenMatches(providedToken, expectedToken)) {
       console.warn('[Kiwify Webhook] Token inválido recebido.');
       return res.status(401).json({ ok: false, error: 'Token inválido.' });
     }
 
-    const body = req.body || {};
+    const body = input.body || {};
     const email = String(pick(body, ['Customer.email', 'customer.email', 'email']) || '').trim().toLowerCase();
     const nome = pick(body, ['Customer.full_name', 'customer.full_name', 'full_name']);
     const orderId = pick(body, ['order_id', 'id']);
@@ -113,11 +138,10 @@ export async function handleKiwifyWebhook(req: Request, res: Response) {
       return res.status(200).json({ ok: true, ignored: true, reason: 'Sem e-mail do comprador no payload.' });
     }
 
-    const app = getAdminApp();
-    if (!app) {
+    const db = getAdminDb();
+    if (!db) {
       return res.status(500).json({ ok: false, error: 'Firebase Admin não configurado no servidor.' });
     }
-    const db = app.firestore();
 
     // Busca o cadastro do consultor pelo e-mail (mesmo e-mail do login no sistema)
     const snap = await db.collection('empresas_credenciadas').where('email', '==', email).limit(1).get();
@@ -129,6 +153,17 @@ export async function handleKiwifyWebhook(req: Request, res: Response) {
 
     const docRef = snap.docs[0].ref;
 
+    if (normalizeCanceledStatus(body)) {
+      await docRef.update({
+        status: 'Bloqueada',
+        kiwifyOrderId: orderId || null,
+        dataCancelamentoKiwify: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: new Date().toISOString(),
+      });
+      console.log(`[Kiwify Webhook] Acesso bloqueado para ${email} (evento de cancelamento/reembolso).`);
+      return res.status(200).json({ ok: true, matched: true, blocked: true });
+    }
+
     if (normalizeApprovedStatus(body)) {
       const plano = resolvePlano(body);
       await docRef.update({
@@ -138,19 +173,10 @@ export async function handleKiwifyWebhook(req: Request, res: Response) {
         kiwifyOrderId: orderId || null,
         kiwifyNomeComprador: nome || null,
         dataAtivacaoKiwify: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: new Date().toISOString(),
       });
       console.log(`[Kiwify Webhook] Plano ${plano} ativado para ${email} (pedido ${orderId}).`);
       return res.status(200).json({ ok: true, matched: true, plano });
-    }
-
-    if (normalizeCanceledStatus(body)) {
-      await docRef.update({
-        status: 'Bloqueada',
-        kiwifyOrderId: orderId || null,
-        dataCancelamentoKiwify: admin.firestore.FieldValue.serverTimestamp(),
-      });
-      console.log(`[Kiwify Webhook] Acesso bloqueado para ${email} (evento de cancelamento/reembolso).`);
-      return res.status(200).json({ ok: true, matched: true, blocked: true });
     }
 
     // Outros eventos (boleto gerado, pix gerado, carrinho abandonado, etc.) são apenas confirmados.
@@ -159,4 +185,14 @@ export async function handleKiwifyWebhook(req: Request, res: Response) {
     console.error('[Kiwify Webhook] Erro inesperado:', error);
     return res.status(500).json({ ok: false, error: error?.message || 'Erro inesperado.' });
   }
+}
+
+// Adaptador Express (server.ts).
+export async function handleKiwifyWebhook(req: Request, res: Response) {
+  const result = await processKiwifyWebhook({
+    token: req.query.token,
+    signature: req.query.signature,
+    body: req.body,
+  });
+  return res.status(result.status).json(result.body);
 }
