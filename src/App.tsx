@@ -11175,17 +11175,29 @@ export default function App() {
   };
 
   const uploadBackupToCloud = async (data: any, uid: string) => {
+    const failed: string[] = [];
     const syncCollection = async (items: any[], colName: string) => {
       if (!items || !Array.isArray(items) || items.length === 0) return;
       for (let i = 0; i < items.length; i += 300) {
-        const batch = writeBatch(db);
         const chunk = items.slice(i, i + 300);
-        for (const item of chunk) {
-          const itemId = item.id || doc(collection(db, colName)).id;
-          const ref = doc(db, colName, itemId);
-          batch.set(ref, sanitizeForFirestore({ ...item, ownerId: uid }), { merge: true });
+        const build = (list: any[]) => {
+          const batch = writeBatch(db);
+          for (const item of list) {
+            const itemId = item.id || doc(collection(db, colName)).id;
+            const ref = doc(db, colName, itemId);
+            batch.set(ref, sanitizeForFirestore({ ...item, ownerId: uid }), { merge: true });
+          }
+          return batch;
+        };
+        try {
+          await build(chunk).commit();
+        } catch (e) {
+          // Um item recusado derruba o lote inteiro: tenta item a item para salvar o restante.
+          console.warn(`[Backup] Lote de ${colName} recusado, enviando item a item:`, e);
+          for (const item of chunk) {
+            try { await build([item]).commit(); } catch { failed.push(colName); }
+          }
         }
-        await batch.commit();
       }
     };
 
@@ -11202,6 +11214,9 @@ export default function App() {
     if (data.agendaEventos || data.agenda_eventos) await syncCollection(data.agendaEventos || data.agenda_eventos, 'agenda_eventos');
     if (data.discAvaliacoes || data.disc_avaliacoes) await syncCollection(data.discAvaliacoes || data.disc_avaliacoes, 'disc_avaliacoes');
     if (data.maturidadeAvaliacoes || data.maturidade_avaliacoes) await syncCollection(data.maturidadeAvaliacoes || data.maturidade_avaliacoes, 'maturidade_avaliacoes');
+    if (failed.length > 0) {
+      console.warn('[Backup] Itens não enviados por coleção:', failed.reduce((acc: Record<string, number>, c) => ({ ...acc, [c]: (acc[c] || 0) + 1 }), {}));
+    }
   };
 
   const handleExportLocalBackup = async () => {
