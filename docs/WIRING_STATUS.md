@@ -5,31 +5,47 @@
 - [x] Módulos Fase 1 (`src/types`, `src/lib/...`)
 - [x] Auth: `useAuth`, `LoginView`
 - [x] `main.tsx` com `<AuthProvider>`
-- [x] Script `scripts/wire-phase2-app.mjs`
+- [x] `scripts/wire-phase2-app.mjs`
+- [x] `scripts/remove-phase1-duplicates.mjs`
 - [x] Testes + `package.json`
 
-## Você precisa rodar localmente (App.tsx ~1MB)
-
-O `App.tsx` é grande demais para alguns pushes automáticos. Aplique o wiring com:
+## Aplicar localmente (ordem)
 
 ```bash
 git fetch origin
 git checkout refactor/phase1-utils
+
+# 1) Wiring Auth + imports
 node scripts/wire-phase2-app.mjs
+
+# 2) Remover duplicatas e usar módulos Fase 1
+node scripts/remove-phase1-duplicates.mjs
+
 npm test
 npm run lint
 npm run dev
 ```
 
-O script é **idempotente**: pode rodar mais de uma vez.
+Ambos os scripts são **idempotentes**.
 
-### O que o script faz no App.tsx
+### O que o remove-phase1-duplicates faz
 
-1. Imports dos módulos Fase 1 (com alias `_` para não colidir com as funções ainda no arquivo)
-2. `useAuth()` no início de `App()`
-3. Sync de `user` / `loading` com o AuthProvider
-4. Substitui a tela de login inline por `<LoginView />`
+1. Troca imports com alias `_` por imports reais + reexports
+2. Remove do `App.tsx`:
+   - enum `Type`
+   - formatters BR / dates
+   - sanitize, oklch, logo
+   - interfaces de domínio
+   - AREAS, CONSULTORIA_AREAS, TIPOS_EMPRESA, AREAS_ORDER
+   - deduplicateRespostas, extractAndParseJSON, load/save respostas
+3. Reduz ~30–40 KB do App (o restante continua sendo UI/views)
 
-### Próximo micro-passo (Fase 1 completa)
+### Depois
 
-Remover as funções/constantes duplicadas do `App.tsx` e trocar usos para os imports sem alias `_`.
+```bash
+git add src/App.tsx src/main.tsx
+git commit -m "refactor: wire App to Phase1 modules and AuthProvider"
+git push origin refactor/phase1-utils
+```
+
+Abrir PR para `main`.
