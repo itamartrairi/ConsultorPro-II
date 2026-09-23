@@ -1,20 +1,20 @@
 /**
- * Serviço Multi-IA para ConsultorPro-II.
+ * ServiÃ§o Multi-IA para ConsultorPro-II.
  * Suporta Groq Cloud (Llama 3.3 70B Versatile) e Google Gemini (2.5 Flash).
  */
 
 export type AiProvider = 'groq' | 'gemini';
 
-const GROQ_DEFAULT_MODEL = 'llama-3.3-70b-versatile';
+const GROQ_DEFAULT_MODEL = 'llama-3.1-70b-versatile';
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 export function getActiveAiProvider(): AiProvider {
   try {
     const saved = localStorage.getItem('active_ai_provider');
     if (saved === 'gemini' || saved === 'groq') return saved;
-    // Se o usuário tem chave da Groq configurada, prioriza Groq por padrão
+    // Se o usuÃ¡rio tem chave da Groq configurada, prioriza Groq por padrÃ£o
     if (getGroqApiKey()) return 'groq';
-    return 'groq'; // Padrão recomendado
+    return 'groq'; // PadrÃ£o recomendado
   } catch {
     return 'groq';
   }
@@ -45,7 +45,7 @@ export function getGroqApiKey(): string {
       ''
     ).trim();
     if (isValidGroqApiKey(envKey)) return envKey;
-    return stored; // Retorna chave salva mesmo se formato for atípico
+    return stored; // Retorna chave salva mesmo se formato for atÃ­pico
   } catch {
     return '';
   }
@@ -94,10 +94,10 @@ export async function testGroqKey(keyToTest: string): Promise<{ ok: boolean; mes
     return {
       ok: true,
       model: GROQ_DEFAULT_MODEL,
-      message: `Conexão bem-sucedida com Groq (${GROQ_DEFAULT_MODEL})!`
+      message: `ConexÃ£o bem-sucedida com Groq (${GROQ_DEFAULT_MODEL})!`
     };
   } catch (err: any) {
-    return { ok: false, message: `Erro de rede ao conectar à Groq: ${err?.message || String(err)}` };
+    return { ok: false, message: `Erro de rede ao conectar Ã  Groq: ${err?.message || String(err)}` };
   }
 }
 
@@ -111,7 +111,7 @@ export async function callGroqChat(options: UniversalGenerateOptions): Promise<{
   const apiKey = getGroqApiKey();
   if (!apiKey) {
     throw new Error(
-      "Chave da API Groq não configurada.\n\nVocê pode gerar uma chave 100% gratuita sem cartão em: https://console.groq.com/keys e inseri-la nas Configurações do sistema."
+      "Chave da API Groq nÃ£o configurada.\n\nVocÃª pode gerar uma chave 100% gratuita sem cartÃ£o em: https://console.groq.com/keys e inseri-la nas ConfiguraÃ§Ãµes do sistema."
     );
   }
 
@@ -133,8 +133,8 @@ export async function callGroqChat(options: UniversalGenerateOptions): Promise<{
     userPrompt.toLowerCase().includes('em json');
 
   const systemInstructions = isJsonExpected
-    ? "Você é um consultor empresarial sênior do SEBRAE. Quando for solicitado formato JSON, responda ESTRITAMENTE em formato JSON válido, sem texto introdutório e sem blocos de código com crases."
-    : "Você é um consultor empresarial sênior experiente. Forneça respostas executivas, estruturadas e práticas em Português do Brasil.";
+    ? "VocÃª Ã© um consultor empresarial sÃªnior do SEBRAE. Quando for solicitado formato JSON, responda ESTRITAMENTE em formato JSON vÃ¡lido, sem texto introdutÃ³rio e sem blocos de cÃ³digo com crases."
+    : "VocÃª Ã© um consultor empresarial sÃªnior experiente. ForneÃ§a respostas executivas, estruturadas e prÃ¡ticas em PortuguÃªs do Brasil.";
 
   const bodyPayload: any = {
     model: GROQ_DEFAULT_MODEL,
