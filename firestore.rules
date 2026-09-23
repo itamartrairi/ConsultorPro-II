@@ -18,7 +18,7 @@ service cloud.firestore {
     // Admin é definido apenas pelo e-mail verificado do login.
     function isAdmin() {
       return isAuthenticated() &&
-        request.auth.token.email == "itamartrairi@gmail.com" &&
+        request.auth.token.email == "ithamar1307@gmail.com" &&
         request.auth.token.email_verified == true;
     }
 
