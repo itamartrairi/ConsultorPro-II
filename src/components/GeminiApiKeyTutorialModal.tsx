@@ -68,7 +68,7 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
           throw new Error(result.message);
         }
       } else {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${keyToTest}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${keyToTest}`;
         const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

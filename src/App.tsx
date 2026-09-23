@@ -2482,7 +2482,7 @@ const CronogramaView = ({
       }`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.0-flash",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -7636,7 +7636,7 @@ const SettingsView = ({
     setTestingGemini(true);
     setGeminiStatus(null);
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${keyToTest}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${keyToTest}`;
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -7648,8 +7648,8 @@ const SettingsView = ({
       if (!res.ok) {
         throw new Error(data.error?.message || `Erro HTTP ${res.status}`);
       }
-      setGeminiStatus({ ok: true, message: 'Conexão ativa! O modelo gemini-1.5-flash respondeu com sucesso.' });
-      alert('Sucesso! A chave de API do Gemini está conectada e operacional com o modelo gemini-1.5-flash.');
+      setGeminiStatus({ ok: true, message: 'Conexão ativa! O modelo gemini-2.0-flash respondeu com sucesso.' });
+      alert('Sucesso! A chave de API do Gemini está conectada e operacional com o modelo gemini-2.0-flash.');
     } catch (e: any) {
       const err = e?.message || String(e);
       setGeminiStatus({ ok: false, message: 'Falha: ' + err });
@@ -9304,14 +9304,15 @@ export const getAI = () => {
 
         const hasValidGeminiKey = Boolean(savedKey && isValidGeminiApiKey(savedKey));
 
-        // 2. Executar via Groq Cloud (Llama 3.3 70B) se for o provedor ativo ou se a chave for detectada
-        if (activeProvider === 'groq' || groqKey) {
+        // 2. Executar via Groq Cloud (Llama 3.3 70B) se for o provedor ativo ou fallback
+        const useGroq = (activeProvider === 'groq' && groqKey) || (!hasValidGeminiKey && groqKey && activeProvider === 'gemini');
+        if (useGroq) {
           try {
             // Se a chave não estava no armazenamento correto do Groq, temporariamente seta ela no contexto da chamada ou usa localStorage
             if (groqKey && !getGroqApiKey()) {
               localStorage.setItem('custom_groq_api_key', groqKey);
             }
-            const groqRes = await callGroqChat({ contents, config, model: 'llama-3.1-70b-versatile' });
+            const groqRes = await callGroqChat({ contents, config, model: 'llama-3.3-70b-versatile' });
             if (groqRes && groqRes.text) {
               setCachedAI(cacheKey, groqRes.text).catch(() => {});
               return { text: groqRes.text };
@@ -9343,7 +9344,7 @@ export const getAI = () => {
           const response = await fetch(apiUrl("/api/gemini/generate"), {
             method: "POST",
             headers: headers,
-            body: JSON.stringify({ model: model || "gemini-1.5-flash", contents, config })
+            body: JSON.stringify({ model: model || "gemini-2.0-flash", contents, config })
           });
 
           if (response.ok) {
@@ -9372,7 +9373,7 @@ export const getAI = () => {
             // Se falhou no proxy e temos chave da Groq, tenta Groq antes de desistir
             if (groqKey) {
               try {
-                const groqRes = await callGroqChat({ contents, config, model: 'llama-3.1-70b-versatile' });
+                const groqRes = await callGroqChat({ contents, config, model: 'llama-3.3-70b-versatile' });
                 if (groqRes && groqRes.text) {
                   setCachedAI(cacheKey, groqRes.text).catch(() => {});
                   return { text: groqRes.text };
@@ -9391,7 +9392,7 @@ export const getAI = () => {
         if (!finalKey || !isValidGeminiApiKey(finalKey)) {
           // Se não há chave válida do Gemini mas há chave da Groq, tenta Groq
           if (groqKey) {
-            const groqRes = await callGroqChat({ contents, config, model: 'llama-3.1-70b-versatile' });
+            const groqRes = await callGroqChat({ contents, config, model: 'llama-3.3-70b-versatile' });
             if (groqRes && groqRes.text) {
               setCachedAI(cacheKey, groqRes.text).catch(() => {});
               return { text: groqRes.text };
@@ -9404,10 +9405,10 @@ export const getAI = () => {
           throw new Error("Chave de Inteligência Artificial não configurada.\n\nPor favor, insira sua chave gratuita da Groq (Llama 3.3) ou do Google Gemini no menu Configurações.");
         }
 
-        const GEMINI_PRIMARY = "gemini-1.5-flash";
+        const GEMINI_PRIMARY = "gemini-2.0-flash";
         const GEMINI_CHAIN = [
-          "gemini-1.5-flash",
-          "gemini-1.5-flash"
+          "gemini-2.0-flash",
+          "gemini-2.0-flash"
         ];
 
         function normalizeClientModel(m?: string): string {
@@ -9512,7 +9513,7 @@ export const getAI = () => {
         if (groqKey) {
           try {
             console.log("[AI Fallback] Falha no Gemini. Tentando Groq como contingência...");
-            const groqRes = await callGroqChat({ contents, config, model: 'llama-3.1-70b-versatile' });
+            const groqRes = await callGroqChat({ contents, config, model: 'llama-3.3-70b-versatile' });
             if (groqRes && groqRes.text) {
               setCachedAI(cacheKey, groqRes.text).catch(() => {});
               return { text: groqRes.text };
@@ -9564,7 +9565,7 @@ const generateAIFeedback = async (resposta: string, pergunta: string, problema: 
     const ai = getAI();
     if (!ai) return null;
     const response = await ai.models.generateContent({ 
-      model: "gemini-1.5-flash", 
+      model: "gemini-2.0-flash", 
       contents: prompt,
     });
     const result = response.text?.trim() || "";
@@ -9624,7 +9625,7 @@ const generateAIMaturityLevel = async (respostas: Resposta[], scorePercent: numb
     const ai = getAI();
     if (!ai) return null;
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.0-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -9684,7 +9685,7 @@ const generateAISuggestions = async (probNome: string, noResponses: Resposta[], 
     const ai = getAI();
     if (!ai) return null;
     const response = await ai.models.generateContent({ 
-      model: "gemini-1.5-flash",
+      model: "gemini-2.0-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json"
@@ -14143,7 +14144,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       `;
       
       const response = await ai.models.generateContent({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.0-flash",
         contents: prompt,
         config: {
             responseMimeType: "application/json",

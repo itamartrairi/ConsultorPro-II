@@ -12,7 +12,7 @@ export interface CoreResult {
   body: any;
 }
 
-const GEMINI_CHAIN = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+const GEMINI_CHAIN = ['gemini-2.0-flash', 'gemini-1.5-flash'];
 const GEMINI_PRIMARY = GEMINI_CHAIN[0];
 
 export function isValidApiKey(val: unknown): val is string {
