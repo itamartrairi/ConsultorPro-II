@@ -14,7 +14,7 @@
     "electron:dev": "vite build && electron electron/main.cjs",
     "electron:build:win": "vite build && electron-builder --win --config electron-builder.json",
     "electron:build": "vite build && electron-builder --config electron-builder.json",
-    "test": "tsx test/librarySelection.test.ts && tsx test/licenseDays.test.ts"
+    "test": "tsx test/librarySelection.test.ts && tsx test/licenseDays.test.ts && tsx test/formatters.br.test.ts && tsx test/domain.respostas.test.ts"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
