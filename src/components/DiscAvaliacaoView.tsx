@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db, auth } from '../firebase';
 import { readCustomGeminiKey, geminiAuthHeaders, apiUrl } from '../lib/gemini';
-import { getActiveAiProvider, getGroqApiKey, callGroqChat } from '../lib/ai/aiService';
+
 import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc, updateDoc } from '../lib/firestoreOwned';
 import {
   User,
@@ -518,38 +518,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
 
     try {
       let aiText = "";
-      const activeProvider = getActiveAiProvider();
-      let groqKey = getGroqApiKey();
-      let customKey = readCustomGeminiKey();
-
-      // Auto-detect Groq key placed in Gemini field
-      if (customKey && customKey.trim().startsWith('gsk_')) {
-        groqKey = customKey.trim();
-        customKey = ''; // Remove from Gemini flow
-      }
-
-      // 1. Tenta Groq se configurado ou se for o provedor ativo
-      if (activeProvider === 'groq' || groqKey) {
-        try {
-          if (groqKey && !getGroqApiKey()) {
-            localStorage.setItem('custom_groq_api_key', groqKey);
-          }
-          const groqRes = await callGroqChat({ contents: prompt, model: 'llama3-70b-8192' });
-          if (groqRes && groqRes.text) {
-            aiText = groqRes.text;
-          }
-        } catch (gErr: any) {
-          console.warn("[DISC Groq] Falha ao consultar Groq:", gErr?.message);
-          if (!customKey) {
-            throw gErr;
-          }
-        }
-      }
-          }
-        }
-      }
-
-      // 2. Se não obteve resposta com Groq, tenta Gemini (Proxy ou Direto)
+      const customKey = readCustomGeminiKey();
       if (!aiText) {
         const headers: Record<string, string> = { "Content-Type": "application/json", ...(await geminiAuthHeaders()) };
         if (customKey) {

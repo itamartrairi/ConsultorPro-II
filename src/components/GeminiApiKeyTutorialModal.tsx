@@ -15,7 +15,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { Button } from './Button';
-import { testGroqKey } from '../lib/ai/aiService';
+
 
 interface GeminiApiKeyTutorialModalProps {
   isOpen: boolean;
@@ -55,21 +55,9 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
 
     setIsTesting(true);
     setTestResult(null);
-
     try {
-      if (keyToTest.startsWith('gsk_')) {
-        const result = await testGroqKey(keyToTest);
-        if (result.ok) {
-          setTestResult({
-            ok: true,
-            message: '✓ Conexão bem-sucedida com Groq! Sua chave está ativa e pronta para uso.'
-          });
-        } else {
-          throw new Error(result.message);
-        }
-      } else {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${keyToTest}`;
-        const res = await fetch(url, {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${keyToTest}`;
+      const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -86,7 +74,6 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
           ok: true,
           message: '✓ Conexão bem-sucedida! Sua chave está ativa e pronta para uso.'
         });
-      }
     } catch (err: any) {
       setTestResult({
         ok: false,

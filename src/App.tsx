@@ -44,16 +44,7 @@ import { BackupExportModal, type BackupExportStats } from './components/BackupEx
 import { ConnectionStatus } from './components/SettingsView';
 import { GeminiApiKeyTutorialModal } from './components/GeminiApiKeyTutorialModal';
 import { getCachedAI, setCachedAI, generateAICacheKey } from './lib/aiCache';
-import {
-  getActiveAiProvider,
-  setActiveAiProvider,
-  getGroqApiKey,
-  saveGroqApiKey,
-  isValidGroqApiKey,
-  testGroqKey,
-  callGroqChat,
-  type AiProvider
-} from './lib/ai/aiService';
+
 import { 
   Plus, 
   Award,
@@ -7565,54 +7556,7 @@ const SettingsView = ({
   const [testingGemini, setTestingGemini] = React.useState(false);
   const [geminiStatus, setGeminiStatus] = React.useState<{ ok?: boolean; message?: string } | null>(null);
 
-  // Provedor de Inteligência Artificial Ativo (Groq Cloud ou Google Gemini)
-  const [activeProvider, setActiveProviderState] = React.useState<AiProvider>(() => getActiveAiProvider());
-  const [groqApiKeyInput, setGroqApiKeyInput] = React.useState(() => getGroqApiKey());
-  const [isGroqKeyVisible, setIsGroqKeyVisible] = React.useState(false);
-  const [testingGroq, setTestingGroq] = React.useState(false);
-  const [groqStatus, setGroqStatus] = React.useState<{ ok?: boolean; message?: string } | null>(null);
 
-  const handleSelectProvider = (prov: AiProvider) => {
-    setActiveProviderState(prov);
-    setActiveAiProvider(prov);
-  };
-
-  const handleSaveGroqKey = () => {
-    const cleanKey = groqApiKeyInput.trim();
-    saveGroqApiKey(cleanKey);
-    if (!cleanKey) {
-      setGroqStatus(null);
-      alert('Chave da API da Groq removida!');
-      return;
-    }
-    setGroqStatus({ ok: true, message: 'Chave da Groq salva com sucesso no dispositivo!' });
-    alert('Chave Groq salva com sucesso! O modelo Llama 3 70B está pronto para uso.');
-  };
-
-  const handleTestGroqKey = async () => {
-    const keyToTest = groqApiKeyInput.trim() || getGroqApiKey();
-    if (!keyToTest) {
-      alert('Por favor, digite ou cole uma chave da Groq antes de testar (inicia com gsk_...).');
-      return;
-    }
-    setTestingGroq(true);
-    setGroqStatus(null);
-    try {
-      const result = await testGroqKey(keyToTest);
-      setGroqStatus({ ok: result.ok, message: result.message });
-      if (result.ok) {
-        alert('Sucesso! Conexão realizada com a Groq (Llama 3 70B).');
-      } else {
-        alert('Falha ao conectar com a Groq:\n\n' + result.message);
-      }
-    } catch (e: any) {
-      const err = e?.message || String(e);
-      setGroqStatus({ ok: false, message: 'Falha: ' + err });
-      alert('Erro ao testar a chave da Groq:\n\n' + err);
-    } finally {
-      setTestingGroq(false);
-    }
-  };
 
   const handleSaveGeminiKey = () => {
     const cleanKey = geminiApiKeyInput.trim();
@@ -7761,142 +7705,17 @@ const SettingsView = ({
             </h3>
             <div className="flex items-center gap-2 flex-wrap">
               <span className={`text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${
-                activeProvider === 'groq'
-                  ? (groqApiKeyInput.trim() ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800')
-                  : (geminiApiKeyInput.trim() ? 'bg-emerald-100 text-emerald-800' : isSystemKeyActive ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800')
+                geminiApiKeyInput.trim() ? 'bg-emerald-100 text-emerald-800' : isSystemKeyActive ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800'
               }`}>
-                {activeProvider === 'groq'
-                  ? (groqApiKeyInput.trim() ? '✓ Groq (Llama 3) Ativo' : '⚠ Groq Não Configurado')
-                  : (geminiApiKeyInput.trim() ? '✓ Gemini Configurado' : isSystemKeyActive ? '✓ Gemini Sistema Ativo' : '⚠ Gemini Não Configurado')}
+                {geminiApiKeyInput.trim() ? '✓ Gemini Configurado' : isSystemKeyActive ? '✓ Gemini Sistema Ativo' : '⚠ Gemini Não Configurado'}
               </span>
             </div>
           </div>
 
-          <p className="text-xs text-slate-600 mb-4 leading-relaxed">
-            A Inteligência Artificial é utilizada para sugerir planos de ação, diagnósticos empresariais, análises comportamentais DISC e recomendações estratégicas. Escolha o provedor de sua preferência:
+          <p className="text-xs text-slate-600 mb-6 leading-relaxed">
+            A Inteligência Artificial é utilizada para sugerir planos de ação, diagnósticos empresariais, análises comportamentais DISC e recomendações estratégicas através do Google Gemini.
           </p>
-
-          {/* Abas de Seleção de Provedor */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-            <button
-              type="button"
-              onClick={() => handleSelectProvider('groq')}
-              className={`p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
-                activeProvider === 'groq'
-                  ? 'border-indigo-600 bg-indigo-50/80 shadow-sm'
-                  : 'border-slate-200 bg-white hover:border-slate-300'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1.5">
-                <div className="flex items-center gap-2 font-bold text-sm text-slate-800">
-                  <Zap size={16} className={activeProvider === 'groq' ? 'text-indigo-600' : 'text-slate-500'} />
-                  <span>Groq Cloud (Llama 3 70B)</span>
-                </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                  Recomendado
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 leading-snug">
-                100% gratuito, sem pedir cartão. Inferência ultra-rápida (&lt;1s) com modelo de topo da Meta.
-              </p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleSelectProvider('gemini')}
-              className={`p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer flex flex-col justify-between ${
-                activeProvider === 'gemini'
-                  ? 'border-indigo-600 bg-indigo-50/80 shadow-sm'
-                  : 'border-slate-200 bg-white hover:border-slate-300'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-1.5">
-                <div className="flex items-center gap-2 font-bold text-sm text-slate-800">
-                  <Bot size={16} className={activeProvider === 'gemini' ? 'text-indigo-600' : 'text-slate-500'} />
-                  <span>Google Gemini (2.5 Flash)</span>
-                </div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-100 text-sky-800">
-                  Google AI Studio
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 leading-snug">
-                Modelos oficiais do Google AI Studio (requer chave oficial <code className="font-mono text-[10px]">AIzaSy...</code>).
-              </p>
-            </button>
-          </div>
-
-          {/* Painel do Provedor Selecionado */}
-          {activeProvider === 'groq' ? (
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <Key size={14} className="text-indigo-600" />
-                  Chave da API Groq Cloud (GROQ_API_KEY)
-                </label>
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <div className="relative flex-1">
-                    <input
-                      type={isGroqKeyVisible ? "text" : "password"}
-                      placeholder="Cole sua chave da Groq aqui (inicia com gsk_...)"
-                      className="w-full px-4 py-2.5 pr-10 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 font-mono bg-white text-slate-800"
-                      value={groqApiKeyInput}
-                      onChange={(e) => setGroqApiKeyInput(e.target.value)}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setIsGroqKeyVisible(!isGroqKeyVisible)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-semibold cursor-pointer"
-                    >
-                      {isGroqKeyVisible ? "Ocultar" : "Ver"}
-                    </button>
-                  </div>
-                  <Button
-                    onClick={handleSaveGroqKey}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shrink-0 flex items-center gap-1.5"
-                  >
-                    <Save size={14} />
-                    Salvar Chave
-                  </Button>
-                  <Button
-                    onClick={handleTestGroqKey}
-                    disabled={testingGroq}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shrink-0 flex items-center gap-1.5 disabled:opacity-50"
-                  >
-                    <RefreshCw size={14} className={testingGroq ? "animate-spin" : ""} />
-                    {testingGroq ? "Testando..." : "Testar Conexão"}
-                  </Button>
-                </div>
-              </div>
-
-              {groqStatus && (
-                <div className={`p-3 rounded-xl text-xs flex items-start gap-2 ${
-                  groqStatus.ok 
-                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
-                    : 'bg-rose-50 text-rose-800 border border-rose-200'
-                }`}>
-                  {groqStatus.ok ? <CheckCircle2 size={16} className="text-emerald-600 shrink-0 mt-0.5" /> : <AlertCircle size={16} className="text-rose-600 shrink-0 mt-0.5" />}
-                  <span>{groqStatus.message}</span>
-                </div>
-              )}
-
-              <div className="p-3.5 bg-indigo-50/70 rounded-xl border border-indigo-100/80 text-[11px] text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Zap size={16} className="text-indigo-600 shrink-0" />
-                  <span>Não tem uma chave da Groq? Ela é 100% gratuita e gerada em 30 segundos:</span>
-                </div>
-                <a
-                  href="https://console.groq.com/keys"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-[11px] shadow-sm flex items-center gap-1.5 transition-all shrink-0 cursor-pointer"
-                >
-                  <span>Gerar Chave Grátis na Groq</span>
-                  <ExternalLink size={12} />
-                </a>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
+          <div className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                   <Key size={14} className="text-indigo-600" />
@@ -7978,12 +7797,7 @@ const SettingsView = ({
                 </div>
               </div>
             </div>
-          )}
 
-          <div className="mt-4 pt-3 border-t border-slate-200/60 text-[11px] text-slate-500 flex items-center gap-1.5">
-            <Info size={13} className="text-indigo-500 shrink-0" />
-            <span>Sistema resiliente: se o provedor ativo encontrar instabilidade, o sistema tentará o outro automaticamente caso configurado.</span>
-          </div>
         </Card>
       </div>
 
@@ -9292,41 +9106,8 @@ export const getAI = () => {
           console.warn("[AICache] Cache lookup error:", e);
         }
 
-        const activeProvider = getActiveAiProvider();
-        let groqKey = getGroqApiKey();
-        let savedKey = readCustomGeminiKey();
-        
-        // Auto-detect Groq key placed in Gemini configuration field
-        if (savedKey && savedKey.trim().startsWith('gsk_')) {
-          groqKey = savedKey.trim();
-          savedKey = ''; // Remove from Gemini flow
-        }
-
+        const savedKey = readCustomGeminiKey();
         const hasValidGeminiKey = Boolean(savedKey && isValidGeminiApiKey(savedKey));
-
-        // 2. Executar via Groq Cloud (Llama 3.3 70B) se for o provedor ativo ou fallback
-        const useGroq = (activeProvider === 'groq' && groqKey) || (!hasValidGeminiKey && groqKey && activeProvider === 'gemini');
-        if (useGroq) {
-          try {
-            // Se a chave não estava no armazenamento correto do Groq, temporariamente seta ela no contexto da chamada ou usa localStorage
-            if (groqKey && !getGroqApiKey()) {
-              localStorage.setItem('custom_groq_api_key', groqKey);
-            }
-            const groqRes = await callGroqChat({ contents, config, model: 'llama3-70b-8192' });
-            if (groqRes && groqRes.text) {
-              setCachedAI(cacheKey, groqRes.text).catch(() => {});
-              return { text: groqRes.text };
-            }
-          } catch (groqErr: any) {
-            console.warn("[AI Groq] Falha ao consultar Groq:", groqErr?.message || groqErr);
-            if (hasValidGeminiKey) {
-              console.log("[AI Fallback] Provedor Groq falhou, alternando para Google Gemini...");
-            } else {
-              throw groqErr;
-            }
-          }
-        }
-
         // 3. Provedor Google Gemini (Backend Proxy ou Chamada Direta)
         // Só a chave própria do usuário é usada fora do servidor.
         const activeKey = savedKey;
@@ -9370,18 +9151,6 @@ export const getAI = () => {
             e.message.includes("503")
           );
           if (!isNetworkOr404) {
-            // Se falhou no proxy e temos chave da Groq, tenta Groq antes de desistir
-            if (groqKey) {
-              try {
-                const groqRes = await callGroqChat({ contents, config, model: 'llama3-70b-8192' });
-                if (groqRes && groqRes.text) {
-                  setCachedAI(cacheKey, groqRes.text).catch(() => {});
-                  return { text: groqRes.text };
-                }
-              } catch {
-                /* continua para fallback */
-              }
-            }
             throw e;
           }
           console.warn("[Gemini] Proxy indisponível ou estático. Tentando chamada direta com a chave configurada.");
@@ -9390,19 +9159,10 @@ export const getAI = () => {
         // 3.2. Direct Client Call
         const finalKey = savedKey; // Use the properly routed key
         if (!finalKey || !isValidGeminiApiKey(finalKey)) {
-          // Se não há chave válida do Gemini mas há chave da Groq, tenta Groq
-          if (groqKey) {
-            const groqRes = await callGroqChat({ contents, config, model: 'llama3-70b-8192' });
-            if (groqRes && groqRes.text) {
-              setCachedAI(cacheKey, groqRes.text).catch(() => {});
-              return { text: groqRes.text };
-            }
-          }
-
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('open-gemini-tutorial-modal'));
           }
-          throw new Error("Chave de Inteligência Artificial não configurada.\n\nPor favor, insira sua chave gratuita da Groq (Llama 3) ou do Google Gemini no menu Configurações.");
+          throw new Error("Chave de Inteligência Artificial não configurada.\n\nPor favor, insira sua chave do Google Gemini no menu Configurações.");
         }
 
         const GEMINI_PRIMARY = "gemini-2.0-flash";
@@ -9509,19 +9269,6 @@ export const getAI = () => {
           }
         }
 
-        // Se o Gemini falhou mas a chave da Groq está configurada, tenta Groq como última contingência
-        if (groqKey) {
-          try {
-            console.log("[AI Fallback] Falha no Gemini. Tentando Groq como contingência...");
-            const groqRes = await callGroqChat({ contents, config, model: 'llama3-70b-8192' });
-            if (groqRes && groqRes.text) {
-              setCachedAI(cacheKey, groqRes.text).catch(() => {});
-              return { text: groqRes.text };
-            }
-          } catch (gFallbackErr) {
-            console.warn("[Groq Fallback falhou]:", gFallbackErr);
-          }
-        }
 
         const friendlyMsg = lastErr?.message?.includes("API_KEY")
           ? "Chave de API do Gemini inválida ou não configurada."
