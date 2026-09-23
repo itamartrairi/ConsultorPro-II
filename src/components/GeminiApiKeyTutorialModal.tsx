@@ -15,6 +15,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { Button } from './Button';
+import { testGroqKey } from '../lib/ai/aiService';
 
 interface GeminiApiKeyTutorialModalProps {
   isOpen: boolean;
@@ -56,24 +57,36 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
     setTestResult(null);
 
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${keyToTest}`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: "Responda apenas: 'OK'." }] }]
-        })
-      });
+      if (keyToTest.startsWith('gsk_')) {
+        const result = await testGroqKey(keyToTest);
+        if (result.ok) {
+          setTestResult({
+            ok: true,
+            message: '✓ Conexão bem-sucedida com Groq! Sua chave está ativa e pronta para uso.'
+          });
+        } else {
+          throw new Error(result.message);
+        }
+      } else {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${keyToTest}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: "Responda apenas: 'OK'." }] }]
+          })
+        });
 
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error?.message || `Erro HTTP ${res.status}`);
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error?.message || `Erro HTTP ${res.status}`);
+        }
+
+        setTestResult({
+          ok: true,
+          message: '✓ Conexão bem-sucedida! Sua chave está ativa e pronta para uso.'
+        });
       }
-
-      setTestResult({
-        ok: true,
-        message: '✓ Conexão bem-sucedida! Sua chave está ativa e pronta para uso.'
-      });
     } catch (err: any) {
       setTestResult({
         ok: false,
@@ -249,7 +262,7 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
             <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type={isKeyVisible ? 'text' : 'password'}
-                placeholder="Cole aqui sua chave (ex: AIzaSy... ou AQ....)"
+                placeholder="Cole aqui sua chave (ex: gsk_..., AIzaSy..., ou AQ....)"
                 value={apiKeyInput}
                 onChange={(e) => {
                   setApiKeyInput(e.target.value);

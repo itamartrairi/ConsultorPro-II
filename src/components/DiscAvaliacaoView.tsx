@@ -519,12 +519,21 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
     try {
       let aiText = "";
       const activeProvider = getActiveAiProvider();
-      const groqKey = getGroqApiKey();
-      const customKey = readCustomGeminiKey();
+      let groqKey = getGroqApiKey();
+      let customKey = readCustomGeminiKey();
+
+      // Auto-detect Groq key placed in Gemini field
+      if (customKey && customKey.trim().startsWith('gsk_')) {
+        groqKey = customKey.trim();
+        customKey = ''; // Remove from Gemini flow
+      }
 
       // 1. Tenta Groq se configurado ou se for o provedor ativo
-      if (activeProvider === 'groq' || (groqKey && !customKey)) {
+      if (activeProvider === 'groq' || groqKey) {
         try {
+          if (groqKey && !getGroqApiKey()) {
+            localStorage.setItem('custom_groq_api_key', groqKey);
+          }
           const groqRes = await callGroqChat({ contents: prompt, model: 'llama-3.3-70b-versatile' });
           if (groqRes && groqRes.text) {
             aiText = groqRes.text;

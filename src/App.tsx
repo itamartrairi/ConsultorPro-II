@@ -9293,13 +9293,24 @@ export const getAI = () => {
         }
 
         const activeProvider = getActiveAiProvider();
-        const groqKey = getGroqApiKey();
-        const savedKey = readCustomGeminiKey();
+        let groqKey = getGroqApiKey();
+        let savedKey = readCustomGeminiKey();
+        
+        // Auto-detect Groq key placed in Gemini configuration field
+        if (savedKey && savedKey.trim().startsWith('gsk_')) {
+          groqKey = savedKey.trim();
+          savedKey = ''; // Remove from Gemini flow
+        }
+
         const hasValidGeminiKey = Boolean(savedKey && isValidGeminiApiKey(savedKey));
 
-        // 2. Executar via Groq Cloud (Llama 3.3 70B) se for o provedor ativo ou se apenas a Groq estiver configurada
-        if (activeProvider === 'groq' || (groqKey && !hasValidGeminiKey)) {
+        // 2. Executar via Groq Cloud (Llama 3.3 70B) se for o provedor ativo ou se a chave for detectada
+        if (activeProvider === 'groq' || groqKey) {
           try {
+            // Se a chave não estava no armazenamento correto do Groq, temporariamente seta ela no contexto da chamada ou usa localStorage
+            if (groqKey && !getGroqApiKey()) {
+              localStorage.setItem('custom_groq_api_key', groqKey);
+            }
             const groqRes = await callGroqChat({ contents, config, model: 'llama-3.3-70b-versatile' });
             if (groqRes && groqRes.text) {
               setCachedAI(cacheKey, groqRes.text).catch(() => {});
@@ -9376,7 +9387,7 @@ export const getAI = () => {
         }
 
         // 3.2. Direct Client Call
-        const finalKey = activeKey || readCustomGeminiKey();
+        const finalKey = savedKey; // Use the properly routed key
         if (!finalKey || !isValidGeminiApiKey(finalKey)) {
           // Se não há chave válida do Gemini mas há chave da Groq, tenta Groq
           if (groqKey) {
