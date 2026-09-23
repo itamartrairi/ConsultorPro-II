@@ -534,7 +534,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
           if (groqKey && !getGroqApiKey()) {
             localStorage.setItem('custom_groq_api_key', groqKey);
           }
-          const groqRes = await callGroqChat({ contents: prompt, model: 'llama-3.3-70b-versatile' });
+          const groqRes = await callGroqChat({ contents: prompt, model: 'llama-3.1-70b-versatile' });
           if (groqRes && groqRes.text) {
             aiText = groqRes.text;
           }
@@ -582,7 +582,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
           if (!activeKey) {
             if (groqKey) {
               // Tentativa de contingência com Groq se ainda não tentou
-              const groqRes = await callGroqChat({ contents: prompt, model: 'llama-3.3-70b-versatile' });
+              const groqRes = await callGroqChat({ contents: prompt, model: 'llama-3.1-70b-versatile' });
               aiText = groqRes.text;
             } else {
               throw new Error("Não foi possível falar com o servidor de IA. Configure uma chave da Groq (Llama 3.3) ou do Gemini em Configurações.");
