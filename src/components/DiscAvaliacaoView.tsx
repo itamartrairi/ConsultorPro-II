@@ -536,6 +536,9 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
           }
         }
       }
+          }
+        }
+      }
 
       // 2. Se não obteve resposta com Groq, tenta Gemini (Proxy ou Direto)
       if (!aiText) {

@@ -7,10 +7,18 @@ export function isValidGeminiApiKey(k: any): boolean {
   return t.startsWith('AQ.') || t.startsWith('AIzaSy') || t.length >= 15;
 }
 
+// Prefixo da chave antiga que ficou pública — removida do navegador de quem a salvou.
+const LEAKED_GEMINI_KEY_PREFIX = "AQ.Ab8RN6LGK4um2g";
+
 export function readCustomGeminiKey(): string {
   try {
     const raw = (localStorage.getItem('custom_gemini_api_key') || '').trim();
+    if (raw.startsWith(LEAKED_GEMINI_KEY_PREFIX)) {
+      localStorage.removeItem('custom_gemini_api_key');
+      return '';
+    }
     if (isValidGeminiApiKey(raw)) return raw;
+    
     const envKey = (
       (import.meta as any).env?.VITE_GEMINI_API_KEY ||
       (import.meta as any).env?.GEMINI_API_KEY ||

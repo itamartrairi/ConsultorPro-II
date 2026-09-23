@@ -41,6 +41,7 @@ function resolveKey(customKey: unknown): string {
 
 function normalizeModel(m?: unknown): string {
   if (typeof m !== 'string' || !m) return GEMINI_PRIMARY;
+
   // Só modelos Gemini: impede usar o proxy para outros fins.
   return m.startsWith('gemini-') ? m : GEMINI_PRIMARY;
 }

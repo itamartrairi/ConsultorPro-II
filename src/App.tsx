@@ -9316,6 +9316,7 @@ export const getAI = () => {
         }
 
         // 3. Provedor Google Gemini (Backend Proxy ou Chamada Direta)
+        // Só a chave própria do usuário é usada fora do servidor.
         const activeKey = savedKey;
         
         // 3.1. Try backend proxy first
