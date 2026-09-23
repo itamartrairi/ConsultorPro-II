@@ -1,10 +1,10 @@
 import { GoogleGenAI } from '@google/genai';
 
 /**
- * LÃ³gica do proxy do Gemini, usada tanto pela Netlify Function (netlify/functions/gemini.mts)
+ * Lógica do proxy do Gemini, usada tanto pela Netlify Function (netlify/functions/gemini.mts)
  * quanto pelo server.ts (Docker / desenvolvimento local).
  *
- * A chave do sistema vem SOMENTE da variÃ¡vel de ambiente GEMINI_API_KEY.
+ * A chave do sistema vem SOMENTE da variável de ambiente GEMINI_API_KEY.
  */
 
 export interface CoreResult {
@@ -24,7 +24,7 @@ export function isValidApiKey(val: unknown): val is string {
 export function getSystemGeminiApiKey(): string {
   const direct = process.env.GEMINI_API_KEY;
   if (isValidApiKey(direct)) return direct.trim();
-  // Aceita variaÃ§Ãµes de nome jÃ¡ usadas no painel (ex.: Gemini_api_kei).
+  // Aceita variações de nome já usadas no painel (ex.: Gemini_api_kei).
   for (const envKey of Object.keys(process.env)) {
     const l = envKey.toLowerCase();
     if (l.includes('gemini_api') || l.includes('gemini_key') || l.includes('gemini_kei')) {
@@ -42,7 +42,7 @@ function resolveKey(customKey: unknown): string {
 function normalizeModel(m?: unknown): string {
   if (typeof m !== 'string' || !m) return GEMINI_PRIMARY;
 
-  // SÃ³ modelos Gemini: impede usar o proxy para outros fins.
+  // Só modelos Gemini: impede usar o proxy para outros fins.
   return m.startsWith('gemini-') ? m : GEMINI_PRIMARY;
 }
 
@@ -56,13 +56,13 @@ export function geminiConfig(): CoreResult {
 
 export async function geminiTest(customKey: unknown): Promise<CoreResult> {
   const apiKey = resolveKey(customKey);
-  if (!apiKey) return { status: 400, body: { ok: false, error: 'Chave API do Gemini nÃ£o configurada no servidor.' } };
+  if (!apiKey) return { status: 400, body: { ok: false, error: 'Chave API do Gemini não configurada no servidor.' } };
   const ai = new GoogleGenAI({ apiKey });
   let lastErr: any = null;
   for (const model of GEMINI_CHAIN) {
     try {
       const r: any = await withTimeout(ai.models.generateContent({ model, contents: "Responda apenas 'OK'." }), 6000, 'Timeout de teste da API');
-      if (r?.text) return { status: 200, body: { ok: true, model, message: `ConexÃ£o bem-sucedida com o modelo ${model}!` } };
+      if (r?.text) return { status: 200, body: { ok: true, model, message: `Conexão bem-sucedida com o modelo ${model}!` } };
     } catch (e) {
       lastErr = e;
     }
@@ -73,20 +73,20 @@ export async function geminiTest(customKey: unknown): Promise<CoreResult> {
 export async function geminiGenerate(body: any, customKey: unknown): Promise<CoreResult> {
   const { model, contents, config } = body || {};
   if (contents === undefined || contents === null || contents === '') {
-    return { status: 400, body: { error: 'ConteÃºdo vazio.' } };
+    return { status: 400, body: { error: 'Conteúdo vazio.' } };
   }
   const apiKey = resolveKey(customKey);
   if (!apiKey) {
     return {
       status: 400,
-      body: { error: 'Chave API do Gemini nÃ£o configurada no servidor. Cadastre GEMINI_API_KEY nas variÃ¡veis do Netlify ou use sua prÃ³pria chave em ConfiguraÃ§Ãµes.' },
+      body: { error: 'Chave API do Gemini não configurada no servidor. Cadastre GEMINI_API_KEY nas variáveis do Netlify ou use sua própria chave em Configurações.' },
     };
   }
 
   const ai = new GoogleGenAI({ apiKey });
   const candidates = Array.from(new Set([normalizeModel(model), ...GEMINI_CHAIN]));
   let lastErr: any = null;
-  // Netlify Functions sÃ­ncronas tÃªm limite de ~26s no total: reparte esse tempo entre as tentativas.
+  // Netlify Functions síncronas têm limite de ~26s no total: reparte esse tempo entre as tentativas.
   const deadline = Date.now() + 22000;
   for (const m of candidates) {
     const remaining = deadline - Date.now();
@@ -107,6 +107,6 @@ export async function geminiGenerate(body: any, customKey: unknown): Promise<Cor
   }
   return {
     status: 500,
-    body: { error: lastErr?.message || 'NÃ£o foi possÃ­vel conectar aos modelos do Gemini no momento. Tente novamente mais tarde.' },
+    body: { error: lastErr?.message || 'Não foi possível conectar aos modelos do Gemini no momento. Tente novamente mais tarde.' },
   };
 }
