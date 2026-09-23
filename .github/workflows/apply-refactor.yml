@@ -13,7 +13,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: refactor/phase1-utils
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -44,5 +46,5 @@ jobs:
             echo "Nenhuma mudanca para commit"
           else
             git commit -m "refactor: wire App to Phase1 modules and AuthProvider (CI)"
-            git push origin HEAD:refactor/phase1-utils
+            git push origin HEAD:main
           fi
