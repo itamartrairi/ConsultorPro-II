@@ -9312,7 +9312,7 @@ export const getAI = () => {
             if (groqKey && !getGroqApiKey()) {
               localStorage.setItem('custom_groq_api_key', groqKey);
             }
-            const groqRes = await callGroqChat({ contents, config, model: 'llama-3.1-70b-versatile' });
+            const groqRes = await callGroqChat({ contents, config, model: 'llama-3.3-70b-versatile' });
             if (groqRes && groqRes.text) {
               setCachedAI(cacheKey, groqRes.text).catch(() => {});
               return { text: groqRes.text };
@@ -9373,7 +9373,7 @@ export const getAI = () => {
             // Se falhou no proxy e temos chave da Groq, tenta Groq antes de desistir
             if (groqKey) {
               try {
-                const groqRes = await callGroqChat({ contents, config, model: 'llama-3.1-70b-versatile' });
+                const groqRes = await callGroqChat({ contents, config, model: 'llama-3.3-70b-versatile' });
                 if (groqRes && groqRes.text) {
                   setCachedAI(cacheKey, groqRes.text).catch(() => {});
                   return { text: groqRes.text };
@@ -9392,7 +9392,7 @@ export const getAI = () => {
         if (!finalKey || !isValidGeminiApiKey(finalKey)) {
           // Se não há chave válida do Gemini mas há chave da Groq, tenta Groq
           if (groqKey) {
-            const groqRes = await callGroqChat({ contents, config, model: 'llama-3.1-70b-versatile' });
+            const groqRes = await callGroqChat({ contents, config, model: 'llama-3.3-70b-versatile' });
             if (groqRes && groqRes.text) {
               setCachedAI(cacheKey, groqRes.text).catch(() => {});
               return { text: groqRes.text };
@@ -9513,7 +9513,7 @@ export const getAI = () => {
         if (groqKey) {
           try {
             console.log("[AI Fallback] Falha no Gemini. Tentando Groq como contingência...");
-            const groqRes = await callGroqChat({ contents, config, model: 'llama-3.1-70b-versatile' });
+            const groqRes = await callGroqChat({ contents, config, model: 'llama-3.3-70b-versatile' });
             if (groqRes && groqRes.text) {
               setCachedAI(cacheKey, groqRes.text).catch(() => {});
               return { text: groqRes.text };
