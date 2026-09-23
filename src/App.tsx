@@ -121,18 +121,6 @@ import {
   CheckCheck,
   Infinity as InfinityIcon
 } from 'lucide-react';
-
-
-
-
-export enum Type {
-  STRING = "STRING",
-  NUMBER = "NUMBER",
-  INTEGER = "INTEGER",
-  BOOLEAN = "BOOLEAN",
-  ARRAY = "ARRAY",
-  OBJECT = "OBJECT",
-}
 import { 
   BarChart, 
   Bar, 
@@ -173,6 +161,8 @@ import {
   setStorageUserId, 
   setStorageSessionPassword 
 } from './lib/cryptoStorage';
+
+// --- Phase 1 extracted modules ---
 import {
   compressImageToDataUrl,
   saveLocalDiagnosticoReport,
@@ -185,448 +175,9 @@ import {
 // --- Safe LocalStorage with AES-256 Encryption at Rest ---
 const safeLocalStorage = encryptedLocalStorage;
 const localStorage = safeLocalStorage;
-
-const CONSULTORIA_AREAS = [
-  "FINANÇAS",
-  "MARKETING E VENDAS",
-  "PLANEJAMENTO ESTRATÉGICO",
-  "GESTÃO DE PESSOAS",
-  "PROCESSOS E OPERAÇÕES",
-  "INOVAÇÃO E TECNOLOGIA",
-  "JURÍDICO",
-  "SUSTENTABILIDADE",
-  "EMPREENDEDORISMO",
-  "ACESSO A CRÉDITO",
-  "CRÉDITO",
-  "OUTROS"
-];
-
 // --- Utilitários de Validação e Formatação (Padrão Brasileiro - CPF e CNPJ) ---
-
-/**
- * Remove qualquer caractere que não seja dígito.
- */
-export function cleanDigits(val?: string | null): string {
-  if (!val) return '';
-  return String(val).replace(/\D/g, '');
-}
-
-/**
- * Aplica a máscara brasileira de CNPJ: 00.000.000/0000-00
- */
-export function formatCNPJ(val?: string | null): string {
-  const digits = cleanDigits(val).slice(0, 14);
-  if (!digits) return '';
-  let res = digits;
-  if (digits.length > 2) res = digits.slice(0, 2) + '.' + digits.slice(2);
-  if (digits.length > 5) res = digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5);
-  if (digits.length > 8) res = digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5, 8) + '/' + digits.slice(8);
-  if (digits.length > 12) res = digits.slice(0, 2) + '.' + digits.slice(2, 5) + '.' + digits.slice(5, 8) + '/' + digits.slice(8, 12) + '-' + digits.slice(12, 14);
-  return res;
-}
-
-/**
- * Validação com cálculo oficial dos 2 dígitos verificadores do CNPJ (Receita Federal)
- */
-export function isValidCNPJ(val?: string | null): boolean {
-  const digits = cleanDigits(val);
-  if (!digits || digits.length !== 14) return false;
-  // Bloqueia sequências de números iguais (ex: 00000000000000, 11111111111111)
-  if (/^(\d)\1{13}$/.test(digits)) return false;
-
-  // 1º Dígito verificador
-  let length = digits.length - 2;
-  let numbers = digits.substring(0, length);
-  const checkDigits = digits.substring(length);
-  let sum = 0;
-  let pos = length - 7;
-  for (let i = length; i >= 1; i--) {
-    sum += parseInt(numbers.charAt(length - i), 10) * pos--;
-    if (pos < 2) pos = 9;
-  }
-  let result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
-  if (result !== parseInt(checkDigits.charAt(0), 10)) return false;
-
-  // 2º Dígito verificador
-  length = length + 1;
-  numbers = digits.substring(0, length);
-  sum = 0;
-  pos = length - 7;
-  for (let i = length; i >= 1; i--) {
-    sum += parseInt(numbers.charAt(length - i), 10) * pos--;
-    if (pos < 2) pos = 9;
-  }
-  result = sum % 11 < 2 ? 0 : 11 - (sum % 11);
-  if (result !== parseInt(checkDigits.charAt(1), 10)) return false;
-
-  return true;
-}
-
-/**
- * Calcula o status de vencimento do Cadastro MDA a partir da data de validade (YYYY-MM-DD).
- */
-export function getMdaExpirationStatus(dataValidade?: string | null): { status: 'vencido' | 'proximo' | 'valido'; diasRestantes: number; label: string } | null {
-  if (!dataValidade) return null;
-  const validade = new Date(dataValidade + 'T00:00:00');
-  if (isNaN(validade.getTime())) return null;
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  const diasRestantes = Math.ceil((validade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
-  if (diasRestantes < 0) return { status: 'vencido', diasRestantes, label: `Vencido há ${Math.abs(diasRestantes)} dia(s)` };
-  if (diasRestantes <= 30) return { status: 'proximo', diasRestantes, label: `Vence em ${diasRestantes} dia(s)` };
-  return { status: 'valido', diasRestantes, label: 'Válido' };
-}
-
-/**
- * Aplica a máscara brasileira de CEP: 00000-000
- */
-export function formatCEP(val?: string | null): string {
-  const digits = cleanDigits(val).slice(0, 8);
-  if (!digits) return '';
-  if (digits.length > 5) return digits.slice(0, 5) + '-' + digits.slice(5, 8);
-  return digits;
-}
-
-/**
- * Aplica a máscara brasileira de CPF: 000.000.000-00
- */
-export function formatCPF(val?: string | null): string {
-  const digits = cleanDigits(val).slice(0, 11);
-  if (!digits) return '';
-  let res = digits;
-  if (digits.length > 3) res = digits.slice(0, 3) + '.' + digits.slice(3);
-  if (digits.length > 6) res = digits.slice(0, 3) + '.' + digits.slice(3, 6) + '.' + digits.slice(6);
-  if (digits.length > 9) res = digits.slice(0, 3) + '.' + digits.slice(3, 6) + '.' + digits.slice(6, 9) + '-' + digits.slice(9, 11);
-  return res;
-}
-
-/**
- * Validação com cálculo oficial dos 2 dígitos verificadores do CPF (Receita Federal)
- */
-export function isValidCPF(val?: string | null): boolean {
-  const digits = cleanDigits(val);
-  if (!digits || digits.length !== 11) return false;
-  // Bloqueia sequências repetidas (ex: 11111111111, 00000000000)
-  if (/^(\d)\1{10}$/.test(digits)) return false;
-
-  // 1º Dígito verificador
-  let sum = 0;
-  for (let i = 1; i <= 9; i++) {
-    sum += parseInt(digits.substring(i - 1, i), 10) * (11 - i);
-  }
-  let remainder = (sum * 10) % 11;
-  if (remainder === 10 || remainder === 11) remainder = 0;
-  if (remainder !== parseInt(digits.substring(9, 10), 10)) return false;
-
-  // 2º Dígito verificador
-  sum = 0;
-  for (let i = 1; i <= 10; i++) {
-    sum += parseInt(digits.substring(i - 1, i), 10) * (12 - i);
-  }
-  remainder = (sum * 10) % 11;
-  if (remainder === 10 || remainder === 11) remainder = 0;
-  if (remainder !== parseInt(digits.substring(10, 11), 10)) return false;
-
-  return true;
-}
-
 // --- Utility ---
-
-function sanitizeForFirestore(obj: any): any {
-  if (obj === null || typeof obj !== 'object') return obj;
-  if (obj instanceof Date) return obj.toISOString();
-  // Do not strip Firestore Timestamps, FieldValues, or custom class instances with toDate/toMillis
-  if (typeof obj.toDate === 'function' || typeof obj.toMillis === 'function' || obj.constructor?.name === 'Timestamp' || obj.constructor?.name === 'FieldValue' || obj._delegate) {
-    return obj;
-  }
-  if (Array.isArray(obj)) return obj.map(v => sanitizeForFirestore(v));
-  
-  const result: any = {};
-  for (const key in obj) {
-    if (obj[key] !== undefined) {
-      result[key] = sanitizeForFirestore(obj[key]);
-    }
-  }
-  return result;
-}
-
-function oklchToRgb(oklchStr: string): string {
-  try {
-    return oklchStr.replace(/oklch\(([^)]+)\)/gi, (m, inner) => {
-      const parts = inner.trim().split(/[\s,/\s]+/).filter(Boolean);
-      if (parts.length < 3) return 'rgb(120, 120, 120)';
-
-      const lStr = parts[0];
-      const cStr = parts[1];
-      const hStr = parts[2];
-      const aStr = parts[3];
-
-      let l = lStr.endsWith('%') ? parseFloat(lStr) / 100 : parseFloat(lStr);
-      let c = parseFloat(cStr);
-      let h = parseFloat(hStr);
-      let alpha = aStr ? (aStr.endsWith('%') ? parseFloat(aStr) / 100 : parseFloat(aStr)) : 1;
-
-      if (isNaN(l)) l = 0.5;
-      if (isNaN(c)) c = 0.1;
-      if (isNaN(h)) h = 0;
-      if (isNaN(alpha)) alpha = 1;
-
-      const hRad = (h * Math.PI) / 180;
-      const a = c * Math.cos(hRad);
-      const b_oklab = c * Math.sin(hRad);
-
-      const l_1 = l + 0.3963377774 * a + 0.2158037573 * b_oklab;
-      const m_1 = l - 0.1055613458 * a - 0.0638541728 * b_oklab;
-      const s_1 = l - 0.0894841775 * a - 1.2914855480 * b_oklab;
-
-      const l_ = l_1 * l_1 * l_1;
-      const m_ = m_1 * m_1 * m_1;
-      const s_ = s_1 * s_1 * s_1;
-
-      let r_l =  4.0767416621 * l_ - 3.3077115913 * m_ + 0.2309699292 * s_;
-      let g_l = -1.2684380046 * l_ + 2.6097574011 * m_ - 0.3413193965 * s_;
-      let b_l = -0.0041960863 * l_ - 0.7034186147 * m_ + 1.7076147010 * s_;
-
-      const f = (x: number) => {
-        if (x <= 0.0031308) return 12.92 * Math.max(0, x);
-        return 1.055 * Math.pow(Math.max(0, x), 1 / 2.4) - 0.055;
-      };
-
-      let r = Math.round(Math.max(0, Math.min(1, f(r_l))) * 255);
-      let g = Math.round(Math.max(0, Math.min(1, f(g_l))) * 255);
-      let b = Math.round(Math.max(0, Math.min(1, f(b_l))) * 255);
-
-      if (alpha === 1) {
-        return `rgb(${r}, ${g}, ${b})`;
-      } else {
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-      }
-    });
-  } catch (err) {
-    console.error("Error in oklchToRgb conversion:", err);
-    return 'rgb(120, 120, 120)';
-  }
-}
-
-const captureElementWithHtml2Canvas = async (elt: HTMLElement) => {
-  return html2canvas(elt, {
-    scale: 2,
-    useCORS: true,
-    allowTaint: false,
-    logging: false,
-    onclone: (clonedDoc) => {
-      // 1. Clean all style tags in cloned doc to replace oklch with standard rgb/rgba
-      clonedDoc.querySelectorAll('style').forEach(styleTag => {
-        try {
-          if (styleTag.textContent && styleTag.textContent.includes('oklch')) {
-            styleTag.textContent = oklchToRgb(styleTag.textContent);
-          }
-        } catch (err) {
-          console.error("Error patching style tag in html2canvas clone:", err);
-        }
-      });
-
-      // 2. Clean inline styles and attributes containing oklch
-      clonedDoc.querySelectorAll('*').forEach((el: any) => {
-        try {
-          if (el.style) {
-            for (let i = 0; i < el.style.length; i++) {
-              const prop = el.style[i];
-              const val = el.style.getPropertyValue(prop);
-              if (val && val.includes('oklch')) {
-                el.style.setProperty(prop, oklchToRgb(val));
-              }
-            }
-          }
-          if (el.hasAttributes()) {
-            for (const attr of Array.from(el.attributes) as any) {
-              if (attr.value && attr.value.includes('oklch')) {
-                attr.value = oklchToRgb(attr.value);
-              }
-            }
-          }
-        } catch (err) {
-          // ignore element-specific patch errors
-        }
-      });
-
-      const clonedWindow = clonedDoc.defaultView;
-      if (clonedWindow) {
-        const originalGetComputedStyle = clonedWindow.getComputedStyle;
-        clonedWindow.getComputedStyle = (e: any, pseudoElt?: any) => {
-          const style = originalGetComputedStyle.call(clonedWindow, e, pseudoElt);
-          return new Proxy(style, {
-            get(target, prop) {
-              if (prop === 'getPropertyValue') {
-                return (propertyName: string) => {
-                  const val = target.getPropertyValue(propertyName);
-                  if (typeof val === 'string' && val.includes('oklch')) {
-                    return oklchToRgb(val);
-                  }
-                  return val;
-                };
-              }
-              if (prop === 'cssText') {
-                const val = target.cssText;
-                if (typeof val === 'string' && val.includes('oklch')) {
-                  return oklchToRgb(val);
-                }
-                return val;
-              }
-              const val = target[prop as any];
-              if (typeof val === 'string' && val.includes('oklch')) {
-                return oklchToRgb(val);
-              }
-              if (typeof val === 'function') {
-                return val.bind(target);
-              }
-              return val;
-            }
-          }) as any;
-        };
-      }
-    }
-  });
-};
-
-const isValidLogoSource = (src: any): boolean => {
-  if (!src || typeof src !== 'string') return false;
-  const trimmed = src.trim();
-  if (trimmed.length === 0) return false;
-  if (trimmed === 'null' || trimmed === 'undefined') return false;
-  if (trimmed.startsWith('data:')) {
-    return trimmed.startsWith('data:image/') && trimmed.includes(';base64,') && trimmed.length > 35;
-  }
-  return trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('./');
-};
-
-export function parseLocalDate(val: any): Date | null {
-  if (!val) return null;
-  if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
-  if (typeof val.toDate === 'function') {
-    const d = val.toDate();
-    return isNaN(d.getTime()) ? null : d;
-  }
-  if (val && typeof val === 'object' && val.seconds) {
-    const d = new Date(val.seconds * 1000);
-    return isNaN(d.getTime()) ? null : d;
-  }
-  if (typeof val === 'string') {
-    const trimmed = val.trim();
-    if (!trimmed) return null;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-      const d = new Date(trimmed + 'T12:00:00');
-      return isNaN(d.getTime()) ? null : d;
-    }
-    const d = new Date(trimmed);
-    return isNaN(d.getTime()) ? null : d;
-  }
-  const d = new Date(val);
-  return isNaN(d.getTime()) ? null : d;
-}
-
-function formatFirestoreDate(date: any, formatStr: string = 'dd/MM/yyyy', options?: any): string {
-  if (!date) return '...';
-  const d = parseLocalDate(date);
-  if (!d) return '...';
-  return format(d, formatStr, options);
-}
-
-export const getActivityDateStr = (diagDate: any, index: number): string => {
-  let base: Date;
-  if (!diagDate) {
-    base = new Date();
-  } else if (typeof diagDate === 'string') {
-    base = new Date(diagDate.includes('T') ? diagDate : diagDate + 'T12:00:00');
-  } else if (diagDate.toDate && typeof diagDate.toDate === 'function') {
-    base = diagDate.toDate();
-  } else if (diagDate.seconds) {
-    base = new Date(diagDate.seconds * 1000);
-  } else if (diagDate instanceof Date) {
-    base = diagDate;
-  } else {
-    base = new Date(diagDate);
-  }
-
-  if (isNaN(base.getTime())) {
-    base = new Date();
-  }
-
-  const result = new Date(base.getTime());
-  result.setDate(result.getDate() + (index * 7));
-  return result.toISOString().split('T')[0];
-};
-
-const LICENSE_FIELDS = ['status', 'tipoPlano', 'diasTeste', 'validadeLicenca', 'role', 'dataCadastro', 'kiwifyOrderId', 'dataAtivacaoKiwify', 'dataCancelamentoKiwify'] as const;
-
 // Retorna apenas os campos de licença presentes no documento da nuvem.
-export function pickLicenseFields(item: any): Record<string, any> {
-  const out: Record<string, any> = {};
-  if (!item) return out;
-  for (const k of LICENSE_FIELDS) {
-    if (item[k] !== undefined) out[k] = item[k];
-  }
-  return out;
-}
-
-import { toJsDate, computeLicenseDaysLeft } from './lib/licenseDays';
-export { toJsDate, computeLicenseDaysLeft };
-
-export function extractItemTimestamp(item: any): number {
-  if (!item) return 0;
-  
-  // 1. Check direct timestamp fields in priority order
-  const dateCandidates = [
-    item.updatedAt,
-    item.dataModificacao,
-    item.dataAtualizacao,
-    item.dataDiagnostico,
-    item.dataCadastro,
-    item.createdAt,
-    item.dataCriacao,
-    item.dataVencimento,
-    item.dataInicio,
-    item.timestamp
-  ];
-
-  for (const candidate of dateCandidates) {
-    if (!candidate) continue;
-    if (typeof candidate === 'number' && !isNaN(candidate) && candidate > 0) {
-      return candidate < 10000000000 ? candidate * 1000 : candidate;
-    }
-    if (typeof candidate === 'object') {
-      if (candidate instanceof Date && !isNaN(candidate.getTime())) {
-        return candidate.getTime();
-      }
-      if (typeof candidate.toMillis === 'function') {
-        try { return candidate.toMillis(); } catch {}
-      }
-      if (typeof candidate.toDate === 'function') {
-        try { return candidate.toDate().getTime(); } catch {}
-      }
-      if (typeof candidate.seconds === 'number') {
-        return candidate.seconds * 1000;
-      }
-    }
-    if (typeof candidate === 'string') {
-      const trimmed = candidate.trim();
-      if (trimmed) {
-        const parsed = Date.parse(trimmed.includes('T') ? trimmed : trimmed + 'T12:00:00');
-        if (!isNaN(parsed) && parsed > 0) return parsed;
-      }
-    }
-  }
-
-  // 2. Specific heuristic weights for content richness
-  let contentWeight = 0;
-  if (item.resposta) contentWeight += 1000;
-  if (item.observacao && String(item.observacao).trim()) contentWeight += 500;
-  if (item.score !== undefined && item.score > 0) contentWeight += 200;
-  if (item.cronograma && Array.isArray(item.cronograma) && item.cronograma.length > 0) contentWeight += 5000;
-  if (item.dadosConsultoria && (item.dadosConsultoria.codigoSgf || item.dadosConsultoria.consultor)) contentWeight += 2000;
-  
-  return contentWeight;
-}
 
 enum OperationType {
   CREATE = 'create',
@@ -693,248 +244,10 @@ async function testConnection() {
 testConnection();
 
 // --- Types ---
-interface EmpresaCredenciada {
-  id: string;
-  razaoSocial: string;
-  cnpj?: string;
-  telefoneFixo?: string;
-  celular?: string;
-  email?: string;
-  consultor?: string;
-  cpfConsultor?: string;
-  ownerId: string;
-  dataCadastro: any;
-  ultimoLogin?: any;
-  providerId?: string;
-  photoURL?: string;
-  status: 'Ativa' | 'Bloqueada';
-  validadeLicenca?: any;
-  tipoPlano?: 'Teste' | 'Mensal' | 'Anual' | 'Definitiva';
-  diasTeste?: number;
-  role?: 'admin' | 'cliente';
-}
-
-export interface Empresa {
-  id: string;
-  nome: string;
-  razaoSocial?: string;
-  nomeFantasia?: string;
-  cnpj?: string;
-  mesAnoAbertura?: string;
-  enderecoComercial?: string;
-  telefoneFixo?: string;
-  celular?: string;
-  email?: string;
-  representante?: string;
-  cpfRepresentante?: string;
-  dataCadastro: any;
-  ownerId: string;
-  anexoUrl?: string;
-  tipoEmpresa?: string;
-  ramoAtividade?: string;
-  cafNumero?: string;
-  // --- Dados da Receita Federal (preenchidos automaticamente pela consulta de CNPJ) ---
-  situacaoCadastral?: string;
-  dataSituacaoCadastral?: string;
-  naturezaJuridica?: string;
-  porteEmpresa?: string;
-  capitalSocial?: string;
-  cnaePrincipalCodigo?: string;
-  cnaePrincipalDescricao?: string;
-  dataAberturaReceita?: string;
-  logradouro?: string;
-  numeroEndereco?: string;
-  complementoEndereco?: string;
-  bairro?: string;
-  municipio?: string;
-  uf?: string;
-  cep?: string;
-  // --- Cadastro MDA (Ministério do Desenvolvimento Agrário) vinculado à CAF ---
-  mdaNumeroCadastro?: string;
-  mdaDataValidade?: string;
-}
-
-export interface Premissa {
-  id: string;
-  idProblema: string;
-  problema: string;
-  peso: number;
-  pergunta: string;
-  tipoEmpresa?: string;
-  ownerId?: string;
-}
-
-export interface Problema {
-  id: string;
-  descricao_problemas: string;
-  area: string;
-  impacto: string;
-  NivelMaturidade?: string;
-  tipoEmpresa?: string;
-  tags?: string[];
-  ownerId?: string;
-}
-
-export interface AtividadeCronograma {
-  nome: string;
-  descricao: string;
-  cargaHoraria: string;
-  solucaoProposta: string;
-  resultadoEsperado?: string;
-  responsavel?: string;
-  idProblema?: string;
-  premissa?: string;
-  status: 'Pendente' | 'Em Andamento' | 'Concluído' | 'Atrasado';
-  prioridade: 'Baixa' | 'Média' | 'Alta';
-  dataInicio?: string;
-  dataFim?: string;
-  progressoKPI?: number;
-  metaKPI?: number;
-  evidencias?: string[];
-  ordem?: number;
-  incluirNoRelatorio?: boolean;
-}
-
-export interface DadosConsultoria {
-  razaoSocial?: string;
-  cnpj?: string;
-  consultor?: string;
-  telefoneFixo?: string;
-  celular?: string;
-  email?: string;
-  areaConsultoria?: string;
-  codigoSgf?: string;
-  periodoConsultoria?: string;
-  tecnicoSebrae?: string;
-  objetivo?: string;
-  resultadosEsperados?: string;
-  solucoesIndicadas?: string;
-  evidencias?: string[];
-  cargaHoraria?: string;
-  tipoRelatorio?: 'Parcial' | 'Final';
-}
-
-export interface Diagnostico {
-  id: string;
-  empresaId: string;
-  dataDiagnostico: any;
-  ownerId: string;
-  cronograma?: AtividadeCronograma[];
-  areasDiagnostico?: string[];
-  dadosConsultoria?: DadosConsultoria;
-  consultorId?: string;
-  empresaCredenciadaId?: string;
-  status?: 'Rascunho' | 'Finalizado' | 'Planejamento';
-  tipoEmpresa?: string;
-  nomeEmpresa?: string;
-  nomeProjeto?: string;
-  nome?: string;
-  cargaHoraria?: string;
-  nivelMaturidadeAI?: string;
-  justificativaMaturidadeAI?: string;
-  resumoExecutivoAI?: string;
-}
-
-export interface Solucao {
-  id: string;
-  idProblema: string;
-  problema: string;
-  area: string;
-  solucao_recomendada: string;
-  acoes_sugeridas: string;
-  prazo_sugerido: string;
-  responsavel_sugerido: string;
-  kpis_sugeridos: string;
-  comentario_sucesso: string;
-  resultado_esperado: string;
-  tipoEmpresa?: string;
-  tags?: string[];
-  ownerId?: string;
-}
-
-export interface TarefaPlanoAcao {
-  id: string;
-  diagnosticoId: string;
-  empresaId: string;
-  idProblema: string;
-  solucaoId?: string;
-  problema: string;
-  area: string;
-  solucaoSugerida: string;
-  acoes: string;
-  status: 'Pendente' | 'Em Andamento' | 'Concluído';
-  prioridade: 'Baixa' | 'Média' | 'Alta';
-  dataInicio?: any;
-  dataFim?: any;
-  dataVencimento?: any;
-  responsavel: string;
-  ownerId: string;
-  ordem?: number;
-  comentarios?: string; lembreteEmail?: boolean; lembreteWhatsapp?: boolean; lembretePush?: boolean; lembreteDiasAntes?: number; lembreteContato?: string;
-  evidencias?: string[];
-  evidenciaUrl?: string;
-  evidenciaNome?: string;
-  anexoUrl?: string;
-}
-
-export interface Resposta {
-  id: string;
-  diagnosticoId: string;
-  premissaId: string;
-  idProblema: string;
-  problema: string;
-  pergunta: string;
-  peso: number;
-  area: string;
-  resposta?: 'Sim' | 'Não' | 'Parcial' | '';
-  observacao: string;
-  score: number;
-  evidenciaUrl?: string;
-  evidenciaNome?: string;
-  ownerId?: string;
-}
-
 // --- Constants ---
-const AREAS = [
-  { id: 'FIN', nome: 'Financeiro' },
-  { id: 'MKT', nome: 'Marketing' },
-  { id: 'OPS', nome: 'Operacional' },
-  { id: 'RH',  nome: 'Recursos Humanos' },
-  { id: 'VEN', nome: 'Vendas' },
-  { id: 'TEC', nome: 'Tecnologia' },
-  { id: 'JUR', nome: 'Jurídico' },
-  { id: 'EST', nome: 'Estratégico' },
-  { id: 'LOG', nome: 'Logística' },
-  { id: 'SAC', nome: 'Atendimento' },
-  { id: 'CRE', nome: 'Acesso a Crédito' },
-  { id: 'CRD', nome: 'Crédito' },
-];
-
-const normalizeAndFormatArea = (rawArea: string | undefined | null): string => {
-  if (!rawArea) return '';
-  const trimmed = rawArea.trim();
-  if (!trimmed) return '';
-  return trimmed
-    .toLowerCase()
-    .split(/\s+/)
-    .map(word => {
-      if (word.length <= 2 && ['de', 'da', 'do', 'em', 'para', 'e'].includes(word)) return word;
-      return word.charAt(0).toUpperCase() + word.slice(1);
-    })
-    .join(' ');
-};
-
 // --- Components ---
 
 // --- Constants ---
-const IMPACTO_ORDER: Record<string, number> = { 'Baixo': 1, 'Médio': 2, 'Alto': 3 };
-
-const globalNormalizedMatch = (val1: string | undefined | null, val2: string | undefined | null) => {
-  if (!val1 && !val2) return true;
-  if (!val1 || !val2) return false;
-  return val1.trim().toLowerCase() === val2.trim().toLowerCase();
-};
-
 const Card = ({ children, className, onClick }: any) => (
   <div 
     onClick={onClick}
@@ -1900,41 +1213,6 @@ const MODELOS_RELATORIO: ModeloRelatorio[] = [
     ]
   }
 ];
-
-export const deduplicateRespostas = (respostasList: Resposta[]): Resposta[] => {
-  if (!respostasList || !Array.isArray(respostasList)) return [];
-  const map = new Map<string, Resposta>();
-
-  for (const resp of respostasList) {
-    if (!resp) continue;
-    const normQ = (resp.pergunta || '').trim().toLowerCase();
-    const key = normQ ? `q:${normQ}` : (resp.premissaId ? `id:${resp.premissaId}` : resp.id);
-    if (!key) continue;
-
-    if (!map.has(key)) {
-      map.set(key, resp);
-    } else {
-      const existing = map.get(key)!;
-      const isAnswered = (r: Resposta) => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'Não';
-      
-      const respAnswered = isAnswered(resp);
-      const existingAnswered = isAnswered(existing);
-
-      if (respAnswered && !existingAnswered) {
-        map.set(key, resp);
-      } else if (respAnswered && existingAnswered) {
-        if (resp.observacao && !existing.observacao) {
-          map.set(key, resp);
-        } else if ((resp.score || 0) > (existing.score || 0)) {
-          map.set(key, resp);
-        }
-      }
-    }
-  }
-
-  return Array.from(map.values());
-};
-
 const DadosConsultoriaView = ({
   selectedDiagnostico,
   selectedEmpresa,
@@ -9807,91 +9085,6 @@ const HomeView = ({
 };
 
 // --- Main App ---
-
-export const extractAndParseJSON = (text: string, defaultValue: any = null): any => {
-  if (!text) return defaultValue;
-  
-  let cleaned = text.trim();
-  
-  // 1. Double check direct parsing
-  try {
-    return JSON.parse(cleaned);
-  } catch (e) {}
-
-  // 2. Remove markdown formatting if present (```json or ```)
-  if (cleaned.includes("```")) {
-    const match = cleaned.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-    if (match && match[1]) {
-      const candidateContent = match[1].trim();
-      try {
-        return JSON.parse(candidateContent);
-      } catch (e) {
-        // Fallback to continue searching below on the code block content
-        cleaned = candidateContent;
-      }
-    }
-  }
-
-  // 3. Find candidate JSON structures (arrays or objects)
-  // We can look for '{' or '[' and find the matching '}' or ']'
-  for (let i = 0; i < cleaned.length; i++) {
-    const char = cleaned[i];
-    if (char === '{' || char === '[') {
-      const openChar = char;
-      const closeChar = char === '{' ? '}' : ']';
-      
-      // Let's find the closing character matching this open character by counting depth
-      let depth = 0;
-      let closingIndex = -1;
-      
-      for (let j = i; j < cleaned.length; j++) {
-        if (cleaned[j] === openChar) {
-          depth++;
-        } else if (cleaned[j] === closeChar) {
-          depth--;
-          if (depth === 0) {
-            closingIndex = j;
-            // First match complete, let's try to parse this substring
-            const candidate = cleaned.substring(i, closingIndex + 1);
-            try {
-              return JSON.parse(candidate);
-            } catch (err) {
-              // Not a valid JSON block, continue searching
-            }
-          }
-        }
-      }
-    }
-  }
-
-  // 4. If all else fails, do a last-ditch effort with first '[' or '{' and last ']' or '}'
-  const firstSquare = cleaned.indexOf('[');
-  const firstCurly = cleaned.indexOf('{');
-  
-  let firstChar = -1;
-  let lastChar = -1;
-  
-  if (firstSquare !== -1 && (firstCurly === -1 || firstSquare < firstCurly)) {
-    firstChar = firstSquare;
-    lastChar = cleaned.lastIndexOf(']');
-  } else if (firstCurly !== -1) {
-    firstChar = firstCurly;
-    lastChar = cleaned.lastIndexOf('}');
-  }
-  
-  if (firstChar !== -1 && lastChar !== -1 && lastChar > firstChar) {
-    const candidate = cleaned.substring(firstChar, lastChar + 1);
-    try {
-      return JSON.parse(candidate);
-    } catch (substringErr) {
-      console.error("Subsegment parsing failed as well:", substringErr);
-    }
-  }
-  
-  console.error("Failed to parse JSON directly/indirectly. Original text:", text);
-  return defaultValue;
-};
-
 // A chave do criador NÃO fica mais no código do navegador: ela mora apenas no servidor
 // (variável GEMINI_API_KEY na Netlify Function /api/gemini/*). Quem quiser pode usar a
 // própria chave em Configurações; ela vai no cabeçalho x-custom-api-key.
@@ -9901,6 +9094,111 @@ export { readCustomGeminiKey, geminiAuthHeaders };
 
 export { isValidGeminiApiKey } from './lib/gemini';
 import { isValidGeminiApiKey } from './lib/gemini';
+// --- Phase 1 extracted modules (AST) ---
+import type {
+  Empresa,
+  EmpresaCredenciada,
+  Premissa,
+  Problema,
+  Diagnostico,
+  Resposta,
+  Solucao,
+  TarefaPlanoAcao,
+  DadosConsultoria,
+  AtividadeCronograma,
+} from './types/domain';
+
+export type {
+  Empresa,
+  EmpresaCredenciada,
+  Premissa,
+  Problema,
+  Diagnostico,
+  Resposta,
+  Solucao,
+  TarefaPlanoAcao,
+  DadosConsultoria,
+  AtividadeCronograma,
+};
+
+import {
+  cleanDigits,
+  formatCNPJ,
+  isValidCNPJ,
+  formatCEP,
+  formatCPF,
+  isValidCPF,
+} from './lib/formatters/br';
+import {
+  getMdaExpirationStatus,
+  parseLocalDate,
+  formatFirestoreDate,
+  getActivityDateStr,
+} from './lib/formatters/dates';
+import { sanitizeForFirestore } from './lib/firestore/sanitize';
+import { oklchToRgb, captureElementWithHtml2Canvas } from './lib/pdf/capture';
+import {
+  CONSULTORIA_AREAS,
+  AREAS,
+  AREAS_ORDER,
+  TIPOS_EMPRESA,
+  IMPACTO_ORDER,
+} from './lib/constants/areas';
+import { LICENSE_FIELDS } from './lib/constants/license';
+import { normalizeAndFormatArea, globalNormalizedMatch } from './lib/domain/areas';
+import {
+  pickLicenseFields,
+  extractItemTimestamp,
+  toJsDate,
+  computeLicenseDaysLeft,
+} from './lib/domain/license';
+import {
+  deduplicateRespostas,
+  loadAllLocalRespostas,
+  saveAllLocalRespostas,
+  getRespostasForDiagnostico,
+} from './lib/domain/respostas';
+import { isValidLogoSource } from './lib/media/logo';
+import { Type } from './lib/ai/schemaTypes';
+import { extractAndParseJSON } from './lib/ai/parseJson';
+import { useAuth } from './features/auth/hooks/useAuth';
+import { LoginView } from './features/auth/components/LoginView';
+
+export {
+  cleanDigits,
+  formatCNPJ,
+  isValidCNPJ,
+  formatCEP,
+  formatCPF,
+  isValidCPF,
+  getMdaExpirationStatus,
+  parseLocalDate,
+  formatFirestoreDate,
+  getActivityDateStr,
+  sanitizeForFirestore,
+  oklchToRgb,
+  captureElementWithHtml2Canvas,
+  CONSULTORIA_AREAS,
+  AREAS,
+  AREAS_ORDER,
+  TIPOS_EMPRESA,
+  IMPACTO_ORDER,
+  LICENSE_FIELDS,
+  normalizeAndFormatArea,
+  globalNormalizedMatch,
+  pickLicenseFields,
+  extractItemTimestamp,
+  toJsDate,
+  computeLicenseDaysLeft,
+  deduplicateRespostas,
+  loadAllLocalRespostas,
+  saveAllLocalRespostas,
+  getRespostasForDiagnostico,
+  isValidLogoSource,
+  Type,
+  extractAndParseJSON,
+};
+
 
 let aiInstance: any = null;
 export const getAI = () => {
@@ -10261,33 +9559,6 @@ const generateAISuggestions = async (probNome: string, noResponses: Resposta[], 
     throw error;
   }
 };
-
-
-const TIPOS_EMPRESA = [
-  "Geral",
-  "Comércio",
-  "Serviços",
-  "Indústria",
-  "Agronegócio",
-  "Alimentos e Bebidas"
-];
-
-const AREAS_ORDER = [
-  "Estratégico",
-  "Financeiro",
-  "Acesso a Crédito",
-  "Crédito",
-  "Marketing",
-  "Vendas",
-  "Operacional",
-  "Recursos Humanos",
-  "Tecnologia",
-  "Logística",
-  "Jurídico",
-  "Atendimento",
-  "Geral"
-];
-
 // --- Components ---
 // (We moved Modal and Button to separate files)
 
@@ -10326,64 +9597,28 @@ const MarkdownText = ({ text }: { text: string }) => {
   );
 };
 
-let cachedAllRespostasMap: Map<string, Resposta> | null = null;
-
-export const loadAllLocalRespostas = (): Resposta[] => {
-  if (cachedAllRespostasMap) {
-    return Array.from(cachedAllRespostasMap.values());
-  }
-  try {
-    const saved = localStorage.getItem('local_all_respostas');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        cachedAllRespostasMap = new Map(parsed.map(r => [r.id, r]));
-        return parsed;
-      }
-    }
-    const legacy = localStorage.getItem('local_respostas');
-    if (legacy) {
-      const parsed = JSON.parse(legacy);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        cachedAllRespostasMap = new Map(parsed.map(r => [r.id, r]));
-        return parsed;
-      }
-    }
-  } catch (e) {
-    console.error("Erro ao carregar respostas locais:", e);
-  }
-  cachedAllRespostasMap = new Map();
-  return [];
-};
-
-export const saveAllLocalRespostas = (newOrUpdated: Resposta[]) => {
-  try {
-    if (!newOrUpdated || newOrUpdated.length === 0) return;
-    if (!cachedAllRespostasMap) {
-      loadAllLocalRespostas();
-    }
-    newOrUpdated.forEach(r => {
-      if (r?.id) cachedAllRespostasMap!.set(r.id, r);
-    });
-    const all = Array.from(cachedAllRespostasMap!.values());
-    localStorage.setItem('local_all_respostas', JSON.stringify(all));
-    localStorage.setItem('local_respostas', JSON.stringify(all));
-  } catch (e) {
-    console.error("Erro ao salvar respostas locais:", e);
-  }
-};
-
-export const getRespostasForDiagnostico = (diagId: string): Resposta[] => {
-  const all = loadAllLocalRespostas();
-  return all.filter(r => r.diagnosticoId === diagId);
-};
-
 export default function App() {
+  // Phase 2: auth from context (AuthProvider in main.tsx)
+  const {
+    user: authUser,
+    loading: authLoading,
+    logout: authLogout,
+    authError: ctxAuthError,
+    authSuccess: ctxAuthSuccess,
+  } = useAuth();
+
   const syncedDiagsRef = useRef<Set<string>>(new Set());
   const pendingResponsesBuffer = useRef<Map<string, Resposta>>(new Map());
   const saveDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Sync Firebase user from AuthProvider (single source of truth)
+  useEffect(() => {
+    setUser(authUser);
+    setLoading(authLoading);
+  }, [authUser, authLoading]);
+
 
   // Save status indicator states
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving'>('saved');
@@ -17565,166 +16800,11 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
   if (!user) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full p-8 text-center shadow-xl border-emerald-100">
-          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <Building2 size={32} />
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">Diagnóstico Empresarial</h1>
-          <p className="text-slate-500 mb-6">
-            {authMode === 'login' ? 'Faça login para gerenciar seus clientes.' : authMode === 'register' ? 'Crie sua conta para começar.' : 'Informe seu e-mail para recuperar o acesso.'}
-          </p>
-
-          {authError && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm text-left">
-              {authError}
-            </div>
-          )}
-          {authSuccess && (
-            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg text-sm text-left flex items-start gap-2">
-              <CheckCircle2 size={16} className="shrink-0 mt-0.5" />
-              <span>{authSuccess}</span>
-            </div>
-          )}
-
-          {authMode === 'reset' ? (
-            <>
-              <form onSubmit={handlePasswordReset} className="space-y-4 mb-6">
-                <div>
-                  <input
-                    type="email"
-                    placeholder="Seu e-mail"
-                    value={authEmail}
-                    onChange={(e) => setAuthEmail(e.target.value)}
-                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-left"
-                    required
-                    autoFocus
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  disabled={isSendingResetEmail}
-                  className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  {isSendingResetEmail ? (
-                    <>
-                      <RefreshCw size={16} className="animate-spin" /> Enviando...
-                    </>
-                  ) : (
-                    'Enviar Link de Recuperação'
-                  )}
-                </Button>
-              </form>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => {
-                  setAuthMode('login');
-                  setAuthError('');
-                  setAuthSuccess('');
-                }}
-                className="w-full py-3 text-slate-500 hover:text-slate-800"
-              >
-                Voltar para o Login
-              </Button>
-            </>
-          ) : (
-            <>
-              <form onSubmit={handleEmailAuth} className="space-y-4 mb-2">
-                <div>
-                  <input
-                    type="email"
-                    placeholder="Seu e-mail"
-                    value={authEmail}
-                    onChange={(e) => setAuthEmail(e.target.value)}
-                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-left"
-                    required
-                  />
-                </div>
-                <div>
-                  <input
-                    type="password"
-                    placeholder="Sua senha"
-                    value={authPassword}
-                    onChange={(e) => setAuthPassword(e.target.value)}
-                    className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all text-left"
-                    required
-                    minLength={6}
-                  />
-                </div>
-                {authMode === 'login' && (
-                  <div className="text-right -mt-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAuthMode('reset');
-                        setAuthError('');
-                        setAuthSuccess('');
-                      }}
-                      className="text-xs font-semibold text-emerald-600 hover:text-emerald-800 hover:underline"
-                    >
-                      Esqueci minha senha
-                    </button>
-                  </div>
-                )}
-                <Button type="submit" className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-colors">
-                  {authMode === 'login' ? 'Entrar' : 'Criar Conta'}
-                </Button>
-              </form>
-
-              {authMode === 'login' ? (
-                <div className="space-y-4 mt-4">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => {
-                      setAuthMode('register');
-                      setAuthError('');
-                      setAuthSuccess('');
-                    }} 
-                    className="w-full py-3 border-emerald-200 text-emerald-700 hover:bg-emerald-50 font-semibold"
-                  >
-                    Cadastro de Usuário
-                  </Button>
-
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-slate-200"></div>
-                    </div>
-                    <div className="relative flex justify-center text-sm">
-                      <span className="px-2 bg-white text-slate-500">Ou continue com</span>
-                    </div>
-                  </div>
-
-                  <Button onClick={handleGoogleLogin} variant="outline" className="w-full py-3 flex items-center justify-center gap-2">
-                    <svg className="w-5 h-5" viewBox="0 0 24 24">
-                      <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                    </svg>
-                    Google
-                  </Button>
-                </div>
-              ) : (
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  onClick={() => {
-                    setAuthMode('login');
-                    setAuthError('');
-                    setAuthSuccess('');
-                  }} 
-                  className="w-full py-3 text-slate-500 hover:text-slate-800"
-                >
-                  Voltar para o Login
-                </Button>
-              )}
-            </>
-          )}
-        </Card>
+        <LoginView />
       </div>
     );
   }
+
 
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden print:bg-white print:overflow-visible print:block print:h-auto print:min-h-0">
