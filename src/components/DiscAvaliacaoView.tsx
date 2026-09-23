@@ -534,7 +534,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
           if (groqKey && !getGroqApiKey()) {
             localStorage.setItem('custom_groq_api_key', groqKey);
           }
-          const groqRes = await callGroqChat({ contents: prompt, model: 'llama-3.3-70b-versatile' });
+          const groqRes = await callGroqChat({ contents: prompt, model: 'llama3-70b-8192' });
           if (groqRes && groqRes.text) {
             aiText = groqRes.text;
           }
@@ -582,10 +582,10 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
           if (!activeKey) {
             if (groqKey) {
               // Tentativa de contingência com Groq se ainda não tentou
-              const groqRes = await callGroqChat({ contents: prompt, model: 'llama-3.3-70b-versatile' });
+              const groqRes = await callGroqChat({ contents: prompt, model: 'llama3-70b-8192' });
               aiText = groqRes.text;
             } else {
-              throw new Error("Não foi possível falar com o servidor de IA. Configure uma chave da Groq (Llama 3.3) ou do Gemini em Configurações.");
+              throw new Error("Não foi possível falar com o servidor de IA. Configure uma chave da Groq (Llama 3) ou do Gemini em Configurações.");
             }
           } else {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${activeKey}`;

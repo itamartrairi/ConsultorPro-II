@@ -7586,7 +7586,7 @@ const SettingsView = ({
       return;
     }
     setGroqStatus({ ok: true, message: 'Chave da Groq salva com sucesso no dispositivo!' });
-    alert('Chave Groq salva com sucesso! O modelo Llama 3.3 70B Versatile está pronto para uso.');
+    alert('Chave Groq salva com sucesso! O modelo Llama 3 70B está pronto para uso.');
   };
 
   const handleTestGroqKey = async () => {
@@ -7601,7 +7601,7 @@ const SettingsView = ({
       const result = await testGroqKey(keyToTest);
       setGroqStatus({ ok: result.ok, message: result.message });
       if (result.ok) {
-        alert('Sucesso! Conexão realizada com a Groq (Llama 3.3 70B Versatile).');
+        alert('Sucesso! Conexão realizada com a Groq (Llama 3 70B).');
       } else {
         alert('Falha ao conectar com a Groq:\n\n' + result.message);
       }
@@ -7766,7 +7766,7 @@ const SettingsView = ({
                   : (geminiApiKeyInput.trim() ? 'bg-emerald-100 text-emerald-800' : isSystemKeyActive ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800')
               }`}>
                 {activeProvider === 'groq'
-                  ? (groqApiKeyInput.trim() ? '✓ Groq (Llama 3.3) Ativo' : '⚠ Groq Não Configurado')
+                  ? (groqApiKeyInput.trim() ? '✓ Groq (Llama 3) Ativo' : '⚠ Groq Não Configurado')
                   : (geminiApiKeyInput.trim() ? '✓ Gemini Configurado' : isSystemKeyActive ? '✓ Gemini Sistema Ativo' : '⚠ Gemini Não Configurado')}
               </span>
             </div>
@@ -7790,7 +7790,7 @@ const SettingsView = ({
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2 font-bold text-sm text-slate-800">
                   <Zap size={16} className={activeProvider === 'groq' ? 'text-indigo-600' : 'text-slate-500'} />
-                  <span>Groq Cloud (Llama 3.3 70B)</span>
+                  <span>Groq Cloud (Llama 3 70B)</span>
                 </div>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
                   Recomendado
@@ -9312,7 +9312,7 @@ export const getAI = () => {
             if (groqKey && !getGroqApiKey()) {
               localStorage.setItem('custom_groq_api_key', groqKey);
             }
-            const groqRes = await callGroqChat({ contents, config, model: 'llama-3.3-70b-versatile' });
+            const groqRes = await callGroqChat({ contents, config, model: 'llama3-70b-8192' });
             if (groqRes && groqRes.text) {
               setCachedAI(cacheKey, groqRes.text).catch(() => {});
               return { text: groqRes.text };
@@ -9373,7 +9373,7 @@ export const getAI = () => {
             // Se falhou no proxy e temos chave da Groq, tenta Groq antes de desistir
             if (groqKey) {
               try {
-                const groqRes = await callGroqChat({ contents, config, model: 'llama-3.3-70b-versatile' });
+                const groqRes = await callGroqChat({ contents, config, model: 'llama3-70b-8192' });
                 if (groqRes && groqRes.text) {
                   setCachedAI(cacheKey, groqRes.text).catch(() => {});
                   return { text: groqRes.text };
@@ -9392,7 +9392,7 @@ export const getAI = () => {
         if (!finalKey || !isValidGeminiApiKey(finalKey)) {
           // Se não há chave válida do Gemini mas há chave da Groq, tenta Groq
           if (groqKey) {
-            const groqRes = await callGroqChat({ contents, config, model: 'llama-3.3-70b-versatile' });
+            const groqRes = await callGroqChat({ contents, config, model: 'llama3-70b-8192' });
             if (groqRes && groqRes.text) {
               setCachedAI(cacheKey, groqRes.text).catch(() => {});
               return { text: groqRes.text };
@@ -9402,7 +9402,7 @@ export const getAI = () => {
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('open-gemini-tutorial-modal'));
           }
-          throw new Error("Chave de Inteligência Artificial não configurada.\n\nPor favor, insira sua chave gratuita da Groq (Llama 3.3) ou do Google Gemini no menu Configurações.");
+          throw new Error("Chave de Inteligência Artificial não configurada.\n\nPor favor, insira sua chave gratuita da Groq (Llama 3) ou do Google Gemini no menu Configurações.");
         }
 
         const GEMINI_PRIMARY = "gemini-2.0-flash";
@@ -9513,7 +9513,7 @@ export const getAI = () => {
         if (groqKey) {
           try {
             console.log("[AI Fallback] Falha no Gemini. Tentando Groq como contingência...");
-            const groqRes = await callGroqChat({ contents, config, model: 'llama-3.3-70b-versatile' });
+            const groqRes = await callGroqChat({ contents, config, model: 'llama3-70b-8192' });
             if (groqRes && groqRes.text) {
               setCachedAI(cacheKey, groqRes.text).catch(() => {});
               return { text: groqRes.text };
