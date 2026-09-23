@@ -62,13 +62,13 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
         if (result.ok) {
           setTestResult({
             ok: true,
-            message: '✓ Conexão bem-sucedida com Groq! Sua chave está ativa e pronta para uso.'
+            message: 'âœ“ ConexÃ£o bem-sucedida com Groq! Sua chave estÃ¡ ativa e pronta para uso.'
           });
         } else {
           throw new Error(result.message);
         }
       } else {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${keyToTest}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${keyToTest}`;
         const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -84,13 +84,13 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
 
         setTestResult({
           ok: true,
-          message: '✓ Conexão bem-sucedida! Sua chave está ativa e pronta para uso.'
+          message: 'âœ“ ConexÃ£o bem-sucedida! Sua chave estÃ¡ ativa e pronta para uso.'
         });
       }
     } catch (err: any) {
       setTestResult({
         ok: false,
-        message: 'Falha na validação: ' + (err?.message || 'Verifique se a chave foi copiada por completo.')
+        message: 'Falha na validaÃ§Ã£o: ' + (err?.message || 'Verifique se a chave foi copiada por completo.')
       });
     } finally {
       setIsTesting(false);
@@ -100,7 +100,7 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
   const handleSave = () => {
     const key = apiKeyInput.trim();
     if (!key) {
-      setTestResult({ ok: false, message: 'Insira uma chave válida antes de salvar.' });
+      setTestResult({ ok: false, message: 'Insira uma chave vÃ¡lida antes de salvar.' });
       return;
     }
     localStorage.setItem('custom_gemini_api_key', key);
@@ -108,7 +108,7 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
     onClose();
   };
 
-  // Volta a usar a chave do sistema, que fica guardada só no servidor.
+  // Volta a usar a chave do sistema, que fica guardada sÃ³ no servidor.
   const handleUseSystemDefault = () => {
     setApiKeyInput('');
     localStorage.removeItem('custom_gemini_api_key');
@@ -138,7 +138,7 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
                 Como Criar e Configurar sua Chave da IA
               </h3>
               <p className="text-xs text-indigo-100 font-medium">
-                Google Gemini • 100% Gratuito e sem cartão de crédito
+                Google Gemini â€¢ 100% Gratuito e sem cartÃ£o de crÃ©dito
               </p>
             </div>
           </div>
@@ -150,25 +150,25 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
           </button>
         </div>
 
-        {/* Corpo com o tutorial didático */}
+        {/* Corpo com o tutorial didÃ¡tico */}
         <div className="p-6 overflow-y-auto space-y-6 flex-1 text-slate-700">
           
           {/* Mensagem de Boas-Vindas para Compartilhamento */}
           <div className="p-4 bg-indigo-50/70 border border-indigo-100 rounded-2xl flex items-start gap-3">
             <ShieldCheck className="text-indigo-600 shrink-0 mt-0.5" size={20} />
             <div className="text-xs text-indigo-950 leading-relaxed">
-              <span className="font-bold">Por que configurar sua própria chave?</span>
+              <span className="font-bold">Por que configurar sua prÃ³pria chave?</span>
               <p className="text-indigo-800 mt-0.5">
-                Para que cada consultor tenha sua própria cota gratuita e independente de Inteligência Artificial sem sobrecarregar a equipe, o sistema permite cadastrar sua chave pessoal em menos de 1 minuto.
+                Para que cada consultor tenha sua prÃ³pria cota gratuita e independente de InteligÃªncia Artificial sem sobrecarregar a equipe, o sistema permite cadastrar sua chave pessoal em menos de 1 minuto.
               </p>
             </div>
           </div>
 
-          {/* Passo a Passo Didático */}
+          {/* Passo a Passo DidÃ¡tico */}
           <div className="space-y-3.5">
             <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
               <HelpCircle size={15} className="text-indigo-600" />
-              Siga os 4 passos rápidos:
+              Siga os 4 passos rÃ¡pidos:
             </h4>
 
             {/* Passo 1 */}
@@ -179,7 +179,7 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
               <div className="flex-1 text-xs">
                 <p className="font-bold text-slate-800">Acesse o Google AI Studio</p>
                 <p className="text-slate-500 mt-0.5">
-                  Abra o portal oficial da Google onde as chaves gratuitas são emitidas.
+                  Abra o portal oficial da Google onde as chaves gratuitas sÃ£o emitidas.
                 </p>
                 <div className="mt-2 flex items-center gap-2 flex-wrap">
                   <a 
@@ -209,9 +209,9 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
                 2
               </div>
               <div className="flex-1 text-xs">
-                <p className="font-bold text-slate-800">Faça login com sua Conta Google</p>
+                <p className="font-bold text-slate-800">FaÃ§a login com sua Conta Google</p>
                 <p className="text-slate-500 mt-0.5">
-                  Utilize qualquer conta Gmail existente. É 100% gratuito e não exige dados de pagamento.
+                  Utilize qualquer conta Gmail existente. Ã‰ 100% gratuito e nÃ£o exige dados de pagamento.
                 </p>
               </div>
             </div>
@@ -224,7 +224,7 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
               <div className="flex-1 text-xs">
                 <p className="font-bold text-slate-800">Clique em "Create API key" (Criar chave de API)</p>
                 <p className="text-slate-500 mt-0.5">
-                  Selecione seu projeto (ou crie um novo padrão) e copie a chave gerada. Ela começará com <code className="bg-slate-200 px-1 py-0.5 rounded text-indigo-700 font-mono font-bold">AQ.</code> ou <code className="bg-slate-200 px-1 py-0.5 rounded text-indigo-700 font-mono font-bold">AIzaSy...</code>
+                  Selecione seu projeto (ou crie um novo padrÃ£o) e copie a chave gerada. Ela comeÃ§arÃ¡ com <code className="bg-slate-200 px-1 py-0.5 rounded text-indigo-700 font-mono font-bold">AQ.</code> ou <code className="bg-slate-200 px-1 py-0.5 rounded text-indigo-700 font-mono font-bold">AIzaSy...</code>
                 </p>
               </div>
             </div>
@@ -237,13 +237,13 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
               <div className="flex-1 text-xs">
                 <p className="font-bold text-slate-800">Cole a chave no campo abaixo</p>
                 <p className="text-slate-500 mt-0.5">
-                  Cole sua chave e clique em <b>Testar e Salvar</b>. Ela ficará salva exclusivamente na sua máquina.
+                  Cole sua chave e clique em <b>Testar e Salvar</b>. Ela ficarÃ¡ salva exclusivamente na sua mÃ¡quina.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Campo de Inserção da Chave */}
+          {/* Campo de InserÃ§Ã£o da Chave */}
           <div className="pt-3 border-t border-slate-100 space-y-3">
             <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center justify-between">
               <span className="flex items-center gap-1.5">
@@ -299,7 +299,7 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
           </div>
         </div>
 
-        {/* Rodapé com ações */}
+        {/* RodapÃ© com aÃ§Ãµes */}
         <div className="px-6 py-4 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 border-t border-slate-100">
           <button
             type="button"

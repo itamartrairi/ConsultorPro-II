@@ -187,9 +187,9 @@ import {
 // --- Safe LocalStorage with AES-256 Encryption at Rest ---
 const safeLocalStorage = encryptedLocalStorage;
 const localStorage = safeLocalStorage;
-// --- UtilitÃ¡rios de ValidaÃ§Ã£o e FormataÃ§Ã£o (PadrÃ£o Brasileiro - CPF e CNPJ) ---
+// --- UtilitÃƒÂ¡rios de ValidaÃƒÂ§ÃƒÂ£o e FormataÃƒÂ§ÃƒÂ£o (PadrÃƒÂ£o Brasileiro - CPF e CNPJ) ---
 // --- Utility ---
-// Retorna apenas os campos de licenÃ§a presentes no documento da nuvem.
+// Retorna apenas os campos de licenÃƒÂ§a presentes no documento da nuvem.
 
 enum OperationType {
   CREATE = 'create',
@@ -232,9 +232,9 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
   console.warn(`[Firestore ${operationType}] ${path}:`, errMsg);
 
   if (isQuotaError(error)) {
-    console.warn('Cota do Firestore excedida (resource-exhausted). Mantendo dados na memÃ³ria local.');
+    console.warn('Cota do Firestore excedida (resource-exhausted). Mantendo dados na memÃƒÂ³ria local.');
     if (operationType === OperationType.WRITE) {
-      alert("Cota de gravaÃ§Ã£o do Firestore excedida no projeto gratuito. As alteraÃ§Ãµes foram salvas e mantidas localmente nesta sessÃ£o.");
+      alert("Cota de gravaÃƒÂ§ÃƒÂ£o do Firestore excedida no projeto gratuito. As alteraÃƒÂ§ÃƒÂµes foram salvas e mantidas localmente nesta sessÃƒÂ£o.");
     }
     return;
   }
@@ -327,7 +327,7 @@ const TagInputManager = ({
         <input
           type="text"
           className="flex-1 min-w-[150px] px-2 py-1 text-sm outline-none bg-transparent placeholder:text-slate-400 font-sans"
-          placeholder={tags.length === 0 ? "Digite tags (Enter ou vÃ­rgula)..." : "Adicionar tag..."}
+          placeholder={tags.length === 0 ? "Digite tags (Enter ou vÃƒÂ­rgula)..." : "Adicionar tag..."}
           value={inputVal}
           onChange={(e) => setInputVal(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -394,20 +394,20 @@ const adjustActivitiesMax4Hours = (
       rawCleanList.push({
         ...atv,
         nome: "Desenvolvimento de sistema, aplicativos ou planilhas",
-        descricao: atv.descricao || "AnÃ¡lise e desenvolvimento de sistema de gestÃ£o, aplicativo ou planilhas para automaÃ§Ã£o e controle operacional e financeiro do negÃ³cio.",
+        descricao: atv.descricao || "AnÃƒÂ¡lise e desenvolvimento de sistema de gestÃƒÂ£o, aplicativo ou planilhas para automaÃƒÂ§ÃƒÂ£o e controle operacional e financeiro do negÃƒÂ³cio.",
         cargaHoraria: "8h",
         solucaoProposta: atv.solucaoProposta || "Desenvolvimento de sistema, aplicativo e planilhas",
         resultadoEsperado: atv.resultadoEsperado || "Sistema, aplicativo ou planilhas desenvolvidas e implantadas na rotina da empresa."
       });
-    } else if (nameLower.includes('anÃ¡lise final') || nameLower.includes('analise final')) {
+    } else if (nameLower.includes('anÃƒÂ¡lise final') || nameLower.includes('analise final')) {
       hasAnaliseFinal = true;
       rawCleanList.push({
         ...atv,
-        nome: "AnÃ¡lise final de atividades da consultoria",
-        descricao: atv.descricao || "AnÃ¡lise crÃ­tica final e mensuraÃ§Ã£o de todas as atividades e resultados executados na consultoria.",
+        nome: "AnÃƒÂ¡lise final de atividades da consultoria",
+        descricao: atv.descricao || "AnÃƒÂ¡lise crÃƒÂ­tica final e mensuraÃƒÂ§ÃƒÂ£o de todas as atividades e resultados executados na consultoria.",
         cargaHoraria: "2h",
-        solucaoProposta: atv.solucaoProposta || "AnÃ¡lise final de atividades da consultoria",
-        resultadoEsperado: atv.resultadoEsperado || "AvaliaÃ§Ã£o detalhada e validaÃ§Ã£o final do cumprimento do escopo da consultoria."
+        solucaoProposta: atv.solucaoProposta || "AnÃƒÂ¡lise final de atividades da consultoria",
+        resultadoEsperado: atv.resultadoEsperado || "AvaliaÃƒÂ§ÃƒÂ£o detalhada e validaÃƒÂ§ÃƒÂ£o final do cumprimento do escopo da consultoria."
       });
     } else {
       rawCleanList.push(atv);
@@ -418,9 +418,9 @@ const adjustActivitiesMax4Hours = (
   if (!hasDevSystem) {
     rawCleanList.push({
       nome: "Desenvolvimento de sistema, aplicativos ou planilhas",
-      descricao: "AnÃ¡lise e desenvolvimento de sistema de gestÃ£o, aplicativo ou planilhas personalizadas para automaÃ§Ã£o dos controles da empresa.",
+      descricao: "AnÃƒÂ¡lise e desenvolvimento de sistema de gestÃƒÂ£o, aplicativo ou planilhas personalizadas para automaÃƒÂ§ÃƒÂ£o dos controles da empresa.",
       cargaHoraria: "8h",
-      solucaoProposta: "Desenvolvimento de sistema, aplicativo ou planilhas de gestÃ£o",
+      solucaoProposta: "Desenvolvimento de sistema, aplicativo ou planilhas de gestÃƒÂ£o",
       responsavel: "Consultor",
       status: "Pendente",
       prioridade: "Alta",
@@ -430,53 +430,53 @@ const adjustActivitiesMax4Hours = (
 
   if (!hasAnaliseFinal) {
     rawCleanList.push({
-      nome: "AnÃ¡lise final de atividades da consultoria",
-      descricao: "AnÃ¡lise de encerramento e verificaÃ§Ã£o do alcance dos indicadores e resultados previstos no plano de trabalho.",
+      nome: "AnÃƒÂ¡lise final de atividades da consultoria",
+      descricao: "AnÃƒÂ¡lise de encerramento e verificaÃƒÂ§ÃƒÂ£o do alcance dos indicadores e resultados previstos no plano de trabalho.",
       cargaHoraria: "2h",
-      solucaoProposta: "AnÃ¡lise final e consolidaÃ§Ã£o de resultados da consultoria",
+      solucaoProposta: "AnÃƒÂ¡lise final e consolidaÃƒÂ§ÃƒÂ£o de resultados da consultoria",
       responsavel: "Consultor",
       status: "Pendente",
-      prioridade: "MÃ©dia",
+      prioridade: "MÃƒÂ©dia",
       resultadoEsperado: "Checklist final de entregas e resultados validados."
     });
   }
 
   // Ensure diagnostic start and end report exist
-  const hasStartDiag = rawCleanList.some(a => (a.nome || '').toLowerCase().includes('diagnÃ³stico inicial') || (a.nome || '').toLowerCase().includes('entendimento'));
+  const hasStartDiag = rawCleanList.some(a => (a.nome || '').toLowerCase().includes('diagnÃƒÂ³stico inicial') || (a.nome || '').toLowerCase().includes('entendimento'));
   if (!hasStartDiag) {
     rawCleanList.unshift({
-      nome: "Entendimento da demanda e diagnÃ³stico inicial",
+      nome: "Entendimento da demanda e diagnÃƒÂ³stico inicial",
       descricao: "Alinhamento das expectativas do cliente e levantamento detalhado das necessidades operacionais e financeiras.",
       cargaHoraria: "4h",
-      solucaoProposta: "Entendimento da demanda e diagnÃ³stico inicial",
+      solucaoProposta: "Entendimento da demanda e diagnÃƒÂ³stico inicial",
       responsavel: "Consultor",
       status: "Pendente",
       prioridade: "Alta",
-      resultadoEsperado: "Expectativas alinhadas e diagnÃ³stico operacional consolidado."
+      resultadoEsperado: "Expectativas alinhadas e diagnÃƒÂ³stico operacional consolidado."
     });
   }
 
-  const hasEndReport = rawCleanList.some(a => (a.nome || '').toLowerCase().includes('relatÃ³rio final') || (a.nome || '').toLowerCase().includes('encerramento'));
+  const hasEndReport = rawCleanList.some(a => (a.nome || '').toLowerCase().includes('relatÃƒÂ³rio final') || (a.nome || '').toLowerCase().includes('encerramento'));
   if (!hasEndReport) {
     rawCleanList.push({
-      nome: "RelatÃ³rio final e encerramento",
-      descricao: "ElaboraÃ§Ã£o, apresentaÃ§Ã£o do relatÃ³rio tÃ©cnico final da consultoria e formalizaÃ§Ã£o do encerramento.",
+      nome: "RelatÃƒÂ³rio final e encerramento",
+      descricao: "ElaboraÃƒÂ§ÃƒÂ£o, apresentaÃƒÂ§ÃƒÂ£o do relatÃƒÂ³rio tÃƒÂ©cnico final da consultoria e formalizaÃƒÂ§ÃƒÂ£o do encerramento.",
       cargaHoraria: "2h",
-      solucaoProposta: "ElaboraÃ§Ã£o e apresentaÃ§Ã£o do relatÃ³rio final.",
+      solucaoProposta: "ElaboraÃƒÂ§ÃƒÂ£o e apresentaÃƒÂ§ÃƒÂ£o do relatÃƒÂ³rio final.",
       responsavel: "Consultor",
       status: "Pendente",
-      prioridade: "MÃ©dia",
-      resultadoEsperado: "RelatÃ³rio final gerencial apresentado e aprovado pelo cliente."
+      prioridade: "MÃƒÂ©dia",
+      resultadoEsperado: "RelatÃƒÂ³rio final gerencial apresentado e aprovado pelo cliente."
     });
   }
 
   // Assign weight for logical execution sequence
   const getWeight = (a: AtividadeCronograma): number => {
     const name = (a.nome || a.solucaoProposta || '').toLowerCase();
-    if (name.includes('diagnÃ³stico inicial') || name.includes('entendimento da demanda')) return 1;
+    if (name.includes('diagnÃƒÂ³stico inicial') || name.includes('entendimento da demanda')) return 1;
     if (name.includes('desenvolvimento de sistema') || name.includes('aplicativo') || name.includes('planilha')) return 8;
-    if (name.includes('anÃ¡lise final') || name.includes('analise final')) return 9;
-    if (name.includes('relatÃ³rio final') || name.includes('encerramento')) return 10;
+    if (name.includes('anÃƒÂ¡lise final') || name.includes('analise final')) return 9;
+    if (name.includes('relatÃƒÂ³rio final') || name.includes('encerramento')) return 10;
     return 5;
   };
 
@@ -518,84 +518,84 @@ const adjustActivitiesMax4Hours = (
 
 const PLANO_DE_ACAO_PADRAO: AtividadeCronograma[] = [
   {
-    nome: "Entendimento da demanda e diagnÃ³stico inicial",
+    nome: "Entendimento da demanda e diagnÃƒÂ³stico inicial",
     descricao: "Alinhamento das expectativas do cliente e levantamento de dados operacionais e financeiros atuais.",
     cargaHoraria: "4h",
-    solucaoProposta: "Entendimento da demanda e diagnÃ³stico inicial",
+    solucaoProposta: "Entendimento da demanda e diagnÃƒÂ³stico inicial",
     responsavel: "Consultor",
     status: "Pendente",
     prioridade: "Alta",
-    resultadoEsperado: "Expectativas alinhadas e diagnÃ³stico operacional/financeiro inicial consolidado."
+    resultadoEsperado: "Expectativas alinhadas e diagnÃƒÂ³stico operacional/financeiro inicial consolidado."
   },
   {
     nome: "Estrutura do Controle de Custos Operacionais",
-    descricao: "ImplementaÃ§Ã£o de mÃ©todos para registro rigoroso de insumos e despesas operacionais.",
+    descricao: "ImplementaÃƒÂ§ÃƒÂ£o de mÃƒÂ©todos para registro rigoroso de insumos e despesas operacionais.",
     cargaHoraria: "4h",
-    solucaoProposta: "EstruturaÃ§Ã£o de registros e controles de custos operacionais.",
+    solucaoProposta: "EstruturaÃƒÂ§ÃƒÂ£o de registros e controles de custos operacionais.",
     responsavel: "Consultor/Produtor",
     status: "Pendente",
     prioridade: "Alta",
     resultadoEsperado: "Controle de insumos estruturado e planilhas implantadas na rotina do cliente."
   },
   {
-    nome: "CÃ¡lculo do Custo de ProduÃ§Ã£o e PrecificaÃ§Ã£o",
-    descricao: "ApuraÃ§Ã£o tÃ©cnica do custo real unitÃ¡rio e definiÃ§Ã£o de margem de contribuiÃ§Ã£o.",
+    nome: "CÃƒÂ¡lculo do Custo de ProduÃƒÂ§ÃƒÂ£o e PrecificaÃƒÂ§ÃƒÂ£o",
+    descricao: "ApuraÃƒÂ§ÃƒÂ£o tÃƒÂ©cnica do custo real unitÃƒÂ¡rio e definiÃƒÂ§ÃƒÂ£o de margem de contribuiÃƒÂ§ÃƒÂ£o.",
     cargaHoraria: "4h",
-    solucaoProposta: "AnÃ¡lise tÃ©cnica de custos e apuraÃ§Ã£o do preÃ§o de venda ideal.",
+    solucaoProposta: "AnÃƒÂ¡lise tÃƒÂ©cnica de custos e apuraÃƒÂ§ÃƒÂ£o do preÃƒÂ§o de venda ideal.",
     responsavel: "Consultor",
     status: "Pendente",
     prioridade: "Alta",
-    resultadoEsperado: "Custo unitÃ¡rio e margem de contribuiÃ§Ã£o calculados com precisÃ£o matemÃ¡tica."
+    resultadoEsperado: "Custo unitÃƒÂ¡rio e margem de contribuiÃƒÂ§ÃƒÂ£o calculados com precisÃƒÂ£o matemÃƒÂ¡tica."
   },
   {
-    nome: "IntroduÃ§Ã£o Ã  GestÃ£o Financeira e Fluxo de Caixa",
-    descricao: "CapacitaÃ§Ã£o sobre controle financeiro diÃ¡rio e elaboraÃ§Ã£o de DRE simplificado.",
+    nome: "IntroduÃƒÂ§ÃƒÂ£o ÃƒÂ  GestÃƒÂ£o Financeira e Fluxo de Caixa",
+    descricao: "CapacitaÃƒÂ§ÃƒÂ£o sobre controle financeiro diÃƒÂ¡rio e elaboraÃƒÂ§ÃƒÂ£o de DRE simplificado.",
     cargaHoraria: "4h",
     solucaoProposta: "Treinamento sobre fluxo de caixa e demonstrativo de resultado.",
     responsavel: "Consultor",
     status: "Pendente",
-    prioridade: "MÃ©dia",
+    prioridade: "MÃƒÂ©dia",
     resultadoEsperado: "Fluxo de caixa implantado e rotina de registros mantida."
   },
   {
-    nome: "Planejamento EstratÃ©gico e GestÃ£o de Estoque",
-    descricao: "DefiniÃ§Ã£o de metas de produÃ§Ã£o/vendas e controle de insumos e matÃ©rias-primas.",
+    nome: "Planejamento EstratÃƒÂ©gico e GestÃƒÂ£o de Estoque",
+    descricao: "DefiniÃƒÂ§ÃƒÂ£o de metas de produÃƒÂ§ÃƒÂ£o/vendas e controle de insumos e matÃƒÂ©rias-primas.",
     cargaHoraria: "4h",
-    solucaoProposta: "FormulaÃ§Ã£o de metas operacionais e otimizaÃ§Ã£o da gestÃ£o de estoque.",
+    solucaoProposta: "FormulaÃƒÂ§ÃƒÂ£o de metas operacionais e otimizaÃƒÂ§ÃƒÂ£o da gestÃƒÂ£o de estoque.",
     responsavel: "Consultor/Produtor",
     status: "Pendente",
-    prioridade: "MÃ©dia",
-    resultadoEsperado: "Metas estratÃ©gicas e controle de estoque estruturados para os prÃ³ximos meses."
+    prioridade: "MÃƒÂ©dia",
+    resultadoEsperado: "Metas estratÃƒÂ©gicas e controle de estoque estruturados para os prÃƒÂ³ximos meses."
   },
   {
     nome: "Desenvolvimento de sistema, aplicativos ou planilhas",
-    descricao: "AnÃ¡lise e desenvolvimento de sistema de gestÃ£o, aplicativo ou planilhas personalizadas para automaÃ§Ã£o dos controles da empresa.",
+    descricao: "AnÃƒÂ¡lise e desenvolvimento de sistema de gestÃƒÂ£o, aplicativo ou planilhas personalizadas para automaÃƒÂ§ÃƒÂ£o dos controles da empresa.",
     cargaHoraria: "8h",
-    solucaoProposta: "Desenvolvimento de aplicativo e planilhas integradas de gestÃ£o",
+    solucaoProposta: "Desenvolvimento de aplicativo e planilhas integradas de gestÃƒÂ£o",
     responsavel: "Consultor",
     status: "Pendente",
     prioridade: "Alta",
     resultadoEsperado: "Sistema, aplicativo ou planilhas operacionais implantadas no ambiente do cliente."
   },
   {
-    nome: "AnÃ¡lise final de atividades da consultoria",
-    descricao: "AnÃ¡lise de encerramento e verificaÃ§Ã£o do alcance dos indicadores e resultados previstos no plano de trabalho.",
+    nome: "AnÃƒÂ¡lise final de atividades da consultoria",
+    descricao: "AnÃƒÂ¡lise de encerramento e verificaÃƒÂ§ÃƒÂ£o do alcance dos indicadores e resultados previstos no plano de trabalho.",
     cargaHoraria: "2h",
-    solucaoProposta: "AnÃ¡lise final e consolidaÃ§Ã£o de resultados da consultoria",
+    solucaoProposta: "AnÃƒÂ¡lise final e consolidaÃƒÂ§ÃƒÂ£o de resultados da consultoria",
     responsavel: "Consultor",
     status: "Pendente",
-    prioridade: "MÃ©dia",
-    resultadoEsperado: "VerificaÃ§Ã£o completa do cumprimento do escopo e metas da consultoria."
+    prioridade: "MÃƒÂ©dia",
+    resultadoEsperado: "VerificaÃƒÂ§ÃƒÂ£o completa do cumprimento do escopo e metas da consultoria."
   },
   {
-    nome: "RelatÃ³rio final e encerramento",
-    descricao: "ConsolidaÃ§Ã£o dos resultados e avaliaÃ§Ã£o do impacto da consultoria.",
+    nome: "RelatÃƒÂ³rio final e encerramento",
+    descricao: "ConsolidaÃƒÂ§ÃƒÂ£o dos resultados e avaliaÃƒÂ§ÃƒÂ£o do impacto da consultoria.",
     cargaHoraria: "4h",
-    solucaoProposta: "ElaboraÃ§Ã£o e apresentaÃ§Ã£o do relatÃ³rio final.",
+    solucaoProposta: "ElaboraÃƒÂ§ÃƒÂ£o e apresentaÃƒÂ§ÃƒÂ£o do relatÃƒÂ³rio final.",
     responsavel: "Consultor",
     status: "Pendente",
-    prioridade: "MÃ©dia",
-    resultadoEsperado: "RelatÃ³rio final consolidado, apresentado e validado pelo produtor/cliente."
+    prioridade: "MÃƒÂ©dia",
+    resultadoEsperado: "RelatÃƒÂ³rio final consolidado, apresentado e validado pelo produtor/cliente."
   }
 ];
 
@@ -610,12 +610,12 @@ interface ModeloRelatorio {
 const MODELOS_RELATORIO: ModeloRelatorio[] = [
   {
     id: 'carcinicultura',
-    nome: 'GestÃ£o Financeira & Controle de Custos da Carcinicultura',
+    nome: 'GestÃƒÂ£o Financeira & Controle de Custos da Carcinicultura',
     categoria: 'Carcinicultura',
-    descricao: 'Modelo de Consultoria Gerencial para Carcinicultura (30hs): Entendimento de demanda, DiagnÃ³stico de fluxos, Planilha de custos, Reserva de emergÃªncia, Treinamento de indicadores, SegregaÃ§Ã£o de contas e RelatÃ³rio final.',
+    descricao: 'Modelo de Consultoria Gerencial para Carcinicultura (30hs): Entendimento de demanda, DiagnÃƒÂ³stico de fluxos, Planilha de custos, Reserva de emergÃƒÂªncia, Treinamento de indicadores, SegregaÃƒÂ§ÃƒÂ£o de contas e RelatÃƒÂ³rio final.',
     atividades: [
       {
-        nome: "Entendimento da demanda e diagnÃ³stico inicial",
+        nome: "Entendimento da demanda e diagnÃƒÂ³stico inicial",
         descricao: "Alinhamento das expectativas do cliente e levantamento detalhado das necessidades operacionais e financeiras.",
         cargaHoraria: "2h",
         solucaoProposta: "Alinhamento das expectativas e levantamento das necessidades operacionais e financeiras da carcinicultura.",
@@ -625,10 +625,10 @@ const MODELOS_RELATORIO: ModeloRelatorio[] = [
         resultadoEsperado: "Expectativas alinhadas e necessidades operacionais e financeiras levantadas."
       },
       {
-        nome: "DiagnÃ³stico Detalhado e Levantamento de Fluxos",
-        descricao: "ReuniÃ£o inicial para mapeamento dos processos atuais, verificaÃ§Ã£o de registros de caixa e entendimento das falhas de separaÃ§Ã£o entre contas.",
+        nome: "DiagnÃƒÂ³stico Detalhado e Levantamento de Fluxos",
+        descricao: "ReuniÃƒÂ£o inicial para mapeamento dos processos atuais, verificaÃƒÂ§ÃƒÂ£o de registros de caixa e entendimento das falhas de separaÃƒÂ§ÃƒÂ£o entre contas.",
         cargaHoraria: "4h",
-        solucaoProposta: "Mapeamento dos processos atuais e verificaÃ§Ã£o das falhas de separaÃ§Ã£o entre contas.",
+        solucaoProposta: "Mapeamento dos processos atuais e verificaÃƒÂ§ÃƒÂ£o das falhas de separaÃƒÂ§ÃƒÂ£o entre contas.",
         responsavel: "Consultor / Produtor",
         status: "Pendente",
         prioridade: "Alta",
@@ -636,173 +636,173 @@ const MODELOS_RELATORIO: ModeloRelatorio[] = [
       },
       {
         nome: "Desenvolvimento de sistema, aplicativos ou planilhas",
-        descricao: "CriaÃ§Ã£o e implementaÃ§Ã£o de uma planilha de controle de custos de raÃ§Ã£o, receitas e cÃ¡lculo de margem de contribuiÃ§Ã£o.",
+        descricao: "CriaÃƒÂ§ÃƒÂ£o e implementaÃƒÂ§ÃƒÂ£o de uma planilha de controle de custos de raÃƒÂ§ÃƒÂ£o, receitas e cÃƒÂ¡lculo de margem de contribuiÃƒÂ§ÃƒÂ£o.",
         cargaHoraria: "8h",
-        solucaoProposta: "Desenvolvimento e implantaÃ§Ã£o da planilha de controle de custos de raÃ§Ã£o, receitas e margem de contribuiÃ§Ã£o.",
+        solucaoProposta: "Desenvolvimento e implantaÃƒÂ§ÃƒÂ£o da planilha de controle de custos de raÃƒÂ§ÃƒÂ£o, receitas e margem de contribuiÃƒÂ§ÃƒÂ£o.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "Planilha/ferramenta de gestÃ£o operando no cliente para controle de custos e receitas."
+        resultadoEsperado: "Planilha/ferramenta de gestÃƒÂ£o operando no cliente para controle de custos e receitas."
       },
       {
-        nome: "Planejamento Financeiro e Reserva de EmergÃªncia",
-        descricao: "CriaÃ§Ã£o de um plano para constituiÃ§Ã£o de reserva financeira visando a sustentabilidade do prÃ³ximo ciclo.",
+        nome: "Planejamento Financeiro e Reserva de EmergÃƒÂªncia",
+        descricao: "CriaÃƒÂ§ÃƒÂ£o de um plano para constituiÃƒÂ§ÃƒÂ£o de reserva financeira visando a sustentabilidade do prÃƒÂ³ximo ciclo.",
         cargaHoraria: "4h",
-        solucaoProposta: "ElaboraÃ§Ã£o de plano financeiro para formaÃ§Ã£o de reserva de emergÃªncia e sustentabilidade do prÃ³ximo ciclo.",
+        solucaoProposta: "ElaboraÃƒÂ§ÃƒÂ£o de plano financeiro para formaÃƒÂ§ÃƒÂ£o de reserva de emergÃƒÂªncia e sustentabilidade do prÃƒÂ³ximo ciclo.",
         responsavel: "Consultor / Produtor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "Reserva financeira planejada e metas de fluxo de caixa para o prÃ³ximo ciclo estruturadas."
+        resultadoEsperado: "Reserva financeira planejada e metas de fluxo de caixa para o prÃƒÂ³ximo ciclo estruturadas."
       },
       {
-        nome: "Treinamento de GestÃ£o e Controle de Indicadores",
-        descricao: "CapacitaÃ§Ã£o sobre o uso do caderno de campo/planilha e acompanhamento dos indicadores de produtividade.",
+        nome: "Treinamento de GestÃƒÂ£o e Controle de Indicadores",
+        descricao: "CapacitaÃƒÂ§ÃƒÂ£o sobre o uso do caderno de campo/planilha e acompanhamento dos indicadores de produtividade.",
         cargaHoraria: "4h",
-        solucaoProposta: "CapacitaÃ§Ã£o do produtor no uso do caderno de campo/planilha e acompanhamento dos indicadores.",
-        responsavel: "Consultor (capacitaÃ§Ã£o) / Produtor (treinamento)",
+        solucaoProposta: "CapacitaÃƒÂ§ÃƒÂ£o do produtor no uso do caderno de campo/planilha e acompanhamento dos indicadores.",
+        responsavel: "Consultor (capacitaÃƒÂ§ÃƒÂ£o) / Produtor (treinamento)",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "Produtor capacitado no registro diÃ¡rio e interpretaÃ§Ã£o dos indicadores de produtividade."
+        resultadoEsperado: "Produtor capacitado no registro diÃƒÂ¡rio e interpretaÃƒÂ§ÃƒÂ£o dos indicadores de produtividade."
       },
       {
-        nome: "SegregaÃ§Ã£o de Contas e EstruturaÃ§Ã£o Financeira",
-        descricao: "OrientaÃ§Ã£o para abertura de conta jurÃ­dica ou separaÃ§Ã£o formal das finanÃ§as pessoais e da carcinicultura.",
+        nome: "SegregaÃƒÂ§ÃƒÂ£o de Contas e EstruturaÃƒÂ§ÃƒÂ£o Financeira",
+        descricao: "OrientaÃƒÂ§ÃƒÂ£o para abertura de conta jurÃƒÂ­dica ou separaÃƒÂ§ÃƒÂ£o formal das finanÃƒÂ§as pessoais e da carcinicultura.",
         cargaHoraria: "4h",
-        solucaoProposta: "SeparaÃ§Ã£o formal das contas pessoais e da atividade de carcinicultura com definiÃ§Ã£o de prÃ³-labore.",
+        solucaoProposta: "SeparaÃƒÂ§ÃƒÂ£o formal das contas pessoais e da atividade de carcinicultura com definiÃƒÂ§ÃƒÂ£o de prÃƒÂ³-labore.",
         responsavel: "Consultor / Produtor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "FinanÃ§as da carcinicultura segregadas do caixa familiar com limite de retiradas."
+        resultadoEsperado: "FinanÃƒÂ§as da carcinicultura segregadas do caixa familiar com limite de retiradas."
       },
       {
-        nome: "AnÃ¡lise final de atividades da consultoria",
-        descricao: "RevisÃ£o dos indicadores apurados na ferramenta de gestÃ£o implementada ao longo do projeto.",
+        nome: "AnÃƒÂ¡lise final de atividades da consultoria",
+        descricao: "RevisÃƒÂ£o dos indicadores apurados na ferramenta de gestÃƒÂ£o implementada ao longo do projeto.",
         cargaHoraria: "2h",
-        solucaoProposta: "AnÃ¡lise e revisÃ£o de todos os indicadores apurados com as ferramentas implementadas.",
+        solucaoProposta: "AnÃƒÂ¡lise e revisÃƒÂ£o de todos os indicadores apurados com as ferramentas implementadas.",
         responsavel: "Consultor",
         status: "Pendente",
-        prioridade: "MÃ©dia",
-        resultadoEsperado: "Indicadores revisados e evoluÃ§Ã£o do desempenho financeiro confirmada."
+        prioridade: "MÃƒÂ©dia",
+        resultadoEsperado: "Indicadores revisados e evoluÃƒÂ§ÃƒÂ£o do desempenho financeiro confirmada."
       },
       {
-        nome: "RelatÃ³rio final e encerramento",
-        descricao: "Entrega do plano de aÃ§Ã£o contÃ­nuo e consolidaÃ§Ã£o do aprendizado do produtor.",
+        nome: "RelatÃƒÂ³rio final e encerramento",
+        descricao: "Entrega do plano de aÃƒÂ§ÃƒÂ£o contÃƒÂ­nuo e consolidaÃƒÂ§ÃƒÂ£o do aprendizado do produtor.",
         cargaHoraria: "2h",
-        solucaoProposta: "Entrega e apresentaÃ§Ã£o do relatÃ³rio final da consultoria com plano de continuidade.",
+        solucaoProposta: "Entrega e apresentaÃƒÂ§ÃƒÂ£o do relatÃƒÂ³rio final da consultoria com plano de continuidade.",
         responsavel: "Consultor",
         status: "Pendente",
-        prioridade: "MÃ©dia",
-        resultadoEsperado: "RelatÃ³rio final entregue e produtor autÃ´nomo na gestÃ£o do empreendimento."
+        prioridade: "MÃƒÂ©dia",
+        resultadoEsperado: "RelatÃƒÂ³rio final entregue e produtor autÃƒÂ´nomo na gestÃƒÂ£o do empreendimento."
       }
     ]
   },
   {
     id: 'financas',
-    nome: 'GestÃ£o Financeira & Controle de Custos',
-    categoria: 'FinanÃ§as',
-    descricao: 'ApuraÃ§Ã£o de custos, fluxo de caixa, DRE gerencial, margem de contribuiÃ§Ã£o e precificaÃ§Ã£o.',
+    nome: 'GestÃƒÂ£o Financeira & Controle de Custos',
+    categoria: 'FinanÃƒÂ§as',
+    descricao: 'ApuraÃƒÂ§ÃƒÂ£o de custos, fluxo de caixa, DRE gerencial, margem de contribuiÃƒÂ§ÃƒÂ£o e precificaÃƒÂ§ÃƒÂ£o.',
     atividades: [
       {
-        nome: "Entendimento da demanda e diagnÃ³stico inicial",
+        nome: "Entendimento da demanda e diagnÃƒÂ³stico inicial",
         descricao: "Alinhamento das expectativas do cliente e levantamento de dados operacionais e financeiros atuais.",
         cargaHoraria: "4h",
-        solucaoProposta: "Entendimento da demanda e diagnÃ³stico inicial",
+        solucaoProposta: "Entendimento da demanda e diagnÃƒÂ³stico inicial",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "Expectativas alinhadas e diagnÃ³stico financeiro/operacional inicial consolidado."
+        resultadoEsperado: "Expectativas alinhadas e diagnÃƒÂ³stico financeiro/operacional inicial consolidado."
       },
       {
-        nome: "Mapeamento e ClassificaÃ§Ã£o de Custos e Despesas",
-        descricao: "CategorizaÃ§Ã£o detalhada de custos fixos, variÃ¡veis, despesas operacionais e tributos.",
+        nome: "Mapeamento e ClassificaÃƒÂ§ÃƒÂ£o de Custos e Despesas",
+        descricao: "CategorizaÃƒÂ§ÃƒÂ£o detalhada de custos fixos, variÃƒÂ¡veis, despesas operacionais e tributos.",
         cargaHoraria: "4h",
-        solucaoProposta: "EstruturaÃ§Ã£o do plano de contas e classificaÃ§Ã£o de custos.",
+        solucaoProposta: "EstruturaÃƒÂ§ÃƒÂ£o do plano de contas e classificaÃƒÂ§ÃƒÂ£o de custos.",
         responsavel: "Consultor/Cliente",
         status: "Pendente",
         prioridade: "Alta",
         resultadoEsperado: "Plano de contas gerencial estruturado para controle financeiro."
       },
       {
-        nome: "CÃ¡lculo da Margem de ContribuiÃ§Ã£o e Ponto de EquilÃ­brio",
-        descricao: "ApuraÃ§Ã£o tÃ©cnica da margem de contribuiÃ§Ã£o por produto/serviÃ§o e determinaÃ§Ã£o do faturamento mÃ­nimo.",
+        nome: "CÃƒÂ¡lculo da Margem de ContribuiÃƒÂ§ÃƒÂ£o e Ponto de EquilÃƒÂ­brio",
+        descricao: "ApuraÃƒÂ§ÃƒÂ£o tÃƒÂ©cnica da margem de contribuiÃƒÂ§ÃƒÂ£o por produto/serviÃƒÂ§o e determinaÃƒÂ§ÃƒÂ£o do faturamento mÃƒÂ­nimo.",
         cargaHoraria: "4h",
-        solucaoProposta: "AnÃ¡lise de viabilidade financeira e cÃ¡lculo do ponto de equilÃ­brio.",
+        solucaoProposta: "AnÃƒÂ¡lise de viabilidade financeira e cÃƒÂ¡lculo do ponto de equilÃƒÂ­brio.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "Ponto de equilÃ­brio financeiro e margem de contribuiÃ§Ã£o mensurados."
+        resultadoEsperado: "Ponto de equilÃƒÂ­brio financeiro e margem de contribuiÃƒÂ§ÃƒÂ£o mensurados."
       },
       {
-        nome: "ImplementaÃ§Ã£o e Rotina do Fluxo de Caixa DiÃ¡rio",
-        descricao: "Treinamento e implantaÃ§Ã£o de processo sistemÃ¡tico de controle de entradas e saÃ­das.",
+        nome: "ImplementaÃƒÂ§ÃƒÂ£o e Rotina do Fluxo de Caixa DiÃƒÂ¡rio",
+        descricao: "Treinamento e implantaÃƒÂ§ÃƒÂ£o de processo sistemÃƒÂ¡tico de controle de entradas e saÃƒÂ­das.",
         cargaHoraria: "4h",
-        solucaoProposta: "CapacitaÃ§Ã£o e rotina prÃ¡tica de fluxo de caixa.",
+        solucaoProposta: "CapacitaÃƒÂ§ÃƒÂ£o e rotina prÃƒÂ¡tica de fluxo de caixa.",
         responsavel: "Consultor/Cliente",
         status: "Pendente",
         prioridade: "Alta",
         resultadoEsperado: "Fluxo de caixa projetado e acompanhado diariamente pelo cliente."
       },
       {
-        nome: "ElaboraÃ§Ã£o do DRE Gerencial e FormaÃ§Ã£o do PreÃ§o de Venda",
-        descricao: "EstruturaÃ§Ã£o do Demonstrativo de Resultado e fÃ³rmula de precificaÃ§Ã£o lucrativa.",
+        nome: "ElaboraÃƒÂ§ÃƒÂ£o do DRE Gerencial e FormaÃƒÂ§ÃƒÂ£o do PreÃƒÂ§o de Venda",
+        descricao: "EstruturaÃƒÂ§ÃƒÂ£o do Demonstrativo de Resultado e fÃƒÂ³rmula de precificaÃƒÂ§ÃƒÂ£o lucrativa.",
         cargaHoraria: "4h",
-        solucaoProposta: "ImplantaÃ§Ã£o do DRE gerencial e modelo de precificaÃ§Ã£o.",
+        solucaoProposta: "ImplantaÃƒÂ§ÃƒÂ£o do DRE gerencial e modelo de precificaÃƒÂ§ÃƒÂ£o.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "DRE gerencial mensal e tabela de preÃ§os revisada com margem real."
+        resultadoEsperado: "DRE gerencial mensal e tabela de preÃƒÂ§os revisada com margem real."
       },
       {
         nome: "Desenvolvimento de sistema, aplicativos ou planilhas",
-        descricao: "Desenvolvimento e personalizaÃ§Ã£o de planilhas financeiras integradas ou aplicativo de gestÃ£o de caixa.",
+        descricao: "Desenvolvimento e personalizaÃƒÂ§ÃƒÂ£o de planilhas financeiras integradas ou aplicativo de gestÃƒÂ£o de caixa.",
         cargaHoraria: "8h",
-        solucaoProposta: "Desenvolvimento de aplicativo e planilhas integradas de gestÃ£o financeira.",
+        solucaoProposta: "Desenvolvimento de aplicativo e planilhas integradas de gestÃƒÂ£o financeira.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
         resultadoEsperado: "Ferramenta/aplicativo financeiro personalizado operando no cliente."
       },
       {
-        nome: "AnÃ¡lise final de atividades da consultoria",
-        descricao: "AnÃ¡lise de encerramento e verificaÃ§Ã£o do alcance dos indicadores financeiros.",
+        nome: "AnÃƒÂ¡lise final de atividades da consultoria",
+        descricao: "AnÃƒÂ¡lise de encerramento e verificaÃƒÂ§ÃƒÂ£o do alcance dos indicadores financeiros.",
         cargaHoraria: "2h",
-        solucaoProposta: "AnÃ¡lise final e consolidaÃ§Ã£o dos resultados da consultoria.",
+        solucaoProposta: "AnÃƒÂ¡lise final e consolidaÃƒÂ§ÃƒÂ£o dos resultados da consultoria.",
         responsavel: "Consultor",
         status: "Pendente",
-        prioridade: "MÃ©dia",
-        resultadoEsperado: "RelatÃ³rio de desempenho financeiro e cumprimento de metas."
+        prioridade: "MÃƒÂ©dia",
+        resultadoEsperado: "RelatÃƒÂ³rio de desempenho financeiro e cumprimento de metas."
       },
       {
-        nome: "RelatÃ³rio final e encerramento",
-        descricao: "ConsolidaÃ§Ã£o final das entregas financeiras, apresentaÃ§Ã£o dos resultados e encerramento.",
+        nome: "RelatÃƒÂ³rio final e encerramento",
+        descricao: "ConsolidaÃƒÂ§ÃƒÂ£o final das entregas financeiras, apresentaÃƒÂ§ÃƒÂ£o dos resultados e encerramento.",
         cargaHoraria: "4h",
-        solucaoProposta: "ElaboraÃ§Ã£o e apresentaÃ§Ã£o do relatÃ³rio final da consultoria.",
+        solucaoProposta: "ElaboraÃƒÂ§ÃƒÂ£o e apresentaÃƒÂ§ÃƒÂ£o do relatÃƒÂ³rio final da consultoria.",
         responsavel: "Consultor",
         status: "Pendente",
-        prioridade: "MÃ©dia",
-        resultadoEsperado: "RelatÃ³rio final aprovado e plano de continuidade entregue ao cliente."
+        prioridade: "MÃƒÂ©dia",
+        resultadoEsperado: "RelatÃƒÂ³rio final aprovado e plano de continuidade entregue ao cliente."
       }
     ]
   },
   {
     id: 'operacoes',
     nome: 'Processos Operacionais & Produtividade',
-    categoria: 'OperaÃ§Ãµes',
-    descricao: 'Mapeamento de processos, eliminaÃ§Ã£o de gargalos, padronizaÃ§Ã£o POP e qualidade.',
+    categoria: 'OperaÃƒÂ§ÃƒÂµes',
+    descricao: 'Mapeamento de processos, eliminaÃƒÂ§ÃƒÂ£o de gargalos, padronizaÃƒÂ§ÃƒÂ£o POP e qualidade.',
     atividades: [
       {
-        nome: "Entendimento da demanda e diagnÃ³stico inicial",
-        descricao: "Levantamento das etapas do fluxo produtivo/operacional e identificaÃ§Ã£o de gargalos.",
+        nome: "Entendimento da demanda e diagnÃƒÂ³stico inicial",
+        descricao: "Levantamento das etapas do fluxo produtivo/operacional e identificaÃƒÂ§ÃƒÂ£o de gargalos.",
         cargaHoraria: "4h",
-        solucaoProposta: "Entendimento da demanda e diagnÃ³stico operacional inicial.",
+        solucaoProposta: "Entendimento da demanda e diagnÃƒÂ³stico operacional inicial.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "DiagnÃ³stico operacional detalhado e gargalos priorizados."
+        resultadoEsperado: "DiagnÃƒÂ³stico operacional detalhado e gargalos priorizados."
       },
       {
         nome: "Mapeamento do Fluxo de Trabalho (AS-IS)",
-        descricao: "Desenho e documentaÃ§Ã£o do fluxo atual de produÃ§Ã£o e atendimento.",
+        descricao: "Desenho e documentaÃƒÂ§ÃƒÂ£o do fluxo atual de produÃƒÂ§ÃƒÂ£o e atendimento.",
         cargaHoraria: "4h",
         solucaoProposta: "Mapeamento completo dos processos operacionais vigentes.",
         responsavel: "Consultor/Equipe",
@@ -811,416 +811,416 @@ const MODELOS_RELATORIO: ModeloRelatorio[] = [
         resultadoEsperado: "Fluxograma operacional atual mapeado e gargalos evidenciados."
       },
       {
-        nome: "Redesenho de Processos e ReduÃ§Ã£o de DesperdÃ­cios (TO-BE)",
-        descricao: "ProposiÃ§Ã£o de melhorias, eliminaÃ§Ã£o de etapas redundantes e tempos mortos.",
+        nome: "Redesenho de Processos e ReduÃƒÂ§ÃƒÂ£o de DesperdÃƒÂ­cios (TO-BE)",
+        descricao: "ProposiÃƒÂ§ÃƒÂ£o de melhorias, eliminaÃƒÂ§ÃƒÂ£o de etapas redundantes e tempos mortos.",
         cargaHoraria: "4h",
-        solucaoProposta: "OtimizaÃ§Ã£o de processos operacionais e reduÃ§Ã£o de perdas.",
+        solucaoProposta: "OtimizaÃƒÂ§ÃƒÂ£o de processos operacionais e reduÃƒÂ§ÃƒÂ£o de perdas.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "Novo fluxo de trabalho otimizado e aprovado pela gerÃªncia."
+        resultadoEsperado: "Novo fluxo de trabalho otimizado e aprovado pela gerÃƒÂªncia."
       },
       {
-        nome: "ElaboraÃ§Ã£o de Procedimentos Operacionais PadrÃ£o (POPs)",
-        descricao: "CriaÃ§Ã£o de manuais prÃ¡ticos e instruÃ§Ãµes de trabalho para padronizaÃ§Ã£o.",
+        nome: "ElaboraÃƒÂ§ÃƒÂ£o de Procedimentos Operacionais PadrÃƒÂ£o (POPs)",
+        descricao: "CriaÃƒÂ§ÃƒÂ£o de manuais prÃƒÂ¡ticos e instruÃƒÂ§ÃƒÂµes de trabalho para padronizaÃƒÂ§ÃƒÂ£o.",
         cargaHoraria: "4h",
-        solucaoProposta: "PadronizaÃ§Ã£o operacional via POPs e checklists de controle.",
+        solucaoProposta: "PadronizaÃƒÂ§ÃƒÂ£o operacional via POPs e checklists de controle.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "Procedimentos operacionais padrÃ£o (POPs) redigidos e implantados."
+        resultadoEsperado: "Procedimentos operacionais padrÃƒÂ£o (POPs) redigidos e implantados."
       },
       {
         nome: "Treinamento da Equipe e Indicadores de Produtividade",
-        descricao: "CapacitaÃ§Ã£o dos colaboradores nos novos processos e mÃ©tricas de eficiÃªncia.",
+        descricao: "CapacitaÃƒÂ§ÃƒÂ£o dos colaboradores nos novos processos e mÃƒÂ©tricas de eficiÃƒÂªncia.",
         cargaHoraria: "4h",
-        solucaoProposta: "Treinamento operacional e implantaÃ§Ã£o de KPIs de produÃ§Ã£o.",
+        solucaoProposta: "Treinamento operacional e implantaÃƒÂ§ÃƒÂ£o de KPIs de produÃƒÂ§ÃƒÂ£o.",
         responsavel: "Consultor/Equipe",
         status: "Pendente",
-        prioridade: "MÃ©dia",
+        prioridade: "MÃƒÂ©dia",
         resultadoEsperado: "Equipe treinada e indicadores de qualidade/produtividade ativos."
       },
       {
         nome: "Desenvolvimento de sistema, aplicativos ou planilhas",
-        descricao: "CriaÃ§Ã£o de ferramenta/aplicativo ou planilhas para acompanhamento em tempo real.",
+        descricao: "CriaÃƒÂ§ÃƒÂ£o de ferramenta/aplicativo ou planilhas para acompanhamento em tempo real.",
         cargaHoraria: "8h",
         solucaoProposta: "Desenvolvimento de aplicativo e planilhas de controle operacional.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "Sistema/planilha de gestÃ£o operacional em pleno funcionamento."
+        resultadoEsperado: "Sistema/planilha de gestÃƒÂ£o operacional em pleno funcionamento."
       },
       {
-        nome: "AnÃ¡lise final de atividades da consultoria",
-        descricao: "AvaliaÃ§Ã£o do aumento de produtividade e alcance dos padrÃµes previstos.",
+        nome: "AnÃƒÂ¡lise final de atividades da consultoria",
+        descricao: "AvaliaÃƒÂ§ÃƒÂ£o do aumento de produtividade e alcance dos padrÃƒÂµes previstos.",
         cargaHoraria: "2h",
-        solucaoProposta: "AnÃ¡lise de encerramento e validaÃ§Ã£o de KPIs operacionais.",
+        solucaoProposta: "AnÃƒÂ¡lise de encerramento e validaÃƒÂ§ÃƒÂ£o de KPIs operacionais.",
         responsavel: "Consultor",
         status: "Pendente",
-        prioridade: "MÃ©dia",
-        resultadoEsperado: "Ganhos de produtividade e eficiÃªncia operacional comprovados."
+        prioridade: "MÃƒÂ©dia",
+        resultadoEsperado: "Ganhos de produtividade e eficiÃƒÂªncia operacional comprovados."
       },
       {
-        nome: "RelatÃ³rio final e encerramento",
-        descricao: "ConsolidaÃ§Ã£o do relatÃ³rio tÃ©cnico de processos, apresentaÃ§Ã£o de resultados e encerramento.",
+        nome: "RelatÃƒÂ³rio final e encerramento",
+        descricao: "ConsolidaÃƒÂ§ÃƒÂ£o do relatÃƒÂ³rio tÃƒÂ©cnico de processos, apresentaÃƒÂ§ÃƒÂ£o de resultados e encerramento.",
         cargaHoraria: "4h",
-        solucaoProposta: "ElaboraÃ§Ã£o e apresentaÃ§Ã£o do relatÃ³rio final de processos.",
+        solucaoProposta: "ElaboraÃƒÂ§ÃƒÂ£o e apresentaÃƒÂ§ÃƒÂ£o do relatÃƒÂ³rio final de processos.",
         responsavel: "Consultor",
         status: "Pendente",
-        prioridade: "MÃ©dia",
-        resultadoEsperado: "RelatÃ³rio final entregue e operacionais padronizados mantidos."
+        prioridade: "MÃƒÂ©dia",
+        resultadoEsperado: "RelatÃƒÂ³rio final entregue e operacionais padronizados mantidos."
       }
     ]
   },
   {
     id: 'comercial',
-    nome: 'ComercializaÃ§Ã£o, Vendas & Marketing Digital',
+    nome: 'ComercializaÃƒÂ§ÃƒÂ£o, Vendas & Marketing Digital',
     categoria: 'Comercial',
-    descricao: 'EstratÃ©gia de vendas, funil de captaÃ§Ã£o, presenÃ§a digital e fidelizaÃ§Ã£o.',
+    descricao: 'EstratÃƒÂ©gia de vendas, funil de captaÃƒÂ§ÃƒÂ£o, presenÃƒÂ§a digital e fidelizaÃƒÂ§ÃƒÂ£o.',
     atividades: [
       {
-        nome: "Entendimento da demanda e diagnÃ³stico inicial",
-        descricao: "DiagnÃ³stico das vendas atuais, perfil do cliente ideal (ICP) e canais de vendas.",
+        nome: "Entendimento da demanda e diagnÃƒÂ³stico inicial",
+        descricao: "DiagnÃƒÂ³stico das vendas atuais, perfil do cliente ideal (ICP) e canais de vendas.",
         cargaHoraria: "4h",
-        solucaoProposta: "Entendimento da demanda e diagnÃ³stico comercial inicial.",
+        solucaoProposta: "Entendimento da demanda e diagnÃƒÂ³stico comercial inicial.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "DiagnÃ³stico das metas de vendas e oportunidades de mercado mapeadas."
+        resultadoEsperado: "DiagnÃƒÂ³stico das metas de vendas e oportunidades de mercado mapeadas."
       },
       {
-        nome: "AnÃ¡lise da ConcorrÃªncia e Posicionamento de Mercado",
-        descricao: "Estudo dos diferenciais competitivos e ajuste na proposta de valor do negÃ³cio.",
+        nome: "AnÃƒÂ¡lise da ConcorrÃƒÂªncia e Posicionamento de Mercado",
+        descricao: "Estudo dos diferenciais competitivos e ajuste na proposta de valor do negÃƒÂ³cio.",
         cargaHoraria: "4h",
-        solucaoProposta: "DefiniÃ§Ã£o de posicionamento estratÃ©gico e proposta de valor.",
+        solucaoProposta: "DefiniÃƒÂ§ÃƒÂ£o de posicionamento estratÃƒÂ©gico e proposta de valor.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "Proposta de valor diferenciada e alinhada Ã s necessidades do cliente."
+        resultadoEsperado: "Proposta de valor diferenciada e alinhada ÃƒÂ s necessidades do cliente."
       },
       {
-        nome: "EstruturaÃ§Ã£o do Funil de Vendas e Processo Comercial",
-        descricao: "DefiniÃ§Ã£o das etapas de prospecÃ§Ã£o, qualificaÃ§Ã£o, apresentaÃ§Ã£o e fechamento.",
+        nome: "EstruturaÃƒÂ§ÃƒÂ£o do Funil de Vendas e Processo Comercial",
+        descricao: "DefiniÃƒÂ§ÃƒÂ£o das etapas de prospecÃƒÂ§ÃƒÂ£o, qualificaÃƒÂ§ÃƒÂ£o, apresentaÃƒÂ§ÃƒÂ£o e fechamento.",
         cargaHoraria: "4h",
         solucaoProposta: "Desenvolvimento da jornada do cliente e funil comercial.",
         responsavel: "Consultor/Vendedores",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "Funil de vendas padronizado com rotina diÃ¡ria de abordagens."
+        resultadoEsperado: "Funil de vendas padronizado com rotina diÃƒÂ¡ria de abordagens."
       },
       {
-        nome: "EstratÃ©gia de Marketing Digital e Redes Sociais",
-        descricao: "Planejamento de conteÃºdos, anÃºncios e presenÃ§a nas mÃ­dias sociais para atraÃ§Ã£o.",
+        nome: "EstratÃƒÂ©gia de Marketing Digital e Redes Sociais",
+        descricao: "Planejamento de conteÃƒÂºdos, anÃƒÂºncios e presenÃƒÂ§a nas mÃƒÂ­dias sociais para atraÃƒÂ§ÃƒÂ£o.",
         cargaHoraria: "4h",
-        solucaoProposta: "Plano de comunicaÃ§Ã£o digital e atraÃ§Ã£o de novos clientes.",
+        solucaoProposta: "Plano de comunicaÃƒÂ§ÃƒÂ£o digital e atraÃƒÂ§ÃƒÂ£o de novos clientes.",
         responsavel: "Consultor/Marketing",
         status: "Pendente",
-        prioridade: "MÃ©dia",
-        resultadoEsperado: "CalendÃ¡rio de marketing digital e diretrizes de divulgaÃ§Ã£o ativas."
+        prioridade: "MÃƒÂ©dia",
+        resultadoEsperado: "CalendÃƒÂ¡rio de marketing digital e diretrizes de divulgaÃƒÂ§ÃƒÂ£o ativas."
       },
       {
-        nome: "Treinamento de TÃ©cnicas de Vendas e PÃ³s-Venda",
-        descricao: "CapacitaÃ§Ã£o da equipe em contorno de objeÃ§Ãµes, fechamento e retenÃ§Ã£o.",
+        nome: "Treinamento de TÃƒÂ©cnicas de Vendas e PÃƒÂ³s-Venda",
+        descricao: "CapacitaÃƒÂ§ÃƒÂ£o da equipe em contorno de objeÃƒÂ§ÃƒÂµes, fechamento e retenÃƒÂ§ÃƒÂ£o.",
         cargaHoraria: "4h",
-        solucaoProposta: "Treinamento prÃ¡tico de vendas e retenÃ§Ã£o de clientes.",
+        solucaoProposta: "Treinamento prÃƒÂ¡tico de vendas e retenÃƒÂ§ÃƒÂ£o de clientes.",
         responsavel: "Consultor/Equipe",
         status: "Pendente",
-        prioridade: "MÃ©dia",
-        resultadoEsperado: "Equipe comercial capacitada e taxa de conversÃ£o aumentada."
+        prioridade: "MÃƒÂ©dia",
+        resultadoEsperado: "Equipe comercial capacitada e taxa de conversÃƒÂ£o aumentada."
       },
       {
         nome: "Desenvolvimento de sistema, aplicativos ou planilhas",
-        descricao: "Desenvolvimento de planilha/aplicativo CRM de controle de leads, propostas e histÃ³rico.",
+        descricao: "Desenvolvimento de planilha/aplicativo CRM de controle de leads, propostas e histÃƒÂ³rico.",
         cargaHoraria: "8h",
-        solucaoProposta: "Desenvolvimento de CRM e planilhas de gestÃ£o de vendas.",
+        solucaoProposta: "Desenvolvimento de CRM e planilhas de gestÃƒÂ£o de vendas.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
         resultadoEsperado: "Ferramenta CRM personalizada implantada para controle comercial."
       },
       {
-        nome: "AnÃ¡lise final de atividades da consultoria",
-        descricao: "AnÃ¡lise da evoluÃ§Ã£o do faturamento e alcance das metas de vendas.",
+        nome: "AnÃƒÂ¡lise final de atividades da consultoria",
+        descricao: "AnÃƒÂ¡lise da evoluÃƒÂ§ÃƒÂ£o do faturamento e alcance das metas de vendas.",
         cargaHoraria: "2h",
-        solucaoProposta: "AnÃ¡lise final do desempenho comercial e taxas de conversÃ£o.",
+        solucaoProposta: "AnÃƒÂ¡lise final do desempenho comercial e taxas de conversÃƒÂ£o.",
         responsavel: "Consultor",
         status: "Pendente",
-        prioridade: "MÃ©dia",
-        resultadoEsperado: "Aumento das vendas mensurado e relatÃ³rio de mÃ©tricas concluÃ­do."
+        prioridade: "MÃƒÂ©dia",
+        resultadoEsperado: "Aumento das vendas mensurado e relatÃƒÂ³rio de mÃƒÂ©tricas concluÃƒÂ­do."
       },
       {
-        nome: "RelatÃ³rio final e encerramento",
-        descricao: "ApresentaÃ§Ã£o do relatÃ³rio final de vendas, recomendaÃ§Ãµes futuras e encerramento.",
+        nome: "RelatÃƒÂ³rio final e encerramento",
+        descricao: "ApresentaÃƒÂ§ÃƒÂ£o do relatÃƒÂ³rio final de vendas, recomendaÃƒÂ§ÃƒÂµes futuras e encerramento.",
         cargaHoraria: "4h",
-        solucaoProposta: "ElaboraÃ§Ã£o e apresentaÃ§Ã£o do relatÃ³rio final comercial.",
+        solucaoProposta: "ElaboraÃƒÂ§ÃƒÂ£o e apresentaÃƒÂ§ÃƒÂ£o do relatÃƒÂ³rio final comercial.",
         responsavel: "Consultor",
         status: "Pendente",
-        prioridade: "MÃ©dia",
-        resultadoEsperado: "RelatÃ³rio final entregue e rotina comercial consolidada."
+        prioridade: "MÃƒÂ©dia",
+        resultadoEsperado: "RelatÃƒÂ³rio final entregue e rotina comercial consolidada."
       }
     ]
   },
   {
     id: 'tecnologia',
-    nome: 'InovaÃ§Ã£o, Tecnologia & AutomaÃ§Ã£o de Processos',
-    categoria: 'InovaÃ§Ã£o',
-    descricao: 'TransformaÃ§Ã£o digital, escolha de softwares, automaÃ§Ã£o e treinamento em TI.',
+    nome: 'InovaÃƒÂ§ÃƒÂ£o, Tecnologia & AutomaÃƒÂ§ÃƒÂ£o de Processos',
+    categoria: 'InovaÃƒÂ§ÃƒÂ£o',
+    descricao: 'TransformaÃƒÂ§ÃƒÂ£o digital, escolha de softwares, automaÃƒÂ§ÃƒÂ£o e treinamento em TI.',
     atividades: [
       {
-        nome: "Entendimento da demanda e diagnÃ³stico inicial",
-        descricao: "AvaliaÃ§Ã£o do nÃ­vel de maturidade digital e requisitos de tecnologia.",
+        nome: "Entendimento da demanda e diagnÃƒÂ³stico inicial",
+        descricao: "AvaliaÃƒÂ§ÃƒÂ£o do nÃƒÂ­vel de maturidade digital e requisitos de tecnologia.",
         cargaHoraria: "4h",
-        solucaoProposta: "Entendimento da demanda e diagnÃ³stico tecnolÃ³gico inicial.",
+        solucaoProposta: "Entendimento da demanda e diagnÃƒÂ³stico tecnolÃƒÂ³gico inicial.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "Maturidade tecnolÃ³gica mapeada e plano de inovaÃ§Ã£o priorizado."
+        resultadoEsperado: "Maturidade tecnolÃƒÂ³gica mapeada e plano de inovaÃƒÂ§ÃƒÂ£o priorizado."
       },
       {
-        nome: "Mapeamento de Requisitos e SeleÃ§Ã£o de Tecnologias",
-        descricao: "IdentificaÃ§Ã£o das soluÃ§Ãµes tecnolÃ³gicas, softwares e sistemas adequados.",
+        nome: "Mapeamento de Requisitos e SeleÃƒÂ§ÃƒÂ£o de Tecnologias",
+        descricao: "IdentificaÃƒÂ§ÃƒÂ£o das soluÃƒÂ§ÃƒÂµes tecnolÃƒÂ³gicas, softwares e sistemas adequados.",
         cargaHoraria: "4h",
-        solucaoProposta: "SeleÃ§Ã£o de ferramentas de automaÃ§Ã£o e tecnologia de gestÃ£o.",
+        solucaoProposta: "SeleÃƒÂ§ÃƒÂ£o de ferramentas de automaÃƒÂ§ÃƒÂ£o e tecnologia de gestÃƒÂ£o.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "Stack tecnolÃ³gico selecionado de acordo com custo-benefÃ­cio."
+        resultadoEsperado: "Stack tecnolÃƒÂ³gico selecionado de acordo com custo-benefÃƒÂ­cio."
       },
       {
-        nome: "Planejamento da IntegraÃ§Ã£o e AutomaÃ§Ã£o de Dados",
-        descricao: "Desenho da arquitetura de integraÃ§Ã£o entre sistemas e automaÃ§Ã£o de fluxos.",
+        nome: "Planejamento da IntegraÃƒÂ§ÃƒÂ£o e AutomaÃƒÂ§ÃƒÂ£o de Dados",
+        descricao: "Desenho da arquitetura de integraÃƒÂ§ÃƒÂ£o entre sistemas e automaÃƒÂ§ÃƒÂ£o de fluxos.",
         cargaHoraria: "4h",
-        solucaoProposta: "AutomaÃ§Ã£o de processos operacionais e integraÃ§Ã£o de dados.",
+        solucaoProposta: "AutomaÃƒÂ§ÃƒÂ£o de processos operacionais e integraÃƒÂ§ÃƒÂ£o de dados.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "Fluxos de automaÃ§Ã£o planejados para reduzir digitaÃ§Ã£o manual."
+        resultadoEsperado: "Fluxos de automaÃƒÂ§ÃƒÂ£o planejados para reduzir digitaÃƒÂ§ÃƒÂ£o manual."
       },
       {
-        nome: "ConfiguraÃ§Ã£o de ParÃ¢metros e Testes do Sistema",
-        descricao: "Ajuste de cadastros, parametrizaÃ§Ã£o de regras de negÃ³cio e validaÃ§Ã£o dos sistemas.",
+        nome: "ConfiguraÃƒÂ§ÃƒÂ£o de ParÃƒÂ¢metros e Testes do Sistema",
+        descricao: "Ajuste de cadastros, parametrizaÃƒÂ§ÃƒÂ£o de regras de negÃƒÂ³cio e validaÃƒÂ§ÃƒÂ£o dos sistemas.",
         cargaHoraria: "4h",
-        solucaoProposta: "ConfiguraÃ§Ã£o tÃ©cnica e simulaÃ§Ã£o de rotinas digitais.",
+        solucaoProposta: "ConfiguraÃƒÂ§ÃƒÂ£o tÃƒÂ©cnica e simulaÃƒÂ§ÃƒÂ£o de rotinas digitais.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "Ambiente tecnolÃ³gico configurado e aprovado em ambiente de teste."
+        resultadoEsperado: "Ambiente tecnolÃƒÂ³gico configurado e aprovado em ambiente de teste."
       },
       {
-        nome: "CapacitaÃ§Ã£o da Equipe em Ferramentas Digitais",
-        descricao: "Treinamento prÃ¡tico dos usuÃ¡rios para operaÃ§Ã£o fluida das novas plataformas.",
+        nome: "CapacitaÃƒÂ§ÃƒÂ£o da Equipe em Ferramentas Digitais",
+        descricao: "Treinamento prÃƒÂ¡tico dos usuÃƒÂ¡rios para operaÃƒÂ§ÃƒÂ£o fluida das novas plataformas.",
         cargaHoraria: "4h",
-        solucaoProposta: "Treinamento tÃ©cnico e mudanÃ§a cultural para o meio digital.",
-        responsavel: "Consultor/UsuÃ¡rios",
+        solucaoProposta: "Treinamento tÃƒÂ©cnico e mudanÃƒÂ§a cultural para o meio digital.",
+        responsavel: "Consultor/UsuÃƒÂ¡rios",
         status: "Pendente",
-        prioridade: "MÃ©dia",
-        resultadoEsperado: "UsuÃ¡rios autÃ´nomos na utilizaÃ§Ã£o das soluÃ§Ãµes tecnolÃ³gicas."
+        prioridade: "MÃƒÂ©dia",
+        resultadoEsperado: "UsuÃƒÂ¡rios autÃƒÂ´nomos na utilizaÃƒÂ§ÃƒÂ£o das soluÃƒÂ§ÃƒÂµes tecnolÃƒÂ³gicas."
       },
       {
         nome: "Desenvolvimento de sistema, aplicativos ou planilhas",
         descricao: "Desenvolvimento de aplicativos sob medida, dashboards interativos ou planilhas.",
         cargaHoraria: "8h",
-        solucaoProposta: "Desenvolvimento de aplicativo e integraÃ§Ã£o de planilhas/sistemas.",
+        solucaoProposta: "Desenvolvimento de aplicativo e integraÃƒÂ§ÃƒÂ£o de planilhas/sistemas.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
         resultadoEsperado: "Aplicativo/sistema entregue e funcionando perfeitamente."
       },
       {
-        nome: "AnÃ¡lise final de atividades da consultoria",
-        descricao: "AnÃ¡lise da reduÃ§Ã£o de tempo de execuÃ§Ã£o e estabilidade do ambiente.",
+        nome: "AnÃƒÂ¡lise final de atividades da consultoria",
+        descricao: "AnÃƒÂ¡lise da reduÃƒÂ§ÃƒÂ£o de tempo de execuÃƒÂ§ÃƒÂ£o e estabilidade do ambiente.",
         cargaHoraria: "2h",
-        solucaoProposta: "ValidaÃ§Ã£o final das automaÃ§Ãµes e tempo economizado.",
+        solucaoProposta: "ValidaÃƒÂ§ÃƒÂ£o final das automaÃƒÂ§ÃƒÂµes e tempo economizado.",
         responsavel: "Consultor",
         status: "Pendente",
-        prioridade: "MÃ©dia",
-        resultadoEsperado: "Ganho de tempo e precisÃ£o dos dados automatizados confirmados."
+        prioridade: "MÃƒÂ©dia",
+        resultadoEsperado: "Ganho de tempo e precisÃƒÂ£o dos dados automatizados confirmados."
       },
       {
-        nome: "RelatÃ³rio final e encerramento",
-        descricao: "ApresentaÃ§Ã£o do relatÃ³rio final de tecnologia, plano de suporte e encerramento.",
+        nome: "RelatÃƒÂ³rio final e encerramento",
+        descricao: "ApresentaÃƒÂ§ÃƒÂ£o do relatÃƒÂ³rio final de tecnologia, plano de suporte e encerramento.",
         cargaHoraria: "4h",
-        solucaoProposta: "ElaboraÃ§Ã£o e apresentaÃ§Ã£o do relatÃ³rio final de inovaÃ§Ã£o.",
+        solucaoProposta: "ElaboraÃƒÂ§ÃƒÂ£o e apresentaÃƒÂ§ÃƒÂ£o do relatÃƒÂ³rio final de inovaÃƒÂ§ÃƒÂ£o.",
         responsavel: "Consultor",
         status: "Pendente",
-        prioridade: "MÃ©dia",
-        resultadoEsperado: "RelatÃ³rio tÃ©cnico final aprovado e encerramento concluÃ­do."
+        prioridade: "MÃƒÂ©dia",
+        resultadoEsperado: "RelatÃƒÂ³rio tÃƒÂ©cnico final aprovado e encerramento concluÃƒÂ­do."
       }
     ]
   },
   {
     id: 'estrategia',
-    nome: 'Planejamento EstratÃ©gico & GestÃ£o de Pessoas',
-    categoria: 'EstratÃ©gia',
-    descricao: 'VisÃ£o de futuro, metas SWOT, organograma, lideranÃ§a e KPIs.',
+    nome: 'Planejamento EstratÃƒÂ©gico & GestÃƒÂ£o de Pessoas',
+    categoria: 'EstratÃƒÂ©gia',
+    descricao: 'VisÃƒÂ£o de futuro, metas SWOT, organograma, lideranÃƒÂ§a e KPIs.',
     atividades: [
       {
-        nome: "Entendimento da demanda e diagnÃ³stico inicial",
-        descricao: "AnÃ¡lise da cultura organizacional, lideranÃ§a e desafios estratÃ©gicos.",
+        nome: "Entendimento da demanda e diagnÃƒÂ³stico inicial",
+        descricao: "AnÃƒÂ¡lise da cultura organizacional, lideranÃƒÂ§a e desafios estratÃƒÂ©gicos.",
         cargaHoraria: "4h",
-        solucaoProposta: "Entendimento da demanda e diagnÃ³stico estratÃ©gico inicial.",
+        solucaoProposta: "Entendimento da demanda e diagnÃƒÂ³stico estratÃƒÂ©gico inicial.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "DiagnÃ³stico da visÃ£o do negÃ³cio e direcionamento estratÃ©gico."
+        resultadoEsperado: "DiagnÃƒÂ³stico da visÃƒÂ£o do negÃƒÂ³cio e direcionamento estratÃƒÂ©gico."
       },
       {
-        nome: "AnÃ¡lise SWOT e Diretrizes EstratÃ©gicas",
-        descricao: "Mapeamento de ForÃ§as, Oportunidades, Fraquezas e AmeaÃ§as.",
+        nome: "AnÃƒÂ¡lise SWOT e Diretrizes EstratÃƒÂ©gicas",
+        descricao: "Mapeamento de ForÃƒÂ§as, Oportunidades, Fraquezas e AmeaÃƒÂ§as.",
         cargaHoraria: "4h",
-        solucaoProposta: "ElaboraÃ§Ã£o da Matriz SWOT e visÃ£o de crescimento.",
-        responsavel: "Consultor/SÃ³cios",
+        solucaoProposta: "ElaboraÃƒÂ§ÃƒÂ£o da Matriz SWOT e visÃƒÂ£o de crescimento.",
+        responsavel: "Consultor/SÃƒÂ³cios",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "Matriz SWOT consolidada com metas de mÃ©dio/longo prazo."
+        resultadoEsperado: "Matriz SWOT consolidada com metas de mÃƒÂ©dio/longo prazo."
       },
       {
-        nome: "EstruturaÃ§Ã£o de Organograma e Responsabilidades",
-        descricao: "DefiniÃ§Ã£o do quadro de funÃ§Ãµes, atribuiÃ§Ãµes de cargos e matriz de responsabilidade.",
+        nome: "EstruturaÃƒÂ§ÃƒÂ£o de Organograma e Responsabilidades",
+        descricao: "DefiniÃƒÂ§ÃƒÂ£o do quadro de funÃƒÂ§ÃƒÂµes, atribuiÃƒÂ§ÃƒÂµes de cargos e matriz de responsabilidade.",
         cargaHoraria: "4h",
-        solucaoProposta: "DefiniÃ§Ã£o de papÃ©is, organograma e matriz de competÃªncias.",
+        solucaoProposta: "DefiniÃƒÂ§ÃƒÂ£o de papÃƒÂ©is, organograma e matriz de competÃƒÂªncias.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
         resultadoEsperado: "Organograma funcional claro e responsabilidades bem delineadas."
       },
       {
-        nome: "Desenvolvimento de LideranÃ§as e ComunicaÃ§Ã£o Interna",
-        descricao: "Treinamento em gestÃ£o de equipes, alinhamento de metas e comunicaÃ§Ã£o.",
+        nome: "Desenvolvimento de LideranÃƒÂ§as e ComunicaÃƒÂ§ÃƒÂ£o Interna",
+        descricao: "Treinamento em gestÃƒÂ£o de equipes, alinhamento de metas e comunicaÃƒÂ§ÃƒÂ£o.",
         cargaHoraria: "4h",
-        solucaoProposta: "Desenvolvimento de competÃªncias gerenciais e clima organizacional.",
+        solucaoProposta: "Desenvolvimento de competÃƒÂªncias gerenciais e clima organizacional.",
         responsavel: "Consultor/Gestores",
         status: "Pendente",
-        prioridade: "MÃ©dia",
-        resultadoEsperado: "Gestores alinhados e canais de comunicaÃ§Ã£o interna ativos."
+        prioridade: "MÃƒÂ©dia",
+        resultadoEsperado: "Gestores alinhados e canais de comunicaÃƒÂ§ÃƒÂ£o interna ativos."
       },
       {
         nome: "Plano de Metas e Acompanhamento de KPIs",
-        descricao: "DefiniÃ§Ã£o de indicadores-chave de desempenho por setor e acompanhamento.",
+        descricao: "DefiniÃƒÂ§ÃƒÂ£o de indicadores-chave de desempenho por setor e acompanhamento.",
         cargaHoraria: "4h",
-        solucaoProposta: "EstruturaÃ§Ã£o do painel de controle e acompanhamento de metas.",
+        solucaoProposta: "EstruturaÃƒÂ§ÃƒÂ£o do painel de controle e acompanhamento de metas.",
         responsavel: "Consultor",
         status: "Pendente",
-        prioridade: "MÃ©dia",
+        prioridade: "MÃƒÂ©dia",
         resultadoEsperado: "Metas corporativas desdobradas em planos operacionais."
       },
       {
         nome: "Desenvolvimento de sistema, aplicativos ou planilhas",
-        descricao: "CriaÃ§Ã£o de aplicativo ou planilha de gestÃ£o estratÃ©gica e controle de KPIs.",
+        descricao: "CriaÃƒÂ§ÃƒÂ£o de aplicativo ou planilha de gestÃƒÂ£o estratÃƒÂ©gica e controle de KPIs.",
         cargaHoraria: "8h",
-        solucaoProposta: "Desenvolvimento de aplicativo/dashboard estratÃ©gico.",
+        solucaoProposta: "Desenvolvimento de aplicativo/dashboard estratÃƒÂ©gico.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "Painel estratÃ©gico de indicadores implantado no cliente."
+        resultadoEsperado: "Painel estratÃƒÂ©gico de indicadores implantado no cliente."
       },
       {
-        nome: "AnÃ¡lise final de atividades da consultoria",
-        descricao: "AnÃ¡lise do alinhamento estratÃ©gico e engajamento da equipe.",
+        nome: "AnÃƒÂ¡lise final de atividades da consultoria",
+        descricao: "AnÃƒÂ¡lise do alinhamento estratÃƒÂ©gico e engajamento da equipe.",
         cargaHoraria: "2h",
-        solucaoProposta: "AnÃ¡lise final do atingimento de metas estratÃ©gicas.",
+        solucaoProposta: "AnÃƒÂ¡lise final do atingimento de metas estratÃƒÂ©gicas.",
         responsavel: "Consultor",
         status: "Pendente",
-        prioridade: "MÃ©dia",
-        resultadoEsperado: "EvoluÃ§Ã£o do engajamento e alcance de diretrizes mensurado."
+        prioridade: "MÃƒÂ©dia",
+        resultadoEsperado: "EvoluÃƒÂ§ÃƒÂ£o do engajamento e alcance de diretrizes mensurado."
       },
       {
-        nome: "RelatÃ³rio final e encerramento",
-        descricao: "ApresentaÃ§Ã£o do relatÃ³rio final de planejamento estratÃ©gico e encerramento.",
+        nome: "RelatÃƒÂ³rio final e encerramento",
+        descricao: "ApresentaÃƒÂ§ÃƒÂ£o do relatÃƒÂ³rio final de planejamento estratÃƒÂ©gico e encerramento.",
         cargaHoraria: "4h",
-        solucaoProposta: "ElaboraÃ§Ã£o e apresentaÃ§Ã£o do relatÃ³rio final estratÃ©gico.",
+        solucaoProposta: "ElaboraÃƒÂ§ÃƒÂ£o e apresentaÃƒÂ§ÃƒÂ£o do relatÃƒÂ³rio final estratÃƒÂ©gico.",
         responsavel: "Consultor",
         status: "Pendente",
-        prioridade: "MÃ©dia",
-        resultadoEsperado: "RelatÃ³rio final entregue e diretrizes estratÃ©gicas vigentes."
+        prioridade: "MÃƒÂ©dia",
+        resultadoEsperado: "RelatÃƒÂ³rio final entregue e diretrizes estratÃƒÂ©gicas vigentes."
       }
     ]
   },
   {
     id: 'agronegocio',
-    nome: 'AgronegÃ³cio & GestÃ£o de Propriedade Rural',
-    categoria: 'AgronegÃ³cio',
-    descricao: 'ApuraÃ§Ã£o de custos por lote/safra, manejo, estoques de insumos e gestÃ£o rural.',
+    nome: 'AgronegÃƒÂ³cio & GestÃƒÂ£o de Propriedade Rural',
+    categoria: 'AgronegÃƒÂ³cio',
+    descricao: 'ApuraÃƒÂ§ÃƒÂ£o de custos por lote/safra, manejo, estoques de insumos e gestÃƒÂ£o rural.',
     atividades: [
       {
-        nome: "Entendimento da demanda e diagnÃ³stico inicial",
-        descricao: "Levantamento das caracterÃ­sticas da propriedade rural, cultivos/criaÃ§Ãµes e infraestrutura.",
+        nome: "Entendimento da demanda e diagnÃƒÂ³stico inicial",
+        descricao: "Levantamento das caracterÃƒÂ­sticas da propriedade rural, cultivos/criaÃƒÂ§ÃƒÂµes e infraestrutura.",
         cargaHoraria: "4h",
-        solucaoProposta: "Entendimento da demanda e diagnÃ³stico agropecuÃ¡rio inicial.",
+        solucaoProposta: "Entendimento da demanda e diagnÃƒÂ³stico agropecuÃƒÂ¡rio inicial.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "DiagnÃ³stico da propriedade rural e pontos crÃ­ticos de melhoria."
+        resultadoEsperado: "DiagnÃƒÂ³stico da propriedade rural e pontos crÃƒÂ­ticos de melhoria."
       },
       {
-        nome: "Mapeamento dos Custos de ProduÃ§Ã£o por Lote/Safra",
-        descricao: "EstruturaÃ§Ã£o da apuraÃ§Ã£o do custo operacional efetivo e custo total por Ã¡rea.",
+        nome: "Mapeamento dos Custos de ProduÃƒÂ§ÃƒÂ£o por Lote/Safra",
+        descricao: "EstruturaÃƒÂ§ÃƒÂ£o da apuraÃƒÂ§ÃƒÂ£o do custo operacional efetivo e custo total por ÃƒÂ¡rea.",
         cargaHoraria: "4h",
-        solucaoProposta: "AnÃ¡lise detalhada do custo de produÃ§Ã£o agropecuÃ¡ria.",
+        solucaoProposta: "AnÃƒÂ¡lise detalhada do custo de produÃƒÂ§ÃƒÂ£o agropecuÃƒÂ¡ria.",
         responsavel: "Consultor/Produtor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "Custo por safra/lote/saco mensurado com precisÃ£o."
+        resultadoEsperado: "Custo por safra/lote/saco mensurado com precisÃƒÂ£o."
       },
       {
-        nome: "Controle de Estoque de Insumos e CalendÃ¡rio Manejo",
-        descricao: "OrganizaÃ§Ã£o do almoxarifado agrÃ­cola, rastreabilidade de aplicaÃ§Ã£o e insumos.",
+        nome: "Controle de Estoque de Insumos e CalendÃƒÂ¡rio Manejo",
+        descricao: "OrganizaÃƒÂ§ÃƒÂ£o do almoxarifado agrÃƒÂ­cola, rastreabilidade de aplicaÃƒÂ§ÃƒÂ£o e insumos.",
         cargaHoraria: "4h",
-        solucaoProposta: "ImplantaÃ§Ã£o de controle de insumos e manejo operacional.",
+        solucaoProposta: "ImplantaÃƒÂ§ÃƒÂ£o de controle de insumos e manejo operacional.",
         responsavel: "Consultor/Equipe",
         status: "Pendente",
         prioridade: "Alta",
         resultadoEsperado: "Estoque de insumos controlado e perdas reduzidas."
       },
       {
-        nome: "AnÃ¡lise de Viabilidade Financeira e PreÃ§o de ComercializaÃ§Ã£o",
-        descricao: "DeterminaÃ§Ã£o do valor de equilÃ­brio da produÃ§Ã£o e estratÃ©gias de comercializaÃ§Ã£o.",
+        nome: "AnÃƒÂ¡lise de Viabilidade Financeira e PreÃƒÂ§o de ComercializaÃƒÂ§ÃƒÂ£o",
+        descricao: "DeterminaÃƒÂ§ÃƒÂ£o do valor de equilÃƒÂ­brio da produÃƒÂ§ÃƒÂ£o e estratÃƒÂ©gias de comercializaÃƒÂ§ÃƒÂ£o.",
         cargaHoraria: "4h",
-        solucaoProposta: "Estudo de margens de lucro e comercializaÃ§Ã£o safra.",
+        solucaoProposta: "Estudo de margens de lucro e comercializaÃƒÂ§ÃƒÂ£o safra.",
         responsavel: "Consultor",
         status: "Pendente",
-        prioridade: "MÃ©dia",
-        resultadoEsperado: "PreÃ§o de venda ideal e rentabilidade da produÃ§Ã£o calculados."
+        prioridade: "MÃƒÂ©dia",
+        resultadoEsperado: "PreÃƒÂ§o de venda ideal e rentabilidade da produÃƒÂ§ÃƒÂ£o calculados."
       },
       {
-        nome: "CapacitaÃ§Ã£o no Gerenciamento PrÃ¡tico da Propriedade",
+        nome: "CapacitaÃƒÂ§ÃƒÂ£o no Gerenciamento PrÃƒÂ¡tico da Propriedade",
         descricao: "Treinamento do produtor rural e equipe no preenchimento de cadernos de campo.",
         cargaHoraria: "4h",
-        solucaoProposta: "Treinamento de gestÃ£o no campo e controles gerenciais.",
+        solucaoProposta: "Treinamento de gestÃƒÂ£o no campo e controles gerenciais.",
         responsavel: "Consultor/Produtor",
         status: "Pendente",
-        prioridade: "MÃ©dia",
-        resultadoEsperado: "Produtor autÃ´nomo na gestÃ£o financeira do agronegÃ³cio."
+        prioridade: "MÃƒÂ©dia",
+        resultadoEsperado: "Produtor autÃƒÂ´nomo na gestÃƒÂ£o financeira do agronegÃƒÂ³cio."
       },
       {
         nome: "Desenvolvimento de sistema, aplicativos ou planilhas",
-        descricao: "Desenvolvimento de aplicativo de gestÃ£o rural ou planilha agrÃ­cola customizada.",
+        descricao: "Desenvolvimento de aplicativo de gestÃƒÂ£o rural ou planilha agrÃƒÂ­cola customizada.",
         cargaHoraria: "8h",
-        solucaoProposta: "Desenvolvimento de aplicativo/planilhas de gestÃ£o agropecuÃ¡ria.",
+        solucaoProposta: "Desenvolvimento de aplicativo/planilhas de gestÃƒÂ£o agropecuÃƒÂ¡ria.",
         responsavel: "Consultor",
         status: "Pendente",
         prioridade: "Alta",
-        resultadoEsperado: "Ferramenta de gestÃ£o rural implantada na propriedade."
+        resultadoEsperado: "Ferramenta de gestÃƒÂ£o rural implantada na propriedade."
       },
       {
-        nome: "AnÃ¡lise final de atividades da consultoria",
-        descricao: "VerificaÃ§Ã£o dos resultados do ciclo produtivo e alcance dos indicadores rurais.",
+        nome: "AnÃƒÂ¡lise final de atividades da consultoria",
+        descricao: "VerificaÃƒÂ§ÃƒÂ£o dos resultados do ciclo produtivo e alcance dos indicadores rurais.",
         cargaHoraria: "2h",
-        solucaoProposta: "AnÃ¡lise final do desempenho produtivo e financeiro da propriedade.",
+        solucaoProposta: "AnÃƒÂ¡lise final do desempenho produtivo e financeiro da propriedade.",
         responsavel: "Consultor",
         status: "Pendente",
-        prioridade: "MÃ©dia",
-        resultadoEsperado: "RelatÃ³rio de desempenho da safra/lote consolidado."
+        prioridade: "MÃƒÂ©dia",
+        resultadoEsperado: "RelatÃƒÂ³rio de desempenho da safra/lote consolidado."
       },
       {
-        nome: "RelatÃ³rio final e encerramento",
-        descricao: "ApresentaÃ§Ã£o do relatÃ³rio final de gestÃ£o agropecuÃ¡ria e encerramento.",
+        nome: "RelatÃƒÂ³rio final e encerramento",
+        descricao: "ApresentaÃƒÂ§ÃƒÂ£o do relatÃƒÂ³rio final de gestÃƒÂ£o agropecuÃƒÂ¡ria e encerramento.",
         cargaHoraria: "4h",
-        solucaoProposta: "ElaboraÃ§Ã£o e apresentaÃ§Ã£o do relatÃ³rio final do agronegÃ³cio.",
+        solucaoProposta: "ElaboraÃƒÂ§ÃƒÂ£o e apresentaÃƒÂ§ÃƒÂ£o do relatÃƒÂ³rio final do agronegÃƒÂ³cio.",
         responsavel: "Consultor",
         status: "Pendente",
-        prioridade: "MÃ©dia",
-        resultadoEsperado: "RelatÃ³rio final entregue com plano de continuidade rural."
+        prioridade: "MÃƒÂ©dia",
+        resultadoEsperado: "RelatÃƒÂ³rio final entregue com plano de continuidade rural."
       }
     ]
   }
@@ -1273,14 +1273,14 @@ const DadosConsultoriaView = ({
   // --- Mandatory Fields & Diagnostic Progress Calculations ---
   const mandatoryFields = useMemo(() => [
     { id: 'cliente', label: 'Cliente Vinculado', isFilled: Boolean(selectedEmpresa?.id || selectedDiagnostico?.empresaId || selectedDiagnostico?.nomeEmpresa) },
-    { id: 'tipoRelatorio', label: 'Tipo do RelatÃ³rio', isFilled: Boolean(dadosConsultoria.tipoRelatorio) },
-    { id: 'areaConsultoria', label: 'Ãrea da Consultoria', isFilled: Boolean(dadosConsultoria.areaConsultoria?.trim()) },
-    { id: 'codigoSgf', label: 'CÃ³digo SGF', isFilled: Boolean(dadosConsultoria.codigoSgf?.trim()) },
-    { id: 'periodoConsultoria', label: 'PerÃ­odo da Consultoria', isFilled: Boolean(dadosConsultoria.periodoConsultoria?.trim()) },
-    { id: 'cargaHoraria', label: 'Carga HorÃ¡ria Total', isFilled: Boolean(dadosConsultoria.cargaHoraria?.trim()) },
-    { id: 'tecnicoSebrae', label: 'TÃ©cnico Sebrae', isFilled: Boolean(dadosConsultoria.tecnicoSebrae?.trim()) },
+    { id: 'tipoRelatorio', label: 'Tipo do RelatÃƒÂ³rio', isFilled: Boolean(dadosConsultoria.tipoRelatorio) },
+    { id: 'areaConsultoria', label: 'ÃƒÂrea da Consultoria', isFilled: Boolean(dadosConsultoria.areaConsultoria?.trim()) },
+    { id: 'codigoSgf', label: 'CÃƒÂ³digo SGF', isFilled: Boolean(dadosConsultoria.codigoSgf?.trim()) },
+    { id: 'periodoConsultoria', label: 'PerÃƒÂ­odo da Consultoria', isFilled: Boolean(dadosConsultoria.periodoConsultoria?.trim()) },
+    { id: 'cargaHoraria', label: 'Carga HorÃƒÂ¡ria Total', isFilled: Boolean(dadosConsultoria.cargaHoraria?.trim()) },
+    { id: 'tecnicoSebrae', label: 'TÃƒÂ©cnico Sebrae', isFilled: Boolean(dadosConsultoria.tecnicoSebrae?.trim()) },
     { id: 'objetivo', label: 'Objetivo da Consultoria', isFilled: Boolean(dadosConsultoria.objetivo?.trim()) },
-    { id: 'solucoesIndicadas', label: 'Problemas & SoluÃ§Ãµes', isFilled: Boolean(dadosConsultoria.solucoesIndicadas?.trim()) },
+    { id: 'solucoesIndicadas', label: 'Problemas & SoluÃƒÂ§ÃƒÂµes', isFilled: Boolean(dadosConsultoria.solucoesIndicadas?.trim()) },
     { id: 'resultadosEsperados', label: 'Resultados Esperados', isFilled: Boolean(dadosConsultoria.resultadosEsperados?.trim()) },
   ], [selectedEmpresa, selectedDiagnostico, dadosConsultoria]);
 
@@ -1298,7 +1298,7 @@ const DadosConsultoriaView = ({
   const uniqueDiagRespostas = useMemo(() => deduplicateRespostas(diagRespostas), [diagRespostas]);
   const totalDiagnosticoPerguntas = uniqueDiagRespostas.length;
   const answeredDiagnosticoPerguntas = uniqueDiagRespostas.filter(r => 
-    r.resposta === 'Sim' || r.resposta === 'NÃ£o' || r.resposta === 'Parcial' || (Boolean(r.resposta) && String(r.resposta).trim() !== '')
+    r.resposta === 'Sim' || r.resposta === 'NÃƒÂ£o' || r.resposta === 'Parcial' || (Boolean(r.resposta) && String(r.resposta).trim() !== '')
   ).length;
   const diagnosticoPercent = totalDiagnosticoPerguntas > 0 
     ? Math.round((answeredDiagnosticoPerguntas / totalDiagnosticoPerguntas) * 100) 
@@ -1343,7 +1343,7 @@ const DadosConsultoriaView = ({
       resultadosEsperados: dados.resultadosEsperados || prev.resultadosEsperados
     }));
     playSuccessSound();
-    alert("Dados contratuais e tÃ©cnicos da consultoria copiados com sucesso pelo CÃ³digo SGF!");
+    alert("Dados contratuais e tÃƒÂ©cnicos da consultoria copiados com sucesso pelo CÃƒÂ³digo SGF!");
   };
 
   useEffect(() => {
@@ -1446,7 +1446,7 @@ const DadosConsultoriaView = ({
           </div>
           <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Dados da Consultoria Gerencial</h2>
           <p className="text-slate-500 text-sm">
-            Preencha e gerencie as informaÃ§Ãµes contratuais e tÃ©cnicas conectadas ao cliente cadastrado.
+            Preencha e gerencie as informaÃƒÂ§ÃƒÂµes contratuais e tÃƒÂ©cnicas conectadas ao cliente cadastrado.
           </p>
         </div>
 
@@ -1457,7 +1457,7 @@ const DadosConsultoriaView = ({
             className="border-slate-200 text-slate-700 hover:bg-slate-50"
           >
             <Calendar className="mr-2 h-4 w-4 text-emerald-600" />
-            Ir para RelatÃ³rio de Consultoria (8 Atividades)
+            Ir para RelatÃƒÂ³rio de Consultoria (8 Atividades)
           </Button>
 
           <Button 
@@ -1485,7 +1485,7 @@ const DadosConsultoriaView = ({
         </div>
       </div>
 
-      {/* Componente: Resumo de Progresso (Campos ObrigatÃ³rios vs. DiagnÃ³stico Total) */}
+      {/* Componente: Resumo de Progresso (Campos ObrigatÃƒÂ³rios vs. DiagnÃƒÂ³stico Total) */}
       <Card className="p-6 border-slate-200/80 shadow-sm bg-white rounded-2xl overflow-hidden relative">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-slate-100">
           <div className="flex items-center gap-3">
@@ -1494,13 +1494,13 @@ const DadosConsultoriaView = ({
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-slate-800 text-lg tracking-tight">Resumo de Progresso do DiagnÃ³stico</h3>
+                <h3 className="font-bold text-slate-800 text-lg tracking-tight">Resumo de Progresso do DiagnÃƒÂ³stico</h3>
                 <span className="text-[11px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                  {globalProgressPercent}% ConcluÃ­do
+                  {globalProgressPercent}% ConcluÃƒÂ­do
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-medium">
-                Acompanhamento em tempo real dos campos obrigatÃ³rios da consultoria e preenchimento total do diagnÃ³stico.
+                Acompanhamento em tempo real dos campos obrigatÃƒÂ³rios da consultoria e preenchimento total do diagnÃƒÂ³stico.
               </p>
             </div>
           </div>
@@ -1509,11 +1509,11 @@ const DadosConsultoriaView = ({
           <div className="flex items-center gap-2">
             {globalProgressPercent === 100 ? (
               <span className="px-3.5 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs">
-                <CheckCircle2 size={15} className="text-emerald-600" /> Pronto para EmissÃ£o
+                <CheckCircle2 size={15} className="text-emerald-600" /> Pronto para EmissÃƒÂ£o
               </span>
             ) : globalProgressPercent >= 70 ? (
               <span className="px-3.5 py-1.5 bg-blue-50 border border-blue-200 text-blue-700 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs">
-                <Clock size={15} className="text-blue-600" /> Em Andamento AvanÃ§ado ({globalProgressPercent}%)
+                <Clock size={15} className="text-blue-600" /> Em Andamento AvanÃƒÂ§ado ({globalProgressPercent}%)
               </span>
             ) : (
               <span className="px-3.5 py-1.5 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-2xs">
@@ -1528,7 +1528,7 @@ const DadosConsultoriaView = ({
           <div className="flex justify-between text-xs font-bold mb-1.5">
             <span className="text-slate-600 flex items-center gap-1.5">
               <Target size={14} className="text-blue-600" />
-              Ãndice Global Consolidado (Consultoria + DiagnÃ³stico + Cronograma)
+              ÃƒÂndice Global Consolidado (Consultoria + DiagnÃƒÂ³stico + Cronograma)
             </span>
             <span className={cn(
               "font-mono",
@@ -1554,13 +1554,13 @@ const DadosConsultoriaView = ({
 
         {/* 3 Metric Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
-          {/* Card 1: Campos ObrigatÃ³rios da Consultoria */}
+          {/* Card 1: Campos ObrigatÃƒÂ³rios da Consultoria */}
           <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-xl flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                   <FileText size={14} className="text-blue-600" />
-                  Campos ObrigatÃ³rios
+                  Campos ObrigatÃƒÂ³rios
                 </span>
                 <span className={cn(
                   "text-xs font-extrabold px-2 py-0.5 rounded-md",
@@ -1581,18 +1581,18 @@ const DadosConsultoriaView = ({
             </div>
             <p className="text-[11px] text-slate-500 font-medium">
               {totalMandatory - filledMandatory === 0 
-                ? "âœ“ Todos os 10 campos obrigatÃ³rios preenchidos" 
+                ? "Ã¢Å“â€œ Todos os 10 campos obrigatÃƒÂ³rios preenchidos" 
                 : `${totalMandatory - filledMandatory} campo(s) da consultoria pendente(s)`}
             </p>
           </div>
 
-          {/* Card 2: Perguntas do DiagnÃ³stico Total */}
+          {/* Card 2: Perguntas do DiagnÃƒÂ³stico Total */}
           <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-xl flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
                   <CheckSquare size={14} className="text-sky-600" />
-                  DiagnÃ³stico Total
+                  DiagnÃƒÂ³stico Total
                 </span>
                 <span className={cn(
                   "text-xs font-extrabold px-2 py-0.5 rounded-md",
@@ -1613,9 +1613,9 @@ const DadosConsultoriaView = ({
             </div>
             <p className="text-[11px] text-slate-500 font-medium">
               {totalDiagnosticoPerguntas === 0 
-                ? "Sem premissas vinculadas ao diagnÃ³stico" 
+                ? "Sem premissas vinculadas ao diagnÃƒÂ³stico" 
                 : totalDiagnosticoPerguntas === answeredDiagnosticoPerguntas 
-                  ? "âœ“ 100% das premissas avaliadas" 
+                  ? "Ã¢Å“â€œ 100% das premissas avaliadas" 
                   : `${totalDiagnosticoPerguntas - answeredDiagnosticoPerguntas} pergunta(s) sem resposta`}
             </p>
           </div>
@@ -1647,17 +1647,17 @@ const DadosConsultoriaView = ({
             </div>
             <p className="text-[11px] text-slate-500 font-medium">
               {totalAtividadesPreenchidas >= 8 
-                ? "âœ“ 8 atividades estruturadas no relatÃ³rio" 
+                ? "Ã¢Å“â€œ 8 atividades estruturadas no relatÃƒÂ³rio" 
                 : `${Math.max(0, 8 - totalAtividadesPreenchidas)} atividade(s) a adicionar no cronograma`}
             </p>
           </div>
         </div>
 
-        {/* Checklist dos Campos ObrigatÃ³rios */}
+        {/* Checklist dos Campos ObrigatÃƒÂ³rios */}
         <div className="pt-4 border-t border-slate-100">
           <div className="flex items-center justify-between mb-2.5">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Checklist dos 10 Campos ObrigatÃ³rios da Consultoria
+              Checklist dos 10 Campos ObrigatÃƒÂ³rios da Consultoria
             </span>
             <span className="text-xs font-semibold text-slate-500">
               {filledMandatory} de {totalMandatory} completos
@@ -1687,7 +1687,7 @@ const DadosConsultoriaView = ({
         </div>
       </Card>
 
-      {/* SeleÃ§Ã£o do Cliente Cadastrado */}
+      {/* SeleÃƒÂ§ÃƒÂ£o do Cliente Cadastrado */}
       <Card className="p-6 border-slate-100 shadow-sm">
         <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
           <div className="w-10 h-10 bg-sky-50 text-sky-600 rounded-xl flex items-center justify-center">
@@ -1744,21 +1744,21 @@ const DadosConsultoriaView = ({
         </div>
       </Card>
 
-      {/* FormulÃ¡rio de Dados da Consultoria Gerencial */}
+      {/* FormulÃƒÂ¡rio de Dados da Consultoria Gerencial */}
       <Card className="p-6 border-slate-100 shadow-sm">
         <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
           <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
             <FileText size={20} />
           </div>
           <div>
-            <h3 className="font-bold text-slate-800 uppercase tracking-tight">InformaÃ§Ãµes Contratuais da Consultoria</h3>
-            <p className="text-xs text-slate-500 uppercase font-medium tracking-wider">Dados do contrato Sebrae/SGF e responsÃ¡vel tÃ©cnico</p>
+            <h3 className="font-bold text-slate-800 uppercase tracking-tight">InformaÃƒÂ§ÃƒÂµes Contratuais da Consultoria</h3>
+            <p className="text-xs text-slate-500 uppercase font-medium tracking-wider">Dados do contrato Sebrae/SGF e responsÃƒÂ¡vel tÃƒÂ©cnico</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tipo do RelatÃ³rio</label>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tipo do RelatÃƒÂ³rio</label>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
@@ -1770,7 +1770,7 @@ const DadosConsultoriaView = ({
                     : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
                 )}
               >
-                <CheckCircle2 size={14} /> RelatÃ³rio Final
+                <CheckCircle2 size={14} /> RelatÃƒÂ³rio Final
               </button>
               <button
                 type="button"
@@ -1782,21 +1782,21 @@ const DadosConsultoriaView = ({
                     : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
                 )}
               >
-                <Clock size={14} /> RelatÃ³rio Parcial
+                <Clock size={14} /> RelatÃƒÂ³rio Parcial
               </button>
             </div>
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase">Ãrea da Consultoria</label>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase">ÃƒÂrea da Consultoria</label>
               <button
                 type="button"
                 onClick={() => { setNewAreaInput(''); setIsNewAreaModalOpen(true); }}
                 className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase flex items-center gap-1 cursor-pointer transition-colors"
-                title="Cadastrar nova Ã¡rea de consultoria"
+                title="Cadastrar nova ÃƒÂ¡rea de consultoria"
               >
-                <Plus size={11} /> Nova Ãrea
+                <Plus size={11} /> Nova ÃƒÂrea
               </button>
             </div>
             <select 
@@ -1811,22 +1811,22 @@ const DadosConsultoriaView = ({
                 }
               }}
             >
-              <option value="">Selecione uma Ã¡rea</option>
+              <option value="">Selecione uma ÃƒÂ¡rea</option>
               {allConsultoriaAreas.map(area => (
                 <option key={area} value={area}>{area}</option>
               ))}
-              <option value="__nova_area__" className="text-blue-600 font-bold">+ Adicionar Nova Ãrea...</option>
+              <option value="__nova_area__" className="text-blue-600 font-bold">+ Adicionar Nova ÃƒÂrea...</option>
             </select>
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase">CÃ³digo de ContrataÃ§Ã£o no SGF</label>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase">CÃƒÂ³digo de ContrataÃƒÂ§ÃƒÂ£o no SGF</label>
               <button
                 type="button"
                 onClick={() => setIsCopySgfModalOpen(true)}
                 className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase flex items-center gap-1 cursor-pointer transition-colors"
-                title="Copiar dados de outra consultoria com mesmo cÃ³digo SGF"
+                title="Copiar dados de outra consultoria com mesmo cÃƒÂ³digo SGF"
               >
                 <Copy size={11} /> Copiar de Contrato SGF
               </button>
@@ -1844,7 +1844,7 @@ const DadosConsultoriaView = ({
                 size="sm"
                 onClick={() => setIsCopySgfModalOpen(true)}
                 className="bg-white border-blue-200 text-blue-700 hover:bg-blue-50 text-xs shrink-0"
-                title="Buscar consultorias por CÃ³digo SGF"
+                title="Buscar consultorias por CÃƒÂ³digo SGF"
               >
                 <Search size={14} className="mr-1" /> Buscar SGF
               </Button>
@@ -1852,7 +1852,7 @@ const DadosConsultoriaView = ({
             {matchingSgfDiags.length > 0 && (
               <div className="mt-2 p-2.5 bg-blue-50/90 border border-blue-200 rounded-xl flex items-center justify-between text-xs text-blue-900 shadow-2xs">
                 <span className="truncate mr-2 font-medium">
-                  âœ¨ HÃ¡ <strong>{matchingSgfDiags.length}</strong> consultoria(s) com este mesmo CÃ³digo SGF.
+                  Ã¢Å“Â¨ HÃƒÂ¡ <strong>{matchingSgfDiags.length}</strong> consultoria(s) com este mesmo CÃƒÂ³digo SGF.
                 </span>
                 <button
                   type="button"
@@ -1870,7 +1870,7 @@ const DadosConsultoriaView = ({
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">PerÃ­odo da Consultoria</label>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">PerÃƒÂ­odo da Consultoria</label>
             <input 
               className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
               value={dadosConsultoria.periodoConsultoria || ''}
@@ -1880,7 +1880,7 @@ const DadosConsultoriaView = ({
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Carga HorÃ¡ria Total (Cadastro)</label>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Carga HorÃƒÂ¡ria Total (Cadastro)</label>
             <input 
               className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all font-mono font-bold text-emerald-700"
               value={dadosConsultoria.cargaHoraria || ''}
@@ -1890,18 +1890,18 @@ const DadosConsultoriaView = ({
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">TÃ©cnico do Sebrae ResponsÃ¡vel</label>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">TÃƒÂ©cnico do Sebrae ResponsÃƒÂ¡vel</label>
             <input 
               className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
               value={dadosConsultoria.tecnicoSebrae || ''}
-              placeholder="Ex: JoÃ£o Silva - Sebrae/RN"
+              placeholder="Ex: JoÃƒÂ£o Silva - Sebrae/RN"
               onChange={(e) => setDadosConsultoria({...dadosConsultoria, tecnicoSebrae: e.target.value})}
             />
           </div>
         </div>
       </Card>
 
-      {/* Objetivos e SoluÃ§Ãµes Propostas */}
+      {/* Objetivos e SoluÃƒÂ§ÃƒÂµes Propostas */}
       <Card className="p-6 border-slate-100 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
           <div className="flex items-center gap-3">
@@ -1909,7 +1909,7 @@ const DadosConsultoriaView = ({
               <Search size={20} />
             </div>
             <div>
-              <h3 className="font-bold text-slate-800 uppercase tracking-tight">Objetivos, Problemas e SoluÃ§Ãµes</h3>
+              <h3 className="font-bold text-slate-800 uppercase tracking-tight">Objetivos, Problemas e SoluÃƒÂ§ÃƒÂµes</h3>
               <p className="text-xs text-slate-500 uppercase font-medium tracking-wider">Detalhamento gerencial do escopo da consultoria</p>
             </div>
           </div>
@@ -1921,29 +1921,29 @@ const DadosConsultoriaView = ({
             onClick={() => {
               const atvs = selectedDiagnostico?.cronograma || [];
               if (!atvs || atvs.length === 0) {
-                alert("Nenhuma atividade encontrada no cronograma do relatÃ³rio para sincronizar. Selecione ou aplique um modelo no relatÃ³rio primeiro.");
+                alert("Nenhuma atividade encontrada no cronograma do relatÃƒÂ³rio para sincronizar. Selecione ou aplique um modelo no relatÃƒÂ³rio primeiro.");
                 return;
               }
 
               const validAtvs = atvs.filter(a => a.nome && a.nome.trim() !== '');
               const totalHoras = validAtvs.reduce((acc, a) => acc + (parseInt(a.cargaHoraria?.replace(/\D/g, '') || '0', 10) || 0), 0);
-              const solucoesLista = validAtvs.map((s, i) => `â€¢ Atividade ${i + 1} (${s.nome}): ${s.solucaoProposta || s.descricao}`).join('\n');
-              const resultadosLista = validAtvs.map((s) => `â€¢ ${s.resultadoEsperado || s.solucaoProposta || s.nome}`).filter(Boolean).join('\n');
+              const solucoesLista = validAtvs.map((s, i) => `Ã¢â‚¬Â¢ Atividade ${i + 1} (${s.nome}): ${s.solucaoProposta || s.descricao}`).join('\n');
+              const resultadosLista = validAtvs.map((s) => `Ã¢â‚¬Â¢ ${s.resultadoEsperado || s.solucaoProposta || s.nome}`).filter(Boolean).join('\n');
 
-              let probsHeader = "PROBLEMAS IDENTIFICADOS:\nâ€¢ Necessidade de organizaÃ§Ã£o das rotinas financeiras, controle por ciclo e apuraÃ§Ã£o de resultados\n\n";
+              let probsHeader = "PROBLEMAS IDENTIFICADOS:\nÃ¢â‚¬Â¢ Necessidade de organizaÃƒÂ§ÃƒÂ£o das rotinas financeiras, controle por ciclo e apuraÃƒÂ§ÃƒÂ£o de resultados\n\n";
               if (dadosConsultoria.solucoesIndicadas?.includes("PROBLEMAS IDENTIFICADOS:")) {
-                probsHeader = dadosConsultoria.solucoesIndicadas.split("SOLUÃ‡Ã•ES / AÃ‡Ã•ES PROPOSTAS:")[0];
+                probsHeader = dadosConsultoria.solucoesIndicadas.split("SOLUÃƒâ€¡Ãƒâ€¢ES / AÃƒâ€¡Ãƒâ€¢ES PROPOSTAS:")[0];
               }
 
               setDadosConsultoria(prev => ({
                 ...prev,
                 cargaHoraria: totalHoras > 0 ? `${totalHoras}hs` : prev.cargaHoraria,
-                solucoesIndicadas: `${probsHeader}SOLUÃ‡Ã•ES / AÃ‡Ã•ES PROPOSTAS:\n${solucoesLista}`,
+                solucoesIndicadas: `${probsHeader}SOLUÃƒâ€¡Ãƒâ€¢ES / AÃƒâ€¡Ãƒâ€¢ES PROPOSTAS:\n${solucoesLista}`,
                 resultadosEsperados: resultadosLista
               }));
 
               playSuccessSound();
-              alert("SoluÃ§Ãµes e Resultados Esperados sincronizados em perfeita sintonia com as atividades do Cronograma!");
+              alert("SoluÃƒÂ§ÃƒÂµes e Resultados Esperados sincronizados em perfeita sintonia com as atividades do Cronograma!");
             }}
             className="border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 text-xs font-semibold"
           >
@@ -1953,24 +1953,24 @@ const DadosConsultoriaView = ({
 
         <div className="grid grid-cols-1 gap-6">
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">1. Objetivo da Consultoria (Conforme DiagnÃ³stico)</label>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">1. Objetivo da Consultoria (Conforme DiagnÃƒÂ³stico)</label>
             <textarea 
               className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none transition-all"
               rows={3}
               value={dadosConsultoria.objetivo || ''}
               onChange={(e) => setDadosConsultoria({...dadosConsultoria, objetivo: e.target.value})}
-              placeholder="O objetivo desta consultoria Ã© implementar melhorias nas Ã¡reas identificadas no diagnÃ³stico..."
+              placeholder="O objetivo desta consultoria ÃƒÂ© implementar melhorias nas ÃƒÂ¡reas identificadas no diagnÃƒÂ³stico..."
             />
           </div>
 
           <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">2. Problemas Identificados / SoluÃ§Ãµes / AÃ§Ãµes Propostas</label>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">2. Problemas Identificados / SoluÃƒÂ§ÃƒÂµes / AÃƒÂ§ÃƒÂµes Propostas</label>
             <textarea 
               className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500 outline-none transition-all"
               rows={6}
               value={dadosConsultoria.solucoesIndicadas || ''}
               onChange={(e) => setDadosConsultoria({...dadosConsultoria, solucoesIndicadas: e.target.value})}
-              placeholder="PROBLEMAS IDENTIFICADOS:&#10;â€¢ Falta de controle financeiro diÃ¡rio&#10;&#10;SOLUÃ‡Ã•ES / AÃ‡Ã•ES PROPOSTAS:&#10;â€¢ ImplantaÃ§Ã£o de fluxo de caixa em planilha/aplicativo"
+              placeholder="PROBLEMAS IDENTIFICADOS:&#10;Ã¢â‚¬Â¢ Falta de controle financeiro diÃƒÂ¡rio&#10;&#10;SOLUÃƒâ€¡Ãƒâ€¢ES / AÃƒâ€¡Ãƒâ€¢ES PROPOSTAS:&#10;Ã¢â‚¬Â¢ ImplantaÃƒÂ§ÃƒÂ£o de fluxo de caixa em planilha/aplicativo"
             />
           </div>
 
@@ -1981,7 +1981,7 @@ const DadosConsultoriaView = ({
               rows={4}
               value={dadosConsultoria.resultadosEsperados || ''}
               onChange={(e) => setDadosConsultoria({...dadosConsultoria, resultadosEsperados: e.target.value})}
-              placeholder="Descreva os resultados esperados apÃ³s a implementaÃ§Ã£o das soluÃ§Ãµes..."
+              placeholder="Descreva os resultados esperados apÃƒÂ³s a implementaÃƒÂ§ÃƒÂ£o das soluÃƒÂ§ÃƒÂµes..."
             />
           </div>
         </div>
@@ -2021,12 +2021,12 @@ const DadosConsultoriaView = ({
         onSelectDadosConsultoria={handleCopySgfData}
       />
 
-      {/* Modal para Adicionar Nova Ãrea da Consultoria */}
+      {/* Modal para Adicionar Nova ÃƒÂrea da Consultoria */}
       {isNewAreaModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border border-slate-100 animate-in fade-in">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-              <h3 className="font-bold text-slate-800 text-base">Nova Ãrea da Consultoria</h3>
+              <h3 className="font-bold text-slate-800 text-base">Nova ÃƒÂrea da Consultoria</h3>
               <button 
                 type="button" 
                 onClick={() => { setIsNewAreaModalOpen(false); setNewAreaInput(''); }}
@@ -2036,7 +2036,7 @@ const DadosConsultoriaView = ({
               </button>
             </div>
             <p className="text-xs text-slate-500 mb-3 font-medium">
-              Digite o nome da nova Ã¡rea de consultoria para incluir nos formulÃ¡rios e relatÃ³rios:
+              Digite o nome da nova ÃƒÂ¡rea de consultoria para incluir nos formulÃƒÂ¡rios e relatÃƒÂ³rios:
             </p>
             <input 
               type="text"
@@ -2079,7 +2079,7 @@ const DadosConsultoriaView = ({
                 disabled={!newAreaInput.trim()}
                 className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold"
               >
-                Adicionar Ãrea
+                Adicionar ÃƒÂrea
               </Button>
             </div>
           </div>
@@ -2255,7 +2255,7 @@ const CronogramaView = ({
         dadosConsultoria: sanitizedDados,
         updatedAt: new Date().toISOString()
       }).catch(err => {
-        console.warn("Auto-sync evidÃªncia aviso Firestore:", err);
+        console.warn("Auto-sync evidÃƒÂªncia aviso Firestore:", err);
       });
     }
   };
@@ -2278,7 +2278,7 @@ const CronogramaView = ({
       let nextAtividades: AtividadeCronograma[] = [];
       setAtividades(prev => {
         const updated = [...prev];
-        const currentAtv = updated[activityIndex] || { nome: '', descricao: '', cargaHoraria: '', solucaoProposta: '', status: 'Pendente', prioridade: 'MÃ©dia' };
+        const currentAtv = updated[activityIndex] || { nome: '', descricao: '', cargaHoraria: '', solucaoProposta: '', status: 'Pendente', prioridade: 'MÃƒÂ©dia' };
         const currentEvidencias = currentAtv.evidencias || [];
         const nextEvidencias = [...currentEvidencias, compressedBase64];
         updated[activityIndex] = {
@@ -2308,7 +2308,7 @@ const CronogramaView = ({
 
       playSuccessSound();
     } catch (err) {
-      console.error("Erro ao processar imagem de evidÃªncia:", err);
+      console.error("Erro ao processar imagem de evidÃƒÂªncia:", err);
     }
   };
 
@@ -2361,7 +2361,7 @@ const CronogramaView = ({
     let nextAtividades: AtividadeCronograma[] = [];
     setAtividades(prev => {
       const updated = [...prev];
-      const currentAtv = updated[targetActivityIdx] || { nome: '', descricao: '', cargaHoraria: '', solucaoProposta: '', status: 'Pendente', prioridade: 'MÃ©dia' };
+      const currentAtv = updated[targetActivityIdx] || { nome: '', descricao: '', cargaHoraria: '', solucaoProposta: '', status: 'Pendente', prioridade: 'MÃƒÂ©dia' };
       const currentEvidencias = currentAtv.evidencias || [];
       updated[targetActivityIdx] = {
         ...currentAtv,
@@ -2392,7 +2392,7 @@ const CronogramaView = ({
       const probId = solution.idProblema;
       const relatedResps = responsesByProblem[probId] || [];
       if (relatedResps.length > 0) {
-        const criticalCount = relatedResps.filter(r => r.resposta === 'NÃ£o' || r.resposta === 'Parcial').length;
+        const criticalCount = relatedResps.filter(r => r.resposta === 'NÃƒÂ£o' || r.resposta === 'Parcial').length;
         return criticalCount > 0;
       }
       return false;
@@ -2406,12 +2406,12 @@ const CronogramaView = ({
       return impB - impA;
     });
 
-    const problemasIdentificadosTexto = Array.from(new Set(sortedRelevantSolutions.map(s => `â€¢ ${s.problema}`))).join('\n');
+    const problemasIdentificadosTexto = Array.from(new Set(sortedRelevantSolutions.map(s => `Ã¢â‚¬Â¢ ${s.problema}`))).join('\n');
 
     if (dadosConsultoria.solucoesIndicadas && (
       dadosConsultoria.solucoesIndicadas.includes("RESULTADOS ESPERADOS:") || 
       !dadosConsultoria.solucoesIndicadas.includes("PROBLEMAS IDENTIFICADOS:") ||
-      dadosConsultoria.solucoesIndicadas.includes("SOLUÃ‡Ã•ES INDICADAS:")
+      dadosConsultoria.solucoesIndicadas.includes("SOLUÃƒâ€¡Ãƒâ€¢ES INDICADAS:")
     )) {
       let newText = dadosConsultoria.solucoesIndicadas;
       
@@ -2421,8 +2421,8 @@ const CronogramaView = ({
       }
       
       // Update header
-      if (newText.includes("SOLUÃ‡Ã•ES INDICADAS:")) {
-        newText = newText.replace("SOLUÃ‡Ã•ES INDICADAS:", "SOLUÃ‡Ã•ES / AÃ‡Ã•ES PROPOSTAS:");
+      if (newText.includes("SOLUÃƒâ€¡Ãƒâ€¢ES INDICADAS:")) {
+        newText = newText.replace("SOLUÃƒâ€¡Ãƒâ€¢ES INDICADAS:", "SOLUÃƒâ€¡Ãƒâ€¢ES / AÃƒâ€¡Ãƒâ€¢ES PROPOSTAS:");
       }
 
       // Add problems if missing
@@ -2438,7 +2438,7 @@ const CronogramaView = ({
 
   const generateSuggestionsAI = async () => {
     if (!respostas || respostas.length === 0) {
-      alert("Realize o diagnÃ³stico primeiro para gerar sugestÃµes baseadas nos dados.");
+      alert("Realize o diagnÃƒÂ³stico primeiro para gerar sugestÃƒÂµes baseadas nos dados.");
       return;
     }
     
@@ -2446,7 +2446,7 @@ const CronogramaView = ({
     try {
       const ai = getAI();
       if (!ai) {
-        alert("IA nÃ£o configurada ou API Key invÃ¡lida.");
+        alert("IA nÃƒÂ£o configurada ou API Key invÃƒÂ¡lida.");
         setIsGeneratingAI(false);
         return;
       }
@@ -2454,20 +2454,20 @@ const CronogramaView = ({
       const totalCargaStr = dadosConsultoria.cargaHoraria || selectedDiagnostico.dadosConsultoria?.cargaHoraria || (selectedEmpresa as any)?.cargaHoraria || '34h';
       const numTotal = parseInt(totalCargaStr.replace(/\D/g, ''), 10) || 34;
 
-      const prompt = `Como um consultor sÃªnior do SEBRAE, analise o diagnÃ³stico empresarial e as respostas abaixo para sugerir um plano de trabalho/cronograma detalhado para uma consultoria de sucesso.
+      const prompt = `Como um consultor sÃƒÂªnior do SEBRAE, analise o diagnÃƒÂ³stico empresarial e as respostas abaixo para sugerir um plano de trabalho/cronograma detalhado para uma consultoria de sucesso.
       
-      DADOS DO DIAGNÃ“STICO:
+      DADOS DO DIAGNÃƒâ€œSTICO:
       ${JSON.stringify(respostas.map(r => ({ id: r.idProblema, p: r.pergunta, r: r.resposta, o: r.observacao, area: r.area }))).slice(0, 3500)}
-      CARGA HORÃRIA TOTAL REGISTRADA DA CONSULTORIA: ${numTotal}hs
+      CARGA HORÃƒÂRIA TOTAL REGISTRADA DA CONSULTORIA: ${numTotal}hs
       
-      DIRETRIZES DE ATIVIDADES E ORDEM LÃ“GICA DE EXECUÃ‡ÃƒO:
-      - A soma das cargas horÃ¡rias de todas as atividades DEVE ser exatamente ${numTotal}hs.
-      - As atividades DEVEM ser apresentadas em ordem LÃ“GICA sequencial de execuÃ§Ã£o:
-        1. "Entendimento da demanda e diagnÃ³stico inicial" (2h a 4h)
-        2. Atividades intermediÃ¡rias focadas em processos, custos, finanÃ§as e comercializaÃ§Ã£o (2h a 4h cada)
-        3. DEVE OBRIGATORIAMENTE incluir a atividade "Desenvolvimento de sistema, aplicativos ou planilhas" com exatamente 8h de carga horÃ¡ria.
-        4. DEVE OBRIGATORIAMENTE incluir a atividade "AnÃ¡lise final de atividades da consultoria" com exatamente 2h de carga horÃ¡ria.
-        5. "RelatÃ³rio final e encerramento" (2h a 4h)
+      DIRETRIZES DE ATIVIDADES E ORDEM LÃƒâ€œGICA DE EXECUÃƒâ€¡ÃƒÆ’O:
+      - A soma das cargas horÃƒÂ¡rias de todas as atividades DEVE ser exatamente ${numTotal}hs.
+      - As atividades DEVEM ser apresentadas em ordem LÃƒâ€œGICA sequencial de execuÃƒÂ§ÃƒÂ£o:
+        1. "Entendimento da demanda e diagnÃƒÂ³stico inicial" (2h a 4h)
+        2. Atividades intermediÃƒÂ¡rias focadas em processos, custos, finanÃƒÂ§as e comercializaÃƒÂ§ÃƒÂ£o (2h a 4h cada)
+        3. DEVE OBRIGATORIAMENTE incluir a atividade "Desenvolvimento de sistema, aplicativos ou planilhas" com exatamente 8h de carga horÃƒÂ¡ria.
+        4. DEVE OBRIGATORIAMENTE incluir a atividade "AnÃƒÂ¡lise final de atividades da consultoria" com exatamente 2h de carga horÃƒÂ¡ria.
+        5. "RelatÃƒÂ³rio final e encerramento" (2h a 4h)
       
       FORMATO CADA ITEM:
       {
@@ -2477,12 +2477,12 @@ const CronogramaView = ({
         "solucaoProposta": "string",
         "resultadoEsperado": "string (com KPIs quantitativos)",
         "responsavel": "string",
-        "prioridade": "Alta" | "MÃ©dia" | "Baixa",
+        "prioridade": "Alta" | "MÃƒÂ©dia" | "Baixa",
         "idProblema": "string (vincular ao id fornecido)"
       }`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-1.5-flash",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -2497,7 +2497,7 @@ const CronogramaView = ({
                 solucaoProposta: { type: Type.STRING },
                 resultadoEsperado: { type: Type.STRING },
                 responsavel: { type: Type.STRING },
-                prioridade: { type: Type.STRING, enum: ["Alta", "MÃ©dia", "Baixa"] },
+                prioridade: { type: Type.STRING, enum: ["Alta", "MÃƒÂ©dia", "Baixa"] },
                 idProblema: { type: Type.STRING }
               },
               required: ["nome", "descricao", "cargaHoraria", "solucaoProposta", "resultadoEsperado", "responsavel", "prioridade"]
@@ -2522,15 +2522,15 @@ const CronogramaView = ({
         setAtividades(finalizedSuggestions);
         
         // Also update summary
-        const problemasUnicos = Array.from(new Set(respostas.filter(r => r.resposta !== 'Sim').map(r => r.problema))).join('\nâ€¢ ');
-        const solucoesUnicas = Array.from(new Set(aiSuggestions.map((s: any) => s.solucaoProposta))).join('\nâ€¢ ');
-        const resultadosUnicos = Array.from(new Set(aiSuggestions.map((s: any) => s.resultadoEsperado))).join('\nâ€¢ ');
+        const problemasUnicos = Array.from(new Set(respostas.filter(r => r.resposta !== 'Sim').map(r => r.problema))).join('\nÃ¢â‚¬Â¢ ');
+        const solucoesUnicas = Array.from(new Set(aiSuggestions.map((s: any) => s.solucaoProposta))).join('\nÃ¢â‚¬Â¢ ');
+        const resultadosUnicos = Array.from(new Set(aiSuggestions.map((s: any) => s.resultadoEsperado))).join('\nÃ¢â‚¬Â¢ ');
 
         setDadosConsultoria({
           ...dadosConsultoria,
-          objetivo: `Implementar soluÃ§Ãµes estratÃ©gicas baseadas no diagnÃ³stico para otimizar os processos da empresa.`,
-          solucoesIndicadas: `PROBLEMAS IDENTIFICADOS:\nâ€¢ ${problemasUnicos}\n\nSOLUÃ‡Ã•ES / AÃ‡Ã•ES PROPOSTAS:\nâ€¢ ${solucoesUnicas}`,
-          resultadosEsperados: `â€¢ ${resultadosUnicos}`
+          objetivo: `Implementar soluÃƒÂ§ÃƒÂµes estratÃƒÂ©gicas baseadas no diagnÃƒÂ³stico para otimizar os processos da empresa.`,
+          solucoesIndicadas: `PROBLEMAS IDENTIFICADOS:\nÃ¢â‚¬Â¢ ${problemasUnicos}\n\nSOLUÃƒâ€¡Ãƒâ€¢ES / AÃƒâ€¡Ãƒâ€¢ES PROPOSTAS:\nÃ¢â‚¬Â¢ ${solucoesUnicas}`,
+          resultadosEsperados: `Ã¢â‚¬Â¢ ${resultadosUnicos}`
         });
         
         playSuccessSound();
@@ -2538,7 +2538,7 @@ const CronogramaView = ({
         // Generate the action plan in tandem
         if (onGenerateActionPlan) {
           Promise.resolve(onGenerateActionPlan()).catch((e: any) => {
-            console.error("Erro ao gerar o plano de aÃ§Ã£o de forma integrada:", e);
+            console.error("Erro ao gerar o plano de aÃƒÂ§ÃƒÂ£o de forma integrada:", e);
           });
         }
       }
@@ -2688,8 +2688,8 @@ const CronogramaView = ({
           area: atv.area || selectedDiagnostico.tipoEmpresa || 'Consultoria',
           solucaoSugerida: atv.solucaoProposta || '',
           acoes: atv.descricao || '',
-          status: (atv.status === 'ConcluÃ­do' || atv.status === 'Em Andamento' || atv.status === 'Pendente') ? atv.status : 'Pendente',
-          prioridade: (atv.prioridade === 'Alta' || atv.prioridade === 'Baixa' || atv.prioridade === 'MÃ©dia') ? atv.prioridade : 'MÃ©dia',
+          status: (atv.status === 'ConcluÃƒÂ­do' || atv.status === 'Em Andamento' || atv.status === 'Pendente') ? atv.status : 'Pendente',
+          prioridade: (atv.prioridade === 'Alta' || atv.prioridade === 'Baixa' || atv.prioridade === 'MÃƒÂ©dia') ? atv.prioridade : 'MÃƒÂ©dia',
           responsavel: atv.responsavel || 'Consultor',
           dataInicio: startStr,
           dataFim: endStr,
@@ -2745,7 +2745,7 @@ const CronogramaView = ({
                   solucaoSugerida: atv.solucaoProposta || '',
                   acoes: atv.descricao || '',
                   status: atv.status || 'Pendente',
-                  prioridade: atv.prioridade || 'MÃ©dia',
+                  prioridade: atv.prioridade || 'MÃƒÂ©dia',
                   responsavel: atv.responsavel || 'Consultor',
                   cargaHoraria: atv.cargaHoraria || '',
                   dataInicio: startStr,
@@ -2875,7 +2875,7 @@ const CronogramaView = ({
   const generateCronogramaPDF = () => {
     try {
       if (!selectedEmpresa || !selectedDiagnostico || atividades.length === 0) {
-        alert("Dados insuficientes para gerar o relatÃ³rio. Verifique se a empresa e o diagnÃ³stico estÃ£o selecionados e se hÃ¡ atividades no cronograma.");
+        alert("Dados insuficientes para gerar o relatÃƒÂ³rio. Verifique se a empresa e o diagnÃƒÂ³stico estÃƒÂ£o selecionados e se hÃƒÂ¡ atividades no cronograma.");
         return;
       }
 
@@ -2894,7 +2894,7 @@ const CronogramaView = ({
       const probId = solution.idProblema;
       const relatedResps = responsesByProblem[probId] || [];
       if (relatedResps.length > 0) {
-        const criticalCount = relatedResps.filter(r => r.resposta === 'NÃ£o' || r.resposta === 'Parcial').length;
+        const criticalCount = relatedResps.filter(r => r.resposta === 'NÃƒÂ£o' || r.resposta === 'Parcial').length;
         return criticalCount > 0;
       }
       return false;
@@ -2909,11 +2909,11 @@ const CronogramaView = ({
     });
 
     const areasIdentificadas = Array.from(new Set(sortedRelevantSolutions.map(s => s.area))).join(', ');
-    const problemasIdentificadosTexto = Array.from(new Set(sortedRelevantSolutions.map(s => `â€¢ ${s.problema}`))).join('\n');
-    const solucoesIndicadasTexto = sortedRelevantSolutions.map(s => `â€¢ ${s.solucao_recomendada}`).join('\n');
-    const acoesPropostasTexto = Array.from(new Set(sortedRelevantSolutions.map(s => `â€¢ ${s.acoes_sugeridas}`))).join('\n');
+    const problemasIdentificadosTexto = Array.from(new Set(sortedRelevantSolutions.map(s => `Ã¢â‚¬Â¢ ${s.problema}`))).join('\n');
+    const solucoesIndicadasTexto = sortedRelevantSolutions.map(s => `Ã¢â‚¬Â¢ ${s.solucao_recomendada}`).join('\n');
+    const acoesPropostasTexto = Array.from(new Set(sortedRelevantSolutions.map(s => `Ã¢â‚¬Â¢ ${s.acoes_sugeridas}`))).join('\n');
 
-    let finalContent = dadosConsultoria.solucoesIndicadas || `PROBLEMAS IDENTIFICADOS:\n${problemasIdentificadosTexto || 'â€¢ (Preencher problemas)'}\n\nSOLUÃ‡Ã•ES / AÃ‡Ã•ES PROPOSTAS:\n${solucoesIndicadasTexto || 'â€¢ (Preencher soluÃ§Ãµes)'}\n${acoesPropostasTexto || 'â€¢ (Preencher aÃ§Ãµes)'}`;
+    let finalContent = dadosConsultoria.solucoesIndicadas || `PROBLEMAS IDENTIFICADOS:\n${problemasIdentificadosTexto || 'Ã¢â‚¬Â¢ (Preencher problemas)'}\n\nSOLUÃƒâ€¡Ãƒâ€¢ES / AÃƒâ€¡Ãƒâ€¢ES PROPOSTAS:\n${solucoesIndicadasTexto || 'Ã¢â‚¬Â¢ (Preencher soluÃƒÂ§ÃƒÂµes)'}\n${acoesPropostasTexto || 'Ã¢â‚¬Â¢ (Preencher aÃƒÂ§ÃƒÂµes)'}`;
     
     // Auto-clean: Remove "RESULTADOS ESPERADOS" as requested (it appears in the table below)
     if (finalContent.includes("RESULTADOS ESPERADOS:")) {
@@ -2922,13 +2922,13 @@ const CronogramaView = ({
     
     // Ensure "PROBLEMAS IDENTIFICADOS" is present if we have them
     if (!finalContent.includes("PROBLEMAS IDENTIFICADOS:") && problemasIdentificadosTexto) {
-      if (finalContent.includes("SOLUÃ‡Ã•ES INDICADAS:")) {
-        finalContent = finalContent.replace("SOLUÃ‡Ã•ES INDICADAS:", "SOLUÃ‡Ã•ES / AÃ‡Ã•ES PROPOSTAS:");
+      if (finalContent.includes("SOLUÃƒâ€¡Ãƒâ€¢ES INDICADAS:")) {
+        finalContent = finalContent.replace("SOLUÃƒâ€¡Ãƒâ€¢ES INDICADAS:", "SOLUÃƒâ€¡Ãƒâ€¢ES / AÃƒâ€¡Ãƒâ€¢ES PROPOSTAS:");
       }
       finalContent = `PROBLEMAS IDENTIFICADOS:\n${problemasIdentificadosTexto}\n\n${finalContent}`;
-    } else if (finalContent.includes("SOLUÃ‡Ã•ES INDICADAS:") && !finalContent.includes("SOLUÃ‡Ã•ES / AÃ‡Ã•ES PROPOSTAS:")) {
+    } else if (finalContent.includes("SOLUÃƒâ€¡Ãƒâ€¢ES INDICADAS:") && !finalContent.includes("SOLUÃƒâ€¡Ãƒâ€¢ES / AÃƒâ€¡Ãƒâ€¢ES PROPOSTAS:")) {
       // Standardize header name
-      finalContent = finalContent.replace("SOLUÃ‡Ã•ES INDICADAS:", "SOLUÃ‡Ã•ES / AÃ‡Ã•ES PROPOSTAS:");
+      finalContent = finalContent.replace("SOLUÃƒâ€¡Ãƒâ€¢ES INDICADAS:", "SOLUÃƒâ€¡Ãƒâ€¢ES / AÃƒâ€¡Ãƒâ€¢ES PROPOSTAS:");
     }
 
     const activeLogoForPdf = logoChoice === 'sebrae' ? customLogo : logoChoice === 'consultora' ? customConsultoraLogo : null;
@@ -2949,13 +2949,13 @@ const CronogramaView = ({
             { content: 'Preenchimento pelo SEBRAE/CE', colSpan: 3, styles: { halign: 'center', fontStyle: 'bold', fillColor: [240, 240, 240] } }
           ],
           [
-            { content: 'NÃºmero da Nota Fiscal:', colSpan: 2 },
-            { content: 'Data emissÃ£o da Nota Fiscal:\n_____/_____/_____' }
+            { content: 'NÃƒÂºmero da Nota Fiscal:', colSpan: 2 },
+            { content: 'Data emissÃƒÂ£o da Nota Fiscal:\n_____/_____/_____' }
           ],
           [
             { content: 'GEDOC:' },
-            { content: 'CÃ³digo SIAC:' },
-            { content: 'Data ConsolidaÃ§Ã£o no SIAC:\n_____/_____/_____' }
+            { content: 'CÃƒÂ³digo SIAC:' },
+            { content: 'Data ConsolidaÃƒÂ§ÃƒÂ£o no SIAC:\n_____/_____/_____' }
           ]
         ],
         didDrawCell: (data) => {
@@ -2993,7 +2993,7 @@ const CronogramaView = ({
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(30, 41, 59);
-    doc.text('RELATÃ“RIO DE CONSULTORIA', 105, currentY, { align: 'center' });
+    doc.text('RELATÃƒâ€œRIO DE CONSULTORIA', 105, currentY, { align: 'center' });
     currentY += 5;
 
     doc.setFontSize(8.5);
@@ -3003,7 +3003,7 @@ const CronogramaView = ({
     } else {
       doc.setTextColor(5, 150, 105);
     }
-    doc.text(`(${tipoRelatorioVal === 'PARCIAL' ? 'RELATÃ“RIO PARCIAL DE ACOMPANHAMENTO' : 'RELATÃ“RIO FINAL DE CONSULTORIA GERENCIAL'})`, 105, currentY, { align: 'center' });
+    doc.text(`(${tipoRelatorioVal === 'PARCIAL' ? 'RELATÃƒâ€œRIO PARCIAL DE ACOMPANHAMENTO' : 'RELATÃƒâ€œRIO FINAL DE CONSULTORIA GERENCIAL'})`, 105, currentY, { align: 'center' });
     currentY += 6;
 
     doc.setTextColor(30, 41, 59);
@@ -3022,16 +3022,16 @@ const CronogramaView = ({
         }
       },
       body: [
-        [{ content: 'RAZÃƒO SOCIAL:', styles: { fontStyle: 'bold', cellWidth: 40 } }, { content: selectedEmpresa.razaoSocial || selectedEmpresa.nome, colSpan: 3 }],
+        [{ content: 'RAZÃƒÆ’O SOCIAL:', styles: { fontStyle: 'bold', cellWidth: 40 } }, { content: selectedEmpresa.razaoSocial || selectedEmpresa.nome, colSpan: 3 }],
         [{ content: 'NOME FANTASIA:', styles: { fontStyle: 'bold' } }, { content: selectedEmpresa.nomeFantasia || selectedEmpresa.nome, colSpan: 3 }],
         [
           { content: 'CNPJ:', styles: { fontStyle: 'bold' } }, { content: selectedEmpresa.cnpj || '' },
-          { content: 'NÃšMERO DA CAF:', styles: { fontStyle: 'bold', cellWidth: 50 } }, { content: selectedEmpresa.cafNumero || '' }
+          { content: 'NÃƒÅ¡MERO DA CAF:', styles: { fontStyle: 'bold', cellWidth: 50 } }, { content: selectedEmpresa.cafNumero || '' }
         ],
         [
-          { content: 'MÃŠS/ANO DE ABERTURA:', styles: { fontStyle: 'bold' } }, { content: selectedEmpresa.mesAnoAbertura || '', colSpan: 3 }
+          { content: 'MÃƒÅ S/ANO DE ABERTURA:', styles: { fontStyle: 'bold' } }, { content: selectedEmpresa.mesAnoAbertura || '', colSpan: 3 }
         ],
-        [{ content: 'ENDEREÃ‡O:', styles: { fontStyle: 'bold' } }, { content: selectedEmpresa.enderecoComercial || '', colSpan: 3 }],
+        [{ content: 'ENDEREÃƒâ€¡O:', styles: { fontStyle: 'bold' } }, { content: selectedEmpresa.enderecoComercial || '', colSpan: 3 }],
         [
           { content: 'CONTATO:', styles: { fontStyle: 'bold' } }, { content: `${selectedEmpresa.telefoneFixo || ''} | ${selectedEmpresa.celular || ''}`, colSpan: 3 }
         ],
@@ -3060,7 +3060,7 @@ const CronogramaView = ({
         }
       },
       body: [
-        [{ content: 'RAZÃƒO SOCIAL:', styles: { fontStyle: 'bold', cellWidth: 40 } }, { content: dadosConsultoria.razaoSocial || '', colSpan: 3 }],
+        [{ content: 'RAZÃƒÆ’O SOCIAL:', styles: { fontStyle: 'bold', cellWidth: 40 } }, { content: dadosConsultoria.razaoSocial || '', colSpan: 3 }],
         [{ content: 'CNPJ:', styles: { fontStyle: 'bold' } }, { content: dadosConsultoria.cnpj || '', colSpan: 3 }],
         [{ content: 'CONSULTOR:', styles: { fontStyle: 'bold' } }, { content: dadosConsultoria.consultor || '', colSpan: 3 }],
         [{ content: 'CONTATO:', styles: { fontStyle: 'bold' } }, { content: `${dadosConsultoria.celular || ''} | ${dadosConsultoria.email || ''}`, colSpan: 3 }]
@@ -3107,24 +3107,24 @@ const CronogramaView = ({
       },
       body: [
         [
-          { content: 'TIPO DE RELATÃ“RIO:', styles: { fontStyle: 'bold', cellWidth: 40 } },
+          { content: 'TIPO DE RELATÃƒâ€œRIO:', styles: { fontStyle: 'bold', cellWidth: 40 } },
           { 
-            content: `RELATÃ“RIO ${tipoRelatorioVal}`, 
+            content: `RELATÃƒâ€œRIO ${tipoRelatorioVal}`, 
             colSpan: 3, 
             styles: { fontStyle: 'bold', textColor: tipoRelatorioVal === 'PARCIAL' ? [217, 119, 6] : [5, 150, 105] } 
           }
         ],
-        [{ content: `ÃREA: ${dadosConsultoria.areaConsultoria || ''}`, colSpan: 4, styles: { fontStyle: 'bold' } }],
-        [{ content: 'CÃ“DIGO SGF:', styles: { fontStyle: 'bold', cellWidth: 40 } }, { content: dadosConsultoria.codigoSgf || '', colSpan: 3 }],
+        [{ content: `ÃƒÂREA: ${dadosConsultoria.areaConsultoria || ''}`, colSpan: 4, styles: { fontStyle: 'bold' } }],
+        [{ content: 'CÃƒâ€œDIGO SGF:', styles: { fontStyle: 'bold', cellWidth: 40 } }, { content: dadosConsultoria.codigoSgf || '', colSpan: 3 }],
         [
-          { content: 'PERÃODO:', styles: { fontStyle: 'bold' } }, { content: dadosConsultoria.periodoConsultoria || '' },
-          { content: 'CARGA HORÃRIA TOTAL:', styles: { fontStyle: 'bold', cellWidth: 40 } }, { content: dadosConsultoria.cargaHoraria || `${totalHoras} HS` }
+          { content: 'PERÃƒÂODO:', styles: { fontStyle: 'bold' } }, { content: dadosConsultoria.periodoConsultoria || '' },
+          { content: 'CARGA HORÃƒÂRIA TOTAL:', styles: { fontStyle: 'bold', cellWidth: 40 } }, { content: dadosConsultoria.cargaHoraria || `${totalHoras} HS` }
         ],
         [
-          { content: 'HORAS NO RELATÃ“RIO:', styles: { fontStyle: 'bold', cellWidth: 40 } },
+          { content: 'HORAS NO RELATÃƒâ€œRIO:', styles: { fontStyle: 'bold', cellWidth: 40 } },
           { content: `${totalHorasSelecionadas} HS (${atividadesSelecionadas.length} atividade(s) selecionada(s))`, colSpan: 3, styles: { fontStyle: 'bold', textColor: [5, 150, 105] } }
         ],
-        [{ content: 'TÃ‰CNICO SEBRAE:', styles: { fontStyle: 'bold' } }, { content: dadosConsultoria.tecnicoSebrae || '', colSpan: 3 }]
+        [{ content: 'TÃƒâ€°CNICO SEBRAE:', styles: { fontStyle: 'bold' } }, { content: dadosConsultoria.tecnicoSebrae || '', colSpan: 3 }]
       ]
     });
 
@@ -3143,7 +3143,7 @@ const CronogramaView = ({
       },
       body: [
         [{ content: '1. OBJETIVO DA CONSULTORIA:', styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }],
-        [{ content: dadosConsultoria.objetivo || `Implementar melhorias nas Ã¡reas de ${areasIdentificadas || 'gestÃ£o empresarial'}.`, styles: { minCellHeight: 10 } }]
+        [{ content: dadosConsultoria.objetivo || `Implementar melhorias nas ÃƒÂ¡reas de ${areasIdentificadas || 'gestÃƒÂ£o empresarial'}.`, styles: { minCellHeight: 10 } }]
       ]
     });
 
@@ -3161,7 +3161,7 @@ const CronogramaView = ({
         }
       },
       body: [
-        [{ content: '2. PROBLEMAS IDENTIFICADOS / SOLUÃ‡Ã•ES / AÃ‡Ã•ES PROPOSTAS:', styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }],
+        [{ content: '2. PROBLEMAS IDENTIFICADOS / SOLUÃƒâ€¡Ãƒâ€¢ES / AÃƒâ€¡Ãƒâ€¢ES PROPOSTAS:', styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }],
         [{ content: finalContent, styles: { minCellHeight: 25 } }]
       ]
     });
@@ -3174,35 +3174,35 @@ const CronogramaView = ({
     if (atividadesSelecionadas.length === 0) {
       atividadesBody.push([
         { content: 'Atividades Selecionadas:', styles: { fontStyle: 'bold', cellWidth: 40 } },
-        { content: 'Nenhuma atividade selecionada para exibiÃ§Ã£o neste relatÃ³rio.', styles: { fontStyle: 'italic', textColor: [120, 120, 120] } }
+        { content: 'Nenhuma atividade selecionada para exibiÃƒÂ§ÃƒÂ£o neste relatÃƒÂ³rio.', styles: { fontStyle: 'italic', textColor: [120, 120, 120] } }
       ]);
     } else {
       atividadesSelecionadas.forEach((item, idx) => {
         const atv = item.atv;
-        const cleanedDesc = (atv.descricao || '').split('\n\n').filter(p => !p.startsWith('DiagnÃ³stico:')).join('\n\n');
+        const cleanedDesc = (atv.descricao || '').split('\n\n').filter(p => !p.startsWith('DiagnÃƒÂ³stico:')).join('\n\n');
 
         atividadesBody.push([
-          { content: `Atividade ${idx + 1} (Ref. #${item.activityNumber}) â€“`, styles: { fontStyle: 'bold', cellWidth: 38 } },
+          { content: `Atividade ${idx + 1} (Ref. #${item.activityNumber}) Ã¢â‚¬â€œ`, styles: { fontStyle: 'bold', cellWidth: 38 } },
           { content: atv.nome || '', styles: { fontStyle: 'bold' } }
         ]);
         atividadesBody.push([
-          { content: 'DescriÃ§Ã£o', styles: { fontStyle: 'bold' } },
+          { content: 'DescriÃƒÂ§ÃƒÂ£o', styles: { fontStyle: 'bold' } },
           { content: cleanedDesc || '' }
         ]);
         atividadesBody.push([
-          { content: `Carga horÃ¡ria desta atividade: ${(atv.cargaHoraria || '0').toString().replace(/h/gi, '')} hs`, styles: { fontStyle: 'bold' } },
-          { content: `Status da atividade: ${atv.status || 'ConcluÃ­do'}`, styles: { fontStyle: 'bold', textColor: (atv.status || '').toLowerCase().includes('conclu') ? [5, 150, 105] : [71, 85, 105] } }
+          { content: `Carga horÃƒÂ¡ria desta atividade: ${(atv.cargaHoraria || '0').toString().replace(/h/gi, '')} hs`, styles: { fontStyle: 'bold' } },
+          { content: `Status da atividade: ${atv.status || 'ConcluÃƒÂ­do'}`, styles: { fontStyle: 'bold', textColor: (atv.status || '').toLowerCase().includes('conclu') ? [5, 150, 105] : [71, 85, 105] } }
         ]);
       });
     }
 
     atividadesBody.push([
-      { content: `CARGA HORÃRIA DO RELATÃ“RIO (${tipoRelatorioVal}):`, styles: { fontStyle: 'bold', fillColor: [236, 253, 245], textColor: [5, 150, 105] } },
+      { content: `CARGA HORÃƒÂRIA DO RELATÃƒâ€œRIO (${tipoRelatorioVal}):`, styles: { fontStyle: 'bold', fillColor: [236, 253, 245], textColor: [5, 150, 105] } },
       { content: `${totalHorasSelecionadas} hs (${atividadesSelecionadas.length} de ${atividades.length} atividades)`, styles: { fontStyle: 'bold', fillColor: [236, 253, 245], textColor: [5, 150, 105] } }
     ]);
 
     atividadesBody.push([
-      { content: `CARGA HORÃRIA TOTAL DA CONSULTORIA:`, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } },
+      { content: `CARGA HORÃƒÂRIA TOTAL DA CONSULTORIA:`, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } },
       { content: `${totalHoras} hs`, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }
     ]);
 
@@ -3216,7 +3216,7 @@ const CronogramaView = ({
           addHeader(doc);
         }
       },
-      head: [[{ content: 'SOLUÃ‡Ã•ES IMPLEMENTADAS\nDetalhamento das atividades selecionadas para o relatÃ³rio.', colSpan: 2, styles: { fontStyle: 'bold', fillColor: [240, 240, 240], fontSize: 9 } }]],
+      head: [[{ content: 'SOLUÃƒâ€¡Ãƒâ€¢ES IMPLEMENTADAS\nDetalhamento das atividades selecionadas para o relatÃƒÂ³rio.', colSpan: 2, styles: { fontStyle: 'bold', fillColor: [240, 240, 240], fontSize: 9 } }]],
       body: atividadesBody
     });
 
@@ -3259,13 +3259,13 @@ const CronogramaView = ({
       doc.setFontSize(11);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(30, 41, 59);
-      doc.text('EVIDÃŠNCIAS FOTOGRÃFICAS DAS ATIVIDADES EXECUTADAS', 15, currentY);
+      doc.text('EVIDÃƒÅ NCIAS FOTOGRÃƒÂFICAS DAS ATIVIDADES EXECUTADAS', 15, currentY);
       currentY += 6;
       
       doc.setFontSize(8);
       doc.setFont("helvetica", "italic");
       doc.setTextColor(100, 116, 139);
-      doc.text('Registros fotogrÃ¡ficos comprobatÃ³rios vinculados a cada atividade em ordem crescente (tamanho reduzido em 50%).', 15, currentY);
+      doc.text('Registros fotogrÃƒÂ¡ficos comprobatÃƒÂ³rios vinculados a cada atividade em ordem crescente (tamanho reduzido em 50%).', 15, currentY);
       currentY += 8;
 
       // 50% scale rendering for PDF (A4 printable width: 180mm)
@@ -3290,7 +3290,7 @@ const CronogramaView = ({
         doc.setFontSize(8.5);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(5, 150, 105);
-        const atvTitle = `Atividade ${item.activityNumber} â€“ ${item.atv.nome || 'Sem tÃ­tulo'}`;
+        const atvTitle = `Atividade ${item.activityNumber} Ã¢â‚¬â€œ ${item.atv.nome || 'Sem tÃƒÂ­tulo'}`;
         doc.text(doc.splitTextToSize(atvTitle, 175)[0], margin + 3, currentY + 4.5);
         currentY += 8.5;
 
@@ -3329,7 +3329,7 @@ const CronogramaView = ({
               doc.setFontSize(6.5);
               doc.setFont("helvetica", "bold");
               doc.setTextColor(100, 116, 139);
-              doc.text(`EvidÃªncia ${i + colIdx + 1} (Ativ. #${item.activityNumber})`, xPos, currentY + h + 3.5);
+              doc.text(`EvidÃƒÂªncia ${i + colIdx + 1} (Ativ. #${item.activityNumber})`, xPos, currentY + h + 3.5);
             } catch(e) {
               console.warn("Error drawing activity evidence image:", e);
             }
@@ -3355,7 +3355,7 @@ const CronogramaView = ({
         doc.setFontSize(8.5);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(71, 85, 105);
-        doc.text('Outras EvidÃªncias Gerais da Consultoria', margin + 3, currentY + 4.5);
+        doc.text('Outras EvidÃƒÂªncias Gerais da Consultoria', margin + 3, currentY + 4.5);
         currentY += 8.5;
 
         for (let i = 0; i < generalEvidencias.length; i += cols) {
@@ -3389,7 +3389,7 @@ const CronogramaView = ({
               doc.setFontSize(6.5);
               doc.setFont("helvetica", "bold");
               doc.setTextColor(100, 116, 139);
-              doc.text(`EvidÃªncia Geral ${i + colIdx + 1}`, xPos, currentY + h + 3.5);
+              doc.text(`EvidÃƒÂªncia Geral ${i + colIdx + 1}`, xPos, currentY + h + 3.5);
             } catch(e) {}
           });
 
@@ -3412,7 +3412,7 @@ const CronogramaView = ({
       },
       body: [
         [
-          { content: `______________________________\n${dadosConsultoria.consultor || 'Consultor responsÃ¡vel'}\nConsultor`, styles: { minCellHeight: 25 } },
+          { content: `______________________________\n${dadosConsultoria.consultor || 'Consultor responsÃƒÂ¡vel'}\nConsultor`, styles: { minCellHeight: 25 } },
           { content: `______________________________\n${selectedEmpresa?.representante || selectedEmpresa?.nome || '________________'}\nCliente`, styles: { minCellHeight: 25 } }
         ]
       ]
@@ -3429,15 +3429,15 @@ const CronogramaView = ({
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">RelatÃ³rio de Consultoria</h2>
-          <p className="text-slate-500 font-medium">Defina as etapas do projeto e as soluÃ§Ãµes propostas</p>
+          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">RelatÃƒÂ³rio de Consultoria</h2>
+          <p className="text-slate-500 font-medium">Defina as etapas do projeto e as soluÃƒÂ§ÃƒÂµes propostas</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={() => setAtividades([...atividades, { nome: '', descricao: '', cargaHoraria: '', solucaoProposta: '', responsavel: '', status: 'Pendente', prioridade: 'MÃ©dia' }])} className="px-4 text-emerald-600 border-emerald-100">
+          <Button variant="outline" onClick={() => setAtividades([...atividades, { nome: '', descricao: '', cargaHoraria: '', solucaoProposta: '', responsavel: '', status: 'Pendente', prioridade: 'MÃƒÂ©dia' }])} className="px-4 text-emerald-600 border-emerald-100">
             <Plus size={18} /> Adicionar Atividade
           </Button>
           <Button variant="outline" onClick={generateCronogramaPDF} className="px-4 text-emerald-600 hover:bg-emerald-50 border-emerald-100">
-            <Printer size={18} /> RelatÃ³rio (PDF)
+            <Printer size={18} /> RelatÃƒÂ³rio (PDF)
           </Button>
           <Button 
             variant="outline" 
@@ -3446,7 +3446,7 @@ const CronogramaView = ({
             className="px-6 text-sky-600 border-sky-100 hover:bg-sky-50"
           >
             {isGeneratingAI ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />} 
-            {isGeneratingAI ? "Gerando RelatÃ³rio & Plano..." : "Gerar RelatÃ³rio e Plano com IA"}
+            {isGeneratingAI ? "Gerando RelatÃƒÂ³rio & Plano..." : "Gerar RelatÃƒÂ³rio e Plano com IA"}
           </Button>
           <Button 
             onClick={handleSave} 
@@ -3466,7 +3466,7 @@ const CronogramaView = ({
             ) : (
               <>
                 <Save className="mr-1.5" size={18} />
-                <span>Salvar RelatÃ³rio</span>
+                <span>Salvar RelatÃƒÂ³rio</span>
               </>
             )}
           </Button>
@@ -3483,7 +3483,7 @@ const CronogramaView = ({
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-        {/* 2. Empresa Credenciada - Apenas SeleÃ§Ã£o e Resumo */}
+        {/* 2. Empresa Credenciada - Apenas SeleÃƒÂ§ÃƒÂ£o e Resumo */}
         <Card className="p-6 mb-8 border-slate-100 shadow-sm">
           <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
             <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
@@ -3491,7 +3491,7 @@ const CronogramaView = ({
             </div>
             <div>
               <h3 className="font-bold text-slate-800 uppercase tracking-tight">2. Empresa Credenciada</h3>
-              <p className="text-xs text-slate-500 uppercase font-medium tracking-wider">Selecione a credenciada cadastrada para vincular aos relatÃ³rios</p>
+              <p className="text-xs text-slate-500 uppercase font-medium tracking-wider">Selecione a credenciada cadastrada para vincular aos relatÃƒÂ³rios</p>
             </div>
           </div>
 
@@ -3546,13 +3546,13 @@ const CronogramaView = ({
               </div>
             ) : (
               <div className="p-4 bg-amber-50/50 rounded-xl border border-amber-200 text-xs text-amber-700 font-medium flex items-center">
-                <span>Selecione uma credenciada acima para preencher automaticamente os dados nos relatÃ³rios.</span>
+                <span>Selecione uma credenciada acima para preencher automaticamente os dados nos relatÃƒÂ³rios.</span>
               </div>
             )}
           </div>
         </Card>
 
-        {/* 3. Dados da Consultoria Gerencial - Card Conectado com BotÃ£o de EdiÃ§Ã£o na Aba Dedicada */}
+        {/* 3. Dados da Consultoria Gerencial - Card Conectado com BotÃƒÂ£o de EdiÃƒÂ§ÃƒÂ£o na Aba Dedicada */}
         <Card className="p-6 mb-8 border-slate-100 shadow-sm bg-gradient-to-r from-slate-50/50 to-blue-50/20">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 pb-4 border-b border-slate-100">
             <div className="flex items-center gap-3">
@@ -3577,25 +3577,25 @@ const CronogramaView = ({
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
             <div className="p-3 bg-white rounded-lg border border-slate-100 shadow-2xs">
-              <span className="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Ãrea da Consultoria</span>
-              <span className="font-semibold text-slate-800">{dadosConsultoria.areaConsultoria || 'NÃ£o informada'}</span>
+              <span className="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">ÃƒÂrea da Consultoria</span>
+              <span className="font-semibold text-slate-800">{dadosConsultoria.areaConsultoria || 'NÃƒÂ£o informada'}</span>
             </div>
             <div className="p-3 bg-white rounded-lg border border-slate-100 shadow-2xs">
-              <span className="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">CÃ³digo SGF</span>
-              <span className="font-semibold text-slate-800 font-mono">{dadosConsultoria.codigoSgf || 'NÃ£o informado'}</span>
+              <span className="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">CÃƒÂ³digo SGF</span>
+              <span className="font-semibold text-slate-800 font-mono">{dadosConsultoria.codigoSgf || 'NÃƒÂ£o informado'}</span>
             </div>
             <div className="p-3 bg-white rounded-lg border border-slate-100 shadow-2xs">
-              <span className="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Carga HorÃ¡ria Total</span>
-              <span className="font-bold text-emerald-700 font-mono">{dadosConsultoria.cargaHoraria || 'NÃ£o informada'}</span>
+              <span className="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Carga HorÃƒÂ¡ria Total</span>
+              <span className="font-bold text-emerald-700 font-mono">{dadosConsultoria.cargaHoraria || 'NÃƒÂ£o informada'}</span>
             </div>
             <div className="p-3 bg-white rounded-lg border border-slate-100 shadow-2xs">
-              <span className="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">TÃ©cnico Sebrae</span>
-              <span className="font-semibold text-slate-800">{dadosConsultoria.tecnicoSebrae || 'NÃ£o informado'}</span>
+              <span className="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">TÃƒÂ©cnico Sebrae</span>
+              <span className="font-semibold text-slate-800">{dadosConsultoria.tecnicoSebrae || 'NÃƒÂ£o informado'}</span>
             </div>
           </div>
         </Card>
 
-        {/* Modelos de RelatÃ³rio de Consultoria Baseados no DiagnÃ³stico */}
+        {/* Modelos de RelatÃƒÂ³rio de Consultoria Baseados no DiagnÃƒÂ³stico */}
         <Card className="p-6 mb-8 border-slate-800 shadow-md bg-slate-900 text-white">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
             <div className="flex items-center gap-3">
@@ -3603,8 +3603,8 @@ const CronogramaView = ({
                 <Sparkles size={20} />
               </div>
               <div>
-                <h3 className="font-bold text-white uppercase tracking-tight text-base">Modelos de RelatÃ³rio de Consultoria</h3>
-                <p className="text-xs text-slate-400 font-medium">Selecione, aplique ou duplique o modelo de relatÃ³rio ideal para o seu cliente</p>
+                <h3 className="font-bold text-white uppercase tracking-tight text-base">Modelos de RelatÃƒÂ³rio de Consultoria</h3>
+                <p className="text-xs text-slate-400 font-medium">Selecione, aplique ou duplique o modelo de relatÃƒÂ³rio ideal para o seu cliente</p>
               </div>
             </div>
           </div>
@@ -3629,7 +3629,7 @@ const CronogramaView = ({
                         {modelo.categoria}
                       </span>
                       <span className="text-[10px] font-bold text-emerald-400 bg-slate-950/60 px-2 py-0.5 rounded-md border border-slate-700/60">
-                        {totalHoras > 0 ? `${totalHoras}hs` : `${modelo.atividades.length} atv`} â€¢ {modelo.atividades.length} Atividades
+                        {totalHoras > 0 ? `${totalHoras}hs` : `${modelo.atividades.length} atv`} Ã¢â‚¬Â¢ {modelo.atividades.length} Atividades
                       </span>
                     </div>
                     <h4 className="font-bold text-sm text-slate-100 mb-1.5">{modelo.nome}</h4>
@@ -3641,7 +3641,7 @@ const CronogramaView = ({
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (window.confirm(`Deseja aplicar o modelo "${modelo.nome}" (${modelo.atividades.length} atividades, ${totalHoras}hs) a este relatÃ³rio?`)) {
+                        if (window.confirm(`Deseja aplicar o modelo "${modelo.nome}" (${modelo.atividades.length} atividades, ${totalHoras}hs) a este relatÃƒÂ³rio?`)) {
                           const finalized = modelo.atividades.map((s, idx) => ({
                             ...s,
                             status: 'Pendente',
@@ -3650,18 +3650,18 @@ const CronogramaView = ({
                           }));
                           setAtividades(finalized);
 
-                          const solucoesLista = finalized.map((s, i) => `â€¢ Atividade ${i + 1} (${s.nome}): ${s.solucaoProposta || s.descricao}`).join('\n');
-                          const resultadosLista = finalized.map((s) => `â€¢ ${s.resultadoEsperado || s.solucaoProposta || s.nome}`).filter(Boolean).join('\n');
+                          const solucoesLista = finalized.map((s, i) => `Ã¢â‚¬Â¢ Atividade ${i + 1} (${s.nome}): ${s.solucaoProposta || s.descricao}`).join('\n');
+                          const resultadosLista = finalized.map((s) => `Ã¢â‚¬Â¢ ${s.resultadoEsperado || s.solucaoProposta || s.nome}`).filter(Boolean).join('\n');
 
-                          let probsHeader = "PROBLEMAS IDENTIFICADOS:\nâ€¢ Necessidade de organizaÃ§Ã£o das rotinas financeiras, controle por ciclo e apuraÃ§Ã£o de resultados\n\n";
+                          let probsHeader = "PROBLEMAS IDENTIFICADOS:\nÃ¢â‚¬Â¢ Necessidade de organizaÃƒÂ§ÃƒÂ£o das rotinas financeiras, controle por ciclo e apuraÃƒÂ§ÃƒÂ£o de resultados\n\n";
                           if (dadosConsultoria.solucoesIndicadas?.includes("PROBLEMAS IDENTIFICADOS:")) {
-                            probsHeader = dadosConsultoria.solucoesIndicadas.split("SOLUÃ‡Ã•ES / AÃ‡Ã•ES PROPOSTAS:")[0];
+                            probsHeader = dadosConsultoria.solucoesIndicadas.split("SOLUÃƒâ€¡Ãƒâ€¢ES / AÃƒâ€¡Ãƒâ€¢ES PROPOSTAS:")[0];
                           }
 
                           const updatedDados = {
                             ...dadosConsultoria,
                             cargaHoraria: totalHoras > 0 ? `${totalHoras}hs` : dadosConsultoria.cargaHoraria,
-                            solucoesIndicadas: `${probsHeader}SOLUÃ‡Ã•ES / AÃ‡Ã•ES PROPOSTAS:\n${solucoesLista}`,
+                            solucoesIndicadas: `${probsHeader}SOLUÃƒâ€¡Ãƒâ€¢ES / AÃƒâ€¡Ãƒâ€¢ES PROPOSTAS:\n${solucoesLista}`,
                             resultadosEsperados: resultadosLista
                           };
 
@@ -3671,7 +3671,7 @@ const CronogramaView = ({
                           }
 
                           playSuccessSound();
-                          alert(`Modelo "${modelo.nome}" aplicado com sucesso! As soluÃ§Ãµes, aÃ§Ãµes e resultados esperados foram sincronizados com os Dados da Consultoria.`);
+                          alert(`Modelo "${modelo.nome}" aplicado com sucesso! As soluÃƒÂ§ÃƒÂµes, aÃƒÂ§ÃƒÂµes e resultados esperados foram sincronizados com os Dados da Consultoria.`);
                         }
                       }}
                       className={isSelected ? "bg-emerald-600 hover:bg-emerald-500 text-white flex-1 text-xs font-bold" : "bg-slate-700 hover:bg-slate-600 text-slate-200 flex-1 text-xs font-medium"}
@@ -3686,7 +3686,7 @@ const CronogramaView = ({
                         const copyM: ModeloRelatorio = {
                           ...JSON.parse(JSON.stringify(modelo)),
                           id: 'modelo_' + Date.now(),
-                          nome: `${modelo.nome} (CÃ³pia)`
+                          nome: `${modelo.nome} (CÃƒÂ³pia)`
                         };
                         setEditingModelo(copyM);
                       }}
@@ -3714,12 +3714,12 @@ const CronogramaView = ({
           </div>
         </Card>
 
-        {/* Modal para CriaÃ§Ã£o/EdiÃ§Ã£o do Modelo de RelatÃ³rio */}
+        {/* Modal para CriaÃƒÂ§ÃƒÂ£o/EdiÃƒÂ§ÃƒÂ£o do Modelo de RelatÃƒÂ³rio */}
         {editingModelo && (
           <Modal
             title={modelosRelatorio.some(m => m.id === editingModelo.id) ? `Editar Modelo: ${editingModelo.nome}` : "Criar Novo Modelo de Consultoria"}
             onClose={() => setEditingModelo(null)}
-            confirmText={modelosRelatorio.some(m => m.id === editingModelo.id) ? "Salvar AlteraÃ§Ãµes" : "Criar e Salvar Modelo"}
+            confirmText={modelosRelatorio.some(m => m.id === editingModelo.id) ? "Salvar AlteraÃƒÂ§ÃƒÂµes" : "Criar e Salvar Modelo"}
             size="4xl"
             onConfirm={() => {
               if (!editingModelo.nome.trim()) {
@@ -3750,7 +3750,7 @@ const CronogramaView = ({
                     type="text"
                     value={editingModelo.nome} 
                     onChange={(e) => setEditingModelo({ ...editingModelo, nome: e.target.value })} 
-                    placeholder="Ex: GestÃ£o Financeira da Carcinicultura"
+                    placeholder="Ex: GestÃƒÂ£o Financeira da Carcinicultura"
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-emerald-500/20 focus:outline-none focus:border-emerald-500 transition-all bg-white"
                   />
                 </div>
@@ -3760,14 +3760,14 @@ const CronogramaView = ({
                     type="text"
                     value={editingModelo.categoria} 
                     onChange={(e) => setEditingModelo({ ...editingModelo, categoria: e.target.value })} 
-                    placeholder="Ex: Carcinicultura, FinanÃ§as, OperaÃ§Ãµes"
+                    placeholder="Ex: Carcinicultura, FinanÃƒÂ§as, OperaÃƒÂ§ÃƒÂµes"
                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs font-medium focus:ring-2 focus:ring-emerald-500/20 focus:outline-none focus:border-emerald-500 transition-all bg-white"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">DescriÃ§Ã£o Resumida</label>
+                <label className="text-xs font-bold text-slate-700 block mb-1">DescriÃƒÂ§ÃƒÂ£o Resumida</label>
                 <textarea 
                   value={editingModelo.descricao} 
                   onChange={(e) => setEditingModelo({ ...editingModelo, descricao: e.target.value })} 
@@ -3782,7 +3782,7 @@ const CronogramaView = ({
                   <div>
                     <h4 className="font-bold text-sm text-slate-800">Atividades do Modelo ({editingModelo.atividades.length})</h4>
                     <p className="text-xs text-slate-500">
-                      Carga HorÃ¡ria Total do Modelo: <span className="font-bold text-emerald-600">
+                      Carga HorÃƒÂ¡ria Total do Modelo: <span className="font-bold text-emerald-600">
                         {editingModelo.atividades.reduce((acc, a) => acc + (parseInt(a.cargaHoraria?.replace(/\D/g, '') || '0', 10) || 0), 0)} hs
                       </span>
                     </p>
@@ -3795,9 +3795,9 @@ const CronogramaView = ({
                     onClick={() => {
                       const newAtv: AtividadeCronograma = {
                         nome: `Nova Atividade ${editingModelo.atividades.length + 1}`,
-                        descricao: "DescriÃ§Ã£o detalhada dos objetivos desta atividade...",
+                        descricao: "DescriÃƒÂ§ÃƒÂ£o detalhada dos objetivos desta atividade...",
                         cargaHoraria: "4h",
-                        solucaoProposta: "AÃ§Ã£o prÃ¡tica recomendada",
+                        solucaoProposta: "AÃƒÂ§ÃƒÂ£o prÃƒÂ¡tica recomendada",
                         responsavel: "Consultor / Cliente",
                         status: "Pendente",
                         prioridade: "Alta",
@@ -3836,7 +3836,7 @@ const CronogramaView = ({
                               }}
                               title="Mover para cima"
                             >
-                              â†‘
+                              Ã¢â€ â€˜
                             </Button>
                           )}
                           {aIdx < editingModelo.atividades.length - 1 && (
@@ -3854,7 +3854,7 @@ const CronogramaView = ({
                               }}
                               title="Mover para baixo"
                             >
-                              â†“
+                              Ã¢â€ â€œ
                             </Button>
                           )}
                           <Button
@@ -3892,7 +3892,7 @@ const CronogramaView = ({
                           />
                         </div>
                         <div>
-                          <label className="text-[11px] font-semibold text-slate-600 block mb-0.5">Carga HorÃ¡ria</label>
+                          <label className="text-[11px] font-semibold text-slate-600 block mb-0.5">Carga HorÃƒÂ¡ria</label>
                           <input 
                             type="text"
                             value={atv.cargaHoraria}
@@ -3908,7 +3908,7 @@ const CronogramaView = ({
                       </div>
 
                       <div>
-                        <label className="text-[11px] font-semibold text-slate-600 block mb-0.5">DescriÃ§Ã£o</label>
+                        <label className="text-[11px] font-semibold text-slate-600 block mb-0.5">DescriÃƒÂ§ÃƒÂ£o</label>
                         <textarea 
                           value={atv.descricao}
                           onChange={(e) => {
@@ -3923,7 +3923,7 @@ const CronogramaView = ({
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <div>
-                          <label className="text-[11px] font-semibold text-slate-600 block mb-0.5">SoluÃ§Ã£o Proposta / AÃ§Ã£o</label>
+                          <label className="text-[11px] font-semibold text-slate-600 block mb-0.5">SoluÃƒÂ§ÃƒÂ£o Proposta / AÃƒÂ§ÃƒÂ£o</label>
                           <input 
                             type="text"
                             value={atv.solucaoProposta || ''}
@@ -3936,7 +3936,7 @@ const CronogramaView = ({
                           />
                         </div>
                         <div>
-                          <label className="text-[11px] font-semibold text-slate-600 block mb-0.5">ResponsÃ¡vel Sugerido</label>
+                          <label className="text-[11px] font-semibold text-slate-600 block mb-0.5">ResponsÃƒÂ¡vel Sugerido</label>
                           <input 
                             type="text"
                             value={atv.responsavel || ''}
@@ -3964,12 +3964,12 @@ const CronogramaView = ({
                 <ImageIcon size={20} />
               </div>
               <div>
-                <h3 className="font-bold text-slate-800 uppercase tracking-tight">EvidÃªncias da Consultoria</h3>
-                <p className="text-xs text-slate-500 uppercase font-medium tracking-wider">Fotos e comprovaÃ§Ãµes vinculadas Ã s atividades ou gerais (reduzidas em 50%)</p>
+                <h3 className="font-bold text-slate-800 uppercase tracking-tight">EvidÃƒÂªncias da Consultoria</h3>
+                <p className="text-xs text-slate-500 uppercase font-medium tracking-wider">Fotos e comprovaÃƒÂ§ÃƒÂµes vinculadas ÃƒÂ s atividades ou gerais (reduzidas em 50%)</p>
               </div>
             </div>
             <div className="text-xs text-slate-500 font-semibold bg-slate-100 px-3 py-1 rounded-full">
-              Ordem crescente automÃ¡tica no relatÃ³rio
+              Ordem crescente automÃƒÂ¡tica no relatÃƒÂ³rio
             </div>
           </div>
 
@@ -3979,8 +3979,8 @@ const CronogramaView = ({
                 <Upload className="text-slate-400 group-hover:text-sky-600" size={24} />
               </div>
               <div className="flex flex-col items-center">
-                <span className="text-sm font-bold text-slate-500 group-hover:text-sky-700">Adicionar fotos como evidÃªncia geral</span>
-                <span className="text-xs text-slate-400 mt-1">Imagens comprimidas automaticamente (reduÃ§Ã£o de 50% no tamanho)</span>
+                <span className="text-sm font-bold text-slate-500 group-hover:text-sky-700">Adicionar fotos como evidÃƒÂªncia geral</span>
+                <span className="text-xs text-slate-400 mt-1">Imagens comprimidas automaticamente (reduÃƒÂ§ÃƒÂ£o de 50% no tamanho)</span>
                 {dadosConsultoria.evidencias && dadosConsultoria.evidencias.length > 0 && (
                   <div className="mt-2 text-[10px] font-bold text-sky-600 uppercase tracking-tighter bg-sky-50 px-2 py-0.5 rounded-full border border-sky-100">
                     {dadosConsultoria.evidencias.length} fotos gerais anexadas
@@ -4011,7 +4011,7 @@ const CronogramaView = ({
                         syncEvidenceState(atividades, nextDados);
                       }, 50);
                     } catch (err) {
-                      console.error("Erro ao comprimir evidÃªncia geral:", err);
+                      console.error("Erro ao comprimir evidÃƒÂªncia geral:", err);
                     }
                   });
                 }} 
@@ -4021,7 +4021,7 @@ const CronogramaView = ({
             {(dadosConsultoria.evidencias && dadosConsultoria.evidencias.length > 0) && (
               <div>
                 <div className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">
-                  Fotos Gerais (VocÃª pode vinculÃ¡-las diretamente a uma atividade abaixo):
+                  Fotos Gerais (VocÃƒÂª pode vinculÃƒÂ¡-las diretamente a uma atividade abaixo):
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 mt-3">
                   {dadosConsultoria.evidencias.map((img, idx) => (
@@ -4032,7 +4032,7 @@ const CronogramaView = ({
                       >
                         <img 
                           src={img} 
-                          alt={`EvidÃªncia Geral ${idx + 1}`} 
+                          alt={`EvidÃƒÂªncia Geral ${idx + 1}`} 
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
                         />
                         <span className="absolute bottom-1 left-1 text-[8px] font-black bg-black/60 text-white px-1 py-0.5 rounded">
@@ -4052,7 +4052,7 @@ const CronogramaView = ({
                           }}
                           title="Vincular foto a uma atividade"
                         >
-                          <option value="" disabled>+ Vincular Ã  Atividade...</option>
+                          <option value="" disabled>+ Vincular ÃƒÂ  Atividade...</option>
                           {atividades.map((atvItem, atvIdx) => (
                             <option key={atvIdx} value={atvIdx}>
                               Ativ. #{atvIdx + 1}: {atvItem.nome ? atvItem.nome.substring(0, 18) : 'Atividade ' + (atvIdx + 1)}...
@@ -4083,7 +4083,7 @@ const CronogramaView = ({
           </div>
         </Card>
 
-        {/* Painel de Controle: RelatÃ³rio de Consultoria & SeleÃ§Ã£o de Atividades */}
+        {/* Painel de Controle: RelatÃƒÂ³rio de Consultoria & SeleÃƒÂ§ÃƒÂ£o de Atividades */}
         <Card className="p-5 border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
@@ -4095,14 +4095,14 @@ const CronogramaView = ({
                     ? "bg-amber-50 text-amber-700 border-amber-200" 
                     : "bg-emerald-50 text-emerald-700 border-emerald-200"
                 )}>
-                  {(dadosConsultoria.tipoRelatorio || 'Final') === 'Parcial' ? 'RelatÃ³rio Parcial' : 'RelatÃ³rio Final'}
+                  {(dadosConsultoria.tipoRelatorio || 'Final') === 'Parcial' ? 'RelatÃƒÂ³rio Parcial' : 'RelatÃƒÂ³rio Final'}
                 </span>
               </div>
-              <h3 className="font-bold text-slate-800 text-base mt-0.5">RELATÃ“RIO DE CONSULTORIA</h3>
-              <p className="text-xs text-slate-500">Selecione se o relatÃ³rio gerado Ã© Parcial ou Final e marque as atividades que devem constar no PDF impresso.</p>
+              <h3 className="font-bold text-slate-800 text-base mt-0.5">RELATÃƒâ€œRIO DE CONSULTORIA</h3>
+              <p className="text-xs text-slate-500">Selecione se o relatÃƒÂ³rio gerado ÃƒÂ© Parcial ou Final e marque as atividades que devem constar no PDF impresso.</p>
             </div>
 
-            {/* Tipo de RelatÃ³rio Toggle */}
+            {/* Tipo de RelatÃƒÂ³rio Toggle */}
             <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
               <button
                 type="button"
@@ -4115,7 +4115,7 @@ const CronogramaView = ({
                 )}
               >
                 <Clock size={14} className={dadosConsultoria.tipoRelatorio === 'Parcial' ? "text-amber-600" : "text-slate-400"} />
-                <span>RelatÃ³rio Parcial</span>
+                <span>RelatÃƒÂ³rio Parcial</span>
               </button>
               <button
                 type="button"
@@ -4128,17 +4128,17 @@ const CronogramaView = ({
                 )}
               >
                 <CheckCircle2 size={14} className={(dadosConsultoria.tipoRelatorio || 'Final') === 'Final' ? "text-emerald-600" : "text-slate-400"} />
-                <span>RelatÃ³rio Final</span>
+                <span>RelatÃƒÂ³rio Final</span>
               </button>
             </div>
           </div>
 
-          {/* SeleÃ§Ã£o RÃ¡pida de Atividades */}
+          {/* SeleÃƒÂ§ÃƒÂ£o RÃƒÂ¡pida de Atividades */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3.5">
             <div className="flex items-center gap-2">
               <ListFilter size={16} className="text-slate-400 shrink-0" />
               <div className="text-xs text-slate-700 font-medium">
-                <strong>{atividades.filter(a => a.incluirNoRelatorio !== undefined ? a.incluirNoRelatorio : (a.status || '').toLowerCase().includes('conclu')).length} de {atividades.length}</strong> atividades selecionadas para o relatÃ³rio (<strong>{atividades.filter(a => a.incluirNoRelatorio !== undefined ? a.incluirNoRelatorio : (a.status || '').toLowerCase().includes('conclu')).reduce((acc, a) => acc + (parseInt((a.cargaHoraria || '0').replace(/\D/g, '')) || 0), 0)}hs</strong> de {atividades.reduce((acc, a) => acc + (parseInt((a.cargaHoraria || '0').replace(/\D/g, '')) || 0), 0)}hs)
+                <strong>{atividades.filter(a => a.incluirNoRelatorio !== undefined ? a.incluirNoRelatorio : (a.status || '').toLowerCase().includes('conclu')).length} de {atividades.length}</strong> atividades selecionadas para o relatÃƒÂ³rio (<strong>{atividades.filter(a => a.incluirNoRelatorio !== undefined ? a.incluirNoRelatorio : (a.status || '').toLowerCase().includes('conclu')).reduce((acc, a) => acc + (parseInt((a.cargaHoraria || '0').replace(/\D/g, '')) || 0), 0)}hs</strong> de {atividades.reduce((acc, a) => acc + (parseInt((a.cargaHoraria || '0').replace(/\D/g, '')) || 0), 0)}hs)
               </div>
             </div>
 
@@ -4147,16 +4147,16 @@ const CronogramaView = ({
                 type="button"
                 onClick={selectConcluidasAtividadesRelatorio}
                 className="px-2.5 py-1 text-xs font-bold bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 rounded-lg border border-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
-                title="Incluir apenas atividades que possuem status ConcluÃ­do"
+                title="Incluir apenas atividades que possuem status ConcluÃƒÂ­do"
               >
                 <CheckCircle size={13} className="text-emerald-600" />
-                <span>Selecionar ConcluÃ­das</span>
+                <span>Selecionar ConcluÃƒÂ­das</span>
               </button>
               <button
                 type="button"
                 onClick={selectAllAtividadesRelatorio}
                 className="px-2.5 py-1 text-xs font-bold bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 rounded-lg border border-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
-                title="Incluir todas as atividades no relatÃ³rio"
+                title="Incluir todas as atividades no relatÃƒÂ³rio"
               >
                 <CheckCheck size={13} className="text-blue-600" />
                 <span>Selecionar Todas</span>
@@ -4165,7 +4165,7 @@ const CronogramaView = ({
                 type="button"
                 onClick={clearSelectionAtividadesRelatorio}
                 className="px-2.5 py-1 text-xs font-bold bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 rounded-lg border border-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
-                title="Limpar seleÃ§Ã£o para escolher manualmente"
+                title="Limpar seleÃƒÂ§ÃƒÂ£o para escolher manualmente"
               >
                 <Square size={13} className="text-slate-400" />
                 <span>Desmarcar Todas</span>
@@ -4216,7 +4216,7 @@ const CronogramaView = ({
               </div>
 
               <div className="flex items-center gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
-                {/* BotÃ£o de InclusÃ£o no RelatÃ³rio */}
+                {/* BotÃƒÂ£o de InclusÃƒÂ£o no RelatÃƒÂ³rio */}
                 <button
                   type="button"
                   onClick={() => toggleAtividadeRelatorio(idx)}
@@ -4226,10 +4226,10 @@ const CronogramaView = ({
                       ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100"
                       : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200"
                   )}
-                  title="Clique para incluir ou remover esta atividade do RelatÃ³rio de Consultoria"
+                  title="Clique para incluir ou remover esta atividade do RelatÃƒÂ³rio de Consultoria"
                 >
                   {isIncluded ? <CheckSquare size={15} className="text-emerald-600" /> : <Square size={15} className="text-slate-400" />}
-                  <span>{isIncluded ? "No RelatÃ³rio" : "Oculta do RelatÃ³rio"}</span>
+                  <span>{isIncluded ? "No RelatÃƒÂ³rio" : "Oculta do RelatÃƒÂ³rio"}</span>
                 </button>
 
                 <div className="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
@@ -4238,7 +4238,7 @@ const CronogramaView = ({
                     className="text-xs font-bold bg-white border border-slate-200 rounded px-1.5 py-0.5 text-slate-700 cursor-pointer focus:outline-none focus:ring-1 focus:ring-emerald-500"
                     value={idx}
                     onChange={(e) => moveAtividadeToPos(idx, Number(e.target.value))}
-                    title="Alterar posiÃ§Ã£o da atividade"
+                    title="Alterar posiÃƒÂ§ÃƒÂ£o da atividade"
                   >
                     {atividades.map((_, pIdx) => (
                       <option key={pIdx} value={pIdx}>
@@ -4299,21 +4299,21 @@ const CronogramaView = ({
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="md:col-span-2 space-y-4">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">DescriÃ§Ã£o da Atividade</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">DescriÃƒÂ§ÃƒÂ£o da Atividade</label>
                   <p className="text-sm text-slate-600 line-clamp-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                    {atv.descricao || "Sem descriÃ§Ã£o definida."}
+                    {atv.descricao || "Sem descriÃƒÂ§ÃƒÂ£o definida."}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">SoluÃ§Ã£o Proposta</label>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">SoluÃƒÂ§ÃƒÂ£o Proposta</label>
                     <div className="text-sm text-slate-700 font-medium bg-slate-50 p-2 rounded-lg border border-slate-100">
                       {atv.solucaoProposta || "---"}
                     </div>
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">ResponsÃ¡vel</label>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">ResponsÃƒÂ¡vel</label>
                     <div className="text-sm text-slate-700 font-medium bg-slate-50 p-2 rounded-lg border border-slate-100">
                       {atv.responsavel || "---"}
                     </div>
@@ -4322,7 +4322,7 @@ const CronogramaView = ({
               </div>
               <div className="space-y-4">
                 <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Carga HorÃ¡ria</label>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Carga HorÃƒÂ¡ria</label>
                   <div className="text-sm text-slate-700 font-bold bg-emerald-50 p-2 rounded-lg border border-emerald-100 flex items-center gap-2">
                     <Clock size={14} className="text-emerald-600" />
                     {atv.cargaHoraria || "0h"}
@@ -4333,7 +4333,7 @@ const CronogramaView = ({
                   <div className={cn(
                     "text-xs font-bold px-2 py-1 rounded inline-block uppercase",
                     atv.prioridade === 'Alta' ? "bg-rose-100 text-rose-600" :
-                    atv.prioridade === 'MÃ©dia' ? "bg-amber-100 text-amber-600" :
+                    atv.prioridade === 'MÃƒÂ©dia' ? "bg-amber-100 text-amber-600" :
                     "bg-emerald-100 text-emerald-600"
                   )}>
                     {atv.prioridade}
@@ -4345,12 +4345,12 @@ const CronogramaView = ({
                   <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Status</label>
                   <div className={cn(
                     "text-xs font-bold px-3 py-1 rounded-full inline-flex items-center gap-1.5 uppercase",
-                    atv.status === 'ConcluÃ­do' ? "bg-emerald-500 text-white" :
+                    atv.status === 'ConcluÃƒÂ­do' ? "bg-emerald-500 text-white" :
                     atv.status === 'Em Andamento' ? "bg-sky-500 text-white" :
                     atv.status === 'Atrasado' ? "bg-rose-500 text-white" :
                     "bg-slate-200 text-slate-600"
                   )}>
-                    {atv.status === 'ConcluÃ­do' ? <CheckCircle size={12} /> : null}
+                    {atv.status === 'ConcluÃƒÂ­do' ? <CheckCircle size={12} /> : null}
                     {atv.status}
                   </div>
                 </div>
@@ -4373,20 +4373,20 @@ const CronogramaView = ({
                 </div>
                 <div className="w-full md:w-80 shrink-0">
                   {(() => {
-                    const pct = atv.progressoKPI ?? (atv.status === 'ConcluÃ­do' ? 100 : atv.status === 'Em Andamento' ? 50 : atv.status === 'Atrasado' ? 25 : 0);
+                    const pct = atv.progressoKPI ?? (atv.status === 'ConcluÃƒÂ­do' ? 100 : atv.status === 'Em Andamento' ? 50 : atv.status === 'Atrasado' ? 25 : 0);
                     return <KpiProgressBar percentage={pct} label="Atingimento do KPI" />;
                   })()}
                 </div>
               </div>
             )}
 
-            {/* EvidÃªncias vinculadas a esta atividade */}
+            {/* EvidÃƒÂªncias vinculadas a esta atividade */}
             <div className="mt-4 pt-4 border-t border-slate-100" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <ImageIcon size={14} className="text-emerald-600" />
                   <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
-                    EvidÃªncias desta Atividade #{idx + 1}
+                    EvidÃƒÂªncias desta Atividade #{idx + 1}
                   </span>
                   <span className="text-[10px] bg-slate-100 text-slate-500 font-bold px-2 py-0.5 rounded-full">
                     {(atv.evidencias || []).length} foto(s)
@@ -4395,7 +4395,7 @@ const CronogramaView = ({
 
                 <label className="cursor-pointer inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg transition-colors">
                   <Upload size={12} />
-                  <span>Anexar EvidÃªncia</span>
+                  <span>Anexar EvidÃƒÂªncia</span>
                   <input 
                     type="file" 
                     className="hidden" 
@@ -4415,7 +4415,7 @@ const CronogramaView = ({
                     <div key={evIdx} className="relative group rounded-lg border border-slate-200 bg-white overflow-hidden aspect-square shadow-2xs">
                       <img 
                         src={img} 
-                        alt={`EvidÃªncia ${evIdx + 1} - Atividade ${idx + 1}`} 
+                        alt={`EvidÃƒÂªncia ${evIdx + 1} - Atividade ${idx + 1}`} 
                         className="w-full h-full object-cover cursor-pointer group-hover:scale-105 transition-transform"
                         onClick={() => setPreviewImage(img)}
                       />
@@ -4426,7 +4426,7 @@ const CronogramaView = ({
                         type="button"
                         className="absolute top-1 right-1 bg-rose-500/90 text-white p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-rose-600 transition-all"
                         onClick={() => handleRemoveEvidenceFromActivity(idx, evIdx)}
-                        title="Remover evidÃªncia"
+                        title="Remover evidÃƒÂªncia"
                       >
                         <Trash2 size={10} />
                       </button>
@@ -4435,7 +4435,7 @@ const CronogramaView = ({
                 </div>
               ) : (
                 <p className="text-[11px] text-slate-400 italic">
-                  Nenhuma imagem vinculada a esta atividade ainda. Clique em "Anexar EvidÃªncia" para adicionar fotos comprobatÃ³rias.
+                  Nenhuma imagem vinculada a esta atividade ainda. Clique em "Anexar EvidÃƒÂªncia" para adicionar fotos comprobatÃƒÂ³rias.
                 </p>
               )}
             </div>
@@ -4488,7 +4488,7 @@ const CronogramaView = ({
 
             playSuccessSound();
           }}
-          confirmText="Confirmar EdiÃ§Ã£o"
+          confirmText="Confirmar EdiÃƒÂ§ÃƒÂ£o"
         >
           <div className="space-y-4">
             <div className="flex justify-end">
@@ -4519,11 +4519,11 @@ const CronogramaView = ({
                 <Trash2 size={14} className="mr-1" /> Excluir Atividade
               </Button>
             </div>
-            {/* Toggle para inclusÃ£o no relatÃ³rio */}
+            {/* Toggle para inclusÃƒÂ£o no relatÃƒÂ³rio */}
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
               <div>
-                <label className="text-xs font-bold text-slate-700 block">Incluir esta Atividade no RelatÃ³rio de Consultoria</label>
-                <p className="text-[11px] text-slate-500">Se desmarcado, esta atividade nÃ£o aparecerÃ¡ no PDF gerado.</p>
+                <label className="text-xs font-bold text-slate-700 block">Incluir esta Atividade no RelatÃƒÂ³rio de Consultoria</label>
+                <p className="text-[11px] text-slate-500">Se desmarcado, esta atividade nÃƒÂ£o aparecerÃƒÂ¡ no PDF gerado.</p>
               </div>
               <button
                 type="button"
@@ -4543,12 +4543,12 @@ const CronogramaView = ({
                 {(editingActivity.incluirNoRelatorio !== undefined ? editingActivity.incluirNoRelatorio : (editingActivity.status || '').toLowerCase().includes('conclu')) ? (
                   <>
                     <CheckSquare size={16} className="text-emerald-600" />
-                    <span>No RelatÃ³rio</span>
+                    <span>No RelatÃƒÂ³rio</span>
                   </>
                 ) : (
                   <>
                     <Square size={16} className="text-slate-400" />
-                    <span>Oculta do RelatÃ³rio</span>
+                    <span>Oculta do RelatÃƒÂ³rio</span>
                   </>
                 )}
               </button>
@@ -4561,7 +4561,7 @@ const CronogramaView = ({
                 value={editingActivity.idProblema || ''}
                 onChange={(e) => setEditingActivity({...editingActivity, idProblema: e.target.value})}
               >
-                <option value="">Geral / NÃ£o vinculado</option>
+                <option value="">Geral / NÃƒÂ£o vinculado</option>
                 {respostas.filter(r => r.resposta !== 'Sim').map(r => {
                   const prob = problemas.find(p => p.id === r.idProblema || p.descricao_problemas === r.problema);
                   return (
@@ -4581,7 +4581,7 @@ const CronogramaView = ({
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Carga HorÃ¡ria</label>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Carga HorÃƒÂ¡ria</label>
               <input 
                 className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
                 placeholder="Ex: 4h"
@@ -4590,7 +4590,7 @@ const CronogramaView = ({
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">DescriÃ§Ã£o</label>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">DescriÃƒÂ§ÃƒÂ£o</label>
               <textarea 
                 className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
                 rows={4}
@@ -4606,13 +4606,13 @@ const CronogramaView = ({
                   value={editingActivity.status}
                   onChange={(e) => {
                     const statusVal = e.target.value as any;
-                    const autoProg = statusVal === 'ConcluÃ­do' ? 100 : statusVal === 'Em Andamento' ? 50 : statusVal === 'Atrasado' ? 25 : 0;
+                    const autoProg = statusVal === 'ConcluÃƒÂ­do' ? 100 : statusVal === 'Em Andamento' ? 50 : statusVal === 'Atrasado' ? 25 : 0;
                     setEditingActivity({...editingActivity, status: statusVal, progressoKPI: autoProg});
                   }}
                 >
                   <option value="Pendente">Pendente</option>
                   <option value="Em Andamento">Em Andamento</option>
-                  <option value="ConcluÃ­do">ConcluÃ­do</option>
+                  <option value="ConcluÃƒÂ­do">ConcluÃƒÂ­do</option>
                   <option value="Atrasado">Atrasado</option>
                 </select>
               </div>
@@ -4624,14 +4624,14 @@ const CronogramaView = ({
                   onChange={(e) => setEditingActivity({...editingActivity, prioridade: e.target.value as any})}
                 >
                   <option value="Baixa">Baixa</option>
-                  <option value="MÃ©dia">MÃ©dia</option>
+                  <option value="MÃƒÂ©dia">MÃƒÂ©dia</option>
                   <option value="Alta">Alta</option>
                 </select>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Data InÃ­cio</label>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Data InÃƒÂ­cio</label>
                 <input 
                   type="date"
                   className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
@@ -4651,7 +4651,7 @@ const CronogramaView = ({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">SoluÃ§Ã£o Proposta</label>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">SoluÃƒÂ§ÃƒÂ£o Proposta</label>
                 <input 
                   className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
                   value={editingActivity.solucaoProposta}
@@ -4670,7 +4670,7 @@ const CronogramaView = ({
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">ResponsÃ¡vel</label>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">ResponsÃƒÂ¡vel</label>
                 <input 
                   className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
                   value={editingActivity.responsavel || ''}
@@ -4681,7 +4681,7 @@ const CronogramaView = ({
                 <div className="flex justify-between items-center">
                   <label className="block text-[10px] font-bold text-slate-400 uppercase">Atingimento do KPI</label>
                   <span className="text-xs font-bold text-emerald-600">
-                    {editingActivity.progressoKPI ?? (editingActivity.status === 'ConcluÃ­do' ? 100 : editingActivity.status === 'Em Andamento' ? 50 : editingActivity.status === 'Atrasado' ? 25 : 0)}%
+                    {editingActivity.progressoKPI ?? (editingActivity.status === 'ConcluÃƒÂ­do' ? 100 : editingActivity.status === 'Em Andamento' ? 50 : editingActivity.status === 'Atrasado' ? 25 : 0)}%
                   </span>
                 </div>
                 <div className="flex items-center gap-3 mt-1">
@@ -4691,7 +4691,7 @@ const CronogramaView = ({
                     max="100"
                     step="5"
                     className="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
-                    value={editingActivity.progressoKPI ?? (editingActivity.status === 'ConcluÃ­do' ? 100 : editingActivity.status === 'Em Andamento' ? 50 : editingActivity.status === 'Atrasado' ? 25 : 0)}
+                    value={editingActivity.progressoKPI ?? (editingActivity.status === 'ConcluÃƒÂ­do' ? 100 : editingActivity.status === 'Em Andamento' ? 50 : editingActivity.status === 'Atrasado' ? 25 : 0)}
                     onChange={(e) => setEditingActivity({...editingActivity, progressoKPI: Number(e.target.value)})}
                   />
                   <input
@@ -4699,7 +4699,7 @@ const CronogramaView = ({
                     min="0"
                     max="100"
                     className="w-14 p-1 bg-slate-50 border border-slate-200 rounded text-center text-xs font-bold"
-                    value={editingActivity.progressoKPI ?? (editingActivity.status === 'ConcluÃ­do' ? 100 : editingActivity.status === 'Em Andamento' ? 50 : editingActivity.status === 'Atrasado' ? 25 : 0)}
+                    value={editingActivity.progressoKPI ?? (editingActivity.status === 'ConcluÃƒÂ­do' ? 100 : editingActivity.status === 'Em Andamento' ? 50 : editingActivity.status === 'Atrasado' ? 25 : 0)}
                     onChange={(e) => {
                       const val = Math.max(0, Math.min(100, Number(e.target.value)));
                       setEditingActivity({...editingActivity, progressoKPI: val});
@@ -4709,12 +4709,12 @@ const CronogramaView = ({
               </div>
             </div>
 
-            {/* EvidÃªncias desta Atividade no Modal */}
+            {/* EvidÃƒÂªncias desta Atividade no Modal */}
             <div className="pt-3 border-t border-slate-200">
               <div className="flex items-center justify-between mb-2">
                 <div>
                   <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                    EvidÃªncias FotogrÃ¡ficas da Atividade (50% red.)
+                    EvidÃƒÂªncias FotogrÃƒÂ¡ficas da Atividade (50% red.)
                   </label>
                   <span className="text-[10px] text-slate-400">
                     {(editingActivity.evidencias || []).length} fotos vinculadas
@@ -4744,7 +4744,7 @@ const CronogramaView = ({
                     <div key={evIdx} className="relative group rounded-lg border border-slate-200 bg-white overflow-hidden aspect-square">
                       <img 
                         src={img} 
-                        alt={`EvidÃªncia ${evIdx + 1}`} 
+                        alt={`EvidÃƒÂªncia ${evIdx + 1}`} 
                         className="w-full h-full object-cover cursor-pointer group-hover:scale-105 transition-transform"
                         onClick={() => setPreviewImage(img)}
                       />
@@ -4765,7 +4765,7 @@ const CronogramaView = ({
                 </div>
               ) : (
                 <div className="p-3 bg-slate-50 rounded-lg border border-dashed border-slate-200 text-center">
-                  <p className="text-xs text-slate-400">Nenhuma foto comprobatÃ³ria anexada a esta atividade ainda.</p>
+                  <p className="text-xs text-slate-400">Nenhuma foto comprobatÃƒÂ³ria anexada a esta atividade ainda.</p>
                 </div>
               )}
             </div>
@@ -4773,7 +4773,7 @@ const CronogramaView = ({
         </Modal>
       )}
 
-      {/* Lightbox / Visualizador de EvidÃªncia em Alta Qualidade */}
+      {/* Lightbox / Visualizador de EvidÃƒÂªncia em Alta Qualidade */}
       {previewImage && (
         <div 
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
@@ -4784,7 +4784,7 @@ const CronogramaView = ({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-full flex justify-between items-center px-4 py-2 text-white">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-300">VisualizaÃ§Ã£o de EvidÃªncia</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-300">VisualizaÃƒÂ§ÃƒÂ£o de EvidÃƒÂªncia</span>
               <button
                 onClick={() => setPreviewImage(null)}
                 className="p-1 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
@@ -4794,7 +4794,7 @@ const CronogramaView = ({
             </div>
             <img 
               src={previewImage} 
-              alt="VisualizaÃ§Ã£o de EvidÃªncia" 
+              alt="VisualizaÃƒÂ§ÃƒÂ£o de EvidÃƒÂªncia" 
               className="max-h-[75vh] w-auto object-contain rounded-xl"
             />
           </div>
@@ -4807,7 +4807,7 @@ const CronogramaView = ({
 const KpiProgressBar = ({ percentage, label = "Atingimento do KPI" }: { percentage: number, label?: string }) => {
   let barColorClass = "bg-rose-500";
   let textColorClass = "text-rose-600 bg-rose-50 border border-rose-100";
-  let statusText = "CrÃ­tico";
+  let statusText = "CrÃƒÂ­tico";
   
   if (percentage >= 100) {
     barColorClass = "bg-emerald-500";
@@ -4816,7 +4816,7 @@ const KpiProgressBar = ({ percentage, label = "Atingimento do KPI" }: { percenta
   } else if (percentage >= 75) {
     barColorClass = "bg-teal-500";
     textColorClass = "text-teal-700 bg-teal-50 border border-teal-100";
-    statusText = "AvanÃ§ado";
+    statusText = "AvanÃƒÂ§ado";
   } else if (percentage >= 50) {
     barColorClass = "bg-amber-500";
     textColorClass = "text-amber-700 bg-amber-50 border border-amber-100";
@@ -4902,7 +4902,7 @@ const RelatorioView = ({
     return localCronograma
       .filter(atv => atv.nome)
       .map(atv => {
-        const actual = atv.progressoKPI ?? (atv.status === 'ConcluÃ­do' ? 100 : atv.status === 'Em Andamento' ? 50 : atv.status === 'Atrasado' ? 25 : 0);
+        const actual = atv.progressoKPI ?? (atv.status === 'ConcluÃƒÂ­do' ? 100 : atv.status === 'Em Andamento' ? 50 : atv.status === 'Atrasado' ? 25 : 0);
         const target = atv.metaKPI ?? 100;
         return {
           name: atv.nome.length > 15 ? atv.nome.slice(0, 12) + '...' : atv.nome,
@@ -4927,7 +4927,7 @@ const RelatorioView = ({
 
     let totalAccum = 0;
     return sorted.map((atv, i) => {
-      const kpiVal = atv.progressoKPI ?? (atv.status === 'ConcluÃ­do' ? 100 : atv.status === 'Em Andamento' ? 50 : atv.status === 'Atrasado' ? 25 : 0);
+      const kpiVal = atv.progressoKPI ?? (atv.status === 'ConcluÃƒÂ­do' ? 100 : atv.status === 'Em Andamento' ? 50 : atv.status === 'Atrasado' ? 25 : 0);
       totalAccum += kpiVal;
       const progressCumulativo = Math.round(totalAccum / (i + 1));
       let label = `Meta ${i + 1}`;
@@ -4948,7 +4948,7 @@ const RelatorioView = ({
         name: atv.nome,
         data: label,
         'Atingimento Individual (%)': kpiVal,
-        'MÃ©dia Geral de KPIs (%)': progressCumulativo
+        'MÃƒÂ©dia Geral de KPIs (%)': progressCumulativo
       };
     });
   }, [selectedDiagnostico?.cronograma]);
@@ -4978,7 +4978,7 @@ const RelatorioView = ({
         uniqueResps.push(r);
       });
 
-      const noResponses = uniqueResps.filter(r => r.resposta === 'NÃ£o' || r.resposta === 'Parcial');
+      const noResponses = uniqueResps.filter(r => r.resposta === 'NÃƒÂ£o' || r.resposta === 'Parcial');
       const yesResponses = uniqueResps.filter(r => r.resposta === 'Sim');
       const solution = solucoes.find(s => s.idProblema === probId || s.problema === probId);
       const probObj = problemas.find(p => p.id === probId || p.descricao_problemas === probId);
@@ -5046,12 +5046,12 @@ const RelatorioView = ({
   const pieChartData = useMemo(() => [
     { name: 'Sim', value: uniqueRespostas.filter(r => r.resposta === 'Sim').length, color: '#10b981' },
     { name: 'Parcial', value: uniqueRespostas.filter(r => r.resposta === 'Parcial').length, color: '#f59e0b' },
-    { name: 'NÃ£o', value: uniqueRespostas.filter(r => r.resposta === 'NÃ£o').length, color: '#ef4444' }
+    { name: 'NÃƒÂ£o', value: uniqueRespostas.filter(r => r.resposta === 'NÃƒÂ£o').length, color: '#ef4444' }
   ], [uniqueRespostas]);
 
   const performance = useMemo(() => {
     // Filter only questions that have been answered
-    const answeredRespostas = uniqueRespostas.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'NÃ£o');
+    const answeredRespostas = uniqueRespostas.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'NÃƒÂ£o');
     if (answeredRespostas.length === 0) return '0';
     
     const totalScore = answeredRespostas.reduce((acc, r) => acc + (r.score || 0), 0);
@@ -5064,7 +5064,7 @@ const RelatorioView = ({
   const currentPlanProgress = useMemo(() => {
     if (totalTasks === 0) return 0;
     const total = localCronograma.reduce((acc, atv) => {
-      const prog = atv.progressoKPI ?? (atv.status === 'ConcluÃ­do' ? 100 : atv.status === 'Em Andamento' ? 50 : atv.status === 'Atrasado' ? 25 : 0);
+      const prog = atv.progressoKPI ?? (atv.status === 'ConcluÃƒÂ­do' ? 100 : atv.status === 'Em Andamento' ? 50 : atv.status === 'Atrasado' ? 25 : 0);
       return acc + prog;
     }, 0);
     return total / totalTasks;
@@ -5145,17 +5145,17 @@ const RelatorioView = ({
         'Plano (%)': Math.round(currentPlanProgress)
       },
       {
-        name: 'MÃªs 1',
+        name: 'MÃƒÂªs 1',
         'Maturidade (%)': proj1.maturityScore,
         'Plano (%)': proj1.planProgress
       },
       {
-        name: 'MÃªs 2',
+        name: 'MÃƒÂªs 2',
         'Maturidade (%)': proj2.maturityScore,
         'Plano (%)': proj2.planProgress
       },
       {
-        name: 'MÃªs 3',
+        name: 'MÃƒÂªs 3',
         'Maturidade (%)': proj3.maturityScore,
         'Plano (%)': proj3.planProgress
       }
@@ -5164,12 +5164,12 @@ const RelatorioView = ({
 
   const generateRelatorioPDF = () => {
     if (!selectedEmpresa || !selectedDiagnostico) {
-      alert("Selecione uma empresa e um diagnÃ³stico para gerar o relatÃ³rio.");
+      alert("Selecione uma empresa e um diagnÃƒÂ³stico para gerar o relatÃƒÂ³rio.");
       return;
     }
     const originalTitle = document.title;
     const empresaNome = selectedEmpresa.nomeFantasia || selectedEmpresa.razaoSocial || selectedEmpresa.nome;
-    document.title = `RelatÃ³rio de Consultoria - ${empresaNome}`;
+    document.title = `RelatÃƒÂ³rio de Consultoria - ${empresaNome}`;
     window.print();
     setTimeout(() => {
       document.title = originalTitle;
@@ -5179,7 +5179,7 @@ const RelatorioView = ({
   const old_generateRelatorioPDF = async () => {
     try {
       if (!selectedEmpresa || !selectedDiagnostico) {
-        alert("Selecione uma empresa e um diagnÃ³stico para gerar o relatÃ³rio.");
+        alert("Selecione uma empresa e um diagnÃƒÂ³stico para gerar o relatÃƒÂ³rio.");
         return;
       }
 
@@ -5203,7 +5203,7 @@ const RelatorioView = ({
       doc.setFontSize(14);
       doc.setTextColor(0, 90, 160);
       doc.setFont("helvetica", "bold");
-      doc.text('RelatÃ³rio de DiagnÃ³stico', 20, 20);
+      doc.text('RelatÃƒÂ³rio de DiagnÃƒÂ³stico', 20, 20);
       
       doc.setFontSize(10);
       doc.setTextColor(100);
@@ -5220,7 +5220,7 @@ const RelatorioView = ({
           [{ content: 'DADOS DO CLIENTE', colSpan: 2, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }],
           [{ content: 'Empresa:', styles: { fontStyle: 'bold' } }, { content: selectedEmpresa.nomeFantasia || selectedEmpresa.nome }],
           [{ content: 'CNPJ:', styles: { fontStyle: 'bold' } }, { content: selectedEmpresa.cnpj || 'N/A' }],
-          [{ content: 'NÂº CAF:', styles: { fontStyle: 'bold' } }, { content: selectedEmpresa.cafNumero || 'N/A' }],
+          [{ content: 'NÃ‚Âº CAF:', styles: { fontStyle: 'bold' } }, { content: selectedEmpresa.cafNumero || 'N/A' }],
           [{ content: 'Representante:', styles: { fontStyle: 'bold' } }, { content: selectedEmpresa.representante || 'N/A' }],
           [{ content: 'CPF Representante:', styles: { fontStyle: 'bold' } }, { content: selectedEmpresa.cpfRepresentante || 'N/A' }]
         ],
@@ -5238,7 +5238,7 @@ const RelatorioView = ({
           body: [
             [{ content: 'DADOS DA CONSULTORIA', colSpan: 2, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }],
             [{ content: 'Consultor:', styles: { fontStyle: 'bold' } }, { content: dc.consultor || 'N/A' }],
-            [{ content: 'Ãrea:', styles: { fontStyle: 'bold' } }, { content: dc.areaConsultoria || 'N/A' }]
+            [{ content: 'ÃƒÂrea:', styles: { fontStyle: 'bold' } }, { content: dc.areaConsultoria || 'N/A' }]
           ],
           margin: { left: 20, right: 20 }
         });
@@ -5247,7 +5247,7 @@ const RelatorioView = ({
 
       // Add High-Level Metrics Summary Table
       const totalSim = uniqueRespostas.filter(r => r.resposta === 'Sim').length;
-      const totalNao = uniqueRespostas.filter(r => r.resposta === 'NÃ£o').length;
+      const totalNao = uniqueRespostas.filter(r => r.resposta === 'NÃƒÂ£o').length;
       const totalParcial = uniqueRespostas.filter(r => r.resposta === 'Parcial').length;
       autoTable(doc, {
         startY: currentY,
@@ -5257,13 +5257,13 @@ const RelatorioView = ({
           [
             { content: 'Maturidade Geral', styles: { fontStyle: 'bold', halign: 'center', fillColor: [245, 247, 250] } },
             { content: 'Pontos Fortes (Sim)', styles: { fontStyle: 'bold', halign: 'center', fillColor: [245, 247, 250] } },
-            { content: 'Pontos CrÃ­ticos (NÃ£o)', styles: { fontStyle: 'bold', halign: 'center', fillColor: [245, 247, 250] } },
-            { content: 'AtenÃ§Ã£o (Parcial)', styles: { fontStyle: 'bold', halign: 'center', fillColor: [245, 247, 250] } }
+            { content: 'Pontos CrÃƒÂ­ticos (NÃƒÂ£o)', styles: { fontStyle: 'bold', halign: 'center', fillColor: [245, 247, 250] } },
+            { content: 'AtenÃƒÂ§ÃƒÂ£o (Parcial)', styles: { fontStyle: 'bold', halign: 'center', fillColor: [245, 247, 250] } }
           ],
           [
             { content: `${performance}%`, styles: { fontSize: 13, fontStyle: 'bold', halign: 'center', textColor: [0, 90, 160] } },
             { content: `${totalSim} conformidades`, styles: { fontSize: 9, halign: 'center', textColor: [16, 185, 129] } },
-            { content: `${totalNao} urgÃªncias`, styles: { fontSize: 9, halign: 'center', textColor: [239, 68, 68] } },
+            { content: `${totalNao} urgÃƒÂªncias`, styles: { fontSize: 9, halign: 'center', textColor: [239, 68, 68] } },
             { content: `${totalParcial} parciais`, styles: { fontSize: 9, halign: 'center', textColor: [245, 158, 11] } }
           ]
         ],
@@ -5361,10 +5361,10 @@ const RelatorioView = ({
       doc.setFontSize(12);
       doc.setTextColor(0, 90, 160);
       doc.setFont("helvetica", "bold");
-      doc.text('AnÃ¡lise de Maturidade e DistribuiÃ§Ã£o', 20, currentY);
+      doc.text('AnÃƒÂ¡lise de Maturidade e DistribuiÃƒÂ§ÃƒÂ£o', 20, currentY);
       currentY += 8;
 
-      // 1. Maturidade por Ãrea (%) - Bar Chart
+      // 1. Maturidade por ÃƒÂrea (%) - Bar Chart
       if (chart1Img) {
         let w1 = 170;
         let h1 = (chart1Img.height * w1) / chart1Img.width;
@@ -5377,7 +5377,7 @@ const RelatorioView = ({
         currentY += h1 + 10;
       }
 
-      // 2. The other two charts side-by-side (Maturidade Rosca on left, DistribuiÃ§Ã£o on right)
+      // 2. The other two charts side-by-side (Maturidade Rosca on left, DistribuiÃƒÂ§ÃƒÂ£o on right)
       const maxPieWidth = 80;
       let w5 = maxPieWidth;
       let h5 = chart5Img ? (chart5Img.height * w5) / chart5Img.width : 0;
@@ -5401,7 +5401,7 @@ const RelatorioView = ({
         doc.setFontSize(12);
         doc.setTextColor(0, 90, 160);
         doc.setFont("helvetica", "bold");
-        doc.text('AnÃ¡lise de Maturidade e DistribuiÃ§Ã£o (ContinuaÃ§Ã£o)', 20, currentY);
+        doc.text('AnÃƒÂ¡lise de Maturidade e DistribuiÃƒÂ§ÃƒÂ£o (ContinuaÃƒÂ§ÃƒÂ£o)', 20, currentY);
         currentY += 8;
       }
 
@@ -5423,7 +5423,7 @@ const RelatorioView = ({
         doc.setFontSize(12);
         doc.setTextColor(0, 90, 160);
         doc.setFont("helvetica", "bold");
-        doc.text('TendÃªncia HistÃ³rica e ProjeÃ§Ã£o de Metas', 20, currentY);
+        doc.text('TendÃƒÂªncia HistÃƒÂ³rica e ProjeÃƒÂ§ÃƒÂ£o de Metas', 20, currentY);
         currentY += 8;
 
         const fullWidth = 170;
@@ -5453,7 +5453,7 @@ const RelatorioView = ({
             doc.setFontSize(12);
             doc.setTextColor(0, 90, 160);
             doc.setFont("helvetica", "bold");
-            doc.text('TendÃªncia HistÃ³rica e ProjeÃ§Ã£o de Metas (ContinuaÃ§Ã£o)', 20, currentY);
+            doc.text('TendÃƒÂªncia HistÃƒÂ³rica e ProjeÃƒÂ§ÃƒÂ£o de Metas (ContinuaÃƒÂ§ÃƒÂ£o)', 20, currentY);
             currentY += 8;
           }
           const x4 = 20 + (fullWidth - w4) / 2;
@@ -5470,7 +5470,7 @@ const RelatorioView = ({
 
       if (Object.keys(problemsByArea).length === 0) {
         doc.setFontSize(12);
-        doc.text('Nenhum dado identificado no diagnÃ³stico.', 20, currentY);
+        doc.text('Nenhum dado identificado no diagnÃƒÂ³stico.', 20, currentY);
       } else {
         Object.entries(problemsByArea).forEach(([areaName, areaProblems]) => {
           // Add Area Header in PDF
@@ -5481,7 +5481,7 @@ const RelatorioView = ({
           doc.setFontSize(14);
           doc.setTextColor(0, 90, 160);
           doc.setFont("helvetica", "bold");
-          doc.text(`Ãrea: ${areaName.toUpperCase()}`, 20, currentY);
+          doc.text(`ÃƒÂrea: ${areaName.toUpperCase()}`, 20, currentY);
           currentY += 8;
 
           const problems = areaProblems as typeof analyzedProblems;
@@ -5496,7 +5496,7 @@ const RelatorioView = ({
             doc.setTextColor(51, 65, 85); // Slate 700
             doc.setFont("helvetica", "bold");
             const itemSeq = sequenciaPlano || (idx + 1);
-            const splitTitle = doc.splitTextToSize(`${itemSeq}Âº - ${solution?.problema || probId}`, 170);
+            const splitTitle = doc.splitTextToSize(`${itemSeq}Ã‚Âº - ${solution?.problema || probId}`, 170);
             doc.text(splitTitle, 20, currentY);
             currentY += splitTitle.length * 5 + 2;
 
@@ -5532,7 +5532,7 @@ const RelatorioView = ({
                 startY: currentY,
                 theme: 'grid',
                 head: [[
-                  { content: 'Pontos CrÃ­ticos / Oportunidades (Premissa)', styles: { textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 } },
+                  { content: 'Pontos CrÃƒÂ­ticos / Oportunidades (Premissa)', styles: { textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9 } },
                   { content: 'Resposta', styles: { textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 9, halign: 'center' } }
                 ]],
                 body: noResponses.map(r => [
@@ -5552,7 +5552,7 @@ const RelatorioView = ({
               if (solution) {
                 autoTable(doc, {
                   startY: currentY,
-                  head: [['SoluÃ§Ã£o Proposta', 'ResponsÃ¡vel']],
+                  head: [['SoluÃƒÂ§ÃƒÂ£o Proposta', 'ResponsÃƒÂ¡vel']],
                   body: [[
                     solution.solucao_recomendada || '',
                     solution.responsavel_sugerido || ''
@@ -5569,7 +5569,7 @@ const RelatorioView = ({
                   if (currentY > 270) { doc.addPage(); currentY = 20; }
                   doc.setFont("helvetica", "bold");
                   doc.setFontSize(10);
-                  doc.text('Passo a Passo / AÃ§Ãµes:', 20, currentY);
+                  doc.text('Passo a Passo / AÃƒÂ§ÃƒÂµes:', 20, currentY);
                   currentY += 5;
                   doc.setFont("helvetica", "normal");
                   doc.setFontSize(9);
@@ -5589,7 +5589,7 @@ const RelatorioView = ({
       setPdfUrl(doc.output('bloburl').toString());
     } catch (error) {
       console.error("Error generating Relatorio PDF:", error);
-      alert("Ocorreu um erro ao gerar o PDF do relatÃ³rio. Por favor, tente novamente.");
+      alert("Ocorreu um erro ao gerar o PDF do relatÃƒÂ³rio. Por favor, tente novamente.");
     }
   };
 
@@ -5606,7 +5606,7 @@ const RelatorioView = ({
         </div>
         <div className="flex gap-3 self-end md:self-auto min-w-[200px]">
           <Button onClick={generateRelatorioPDF} className="w-full h-12 rounded-xl text-sm font-bold bg-emerald-600 hover:bg-emerald-700">
-            <Printer size={18} className="mr-2" /> Imprimir RelatÃ³rio
+            <Printer size={18} className="mr-2" /> Imprimir RelatÃƒÂ³rio
           </Button>
         </div>
       </div>
@@ -5614,11 +5614,11 @@ const RelatorioView = ({
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 print:shadow-none print:border-none print:p-0">
         <div className="flex justify-between items-start border-b border-slate-200 pb-4 mb-5">
           <div>
-            <h1 className="text-3xl font-black text-slate-800 mb-2">RelatÃ³rio de DiagnÃ³stico</h1>
+            <h1 className="text-3xl font-black text-slate-800 mb-2">RelatÃƒÂ³rio de DiagnÃƒÂ³stico</h1>
             <div className="grid grid-cols-2 gap-x-8 gap-y-2 text-slate-600 mt-3">
               <div>
                 <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-0.5">Empresa</p>
-                <p className="text-base font-semibold text-slate-800">{selectedEmpresa?.nome || 'NÃ£o informada'}</p>
+                <p className="text-base font-semibold text-slate-800">{selectedEmpresa?.nome || 'NÃƒÂ£o informada'}</p>
                 <div className="flex flex-col gap-0.5 mt-0.5">
                   {selectedEmpresa?.cnpj && <p className="text-xs text-slate-500">CNPJ: {selectedEmpresa.cnpj}</p>}
                   <span className="w-fit inline-flex items-center gap-1 bg-slate-50 border border-slate-150 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
@@ -5627,14 +5627,14 @@ const RelatorioView = ({
                 </div>
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-0.5">Data do DiagnÃ³stico</p>
+                <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-0.5">Data do DiagnÃƒÂ³stico</p>
                 <p className="text-base font-semibold text-slate-800">
                   {formatFirestoreDate(selectedDiagnostico.dataDiagnostico, 'dd/MM/yyyy')}
                 </p>
               </div>
               {selectedDiagnostico.dadosConsultoria?.areaConsultoria && (
                 <div className="col-span-2">
-                  <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-0.5">Ãrea da Consultoria</p>
+                  <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 mb-0.5">ÃƒÂrea da Consultoria</p>
                   <p className="text-base font-semibold text-emerald-600">{selectedDiagnostico.dadosConsultoria.areaConsultoria}</p>
                 </div>
               )}
@@ -5663,11 +5663,11 @@ const RelatorioView = ({
                 <p className="text-sm font-semibold text-slate-800">{selectedDiagnostico.dadosConsultoria.consultor || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 uppercase">CÃ³digo SGF</p>
+                <p className="text-xs font-bold text-slate-400 uppercase">CÃƒÂ³digo SGF</p>
                 <p className="text-sm font-semibold text-slate-800">{selectedDiagnostico.dadosConsultoria.codigoSgf || 'N/A'}</p>
               </div>
               <div>
-                <p className="text-xs font-bold text-slate-400 uppercase">PerÃ­odo</p>
+                <p className="text-xs font-bold text-slate-400 uppercase">PerÃƒÂ­odo</p>
                 <p className="text-sm font-semibold text-slate-800">{selectedDiagnostico.dadosConsultoria.periodoConsultoria || 'N/A'}</p>
               </div>
             </div>
@@ -5682,7 +5682,7 @@ const RelatorioView = ({
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-black text-blue-800">{performance}%</span>
                 <div className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${Number(performance) > 60 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                  {Number(performance) > 60 ? 'Bom' : 'CrÃ­tico'}
+                  {Number(performance) > 60 ? 'Bom' : 'CrÃƒÂ­tico'}
                 </div>
               </div>
             </div>
@@ -5694,14 +5694,14 @@ const RelatorioView = ({
               </div>
             </div>
             <div className="bg-rose-50 p-3 rounded-xl border border-rose-100 flex flex-col gap-1 shadow-sm">
-              <span className="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Pontos CrÃ­ticos</span>
+              <span className="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Pontos CrÃƒÂ­ticos</span>
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black text-rose-800">{uniqueRespostas.filter(r => r.resposta === 'NÃ£o').length}</span>
-                <span className="text-[10px] text-rose-600 font-medium">urgÃªncias</span>
+                <span className="text-2xl font-black text-rose-800">{uniqueRespostas.filter(r => r.resposta === 'NÃƒÂ£o').length}</span>
+                <span className="text-[10px] text-rose-600 font-medium">urgÃƒÂªncias</span>
               </div>
             </div>
             <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 flex flex-col gap-1 shadow-sm">
-              <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">AtenÃ§Ã£o NecessÃ¡ria</span>
+              <span className="text-[10px] font-bold text-amber-600 uppercase tracking-wider">AtenÃƒÂ§ÃƒÂ£o NecessÃƒÂ¡ria</span>
               <div className="flex items-baseline gap-2">
                 <span className="text-2xl font-black text-amber-800">{uniqueRespostas.filter(r => r.resposta === 'Parcial').length}</span>
                 <span className="text-[10px] text-amber-600 font-medium">pontos parciais</span>
@@ -5713,7 +5713,7 @@ const RelatorioView = ({
           <div style={{ backgroundColor: '#f8fafc', borderColor: '#f1f5f9', color: '#1e293b' }} className="bg-slate-50 p-5 rounded-2xl border border-slate-100 print:bg-white print:border-none print:p-0">
             <h3 style={{ color: '#1e293b' }} className="text-xl font-bold mb-4 flex items-center gap-2">
               <BarChart3 style={{ color: '#3b82f6' }} />
-              Desempenho por Ãrea e Status
+              Desempenho por ÃƒÂrea e Status
             </h3>
 
             <div className="flex flex-col gap-4 max-w-4xl mx-auto print:max-w-none">
@@ -5725,7 +5725,7 @@ const RelatorioView = ({
               >
                 <div>
                   <h4 style={{ color: '#334155' }} className="font-bold text-base mb-3 flex items-center gap-2">
-                    <BarChart3 size={18} style={{ color: '#3b82f6' }} /> Maturidade por Ãrea (%)
+                    <BarChart3 size={18} style={{ color: '#3b82f6' }} /> Maturidade por ÃƒÂrea (%)
                   </h4>
                   <div className="h-96" style={{ backgroundColor: '#ffffff' }}>
                     <ResponsiveContainer width="100%" height={380}>
@@ -5757,7 +5757,7 @@ const RelatorioView = ({
                   </div>
                 </div>
                 <div className="mt-6 border-t border-slate-100 pt-4">
-                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-3 text-center">Legenda de Maturidade por Ãrea</p>
+                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-3 text-center">Legenda de Maturidade por ÃƒÂrea</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
                     {barChartData.map((item, index) => {
                       const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6', '#6366f1'];
@@ -5782,7 +5782,7 @@ const RelatorioView = ({
               >
                 <div>
                   <h4 style={{ color: '#334155' }} className="font-bold text-base mb-3 flex items-center gap-2">
-                    <LucidePieChart size={18} style={{ color: '#3b82f6' }} /> Maturidade (GrÃ¡fico de Rosca)
+                    <LucidePieChart size={18} style={{ color: '#3b82f6' }} /> Maturidade (GrÃƒÂ¡fico de Rosca)
                   </h4>
                   <div className="h-80 flex items-center justify-center bg-white">
                     <ResponsiveContainer width="100%" height={320}>
@@ -5812,7 +5812,7 @@ const RelatorioView = ({
                 </div>
 
                 <div className="mt-6 border-t border-slate-100 pt-4">
-                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-3 text-center">NÃ­vel de AtenÃ§Ã£o por Ãrea</p>
+                  <p className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-3 text-center">NÃƒÂ­vel de AtenÃƒÂ§ÃƒÂ£o por ÃƒÂrea</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
                     {barChartData.map((item, index) => {
                       const donutColors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6', '#6366f1'];
@@ -5820,10 +5820,10 @@ const RelatorioView = ({
                       let levelText = '';
                       if (item.value < 50) {
                         levelColor = 'bg-rose-50 text-rose-700 border border-rose-100';
-                        levelText = 'CrÃ­tico';
+                        levelText = 'CrÃƒÂ­tico';
                       } else if (item.value <= 75) {
                         levelColor = 'bg-amber-50 text-amber-700 border border-amber-100';
-                        levelText = 'AtenÃ§Ã£o';
+                        levelText = 'AtenÃƒÂ§ÃƒÂ£o';
                       } else {
                         levelColor = 'bg-emerald-50 text-emerald-700 border border-emerald-100';
                         levelText = 'Bom';
@@ -5853,7 +5853,7 @@ const RelatorioView = ({
               >
                 <div>
                   <h4 style={{ color: '#334155' }} className="font-bold text-base mb-3 flex items-center gap-2">
-                    <LucidePieChart size={18} style={{ color: '#10b981' }} /> DistribuiÃ§Ã£o de Respostas
+                    <LucidePieChart size={18} style={{ color: '#10b981' }} /> DistribuiÃƒÂ§ÃƒÂ£o de Respostas
                   </h4>
                   <div className="h-80 flex items-center justify-center bg-white">
                     <ResponsiveContainer width="100%" height={320}>
@@ -5888,7 +5888,7 @@ const RelatorioView = ({
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#f59e0b' }} /> Parcial ({pieChartData.find(d => d.name === 'Parcial')?.value || 0})
                   </div>
                   <div className="flex items-center gap-2 text-xs font-bold uppercase" style={{ color: '#64748b' }}>
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#ef4444' }} /> NÃ£o ({pieChartData.find(d => d.name === 'NÃ£o')?.value || 0})
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#ef4444' }} /> NÃƒÂ£o ({pieChartData.find(d => d.name === 'NÃƒÂ£o')?.value || 0})
                   </div>
                 </div>
               </div>
@@ -5898,11 +5898,11 @@ const RelatorioView = ({
           <div>
             <h3 className="text-2xl font-black text-slate-800 mb-4 flex items-center gap-2 border-b border-slate-100 pb-3">
               <CheckCircle2 className="text-emerald-500 shrink-0" size={24} />
-              AnÃ¡lise Detalhada do DiagnÃ³stico
+              AnÃƒÂ¡lise Detalhada do DiagnÃƒÂ³stico
             </h3>
             
             {Object.keys(problemsByArea).length === 0 ? (
-              <p className="text-slate-500 italic">Nenhum dado identificado no diagnÃ³stico.</p>
+              <p className="text-slate-500 italic">Nenhum dado identificado no diagnÃƒÂ³stico.</p>
             ) : (
               <div className="space-y-8">
                 {Object.entries(problemsByArea).map(([areaName, areaProblems]) => {
@@ -5912,7 +5912,7 @@ const RelatorioView = ({
                       <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-100 p-4 rounded-xl print:bg-transparent print:border-none print:p-0">
                         <div className="w-3 h-3 rounded-full bg-emerald-600 shrink-0" />
                         <h3 className="text-xl font-bold text-slate-800 tracking-tight uppercase">
-                          Ãrea: {areaName}
+                          ÃƒÂrea: {areaName}
                         </h3>
                       </div>
 
@@ -5922,7 +5922,7 @@ const RelatorioView = ({
                           <div className="flex items-start justify-between gap-4 mb-3">
                             <div className="flex items-start gap-4">
                               <div className="w-8 h-8 bg-emerald-600 text-white rounded-xl flex items-center justify-center text-xs font-black shrink-0 mt-0.5 shadow-sm shadow-emerald-600/20">
-                                {idx + 1}Âº
+                                {idx + 1}Ã‚Âº
                               </div>
                               <div>
                                 <h4 className="text-base font-black text-slate-800 tracking-tight leading-snug">{solution?.problema || probId}</h4>
@@ -5940,7 +5940,7 @@ const RelatorioView = ({
                                 <ul className="space-y-1.5 mb-2">
                                   {yesResponses.map((r, i) => (
                                     <li key={i} className="text-slate-700 text-sm flex items-start gap-2">
-                                      <span className="text-emerald-500 mt-0.5">â€¢</span>
+                                      <span className="text-emerald-500 mt-0.5">Ã¢â‚¬Â¢</span>
                                       <span>{r.pergunta}</span>
                                     </li>
                                   ))}
@@ -5958,7 +5958,7 @@ const RelatorioView = ({
                             {noResponses.length > 0 && (
                               <div className="bg-rose-50/40 p-3 rounded-xl border border-rose-100">
                                 <h5 className="text-sm font-bold text-rose-700 uppercase tracking-widest mb-2 flex items-center gap-2">
-                                  <AlertTriangle size={16} /> Pontos CrÃ­ticos / Oportunidades
+                                  <AlertTriangle size={16} /> Pontos CrÃƒÂ­ticos / Oportunidades
                                 </h5>
                                 <div className="overflow-x-auto">
                                   <table className="w-full text-sm text-left border-collapse">
@@ -5989,27 +5989,27 @@ const RelatorioView = ({
                                 {solution ? (
                                   <div className="mt-2 bg-white p-3 rounded-lg border border-emerald-100 shadow-sm print:border-slate-200 print:shadow-none">
                                     <h5 className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-2 flex items-center gap-2">
-                                      <CheckCircle2 size={16} /> SoluÃ§Ã£o e RecomendaÃ§Ãµes Propostas
+                                      <CheckCircle2 size={16} /> SoluÃƒÂ§ÃƒÂ£o e RecomendaÃƒÂ§ÃƒÂµes Propostas
                                     </h5>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-2">
                                       <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase">SoluÃ§Ã£o / AÃ§Ã£o Recomendada</p>
-                                        <p className="text-sm font-semibold text-slate-800">{solution.solucao_recomendada || 'NÃ£o informada'}</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase">SoluÃƒÂ§ÃƒÂ£o / AÃƒÂ§ÃƒÂ£o Recomendada</p>
+                                        <p className="text-sm font-semibold text-slate-800">{solution.solucao_recomendada || 'NÃƒÂ£o informada'}</p>
                                       </div>
                                       <div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase">ResponsÃ¡vel</p>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase">ResponsÃƒÂ¡vel</p>
                                         <p className="text-sm font-semibold text-slate-800">{solution.responsavel_sugerido || 'Consultor'}</p>
                                       </div>
                                     </div>
                                     <div>
-                                      <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Passo a Passo / RecomendaÃ§Ãµes</p>
-                                      <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed bg-slate-50/70 p-2.5 rounded-lg border border-slate-100 font-sans">{solution.acoes_sugeridas || 'Nenhuma recomendaÃ§Ã£o detalhada cadastrada.'}</p>
+                                      <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Passo a Passo / RecomendaÃƒÂ§ÃƒÂµes</p>
+                                      <p className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed bg-slate-50/70 p-2.5 rounded-lg border border-slate-100 font-sans">{solution.acoes_sugeridas || 'Nenhuma recomendaÃƒÂ§ÃƒÂ£o detalhada cadastrada.'}</p>
                                     </div>
 
                                   </div>
                                 ) : (
                                   <div className="mt-3 bg-amber-50 p-3 rounded-lg border border-amber-100 text-amber-800 text-sm italic flex items-center gap-2">
-                                    <AlertCircle size={16} /> Nenhuma soluÃ§Ã£o mapeada para este problema.
+                                    <AlertCircle size={16} /> Nenhuma soluÃƒÂ§ÃƒÂ£o mapeada para este problema.
                                   </div>
                                 )}
                               </div>
@@ -6057,8 +6057,8 @@ const GestaoPlanoView = ({
   empresas: Empresa[],
   onEdit: (t: TarefaPlanoAcao) => void, 
   onDelete: (t: TarefaPlanoAcao) => void,
-  onUpdateStatus: (id: string, s: 'Pendente' | 'Em Andamento' | 'ConcluÃ­do') => void,
-  onUpdatePrioridade: (id: string, p: 'Baixa' | 'MÃ©dia' | 'Alta') => void,
+  onUpdateStatus: (id: string, s: 'Pendente' | 'Em Andamento' | 'ConcluÃƒÂ­do') => void,
+  onUpdatePrioridade: (id: string, p: 'Baixa' | 'MÃƒÂ©dia' | 'Alta') => void,
   onUploadEvidence: (f: File, type: 'tarefa', id: string) => void,
   setTarefaForm: (f: any) => void,
   setModalType: (t: any) => void,
@@ -6085,7 +6085,7 @@ const GestaoPlanoView = ({
 
   const handleSavePlanoAcao = async () => {
     if (!selectedDiagnostico || !selectedDiagnostico.id) {
-      alert("Nenhum diagnÃ³stico selecionado para salvar o Plano de AÃ§Ã£o.");
+      alert("Nenhum diagnÃƒÂ³stico selecionado para salvar o Plano de AÃƒÂ§ÃƒÂ£o.");
       return;
     }
 
@@ -6104,15 +6104,15 @@ const GestaoPlanoView = ({
         solucaoProposta: t.solucaoSugerida || t.problema || '',
         descricao: t.acoes || '',
         status: t.status || 'Pendente',
-        prioridade: t.prioridade || 'MÃ©dia',
+        prioridade: t.prioridade || 'MÃƒÂ©dia',
         responsavel: t.responsavel || 'Consultor',
         cargaHoraria: t.cargaHoraria || '',
         dataInicio: t.dataInicio || '',
         dataFim: t.dataFim || t.dataInicio || ''
       }));
 
-      const isAllCompleted = sortedTarefas.length > 0 && sortedTarefas.every(t => t.status === 'ConcluÃ­do');
-      const newStatus = isAllCompleted ? 'ConcluÃ­do' : selectedDiagnostico.status || 'Em Andamento';
+      const isAllCompleted = sortedTarefas.length > 0 && sortedTarefas.every(t => t.status === 'ConcluÃƒÂ­do');
+      const newStatus = isAllCompleted ? 'ConcluÃƒÂ­do' : selectedDiagnostico.status || 'Em Andamento';
 
       // 2. Local storage persistence immediately
       try {
@@ -6177,7 +6177,7 @@ const GestaoPlanoView = ({
       setSaveSuccessPlano(true);
       setTimeout(() => setSaveSuccessPlano(false), 3000);
     } catch (err) {
-      console.error("Erro ao salvar Plano de AÃ§Ã£o:", err);
+      console.error("Erro ao salvar Plano de AÃƒÂ§ÃƒÂ£o:", err);
       clearTimeout(safetyTimer);
       setIsSavingPlano(false);
       playSuccessSound();
@@ -6220,17 +6220,17 @@ const GestaoPlanoView = ({
           // 1. Identify final report / closing tasks
           const isFinalReport = 
             (t.problema && (
-              t.problema.toLowerCase().includes("relatÃ³rio final") || 
+              t.problema.toLowerCase().includes("relatÃƒÂ³rio final") || 
               t.problema.toLowerCase().includes("relatorio final") || 
               t.problema.toLowerCase().includes("encerramento") ||
-              t.problema.toLowerCase().includes("reuniÃ£o de fechamento") ||
+              t.problema.toLowerCase().includes("reuniÃƒÂ£o de fechamento") ||
               t.problema.toLowerCase().includes("reuniao de fechamento")
             )) ||
             (t.solucaoSugerida && (
-              t.solucaoSugerida.toLowerCase().includes("relatÃ³rio final") || 
+              t.solucaoSugerida.toLowerCase().includes("relatÃƒÂ³rio final") || 
               t.solucaoSugerida.toLowerCase().includes("relatorio final") || 
               t.solucaoSugerida.toLowerCase().includes("encerramento") ||
-              t.solucaoSugerida.toLowerCase().includes("apresentaÃ§Ã£o do relatÃ³rio") ||
+              t.solucaoSugerida.toLowerCase().includes("apresentaÃƒÂ§ÃƒÂ£o do relatÃƒÂ³rio") ||
               t.solucaoSugerida.toLowerCase().includes("apresentacao do relatorio")
             ));
 
@@ -6241,12 +6241,12 @@ const GestaoPlanoView = ({
           // 2. Identify first task (Diagnosis / Demand assessment)
           const isFirstTask = 
             (t.problema && (
-              t.problema.toLowerCase().includes("diagnÃ³stico inicial") || 
+              t.problema.toLowerCase().includes("diagnÃƒÂ³stico inicial") || 
               t.problema.toLowerCase().includes("diagnostico inicial") || 
               t.problema.toLowerCase().includes("entendimento da demanda")
             )) ||
             (t.solucaoSugerida && (
-              t.solucaoSugerida.toLowerCase().includes("diagnÃ³stico inicial") || 
+              t.solucaoSugerida.toLowerCase().includes("diagnÃƒÂ³stico inicial") || 
               t.solucaoSugerida.toLowerCase().includes("diagnostico inicial") || 
               t.solucaoSugerida.toLowerCase().includes("entendimento da demanda")
             ));
@@ -6297,7 +6297,7 @@ const GestaoPlanoView = ({
         const dateB = b.dataVencimento ? new Date(b.dataVencimento).getTime() : b.dataFim ? new Date(b.dataFim).getTime() : 0;
         return dateA - dateB;
       } else if (sortBy === 'prioridade') {
-        const priorityWeight = { Alta: 3, MÃ©dia: 2, Baixa: 1 };
+        const priorityWeight = { Alta: 3, MÃƒÂ©dia: 2, Baixa: 1 };
         const weightA = priorityWeight[a.prioridade] || 0;
         const weightB = priorityWeight[b.prioridade] || 0;
         return weightB - weightA;
@@ -6345,7 +6345,7 @@ const GestaoPlanoView = ({
     if (groupBy === 'status') {
       map['Pendente'] = sortedTarefas.filter(t => t.status === 'Pendente');
       map['Em Andamento'] = sortedTarefas.filter(t => t.status === 'Em Andamento');
-      map['ConcluÃ­do'] = sortedTarefas.filter(t => t.status === 'ConcluÃ­do');
+      map['ConcluÃƒÂ­do'] = sortedTarefas.filter(t => t.status === 'ConcluÃƒÂ­do');
     } else if (groupBy === 'area') {
       sortedTarefas.forEach(t => {
         const key = t.area || 'Geral';
@@ -6354,13 +6354,13 @@ const GestaoPlanoView = ({
       });
     } else if (groupBy === 'problema') {
       sortedTarefas.forEach(t => {
-        const key = t.problema || 'NÃ£o definido';
+        const key = t.problema || 'NÃƒÂ£o definido';
         if (!map[key]) map[key] = [];
         map[key].push(t);
       });
     } else if (groupBy === 'data') {
       sortedTarefas.forEach(t => {
-        let key = 'Sem data de execuÃ§Ã£o';
+        let key = 'Sem data de execuÃƒÂ§ÃƒÂ£o';
         const dateVal = t.dataInicio || t.dataVencimento || t.dataFim;
         if (dateVal) {
           try {
@@ -6368,7 +6368,7 @@ const GestaoPlanoView = ({
             const m = d.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
             key = m.charAt(0).toUpperCase() + m.slice(1);
           } catch (e) {
-            key = 'Data invÃ¡lida';
+            key = 'Data invÃƒÂ¡lida';
           }
         }
         if (!map[key]) map[key] = [];
@@ -6383,14 +6383,14 @@ const GestaoPlanoView = ({
       return [
         { id: 'Pendente', label: 'Pendentes', color: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-200' },
         { id: 'Em Andamento', label: 'Em Andamento', color: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-200' },
-        { id: 'ConcluÃ­do', label: 'ConcluÃ­dos', color: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200' }
+        { id: 'ConcluÃƒÂ­do', label: 'ConcluÃƒÂ­dos', color: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-200' }
       ];
     }
 
     const keys = Object.keys(groupedTasksMap);
     keys.sort((a, b) => {
-      if (a === 'Sem data de execuÃ§Ã£o' || a === 'Geral' || a === 'NÃ£o definido') return -1;
-      if (b === 'Sem data de execuÃ§Ã£o' || b === 'Geral' || b === 'NÃ£o definido') return 1;
+      if (a === 'Sem data de execuÃƒÂ§ÃƒÂ£o' || a === 'Geral' || a === 'NÃƒÂ£o definido') return -1;
+      if (b === 'Sem data de execuÃƒÂ§ÃƒÂ£o' || b === 'Geral' || b === 'NÃƒÂ£o definido') return 1;
       return a.localeCompare(b);
     });
 
@@ -6421,7 +6421,7 @@ const GestaoPlanoView = ({
     hoje.setHours(0,0,0,0);
     
     return tarefas.filter(t => {
-      if (t.status === 'ConcluÃ­do') return false;
+      if (t.status === 'ConcluÃƒÂ­do') return false;
       const dataVenc = t.dataVencimento || t.dataFim;
       if (!dataVenc) return false;
       
@@ -6447,11 +6447,11 @@ const GestaoPlanoView = ({
           const msg = dias === 0 
             ? `vence hoje!` 
             : dias < 0 
-              ? `estÃ¡ vencida hÃ¡ ${Math.abs(dias)} dias!`
+              ? `estÃƒÂ¡ vencida hÃƒÂ¡ ${Math.abs(dias)} dias!`
               : `vence em ${dias} dias!`;
 
           new Notification(`Lembrete: ${t.problema}`, {
-            body: `A tarefa de responsabilidade de ${t.responsavel || 'NÃ£o definido'} ${msg}`,
+            body: `A tarefa de responsabilidade de ${t.responsavel || 'NÃƒÂ£o definido'} ${msg}`,
             icon: "/favicon.ico"
           });
           notificationsSent.current[t.id] = true;
@@ -6460,7 +6460,7 @@ const GestaoPlanoView = ({
     }
   }, [tarefAsComLembreteProximo]);
 
-  // HorÃ¡rio de Lembrete DiÃ¡rio Background Ticker
+  // HorÃƒÂ¡rio de Lembrete DiÃƒÂ¡rio Background Ticker
   useEffect(() => {
     const checkDailyReminder = () => {
       const enabled = localStorage.getItem('daily_reminder_enabled') === 'true';
@@ -6481,14 +6481,14 @@ const GestaoPlanoView = ({
         
         if (lastNotified !== todayStr) {
           if ('Notification' in window && Notification.permission === 'granted') {
-            const pending = tarefas.filter(t => t.status !== 'ConcluÃ­do');
+            const pending = tarefas.filter(t => t.status !== 'ConcluÃƒÂ­do');
             if (pending.length > 0) {
-              new Notification("Tarefas Pendentes: Lembrete DiÃ¡rio", {
-                body: `VocÃª possui ${pending.length} tarefa(s) pendente(s) no seu cronograma hoje.`,
+              new Notification("Tarefas Pendentes: Lembrete DiÃƒÂ¡rio", {
+                body: `VocÃƒÂª possui ${pending.length} tarefa(s) pendente(s) no seu cronograma hoje.`,
                 icon: "/favicon.ico"
               });
             } else {
-              new Notification("Lembrete DiÃ¡rio de Tarefas", {
+              new Notification("Lembrete DiÃƒÂ¡rio de Tarefas", {
                 body: `Tudo limpo! Nenhuma tarefa pendente no cronograma hoje.`,
                 icon: "/favicon.ico"
               });
@@ -6512,10 +6512,10 @@ const GestaoPlanoView = ({
     const statusVenc = dias === 0 
       ? 'vence hoje' 
       : dias < 0 
-        ? `estÃ¡ atrasada hÃ¡ ${Math.abs(dias)} dias`
-        : `vencerÃ¡ em ${dias} dias`;
+        ? `estÃƒÂ¡ atrasada hÃƒÂ¡ ${Math.abs(dias)} dias`
+        : `vencerÃƒÂ¡ em ${dias} dias`;
 
-    const txt = `OlÃ¡! Segue um lembrete da tarefa do Plano de AÃ§Ã£o:\n*Tarefa:* ${t.problema}\n*ResponsÃ¡vel:* ${t.responsavel || 'NÃ£o definido'}\n*Status:* ${t.status}\n*Vencimento:* ${vencDate ? format(vencDate, 'dd/MM/yyyy') : 'NÃ£o definido'} (${statusVenc})\n\n*AÃ§Ãµes recomendadas:*\n${t.acoes || 'Nenhum detalhe adicional.'}\n\nPor favor, mantenha o andamento atualizado. Obrigado!`;
+    const txt = `OlÃƒÂ¡! Segue um lembrete da tarefa do Plano de AÃƒÂ§ÃƒÂ£o:\n*Tarefa:* ${t.problema}\n*ResponsÃƒÂ¡vel:* ${t.responsavel || 'NÃƒÂ£o definido'}\n*Status:* ${t.status}\n*Vencimento:* ${vencDate ? format(vencDate, 'dd/MM/yyyy') : 'NÃƒÂ£o definido'} (${statusVenc})\n\n*AÃƒÂ§ÃƒÂµes recomendadas:*\n${t.acoes || 'Nenhum detalhe adicional.'}\n\nPor favor, mantenha o andamento atualizado. Obrigado!`;
 
     const encodedText = encodeURIComponent(txt);
     const url = cleanContato 
@@ -6531,12 +6531,12 @@ const GestaoPlanoView = ({
     const statusVenc = dias === 0 
       ? 'vence hoje' 
       : dias < 0 
-        ? `estÃ¡ atrasada hÃ¡ ${Math.abs(dias)} dias`
-        : `vencerÃ¡ em ${dias} dias`;
+        ? `estÃƒÂ¡ atrasada hÃƒÂ¡ ${Math.abs(dias)} dias`
+        : `vencerÃƒÂ¡ em ${dias} dias`;
 
     const formattedVenc = vencDate ? format(vencDate, 'dd/MM/yyyy') : '';
-    const subject = `Lembrete de Tarefa do Plano de AÃ§Ã£o - Vence em ${formattedVenc}`;
-    const body = `OlÃ¡!\n\nEste Ã© um lembrete para a seguinte tarefa do Plano de AÃ§Ã£o:\n\n- Tarefa: ${t.problema}\n- ResponsÃ¡vel: ${t.responsavel || 'NÃ£o definido'}\n- Status: ${t.status}\n- Prioridade: ${t.prioridade}\n- Vencimento: ${formattedVenc || 'NÃ£o definido'} (${statusVenc})\n\nAÃ§Ãµes recomendadas:\n${t.acoes || 'Nenhum detalhe adicional.'}\n\nPor favor, atualize o status da atividade assim que possÃ­vel.\n\nAtenciosamente,\nGestor de Consultoria`;
+    const subject = `Lembrete de Tarefa do Plano de AÃƒÂ§ÃƒÂ£o - Vence em ${formattedVenc}`;
+    const body = `OlÃƒÂ¡!\n\nEste ÃƒÂ© um lembrete para a seguinte tarefa do Plano de AÃƒÂ§ÃƒÂ£o:\n\n- Tarefa: ${t.problema}\n- ResponsÃƒÂ¡vel: ${t.responsavel || 'NÃƒÂ£o definido'}\n- Status: ${t.status}\n- Prioridade: ${t.prioridade}\n- Vencimento: ${formattedVenc || 'NÃƒÂ£o definido'} (${statusVenc})\n\nAÃƒÂ§ÃƒÂµes recomendadas:\n${t.acoes || 'Nenhum detalhe adicional.'}\n\nPor favor, atualize o status da atividade assim que possÃƒÂ­vel.\n\nAtenciosamente,\nGestor de Consultoria`;
 
     const mailto = `mailto:${encodeURIComponent(contato)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.open(mailto, '_blank');
@@ -6546,14 +6546,14 @@ const GestaoPlanoView = ({
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {!selectedDiagnostico && (
         <div className="p-8 bg-amber-50 border border-amber-200 rounded-2xl text-center">
-          <p className="text-amber-800 font-bold">Nenhum diagnÃ³stico selecionado.</p>
-          <p className="text-amber-600 text-sm">Por favor, selecione um diagnÃ³stico na tela de "DiagnÃ³sticos" para visualizar o plano de aÃ§Ã£o.</p>
+          <p className="text-amber-800 font-bold">Nenhum diagnÃƒÂ³stico selecionado.</p>
+          <p className="text-amber-600 text-sm">Por favor, selecione um diagnÃƒÂ³stico na tela de "DiagnÃƒÂ³sticos" para visualizar o plano de aÃƒÂ§ÃƒÂ£o.</p>
         </div>
       )}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-black text-slate-800 tracking-tight">GestÃ£o do Plano de AÃ§Ã£o</h2>
-          <p className="text-slate-500 font-medium tracking-tight">Acompanhe a execuÃ§Ã£o das melhorias sugeridas nos diagnÃ³sticos.</p>
+          <h2 className="text-3xl font-black text-slate-800 tracking-tight">GestÃƒÂ£o do Plano de AÃƒÂ§ÃƒÂ£o</h2>
+          <p className="text-slate-500 font-medium tracking-tight">Acompanhe a execuÃƒÂ§ÃƒÂ£o das melhorias sugeridas nos diagnÃƒÂ³sticos.</p>
         </div>
         <div className="flex items-center gap-3">
            <button
@@ -6577,7 +6577,7 @@ const GestaoPlanoView = ({
              ) : (
                <>
                  <Save size={14} />
-                 <span>Salvar AlteraÃ§Ãµes</span>
+                 <span>Salvar AlteraÃƒÂ§ÃƒÂµes</span>
                </>
              )}
            </button>
@@ -6629,7 +6629,7 @@ const GestaoPlanoView = ({
         </div>
       )}
 
-      {/* SeÃ§Ã£o de Lembretes / Alertas Ativos */}
+      {/* SeÃƒÂ§ÃƒÂ£o de Lembretes / Alertas Ativos */}
       {tarefAsComLembreteProximo.length > 0 && (
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
@@ -6642,7 +6642,7 @@ const GestaoPlanoView = ({
             </div>
             <div>
               <h3 className="font-black text-slate-800 uppercase tracking-wider text-xs">Alertas de Vencimento Ativos</h3>
-              <p className="text-[11px] text-slate-500 font-medium">HÃ¡ tarefas prÃ³ximas do vencimento com lembretes configurados.</p>
+              <p className="text-[11px] text-slate-500 font-medium">HÃƒÂ¡ tarefas prÃƒÂ³ximas do vencimento com lembretes configurados.</p>
             </div>
           </div>
           
@@ -6657,13 +6657,13 @@ const GestaoPlanoView = ({
                   <div>
                     <div className="flex justify-between items-start gap-2 mb-2">
                       <span className="text-[9px] font-black uppercase bg-amber-50 text-amber-600 border border-amber-100 px-2 py-0.5 rounded-md">
-                        {dias === 0 ? "Vence hoje" : dias < 0 ? `Vencido hÃ¡ ${Math.abs(dias)}d` : `Vence em ${dias}d`}
+                        {dias === 0 ? "Vence hoje" : dias < 0 ? `Vencido hÃƒÂ¡ ${Math.abs(dias)}d` : `Vence em ${dias}d`}
                       </span>
                       <span className="text-[10px] text-slate-400 font-bold max-w-[120px] truncate">{t.responsavel || 'Sem resp.'}</span>
                     </div>
                     
                     <h4 className="font-bold text-slate-800 text-xs mb-1 truncate">{t.problema}</h4>
-                    <p className="text-[10px] text-slate-400 font-medium mb-3">Vencimento: {dLimit ? dLimit.toLocaleDateString('pt-BR') : 'NÃ£o definido'}</p>
+                    <p className="text-[10px] text-slate-400 font-medium mb-3">Vencimento: {dLimit ? dLimit.toLocaleDateString('pt-BR') : 'NÃƒÂ£o definido'}</p>
                   </div>
                   
                   <div className="flex items-center gap-2 pt-2 border-t border-slate-50">
@@ -6691,10 +6691,10 @@ const GestaoPlanoView = ({
                         onClick={() => {
                           if ('Notification' in window && Notification.permission === 'granted') {
                             new Notification(`Lembrete - ${t.problema}`, {
-                              body: `Tarefa para ${t.responsavel || 'nÃ£o definido'}. Vencimento: ${dataV ? new Date(dataV).toLocaleDateString('pt-BR') : ''}.`
+                              body: `Tarefa para ${t.responsavel || 'nÃƒÂ£o definido'}. Vencimento: ${dataV ? new Date(dataV).toLocaleDateString('pt-BR') : ''}.`
                             });
                           } else {
-                            alert("PermissÃµes de notificaÃ§Ãµes nÃ£o concedidas no navegador!");
+                            alert("PermissÃƒÂµes de notificaÃƒÂ§ÃƒÂµes nÃƒÂ£o concedidas no navegador!");
                           }
                         }}
                         className="p-1.5 bg-purple-50 hover:bg-purple-100 text-purple-600 rounded-lg transition-colors cursor-pointer"
@@ -6711,10 +6711,10 @@ const GestaoPlanoView = ({
         </motion.div>
       )}
 
-      {/* Barra de Ferramentas / Filtros e Modos de VisualizaÃ§Ã£o */}
+      {/* Barra de Ferramentas / Filtros e Modos de VisualizaÃƒÂ§ÃƒÂ£o */}
       <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">VisualizaÃ§Ã£o:</span>
+          <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">VisualizaÃƒÂ§ÃƒÂ£o:</span>
           <div className="bg-slate-100 p-1 rounded-xl flex gap-1">
             <button
               onClick={() => setViewMode('kanban')}
@@ -6751,10 +6751,10 @@ const GestaoPlanoView = ({
               onChange={(e) => setGroupBy(e.target.value as any)}
               className="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 cursor-pointer"
             >
-              <option value="status">ðŸ“Š Status de ExecuÃ§Ã£o</option>
-              <option value="data">ðŸ“… Data de ExecuÃ§Ã£o (MÃªs)</option>
-              <option value="problema">â“ Problema Associado</option>
-              <option value="area">ðŸ—‚ï¸ Ãrea de Consultoria</option>
+              <option value="status">Ã°Å¸â€œÅ  Status de ExecuÃƒÂ§ÃƒÂ£o</option>
+              <option value="data">Ã°Å¸â€œâ€¦ Data de ExecuÃƒÂ§ÃƒÂ£o (MÃƒÂªs)</option>
+              <option value="problema">Ã¢Ââ€œ Problema Associado</option>
+              <option value="area">Ã°Å¸â€”â€šÃ¯Â¸Â ÃƒÂrea de Consultoria</option>
             </select>
           </div>
 
@@ -6765,13 +6765,13 @@ const GestaoPlanoView = ({
               onChange={(e) => setSortBy(e.target.value as any)}
               className="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 cursor-pointer"
             >
-              <option value="ordem">ðŸ”¢ Ordem Manual das AÃ§Ãµes (#1, #2...)</option>
-              <option value="cronograma">ðŸ“‹ Ordem do RelatÃ³rio de Consultoria</option>
-              <option value="dataInicio">ðŸ“… Ordem de InÃ­cio</option>
-              <option value="dataVencimento">â° Ordem de Vencimento</option>
-              <option value="prioridade">ðŸ”¥ NÃ­vel de Prioridade</option>
-              <option value="problema">â“ Nome do Problema</option>
-              <option value="area">ðŸ—‚ï¸ Ãrea de Consultoria</option>
+              <option value="ordem">Ã°Å¸â€Â¢ Ordem Manual das AÃƒÂ§ÃƒÂµes (#1, #2...)</option>
+              <option value="cronograma">Ã°Å¸â€œâ€¹ Ordem do RelatÃƒÂ³rio de Consultoria</option>
+              <option value="dataInicio">Ã°Å¸â€œâ€¦ Ordem de InÃƒÂ­cio</option>
+              <option value="dataVencimento">Ã¢ÂÂ° Ordem de Vencimento</option>
+              <option value="prioridade">Ã°Å¸â€Â¥ NÃƒÂ­vel de Prioridade</option>
+              <option value="problema">Ã¢Ââ€œ Nome do Problema</option>
+              <option value="area">Ã°Å¸â€”â€šÃ¯Â¸Â ÃƒÂrea de Consultoria</option>
             </select>
           </div>
         </div>
@@ -6806,7 +6806,7 @@ const GestaoPlanoView = ({
                       <div className={cn(
                         "absolute top-0 left-0 w-1 h-full",
                         tarefa.prioridade === 'Alta' ? "bg-rose-500" :
-                        tarefa.prioridade === 'MÃ©dia' ? "bg-amber-500" : "bg-slate-300"
+                        tarefa.prioridade === 'MÃƒÂ©dia' ? "bg-amber-500" : "bg-slate-300"
                       )} />
                       
                       <div className="flex justify-between items-start mb-3">
@@ -6814,14 +6814,14 @@ const GestaoPlanoView = ({
                           <span className={cn(
                             "text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest",
                             tarefa.prioridade === 'Alta' ? "bg-rose-50 text-rose-600 border border-rose-100" :
-                            tarefa.prioridade === 'MÃ©dia' ? "bg-amber-50 text-amber-600 border border-amber-100" :
+                            tarefa.prioridade === 'MÃƒÂ©dia' ? "bg-amber-50 text-amber-600 border border-amber-100" :
                             "bg-slate-50 text-slate-600 border border-slate-100"
                           )}>
                             {tarefa.prioridade}
                           </span>
                           <div className="flex items-center gap-1 bg-sky-50/80 px-2 py-0.5 rounded-md border border-sky-100 text-[10px] font-black text-sky-700" onClick={(e) => e.stopPropagation()}>
                             <ListOrdered size={12} />
-                            <span className="text-[9px] text-sky-500 font-bold mr-0.5">PosiÃ§Ã£o:</span>
+                            <span className="text-[9px] text-sky-500 font-bold mr-0.5">PosiÃƒÂ§ÃƒÂ£o:</span>
                             <select
                               value={tarefa.ordem !== undefined && tarefa.ordem !== null ? tarefa.ordem : sortedTarefas.findIndex(t => t.id === tarefa.id)}
                               onChange={(e) => {
@@ -6829,7 +6829,7 @@ const GestaoPlanoView = ({
                                 handleSetTaskPosition(tarefa, parseInt(e.target.value, 10));
                               }}
                               className="bg-white font-black text-sky-700 border border-sky-200 rounded px-1 py-0.5 cursor-pointer outline-none shadow-2xs hover:bg-sky-50"
-                              title="Clique para alterar a posiÃ§Ã£o da aÃ§Ã£o"
+                              title="Clique para alterar a posiÃƒÂ§ÃƒÂ£o da aÃƒÂ§ÃƒÂ£o"
                             >
                               {sortedTarefas.map((_, idx) => (
                                 <option key={idx} value={idx}>#{idx + 1}</option>
@@ -6860,23 +6860,23 @@ const GestaoPlanoView = ({
                             value={tarefa.prioridade}
                             onChange={(e) => {
                               e.stopPropagation();
-                              onUpdatePrioridade(tarefa.id, e.target.value as 'Baixa' | 'MÃ©dia' | 'Alta');
+                              onUpdatePrioridade(tarefa.id, e.target.value as 'Baixa' | 'MÃƒÂ©dia' | 'Alta');
                             }}
                             className={cn(
                               "text-[9px] font-black px-2 py-1 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20",
                               tarefa.prioridade === 'Alta' ? "text-rose-600" :
-                              tarefa.prioridade === 'MÃ©dia' ? "text-amber-600" : "text-slate-600"
+                              tarefa.prioridade === 'MÃƒÂ©dia' ? "text-amber-600" : "text-slate-600"
                             )}
                           >
                             <option value="Baixa">Baixa</option>
-                            <option value="MÃ©dia">MÃ©dia</option>
+                            <option value="MÃƒÂ©dia">MÃƒÂ©dia</option>
                             <option value="Alta">Alta</option>
                           </select>
                           <select
                             value={tarefa.status}
                             onChange={(e) => {
                               e.stopPropagation();
-                              onUpdateStatus(tarefa.id, e.target.value as 'Pendente' | 'Em Andamento' | 'ConcluÃ­do');
+                              onUpdateStatus(tarefa.id, e.target.value as 'Pendente' | 'Em Andamento' | 'ConcluÃƒÂ­do');
                             }}
                             className={cn(
                               "text-[10px] font-bold px-2 py-1 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20",
@@ -6884,7 +6884,7 @@ const GestaoPlanoView = ({
                           >
                             <option value="Pendente">Pendente</option>
                             <option value="Em Andamento">Em Andamento</option>
-                            <option value="ConcluÃ­do">ConcluÃ­do</option>
+                            <option value="ConcluÃƒÂ­do">ConcluÃƒÂ­do</option>
                           </select>
                           <button 
                             onClick={(e) => { e.stopPropagation(); onDelete(tarefa); }}
@@ -6901,7 +6901,7 @@ const GestaoPlanoView = ({
                       {tarefa.area && (
                         <div className="mb-2 flex items-center gap-1.5">
                           <span className="text-[9px] font-black text-sky-500 bg-sky-50 border border-sky-100 px-2 py-0.5 rounded-md uppercase tracking-tight">
-                            ðŸ—‚ï¸ {tarefa.area}
+                            Ã°Å¸â€”â€šÃ¯Â¸Â {tarefa.area}
                           </span>
                         </div>
                       )}
@@ -6914,7 +6914,7 @@ const GestaoPlanoView = ({
                             </div>
                           </div>
                           <div className="flex justify-between items-center bg-sky-50/50 px-2.5 py-1.5 rounded-lg border border-sky-100/50">
-                             <span className="text-[10px] font-black text-sky-600 uppercase tracking-tighter">DuraÃ§Ã£o</span>
+                             <span className="text-[10px] font-black text-sky-600 uppercase tracking-tighter">DuraÃƒÂ§ÃƒÂ£o</span>
                              <span className="text-[10px] font-bold text-sky-700 bg-white px-1.5 py-0.5 rounded shadow-sm border border-sky-100">
                                 {(() => {
                                   const d1 = parseLocalDate(tarefa.dataInicio);
@@ -7002,9 +7002,9 @@ const GestaoPlanoView = ({
                   {/* Header do Grupo */}
                   <div className="relative z-10 flex items-center gap-3">
                     <div className={cn("px-4 py-2 rounded-2xl border text-xs font-black uppercase tracking-wider shadow-sm flex items-center gap-2", col.color, col.border)}>
-                      {groupBy === 'status' ? 'ðŸ“Š Status: ' :
-                       groupBy === 'data' ? 'ðŸ“… MÃªs: ' :
-                       groupBy === 'problema' ? 'â“ Problema: ' : 'ðŸ—‚ï¸ Ãrea: '}
+                      {groupBy === 'status' ? 'Ã°Å¸â€œÅ  Status: ' :
+                       groupBy === 'data' ? 'Ã°Å¸â€œâ€¦ MÃƒÂªs: ' :
+                       groupBy === 'problema' ? 'Ã¢Ââ€œ Problema: ' : 'Ã°Å¸â€”â€šÃ¯Â¸Â ÃƒÂrea: '}
                       {col.label}
                     </div>
                     <div className="h-px flex-1 bg-slate-100"></div>
@@ -7021,7 +7021,7 @@ const GestaoPlanoView = ({
                         ? Math.ceil((dEnd.getTime() - dStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
                         : null;
                       
-                      const statusColors = tarefa.status === 'ConcluÃ­do' 
+                      const statusColors = tarefa.status === 'ConcluÃƒÂ­do' 
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
                         : tarefa.status === 'Em Andamento'
                           ? 'bg-blue-50 text-blue-700 border-blue-200'
@@ -7029,7 +7029,7 @@ const GestaoPlanoView = ({
 
                       const priorityColors = tarefa.prioridade === 'Alta'
                         ? 'bg-rose-50 text-rose-700 border-rose-200'
-                        : tarefa.prioridade === 'MÃ©dia'
+                        : tarefa.prioridade === 'MÃƒÂ©dia'
                           ? 'bg-amber-50 text-amber-700 border-amber-200'
                           : 'bg-slate-50 text-slate-700 border-slate-200';
 
@@ -7050,10 +7050,10 @@ const GestaoPlanoView = ({
                                   handleSetTaskPosition(tarefa, parseInt(e.target.value, 10));
                                 }}
                                 className="w-full h-full opacity-0 absolute inset-0 cursor-pointer z-20"
-                                title="Clique para alterar a posiÃ§Ã£o da aÃ§Ã£o"
+                                title="Clique para alterar a posiÃƒÂ§ÃƒÂ£o da aÃƒÂ§ÃƒÂ£o"
                               >
                                 {sortedTarefas.map((_, idx) => (
-                                  <option key={idx} value={idx}>PosiÃ§Ã£o #{idx + 1}</option>
+                                  <option key={idx} value={idx}>PosiÃƒÂ§ÃƒÂ£o #{idx + 1}</option>
                                 ))}
                               </select>
                               <span className="text-[10px] font-black text-sky-600 uppercase pointer-events-none">
@@ -7094,7 +7094,7 @@ const GestaoPlanoView = ({
                                 </span>
                                 {tarefa.area && (
                                   <span className="text-[10px] font-black uppercase tracking-tight px-2 py-0.5 rounded-md border bg-sky-50/50 border-sky-100 text-sky-600">
-                                    ðŸ—‚ï¸ {tarefa.area}
+                                    Ã°Å¸â€”â€šÃ¯Â¸Â {tarefa.area}
                                   </span>
                                 )}
                               </div>
@@ -7105,13 +7105,13 @@ const GestaoPlanoView = ({
                               
                               {tarefa.solucaoSugerida && (
                                 <p className="text-xs text-slate-600 font-medium leading-relaxed max-w-3xl">
-                                  <strong className="text-slate-700">SoluÃ§Ã£o Recomendada:</strong> {tarefa.solucaoSugerida}
+                                  <strong className="text-slate-700">SoluÃƒÂ§ÃƒÂ£o Recomendada:</strong> {tarefa.solucaoSugerida}
                                 </p>
                               )}
 
                               {tarefa.acoes && (
                                 <p className="text-xs text-slate-500 font-medium leading-relaxed max-w-3xl pt-1">
-                                  <strong className="text-slate-600">AÃ§Ãµes:</strong> {tarefa.acoes}
+                                  <strong className="text-slate-600">AÃƒÂ§ÃƒÂµes:</strong> {tarefa.acoes}
                                 </p>
                               )}
 
@@ -7119,7 +7119,7 @@ const GestaoPlanoView = ({
                                 {tarefa.dataInicio && (
                                   <div className="flex items-center gap-1">
                                     <Clock size={12} className="text-slate-400" />
-                                    <span>InÃ­cio: {dStart ? format(dStart, 'dd/MM/yyyy') : '-'}</span>
+                                    <span>InÃƒÂ­cio: {dStart ? format(dStart, 'dd/MM/yyyy') : '-'}</span>
                                   </div>
                                 )}
                                 {tarefa.dataFim && (
@@ -7135,7 +7135,7 @@ const GestaoPlanoView = ({
                                 )}
                                 {tarefa.responsavel && (
                                   <span className="text-slate-500">
-                                    ResponsÃ¡vel: <strong className="text-slate-600">{tarefa.responsavel}</strong>
+                                    ResponsÃƒÂ¡vel: <strong className="text-slate-600">{tarefa.responsavel}</strong>
                                   </span>
                                 )}
                               </div>
@@ -7150,7 +7150,7 @@ const GestaoPlanoView = ({
                                 >
                                   <option value="Pendente">Pendente</option>
                                   <option value="Em Andamento">Em Andamento</option>
-                                  <option value="ConcluÃ­do">ConcluÃ­do</option>
+                                  <option value="ConcluÃƒÂ­do">ConcluÃƒÂ­do</option>
                                 </select>
 
                                 <select
@@ -7159,11 +7159,11 @@ const GestaoPlanoView = ({
                                   className={cn(
                                     "text-[9px] font-black px-2 py-1 rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20",
                                     tarefa.prioridade === 'Alta' ? "text-rose-600" :
-                                    tarefa.prioridade === 'MÃ©dia' ? "text-amber-600" : "text-slate-600"
+                                    tarefa.prioridade === 'MÃƒÂ©dia' ? "text-amber-600" : "text-slate-600"
                                   )}
                                 >
                                   <option value="Baixa">Baixa</option>
-                                  <option value="MÃ©dia">MÃ©dia</option>
+                                  <option value="MÃƒÂ©dia">MÃƒÂ©dia</option>
                                   <option value="Alta">Alta</option>
                                 </select>
                               </div>
@@ -7231,27 +7231,27 @@ const LandingPage = ({ setView }: { setView: (v: any) => void }) => {
             transition={{ duration: 0.8 }}
           >
             <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/20 backdrop-blur-md rounded-full text-xs font-black text-white mb-6 tracking-widest uppercase border border-white/25">
-              by ItÃ mar Gomes
+              by ItÃƒÂ mar Gomes
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-              Transforme sua Consultoria <br /> com InteligÃªncia Artificial
+              Transforme sua Consultoria <br /> com InteligÃƒÂªncia Artificial
             </h1>
             <p className="text-xl text-emerald-100 mb-10 max-w-2xl mx-auto">
-              A plataforma definitiva para diagnÃ³sticos precisos, cronogramas automÃ¡ticos e gestÃ£o de planos de aÃ§Ã£o em tempo real.
+              A plataforma definitiva para diagnÃƒÂ³sticos precisos, cronogramas automÃƒÂ¡ticos e gestÃƒÂ£o de planos de aÃƒÂ§ÃƒÂ£o em tempo real.
             </p>
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
               <Button 
                 onClick={() => setView('home')}
                 className="bg-white text-emerald-600 hover:bg-emerald-50 px-8 py-4 text-lg font-bold h-auto border-none w-full sm:w-auto"
               >
-                Inicie agora o seu teste grÃ¡tis (30 dias)
+                Inicie agora o seu teste grÃƒÂ¡tis (30 dias)
               </Button>
               <Button 
                 onClick={() => setView('home')}
                 variant="outline"
                 className="text-white border-white hover:bg-emerald-700 px-8 py-4 text-lg font-bold h-auto w-full sm:w-auto"
               >
-                Ver DemonstraÃ§Ã£o
+                Ver DemonstraÃƒÂ§ÃƒÂ£o
               </Button>
             </div>
             <div className="mt-8 flex justify-center">
@@ -7259,7 +7259,7 @@ const LandingPage = ({ setView }: { setView: (v: any) => void }) => {
                 variant="ghost"
                 onClick={() => {
                   navigator.clipboard.writeText("https://gestorconsultorpro.netlify.app/");
-                  alert("Link de teste copiado para sua Ã¡rea de transferÃªncia!");
+                  alert("Link de teste copiado para sua ÃƒÂ¡rea de transferÃƒÂªncia!");
                 }}
                 className="text-white/60 hover:text-white hover:bg-white/10 flex items-center gap-2 text-xs uppercase tracking-widest font-black"
               >
@@ -7276,13 +7276,13 @@ const LandingPage = ({ setView }: { setView: (v: any) => void }) => {
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-slate-800">Por que escolher nossa plataforma?</h2>
-            <p className="text-slate-500 mt-4">Tudo o que vocÃª precisa para elevar o nÃ­vel das suas entregas consultivas.</p>
+            <p className="text-slate-500 mt-4">Tudo o que vocÃƒÂª precisa para elevar o nÃƒÂ­vel das suas entregas consultivas.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { icon: Sparkles, title: "InteligÃªncia Artificial", desc: "GeraÃ§Ã£o automÃ¡tica de soluÃ§Ãµes e cronogramas baseados no diagnÃ³stico." },
-              { icon: FileText, title: "RelatÃ³rios Profissionais", desc: "Exporte diagnÃ³sticos e cronogramas completos em PDF com sua marca." },
-              { icon: Layout, title: "GestÃ£o Kanban", desc: "Acompanhe a implementaÃ§Ã£o de cada aÃ§Ã£o em um quadro visual intuitivo." }
+              { icon: Sparkles, title: "InteligÃƒÂªncia Artificial", desc: "GeraÃƒÂ§ÃƒÂ£o automÃƒÂ¡tica de soluÃƒÂ§ÃƒÂµes e cronogramas baseados no diagnÃƒÂ³stico." },
+              { icon: FileText, title: "RelatÃƒÂ³rios Profissionais", desc: "Exporte diagnÃƒÂ³sticos e cronogramas completos em PDF com sua marca." },
+              { icon: Layout, title: "GestÃƒÂ£o Kanban", desc: "Acompanhe a implementaÃƒÂ§ÃƒÂ£o de cada aÃƒÂ§ÃƒÂ£o em um quadro visual intuitivo." }
             ].map((item, i) => (
               <motion.div 
                 key={i}
@@ -7305,21 +7305,21 @@ const LandingPage = ({ setView }: { setView: (v: any) => void }) => {
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold text-slate-800">Escolha o seu plano</h2>
-            <p className="text-slate-500 mt-2">Assinatura flexÃ­vel para o seu negÃ³cio de consultoria.</p>
+            <p className="text-slate-500 mt-2">Assinatura flexÃƒÂ­vel para o seu negÃƒÂ³cio de consultoria.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             {/* Monthly Plan */}
             <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-200 flex flex-col">
               <div className="p-8 md:p-12 flex-1">
                 <div className="bg-slate-50 text-slate-500 text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full w-fit mb-6">Mensal</div>
-                <h3 className="text-2xl font-bold text-slate-800 mb-4">Consultor PrÃ³</h3>
+                <h3 className="text-2xl font-bold text-slate-800 mb-4">Consultor PrÃƒÂ³</h3>
                 <div className="flex items-baseline gap-1 mb-8">
                   <span className="text-slate-400 text-xl font-medium font-sans">R$</span>
                   <span className="text-5xl font-bold text-slate-800">47,90</span>
-                  <span className="text-slate-400 font-medium font-sans">/mÃªs</span>
+                  <span className="text-slate-400 font-medium font-sans">/mÃƒÂªs</span>
                 </div>
                 <ul className="space-y-4">
-                  {['DiagnÃ³sticos Ilimitados', 'IA Generativa Integrada', 'RelatÃ³rios Customizados', 'GestÃ£o Kanban'].map((text, i) => (
+                  {['DiagnÃƒÂ³sticos Ilimitados', 'IA Generativa Integrada', 'RelatÃƒÂ³rios Customizados', 'GestÃƒÂ£o Kanban'].map((text, i) => (
                     <li key={i} className="flex items-center gap-3 text-slate-700 text-sm">
                       <CheckCircle2 size={18} className="text-emerald-500" />
                       <span>{text}</span>
@@ -7348,11 +7348,11 @@ const LandingPage = ({ setView }: { setView: (v: any) => void }) => {
                 <div className="flex items-baseline gap-1 mb-2">
                   <span className="text-slate-400 text-xl font-medium font-sans">R$</span>
                   <span className="text-5xl font-bold text-emerald-600">41,49</span>
-                  <span className="text-slate-400 font-medium font-sans">/mÃªs</span>
+                  <span className="text-slate-400 font-medium font-sans">/mÃƒÂªs</span>
                 </div>
-                <p className="text-slate-400 text-xs mb-8">R$ 497,90 Ã  vista ou no cartÃ£o de crÃ©dito em atÃ© 12x</p>
+                <p className="text-slate-400 text-xs mb-8">R$ 497,90 ÃƒÂ  vista ou no cartÃƒÂ£o de crÃƒÂ©dito em atÃƒÂ© 12x</p>
                 <ul className="space-y-4">
-                  {['Tudo do plano mensal', 'Acesso Antecipado a Novas IAs', 'Suporte PrioritÃ¡rio', 'Mentoria em DiagnÃ³sticos'].map((text, i) => (
+                  {['Tudo do plano mensal', 'Acesso Antecipado a Novas IAs', 'Suporte PrioritÃƒÂ¡rio', 'Mentoria em DiagnÃƒÂ³sticos'].map((text, i) => (
                     <li key={i} className="flex items-center gap-3 text-slate-700 text-sm">
                       <CheckCircle2 size={18} className="text-emerald-500" />
                       <span>{text}</span>
@@ -7403,7 +7403,7 @@ const CheckoutPage = ({ setView, plan = 'annual' }: { setView: (v: any) => void,
           className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors mb-8 group"
         >
           <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
-          <span className="uppercase font-bold tracking-wider text-xs">Voltar para a pÃ¡gina de vendas</span>
+          <span className="uppercase font-bold tracking-wider text-xs">Voltar para a pÃƒÂ¡gina de vendas</span>
         </button>
 
         <Card className="p-8 md:p-12 shadow-sm border border-slate-100 rounded-3xl">
@@ -7411,13 +7411,13 @@ const CheckoutPage = ({ setView, plan = 'annual' }: { setView: (v: any) => void,
 
           <div className="bg-slate-50 border border-slate-100 p-5 rounded-2xl flex justify-between items-center mb-6">
             <div>
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">VocÃª assinarÃ¡</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-0.5">VocÃƒÂª assinarÃƒÂ¡</p>
               <p className="font-sans font-bold text-slate-800 text-sm">
-                {plan === 'annual' ? 'Master Consultant (Anual)' : 'Consultor PrÃ³ (Mensal)'}
+                {plan === 'annual' ? 'Master Consultant (Anual)' : 'Consultor PrÃƒÂ³ (Mensal)'}
               </p>
             </div>
             <p className="font-sans font-extrabold text-slate-800 text-sm">
-              {plan === 'annual' ? 'R$ 497,90/ano' : 'R$ 47,90/mÃªs'}
+              {plan === 'annual' ? 'R$ 497,90/ano' : 'R$ 47,90/mÃƒÂªs'}
             </p>
           </div>
 
@@ -7425,13 +7425,13 @@ const CheckoutPage = ({ setView, plan = 'annual' }: { setView: (v: any) => void,
             <div className="bg-sky-50 border border-sky-100 p-4 rounded-xl mb-6 text-sm text-sky-900 flex items-start gap-2.5">
               <Info size={16} className="shrink-0 mt-0.5 text-sky-500" />
               <p>
-                O pagamento serÃ¡ feito em ambiente seguro da <strong>Kiwify</strong>. Use o e-mail <strong className="font-mono">{loggedEmail}</strong> (o mesmo do seu login) na hora de pagar â€” assim que a Kiwify confirmar a compra, seu plano Ã© liberado automaticamente aqui no sistema, sem precisar fazer mais nada.
+                O pagamento serÃƒÂ¡ feito em ambiente seguro da <strong>Kiwify</strong>. Use o e-mail <strong className="font-mono">{loggedEmail}</strong> (o mesmo do seu login) na hora de pagar Ã¢â‚¬â€ assim que a Kiwify confirmar a compra, seu plano ÃƒÂ© liberado automaticamente aqui no sistema, sem precisar fazer mais nada.
               </p>
             </div>
           ) : (
             <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl mb-6 text-sm text-amber-900 flex items-start gap-2.5">
               <AlertTriangle size={16} className="shrink-0 mt-0.5 text-amber-500" />
-              <p>FaÃ§a login antes de continuar, para que o e-mail da compra seja vinculado Ã  sua conta e o plano seja liberado automaticamente.</p>
+              <p>FaÃƒÂ§a login antes de continuar, para que o e-mail da compra seja vinculado ÃƒÂ  sua conta e o plano seja liberado automaticamente.</p>
             </div>
           )}
 
@@ -7444,12 +7444,12 @@ const CheckoutPage = ({ setView, plan = 'annual' }: { setView: (v: any) => void,
           </Button>
 
           <p className="text-center text-slate-400 text-[10px] font-medium mt-4">
-            VocÃª serÃ¡ redirecionado para pay.kiwify.com.br para concluir o pagamento com cartÃ£o, PIX ou boleto.
+            VocÃƒÂª serÃƒÂ¡ redirecionado para pay.kiwify.com.br para concluir o pagamento com cartÃƒÂ£o, PIX ou boleto.
           </p>
         </Card>
 
         <p className="text-center text-slate-400 text-[11px] font-bold uppercase tracking-wider mt-8">
-          Ambiente seguro e criptografado. Seus dados estÃ£o protegidos.
+          Ambiente seguro e criptografado. Seus dados estÃƒÂ£o protegidos.
         </p>
       </div>
     </div>
@@ -7471,10 +7471,10 @@ const LogoSelector = ({
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
       <div>
         <h4 className="text-xs font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
-          <span>ðŸŽ¯</span> Logotipo no RelatÃ³rio
+          <span>Ã°Å¸Å½Â¯</span> Logotipo no RelatÃƒÂ³rio
         </h4>
         <p className="text-[10px] text-slate-400 font-bold leading-relaxed uppercase tracking-wider mt-0.5">
-          Escolha qual marca exibir nos cabeÃ§alhos dos PDFs gerados neste painel
+          Escolha qual marca exibir nos cabeÃƒÂ§alhos dos PDFs gerados neste painel
         </p>
       </div>
       <div className="flex bg-slate-100 p-1 rounded-xl self-start sm:self-auto border border-slate-200/50">
@@ -7490,7 +7490,7 @@ const LogoSelector = ({
               : "text-slate-500 hover:text-slate-800"
           )}
         >
-          SEBRAE {customLogo ? 'âœ…' : 'âš ï¸'}
+          SEBRAE {customLogo ? 'Ã¢Å“â€¦' : 'Ã¢Å¡Â Ã¯Â¸Â'}
         </button>
         <button
           onClick={() => {
@@ -7504,7 +7504,7 @@ const LogoSelector = ({
               : "text-slate-500 hover:text-slate-800"
           )}
         >
-          Consultora {customConsultoraLogo ? 'âœ…' : 'âš ï¸'}
+          Consultora {customConsultoraLogo ? 'Ã¢Å“â€¦' : 'Ã¢Å¡Â Ã¯Â¸Â'}
         </button>
         <button
           onClick={() => {
@@ -7565,7 +7565,7 @@ const SettingsView = ({
   const [testingGemini, setTestingGemini] = React.useState(false);
   const [geminiStatus, setGeminiStatus] = React.useState<{ ok?: boolean; message?: string } | null>(null);
 
-  // Provedor de InteligÃªncia Artificial Ativo (Groq Cloud ou Google Gemini)
+  // Provedor de InteligÃƒÂªncia Artificial Ativo (Groq Cloud ou Google Gemini)
   const [activeProvider, setActiveProviderState] = React.useState<AiProvider>(() => getActiveAiProvider());
   const [groqApiKeyInput, setGroqApiKeyInput] = React.useState(() => getGroqApiKey());
   const [isGroqKeyVisible, setIsGroqKeyVisible] = React.useState(false);
@@ -7586,7 +7586,7 @@ const SettingsView = ({
       return;
     }
     setGroqStatus({ ok: true, message: 'Chave da Groq salva com sucesso no dispositivo!' });
-    alert('Chave Groq salva com sucesso! O modelo Llama 3.3 70B Versatile estÃ¡ pronto para uso.');
+    alert('Chave Groq salva com sucesso! O modelo Llama 3.3 70B Versatile estÃƒÂ¡ pronto para uso.');
   };
 
   const handleTestGroqKey = async () => {
@@ -7601,7 +7601,7 @@ const SettingsView = ({
       const result = await testGroqKey(keyToTest);
       setGroqStatus({ ok: result.ok, message: result.message });
       if (result.ok) {
-        alert('Sucesso! ConexÃ£o realizada com a Groq (Llama 3.3 70B Versatile).');
+        alert('Sucesso! ConexÃƒÂ£o realizada com a Groq (Llama 3.3 70B Versatile).');
       } else {
         alert('Falha ao conectar com a Groq:\n\n' + result.message);
       }
@@ -7624,7 +7624,7 @@ const SettingsView = ({
     }
     localStorage.setItem('custom_gemini_api_key', cleanKey);
     setGeminiStatus({ ok: true, message: 'Chave salva com sucesso no dispositivo!' });
-    alert('Chave salva com sucesso no seu dispositivo! Ela serÃ¡ utilizada para gerar planos e anÃ¡lises.');
+    alert('Chave salva com sucesso no seu dispositivo! Ela serÃƒÂ¡ utilizada para gerar planos e anÃƒÂ¡lises.');
   };
 
   const handleTestGeminiKey = async () => {
@@ -7636,7 +7636,7 @@ const SettingsView = ({
     setTestingGemini(true);
     setGeminiStatus(null);
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${keyToTest}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${keyToTest}`;
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -7648,8 +7648,8 @@ const SettingsView = ({
       if (!res.ok) {
         throw new Error(data.error?.message || `Erro HTTP ${res.status}`);
       }
-      setGeminiStatus({ ok: true, message: 'ConexÃ£o ativa! O modelo gemini-2.5-flash respondeu com sucesso.' });
-      alert('Sucesso! A chave de API do Gemini estÃ¡ conectada e operacional com o modelo gemini-2.5-flash.');
+      setGeminiStatus({ ok: true, message: 'ConexÃƒÂ£o ativa! O modelo gemini-1.5-flash respondeu com sucesso.' });
+      alert('Sucesso! A chave de API do Gemini estÃƒÂ¡ conectada e operacional com o modelo gemini-1.5-flash.');
     } catch (e: any) {
       const err = e?.message || String(e);
       setGeminiStatus({ ok: false, message: 'Falha: ' + err });
@@ -7665,11 +7665,11 @@ const SettingsView = ({
       const res = await checkCloudConnection();
       setCloudStatus({ checking: false, ok: res.ok, message: res.message, details: res.details });
     } catch (e: any) {
-      setCloudStatus({ checking: false, ok: false, message: 'Erro ao testar conexÃ£o', details: e?.message });
+      setCloudStatus({ checking: false, ok: false, message: 'Erro ao testar conexÃƒÂ£o', details: e?.message });
     }
   }, []);
 
-  // Verifica automaticamente a integridade da comunicaÃ§Ã£o ao abrir as configuraÃ§Ãµes
+  // Verifica automaticamente a integridade da comunicaÃƒÂ§ÃƒÂ£o ao abrir as configuraÃƒÂ§ÃƒÂµes
   React.useEffect(() => {
     handleTestConnection();
   }, [handleTestConnection]);
@@ -7679,7 +7679,7 @@ const SettingsView = ({
     if (nextVal && 'Notification' in window) {
       const perm = await Notification.requestPermission();
       if (perm !== 'granted') {
-        alert("Por favor, habilite as notificaÃ§Ãµes no seu navegador para receber os lembretes diÃ¡rios.");
+        alert("Por favor, habilite as notificaÃƒÂ§ÃƒÂµes no seu navegador para receber os lembretes diÃƒÂ¡rios.");
         return;
       }
     }
@@ -7689,21 +7689,21 @@ const SettingsView = ({
 
   const saveReminderConfig = () => {
     localStorage.setItem('daily_reminder_time', dailyReminderTime);
-    alert(`HorÃ¡rio de lembrete diÃ¡rio configurado para as ${dailyReminderTime} com sucesso!`);
+    alert(`HorÃƒÂ¡rio de lembrete diÃƒÂ¡rio configurado para as ${dailyReminderTime} com sucesso!`);
   };
 
   const testNotification = () => {
     if ('Notification' in window) {
       if (Notification.permission === 'granted') {
-        new Notification("Teste de Lembrete DiÃ¡rio", {
-          body: "As notificaÃ§Ãµes de lembrete diÃ¡rio estÃ£o configuradas e prontas!",
+        new Notification("Teste de Lembrete DiÃƒÂ¡rio", {
+          body: "As notificaÃƒÂ§ÃƒÂµes de lembrete diÃƒÂ¡rio estÃƒÂ£o configuradas e prontas!",
           icon: "/favicon.ico"
         });
       } else {
-        alert("PermissÃ£o de notificaÃ§Ã£o nÃ£o concedida no navegador. Favor habilitÃ¡-la no navegador.");
+        alert("PermissÃƒÂ£o de notificaÃƒÂ§ÃƒÂ£o nÃƒÂ£o concedida no navegador. Favor habilitÃƒÂ¡-la no navegador.");
       }
     } else {
-      alert("Seu navegador nÃ£o oferece suporte para notificaÃ§Ãµes push.");
+      alert("Seu navegador nÃƒÂ£o oferece suporte para notificaÃƒÂ§ÃƒÂµes push.");
     }
   };
 
@@ -7747,17 +7747,17 @@ const SettingsView = ({
       className="space-y-8"
     >
       <div>
-        <h2 className="text-2xl font-bold text-slate-800">ConfiguraÃ§Ãµes</h2>
-        <p className="text-slate-500 text-sm">Personalize sua experiÃªncia na plataforma</p>
+        <h2 className="text-2xl font-bold text-slate-800">ConfiguraÃƒÂ§ÃƒÂµes</h2>
+        <p className="text-slate-500 text-sm">Personalize sua experiÃƒÂªncia na plataforma</p>
       </div>
 
-      {/* Bloco de InteligÃªncia Artificial (Groq Cloud & Google Gemini) */}
+      {/* Bloco de InteligÃƒÂªncia Artificial (Groq Cloud & Google Gemini) */}
       <div className="max-w-5xl">
         <Card className="p-6 border-2 border-indigo-100 bg-gradient-to-br from-indigo-50/40 via-white to-sky-50/30">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <h3 className="text-base font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
               <Sparkles className="text-indigo-600" size={20} />
-              Motor de InteligÃªncia Artificial
+              Motor de InteligÃƒÂªncia Artificial
             </h3>
             <div className="flex items-center gap-2 flex-wrap">
               <span className={`text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${
@@ -7766,17 +7766,17 @@ const SettingsView = ({
                   : (geminiApiKeyInput.trim() ? 'bg-emerald-100 text-emerald-800' : isSystemKeyActive ? 'bg-sky-100 text-sky-800' : 'bg-amber-100 text-amber-800')
               }`}>
                 {activeProvider === 'groq'
-                  ? (groqApiKeyInput.trim() ? 'âœ“ Groq (Llama 3.3) Ativo' : 'âš  Groq NÃ£o Configurado')
-                  : (geminiApiKeyInput.trim() ? 'âœ“ Gemini Configurado' : isSystemKeyActive ? 'âœ“ Gemini Sistema Ativo' : 'âš  Gemini NÃ£o Configurado')}
+                  ? (groqApiKeyInput.trim() ? 'Ã¢Å“â€œ Groq (Llama 3.3) Ativo' : 'Ã¢Å¡Â  Groq NÃƒÂ£o Configurado')
+                  : (geminiApiKeyInput.trim() ? 'Ã¢Å“â€œ Gemini Configurado' : isSystemKeyActive ? 'Ã¢Å“â€œ Gemini Sistema Ativo' : 'Ã¢Å¡Â  Gemini NÃƒÂ£o Configurado')}
               </span>
             </div>
           </div>
 
           <p className="text-xs text-slate-600 mb-4 leading-relaxed">
-            A InteligÃªncia Artificial Ã© utilizada para sugerir planos de aÃ§Ã£o, diagnÃ³sticos empresariais, anÃ¡lises comportamentais DISC e recomendaÃ§Ãµes estratÃ©gicas. Escolha o provedor de sua preferÃªncia:
+            A InteligÃƒÂªncia Artificial ÃƒÂ© utilizada para sugerir planos de aÃƒÂ§ÃƒÂ£o, diagnÃƒÂ³sticos empresariais, anÃƒÂ¡lises comportamentais DISC e recomendaÃƒÂ§ÃƒÂµes estratÃƒÂ©gicas. Escolha o provedor de sua preferÃƒÂªncia:
           </p>
 
-          {/* Abas de SeleÃ§Ã£o de Provedor */}
+          {/* Abas de SeleÃƒÂ§ÃƒÂ£o de Provedor */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
             <button
               type="button"
@@ -7797,7 +7797,7 @@ const SettingsView = ({
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 leading-snug">
-                100% gratuito, sem pedir cartÃ£o. InferÃªncia ultra-rÃ¡pida (&lt;1s) com modelo de topo da Meta.
+                100% gratuito, sem pedir cartÃƒÂ£o. InferÃƒÂªncia ultra-rÃƒÂ¡pida (&lt;1s) com modelo de topo da Meta.
               </p>
             </button>
 
@@ -7863,7 +7863,7 @@ const SettingsView = ({
                     className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shrink-0 flex items-center gap-1.5 disabled:opacity-50"
                   >
                     <RefreshCw size={14} className={testingGroq ? "animate-spin" : ""} />
-                    {testingGroq ? "Testando..." : "Testar ConexÃ£o"}
+                    {testingGroq ? "Testando..." : "Testar ConexÃƒÂ£o"}
                   </Button>
                 </div>
               </div>
@@ -7882,7 +7882,7 @@ const SettingsView = ({
               <div className="p-3.5 bg-indigo-50/70 rounded-xl border border-indigo-100/80 text-[11px] text-slate-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <Zap size={16} className="text-indigo-600 shrink-0" />
-                  <span>NÃ£o tem uma chave da Groq? Ela Ã© 100% gratuita e gerada em 30 segundos:</span>
+                  <span>NÃƒÂ£o tem uma chave da Groq? Ela ÃƒÂ© 100% gratuita e gerada em 30 segundos:</span>
                 </div>
                 <a
                   href="https://console.groq.com/keys"
@@ -7890,7 +7890,7 @@ const SettingsView = ({
                   rel="noreferrer"
                   className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-[11px] shadow-sm flex items-center gap-1.5 transition-all shrink-0 cursor-pointer"
                 >
-                  <span>Gerar Chave GrÃ¡tis na Groq</span>
+                  <span>Gerar Chave GrÃƒÂ¡tis na Groq</span>
                   <ExternalLink size={12} />
                 </a>
               </div>
@@ -7932,7 +7932,7 @@ const SettingsView = ({
                     className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shrink-0 flex items-center gap-1.5 disabled:opacity-50"
                   >
                     <RefreshCw size={14} className={testingGemini ? "animate-spin" : ""} />
-                    {testingGemini ? "Testando..." : "Testar ConexÃ£o"}
+                    {testingGemini ? "Testando..." : "Testar ConexÃƒÂ£o"}
                   </Button>
                 </div>
               </div>
@@ -7982,7 +7982,7 @@ const SettingsView = ({
 
           <div className="mt-4 pt-3 border-t border-slate-200/60 text-[11px] text-slate-500 flex items-center gap-1.5">
             <Info size={13} className="text-indigo-500 shrink-0" />
-            <span>Sistema resiliente: se o provedor ativo encontrar instabilidade, o sistema tentarÃ¡ o outro automaticamente caso configurado.</span>
+            <span>Sistema resiliente: se o provedor ativo encontrar instabilidade, o sistema tentarÃƒÂ¡ o outro automaticamente caso configurado.</span>
           </div>
         </Card>
       </div>
@@ -7996,7 +7996,7 @@ const SettingsView = ({
           
           <div className="space-y-4">
             <p className="text-xs text-slate-500 leading-relaxed font-semibold">
-              Logotipo do SEBRAE exibido no cabeÃ§alho ou Ã¡rea reservada dos seus relatÃ³rios de diagnÃ³stico e planos de aÃ§Ã£o.
+              Logotipo do SEBRAE exibido no cabeÃƒÂ§alho ou ÃƒÂ¡rea reservada dos seus relatÃƒÂ³rios de diagnÃƒÂ³stico e planos de aÃƒÂ§ÃƒÂ£o.
             </p>
 
             <div className="space-y-4">
@@ -8018,15 +8018,15 @@ const SettingsView = ({
                     <Upload className="text-slate-400 group-hover:text-emerald-600" size={20} />
                   </div>
                   <span className="text-xs font-bold text-slate-500 group-hover:text-emerald-700">Clique para selecionar o logo</span>
-                  <span className="text-[10px] text-slate-400 mt-1">PNG ou JPG atÃ© 1MB</span>
+                  <span className="text-[10px] text-slate-400 mt-1">PNG ou JPG atÃƒÂ© 1MB</span>
                   <input type="file" className="hidden" accept="image/*" onChange={(e) => handleLogoUpload(e, true)} />
                 </label>
               )}
               
               <div className="text-[10px] text-slate-400 space-y-1 bg-slate-50/30 p-3 rounded-xl border border-slate-100">
                 <p className="font-bold text-slate-500 uppercase tracking-wider mb-1">Dicas:</p>
-                <p>â€¢ Use fundo transparente (PNG) ou fundos claros.</p>
-                <p>â€¢ Formato horizontal/paisagem ajusta melhor na folha.</p>
+                <p>Ã¢â‚¬Â¢ Use fundo transparente (PNG) ou fundos claros.</p>
+                <p>Ã¢â‚¬Â¢ Formato horizontal/paisagem ajusta melhor na folha.</p>
               </div>
             </div>
           </div>
@@ -8040,7 +8040,7 @@ const SettingsView = ({
           
           <div className="space-y-4">
             <p className="text-xs text-slate-500 leading-relaxed font-semibold">
-              Logotipo da sua empresa de consultoria credenciada que serÃ¡ posicionado ao lado do SEBRAE de forma profissional.
+              Logotipo da sua empresa de consultoria credenciada que serÃƒÂ¡ posicionado ao lado do SEBRAE de forma profissional.
             </p>
 
             <div className="space-y-4">
@@ -8062,15 +8062,15 @@ const SettingsView = ({
                     <Upload className="text-slate-400 group-hover:text-sky-600" size={20} />
                   </div>
                   <span className="text-xs font-bold text-slate-500 group-hover:text-sky-700">Clique para selecionar o logo</span>
-                  <span className="text-[10px] text-slate-400 mt-1">PNG ou JPG atÃ© 1MB</span>
+                  <span className="text-[10px] text-slate-400 mt-1">PNG ou JPG atÃƒÂ© 1MB</span>
                   <input type="file" className="hidden" accept="image/*" onChange={(e) => handleLogoUpload(e, false)} />
                 </label>
               )}
               
               <div className="text-[10px] text-slate-400 space-y-1 bg-slate-50/30 p-3 rounded-xl border border-slate-100">
                 <p className="font-bold text-slate-500 uppercase tracking-wider mb-1">Dicas:</p>
-                <p>â€¢ Use fundo transparente (PNG) para um acabamento perfeito.</p>
-                <p>â€¢ Formatos horizontais produzem um excelente alinhamento.</p>
+                <p>Ã¢â‚¬Â¢ Use fundo transparente (PNG) para um acabamento perfeito.</p>
+                <p>Ã¢â‚¬Â¢ Formatos horizontais produzem um excelente alinhamento.</p>
               </div>
             </div>
           </div>
@@ -8081,19 +8081,19 @@ const SettingsView = ({
         <Card className="p-6">
           <h3 className="text-base font-black text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2">
             <Bell className="text-emerald-600" size={18} />
-            HorÃ¡rio de Lembrete DiÃ¡rio
+            HorÃƒÂ¡rio de Lembrete DiÃƒÂ¡rio
           </h3>
           
           <div className="space-y-4">
             <p className="text-xs text-slate-500 leading-relaxed font-semibold">
-              Receba notificaÃ§Ãµes push diÃ¡rias no horÃ¡rio configurado para lembrar vocÃª e seus consultores sobre as tarefas e pendÃªncias dos clientes.
+              Receba notificaÃƒÂ§ÃƒÂµes push diÃƒÂ¡rias no horÃƒÂ¡rio configurado para lembrar vocÃƒÂª e seus consultores sobre as tarefas e pendÃƒÂªncias dos clientes.
             </p>
 
             <div className="space-y-3">
               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700">Ativar Lembrete DiÃ¡rio</label>
-                  <p className="text-[11px] text-slate-400">NotificaÃ§Ãµes de tarefas pendentes.</p>
+                  <label className="block text-xs font-bold text-slate-700">Ativar Lembrete DiÃƒÂ¡rio</label>
+                  <p className="text-[11px] text-slate-400">NotificaÃƒÂ§ÃƒÂµes de tarefas pendentes.</p>
                 </div>
                 <button
                   onClick={toggleReminder}
@@ -8110,7 +8110,7 @@ const SettingsView = ({
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                       <Clock size={14} className="text-slate-400" />
-                      Definir HorÃ¡rio de Envio
+                      Definir HorÃƒÂ¡rio de Envio
                     </label>
                     <div className="flex gap-2">
                       <input 
@@ -8129,7 +8129,7 @@ const SettingsView = ({
                   </div>
 
                   <div className="pt-2 border-t border-slate-200/55 flex justify-between items-center">
-                    <span className="text-[11px] text-slate-500 font-semibold">Testar notificaÃ§Ãµes push?</span>
+                    <span className="text-[11px] text-slate-500 font-semibold">Testar notificaÃƒÂ§ÃƒÂµes push?</span>
                     <Button 
                       variant="outline"
                       size="sm"
@@ -8152,7 +8152,7 @@ const SettingsView = ({
           Modo de Armazenamento e Salvamento (Nuvem vs. Local)
         </h3>
         <p className="text-xs text-slate-500 mb-6">
-          Escolha onde deseja preferencialmente salvar seus dados (empresas, diagnÃ³sticos e planos de aÃ§Ã£o) e realize backups locais de seguranÃ§a.
+          Escolha onde deseja preferencialmente salvar seus dados (empresas, diagnÃƒÂ³sticos e planos de aÃƒÂ§ÃƒÂ£o) e realize backups locais de seguranÃƒÂ§a.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -8172,7 +8172,7 @@ const SettingsView = ({
                 </div>
                 <div>
                   <h4 className="font-bold text-sm text-slate-800">Salvar na Nuvem (Firestore)</h4>
-                  <p className="text-xs text-slate-500">SincronizaÃ§Ã£o Online AutomÃ¡tica</p>
+                  <p className="text-xs text-slate-500">SincronizaÃƒÂ§ÃƒÂ£o Online AutomÃƒÂ¡tica</p>
                 </div>
               </div>
               {storageMode === 'cloud' && (
@@ -8180,7 +8180,7 @@ const SettingsView = ({
               )}
             </div>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Seus dados sÃ£o salvos e sincronizados automaticamente no banco de dados online. Recomendado para sincronizaÃ§Ã£o em mÃºltiplos aparelhos.
+              Seus dados sÃƒÂ£o salvos e sincronizados automaticamente no banco de dados online. Recomendado para sincronizaÃƒÂ§ÃƒÂ£o em mÃƒÂºltiplos aparelhos.
             </p>
           </div>
 
@@ -8208,27 +8208,27 @@ const SettingsView = ({
               )}
             </div>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Seus dados sÃ£o salvos diretamente em seu prÃ³prio navegador/computador. Funciona offline e sem limitaÃ§Ãµes de cota da nuvem.
+              Seus dados sÃƒÂ£o salvos diretamente em seu prÃƒÂ³prio navegador/computador. Funciona offline e sem limitaÃƒÂ§ÃƒÂµes de cota da nuvem.
             </p>
           </div>
         </div>
 
-        {/* SincronizaÃ§Ã£o Inteligente com a Nuvem */}
+        {/* SincronizaÃƒÂ§ÃƒÂ£o Inteligente com a Nuvem */}
         <div className="p-5 bg-gradient-to-br from-emerald-50/80 to-teal-50/50 rounded-2xl border border-emerald-200/90 flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1 max-w-xl">
             <div className="flex items-center gap-2">
               <RefreshCw size={16} className={cn("text-emerald-700", isSyncingCloud && "animate-spin")} />
               <p className="text-xs font-black text-emerald-950 uppercase tracking-wide">
-                SincronizaÃ§Ã£o Inteligente com a Nuvem (Ãšltimos Dados Registrados)
+                SincronizaÃƒÂ§ÃƒÂ£o Inteligente com a Nuvem (ÃƒÅ¡ltimos Dados Registrados)
               </p>
             </div>
             <p className="text-[11px] text-emerald-800 leading-relaxed">
-              Mescla e sincroniza os dados salvos localmente com a nuvem (Firestore). O sistema compara as datas de modificaÃ§Ã£o de cada empresa, diagnÃ³stico, resposta e plano, garantindo que o registro mais recente sempre prevaleÃ§a e atualize ambas as pontas.
+              Mescla e sincroniza os dados salvos localmente com a nuvem (Firestore). O sistema compara as datas de modificaÃƒÂ§ÃƒÂ£o de cada empresa, diagnÃƒÂ³stico, resposta e plano, garantindo que o registro mais recente sempre prevaleÃƒÂ§a e atualize ambas as pontas.
             </p>
             {lastSyncSummary && (
               <p className="text-[10px] font-bold text-emerald-900 flex items-center gap-1.5 pt-1">
-                <span>âœ“ Ãšltima sincronizaÃ§Ã£o realizada Ã s {lastSyncSummary.timestamp}</span>
-                <span>â€¢ {lastSyncSummary.totalAnalyzed} registros verificados</span>
+                <span>Ã¢Å“â€œ ÃƒÅ¡ltima sincronizaÃƒÂ§ÃƒÂ£o realizada ÃƒÂ s {lastSyncSummary.timestamp}</span>
+                <span>Ã¢â‚¬Â¢ {lastSyncSummary.totalAnalyzed} registros verificados</span>
               </p>
             )}
           </div>
@@ -8246,8 +8246,8 @@ const SettingsView = ({
 
         <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200/80 flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">
-            <p className="text-xs font-bold text-slate-800">Backup e RestauraÃ§Ã£o de Dados Locais</p>
-            <p className="text-[11px] text-slate-500">Baixe uma cÃ³pia completa de todos os seus diagnÃ³sticos e empresas em formato .JSON ou restaure um backup existente.</p>
+            <p className="text-xs font-bold text-slate-800">Backup e RestauraÃƒÂ§ÃƒÂ£o de Dados Locais</p>
+            <p className="text-[11px] text-slate-500">Baixe uma cÃƒÂ³pia completa de todos os seus diagnÃƒÂ³sticos e empresas em formato .JSON ou restaure um backup existente.</p>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -8281,7 +8281,7 @@ const SettingsView = ({
               Criptografia em Repouso Local (AES-256)
             </h3>
             <p className="text-xs text-slate-500 mt-1">
-              ProteÃ§Ã£o local para evitar que diagnÃ³sticos, empresas e chaves salvas no navegador fiquem em texto simples.
+              ProteÃƒÂ§ÃƒÂ£o local para evitar que diagnÃƒÂ³sticos, empresas e chaves salvas no navegador fiquem em texto simples.
             </p>
           </div>
           <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0">
@@ -8294,13 +8294,13 @@ const SettingsView = ({
           <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1">
             <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">Algoritmo &amp; Chave</p>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Criptografia simÃ©trica AES-256 derivada via SHA-256 a partir do seu ID de UsuÃ¡rio / SessÃ£o no dispositivo.
+              Criptografia simÃƒÂ©trica AES-256 derivada via SHA-256 a partir do seu ID de UsuÃƒÂ¡rio / SessÃƒÂ£o no dispositivo.
             </p>
           </div>
           <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1">
-            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">Identificador de SeguranÃ§a</p>
+            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">Identificador de SeguranÃƒÂ§a</p>
             <p className="text-xs text-slate-600 leading-relaxed">
-              Todos os registros armazenados no <code className="bg-slate-200 px-1 py-0.5 rounded text-[11px] font-mono">localStorage</code> sÃ£o gravados sob o formato cifrado <code className="text-sky-600 font-mono text-[11px]">enc:v1:...</code>.
+              Todos os registros armazenados no <code className="bg-slate-200 px-1 py-0.5 rounded text-[11px] font-mono">localStorage</code> sÃƒÂ£o gravados sob o formato cifrado <code className="text-sky-600 font-mono text-[11px]">enc:v1:...</code>.
             </p>
           </div>
         </div>
@@ -8308,12 +8308,12 @@ const SettingsView = ({
         <div className="p-4 bg-sky-50/60 rounded-xl border border-sky-100 flex flex-wrap items-center justify-between gap-3">
           <div className="space-y-0.5">
             <p className="text-xs font-bold text-sky-950">Verificar e Re-criptografar Dados Locais</p>
-            <p className="text-[11px] text-sky-700">Converte dados legados nÃ£o criptografados no navegador para a nova estrutura AES-256.</p>
+            <p className="text-[11px] text-sky-700">Converte dados legados nÃƒÂ£o criptografados no navegador para a nova estrutura AES-256.</p>
           </div>
           <Button
             onClick={() => {
               const count = encryptedLocalStorage.migrateAllToEncrypted();
-              alert(`Varredura concluÃ­da! ${count} item(ns) legados foram criptografados e salvos com AES-256 no LocalStorage.`);
+              alert(`Varredura concluÃƒÂ­da! ${count} item(ns) legados foram criptografados e salvos com AES-256 no LocalStorage.`);
             }}
             variant="outline"
             size="sm"
@@ -8330,7 +8330,7 @@ const SettingsView = ({
         <div className="space-y-1">
           <p className="text-sm font-bold text-amber-800">Sobre o armazenamento</p>
           <p className="text-xs text-amber-700 leading-relaxed">
-            Por enquanto, esta logo fica armazenada localmente em seu navegador. Se vocÃª mudar de computador ou limpar os dados do navegador, precisarÃ¡ fazer o upload novamente.
+            Por enquanto, esta logo fica armazenada localmente em seu navegador. Se vocÃƒÂª mudar de computador ou limpar os dados do navegador, precisarÃƒÂ¡ fazer o upload novamente.
           </p>
         </div>
       </div>
@@ -8421,14 +8421,14 @@ const LicenseManagementView = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h2 className="text-2xl font-bold text-slate-800">GestÃ£o de LicenÃ§as e Tempo de Teste</h2>
+            <h2 className="text-2xl font-bold text-slate-800">GestÃƒÂ£o de LicenÃƒÂ§as e Tempo de Teste</h2>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200">
               <ShieldCheck size={13} className="text-amber-700" />
               Firebase Auth Vinculado
             </span>
           </div>
           <p className="text-slate-500 text-sm mt-1">
-            Cada consultor autenticado pelo Firebase Ã© registrado automaticamente com controle de licenÃ§a, planos e expiraÃ§Ã£o.
+            Cada consultor autenticado pelo Firebase ÃƒÂ© registrado automaticamente com controle de licenÃƒÂ§a, planos e expiraÃƒÂ§ÃƒÂ£o.
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
@@ -8438,10 +8438,10 @@ const LicenseManagementView = ({
               onClick={handleSyncAuth}
               disabled={isSyncing}
               className="border-slate-200 hover:bg-slate-50 text-slate-700 font-bold flex items-center gap-2 cursor-pointer"
-              title="Sincronizar dados do usuÃ¡rio logado no Firebase Authentication com as licenÃ§as"
+              title="Sincronizar dados do usuÃƒÂ¡rio logado no Firebase Authentication com as licenÃƒÂ§as"
             >
               <RefreshCw size={15} className={isSyncing ? "animate-spin text-emerald-600" : "text-slate-500"} />
-              {isSyncing ? "Sincronizando..." : "Sincronizar AutenticaÃ§Ã£o"}
+              {isSyncing ? "Sincronizando..." : "Sincronizar AutenticaÃƒÂ§ÃƒÂ£o"}
             </Button>
           )}
           {onOpenCreateModal && (
@@ -8459,7 +8459,7 @@ const LicenseManagementView = ({
         <div>
           <h3 className="text-xl font-bold mb-2">Divulgue seu Sistema</h3>
           <p className="text-emerald-100 text-sm">
-            Use o link abaixo para convidar novos consultores para criar conta e usufruir do perÃ­odo de teste gratuito da plataforma.
+            Use o link abaixo para convidar novos consultores para criar conta e usufruir do perÃƒÂ­odo de teste gratuito da plataforma.
           </p>
         </div>
         <div className="flex bg-white/10 p-2 rounded-2xl border border-white/20 w-full md:w-auto items-center gap-4">
@@ -8471,7 +8471,7 @@ const LicenseManagementView = ({
             size="sm"
             onClick={() => {
               navigator.clipboard.writeText("https://gestorconsultorpro.netlify.app/");
-              alert("Link de divulgaÃ§Ã£o copiado!");
+              alert("Link de divulgaÃƒÂ§ÃƒÂ£o copiado!");
             }}
             className="bg-white text-emerald-600 hover:bg-emerald-50 font-bold whitespace-nowrap cursor-pointer"
           >
@@ -8498,7 +8498,7 @@ const LicenseManagementView = ({
             </div>
           </div>
           <div className="text-xs text-slate-500 flex items-center gap-4 flex-wrap">
-            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span> Definitiva (VitalÃ­cia)</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span> Definitiva (VitalÃƒÂ­cia)</span>
             <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Ativo</span>
             <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Expirando (&le; 5 dias)</span>
             <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span> Expirado / Bloqueado</span>
@@ -8509,12 +8509,12 @@ const LicenseManagementView = ({
           <table className="w-full text-left">
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
-                <th className="p-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Empresa / Consultor &amp; AutenticaÃ§Ã£o</th>
+                <th className="p-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Empresa / Consultor &amp; AutenticaÃƒÂ§ÃƒÂ£o</th>
                 <th className="p-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Plano Atual</th>
                 <th className="p-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Tempo Restante &amp; Acessos</th>
-                <th className="p-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Ampliar PerÃ­odo de Teste</th>
+                <th className="p-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Ampliar PerÃƒÂ­odo de Teste</th>
                 <th className="p-5 text-xs font-bold text-slate-500 uppercase tracking-wider">Status</th>
-                <th className="p-5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">AÃ§Ãµes</th>
+                <th className="p-5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">AÃƒÂ§ÃƒÂµes</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -8554,7 +8554,7 @@ const LicenseManagementView = ({
                             )}
                             {isCurrentUser && (
                               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                VocÃª
+                                VocÃƒÂª
                               </span>
                             )}
                           </div>
@@ -8616,7 +8616,7 @@ const LicenseManagementView = ({
                           <option value="Teste">Teste ({emp.diasTeste || 30} dias)</option>
                           <option value="Mensal">Mensal (30 dias)</option>
                           <option value="Anual">Anual (365 dias)</option>
-                          <option value="Definitiva">â­ Definitiva (VitalÃ­cia)</option>
+                          <option value="Definitiva">Ã¢Â­Â Definitiva (VitalÃƒÂ­cia)</option>
                         </select>
                         <p className="text-[10px] text-slate-400">
                           {isDefinitive ? 'Acesso Permanente' : `Total configurado: ${totalLimitDays} dias`}
@@ -8629,14 +8629,14 @@ const LicenseManagementView = ({
                         <div className="space-y-1.5">
                           <span className="px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 bg-sky-100 text-sky-700 border border-sky-200 w-fit">
                             <InfinityIcon size={14} className="shrink-0" />
-                            LicenÃ§a Definitiva
+                            LicenÃƒÂ§a Definitiva
                           </span>
                           <p className="text-[10px] text-sky-600 font-medium">
-                            Acesso vitalÃ­cio sem expiraÃ§Ã£o
+                            Acesso vitalÃƒÂ­cio sem expiraÃƒÂ§ÃƒÂ£o
                           </p>
                           {loginFormatted && (
                             <p className="text-[10px] text-slate-400">
-                              Ãšltimo login: <span className="font-semibold text-slate-600">{loginFormatted}</span>
+                              ÃƒÅ¡ltimo login: <span className="font-semibold text-slate-600">{loginFormatted}</span>
                             </p>
                           )}
                         </div>
@@ -8658,7 +8658,7 @@ const LicenseManagementView = ({
                           </div>
                           {emp.validadeLicenca ? (
                             <p className="text-[11px] text-slate-500">
-                              Validade atÃ©: <span className="font-semibold text-slate-700">{formatItemDate(emp.validadeLicenca)}</span>
+                              Validade atÃƒÂ©: <span className="font-semibold text-slate-700">{formatItemDate(emp.validadeLicenca)}</span>
                             </p>
                           ) : cadastroFormatted ? (
                             <p className="text-[10px] text-slate-400">
@@ -8667,7 +8667,7 @@ const LicenseManagementView = ({
                           ) : null}
                           {loginFormatted && (
                             <p className="text-[10px] text-slate-400">
-                              Ãšltimo login: <span className="font-semibold text-slate-600">{loginFormatted}</span>
+                              ÃƒÅ¡ltimo login: <span className="font-semibold text-slate-600">{loginFormatted}</span>
                             </p>
                           )}
                         </div>
@@ -8679,7 +8679,7 @@ const LicenseManagementView = ({
                         <div className="py-1">
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-100">
                             <Sparkles size={13} />
-                            LicenÃ§a VitalÃ­cia Ativa
+                            LicenÃƒÂ§a VitalÃƒÂ­cia Ativa
                           </span>
                         </div>
                       ) : (
@@ -8689,7 +8689,7 @@ const LicenseManagementView = ({
                               type="button"
                               onClick={() => handleAddDays(emp, 15)}
                               className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 rounded-lg text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
-                              title="Adicionar 15 dias de teste a este usuÃ¡rio"
+                              title="Adicionar 15 dias de teste a este usuÃƒÂ¡rio"
                             >
                               +15 dias
                             </button>
@@ -8697,7 +8697,7 @@ const LicenseManagementView = ({
                               type="button"
                               onClick={() => handleAddDays(emp, 30)}
                               className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 rounded-lg text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
-                              title="Adicionar 30 dias de teste a este usuÃ¡rio"
+                              title="Adicionar 30 dias de teste a este usuÃƒÂ¡rio"
                             >
                               +30 dias
                             </button>
@@ -8705,7 +8705,7 @@ const LicenseManagementView = ({
                               type="button"
                               onClick={() => handleAddDays(emp, 60)}
                               className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 rounded-lg text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer"
-                              title="Adicionar 60 dias de teste a este usuÃ¡rio"
+                              title="Adicionar 60 dias de teste a este usuÃƒÂ¡rio"
                             >
                               +60 dias
                             </button>
@@ -8745,7 +8745,7 @@ const LicenseManagementView = ({
                                 }}
                                 className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-bold cursor-pointer"
                               >
-                                âœ•
+                                Ã¢Å“â€¢
                               </button>
                             </div>
                           ) : (
@@ -8825,7 +8825,7 @@ const LicenseManagementView = ({
                     </div>
                     <h4 className="text-base font-bold text-slate-700 mb-1">Nenhum consultor ou credenciada cadastrada</h4>
                     <p className="text-slate-400 text-sm max-w-md mx-auto mb-6">
-                      Como o banco de dados do Firebase foi atualizado, qualquer usuÃ¡rio autenticado aparecerÃ¡ aqui automaticamente. VocÃª tambÃ©m pode sincronizar sua conta de administrador agora.
+                      Como o banco de dados do Firebase foi atualizado, qualquer usuÃƒÂ¡rio autenticado aparecerÃƒÂ¡ aqui automaticamente. VocÃƒÂª tambÃƒÂ©m pode sincronizar sua conta de administrador agora.
                     </p>
                     <div className="flex items-center justify-center gap-3 flex-wrap">
                       {onInitializeAdmin && (
@@ -8838,7 +8838,7 @@ const LicenseManagementView = ({
                           disabled={isInitializing}
                           className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center gap-2 shadow-sm cursor-pointer"
                         >
-                          <Sparkles size={16} /> {isInitializing ? "Inicializando..." : "âš¡ Sincronizar Conta de Administrador"}
+                          <Sparkles size={16} /> {isInitializing ? "Inicializando..." : "Ã¢Å¡Â¡ Sincronizar Conta de Administrador"}
                         </Button>
                       )}
                       {onOpenCreateModal && (
@@ -8872,7 +8872,7 @@ const LicensingDataView = ({ setView }: { setView?: (v: any) => void }) => {
     >
       <div>
         <h2 className="text-2xl font-bold text-slate-800">Dados do Licenciamento</h2>
-        <p className="text-slate-500 text-sm">InformaÃ§Ãµes de preÃ§os, planos e faturamento da plataforma</p>
+        <p className="text-slate-500 text-sm">InformaÃƒÂ§ÃƒÂµes de preÃƒÂ§os, planos e faturamento da plataforma</p>
       </div>
 
       <div className="bg-amber-50 border border-amber-200 rounded-3xl p-6 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -8881,8 +8881,8 @@ const LicensingDataView = ({ setView }: { setView?: (v: any) => void }) => {
             <Trophy size={24} />
           </div>
           <div>
-            <h3 className="font-bold text-amber-950 text-base">Faturamento & AtivaÃ§Ã£o AutomÃ¡tica (Kiwify)</h3>
-            <p className="text-amber-800 text-sm">Os planos Mensal e Anual sÃ£o vendidos pela Kiwify e liberados <strong>automaticamente</strong> via webhook assim que o pagamento Ã© aprovado. A ativaÃ§Ã£o manual abaixo continua disponÃ­vel como alternativa/exceÃ§Ã£o.</p>
+            <h3 className="font-bold text-amber-950 text-base">Faturamento & AtivaÃƒÂ§ÃƒÂ£o AutomÃƒÂ¡tica (Kiwify)</h3>
+            <p className="text-amber-800 text-sm">Os planos Mensal e Anual sÃƒÂ£o vendidos pela Kiwify e liberados <strong>automaticamente</strong> via webhook assim que o pagamento ÃƒÂ© aprovado. A ativaÃƒÂ§ÃƒÂ£o manual abaixo continua disponÃƒÂ­vel como alternativa/exceÃƒÂ§ÃƒÂ£o.</p>
           </div>
         </div>
       </div>
@@ -8901,17 +8901,17 @@ const LicensingDataView = ({ setView }: { setView?: (v: any) => void }) => {
               <div className="bg-slate-100 text-slate-700 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full w-fit mb-4">
                 Mensal
               </div>
-              <h3 className="text-2xl font-bold text-slate-800 mb-2">Consultor PrÃ³</h3>
+              <h3 className="text-2xl font-bold text-slate-800 mb-2">Consultor PrÃƒÂ³</h3>
               <p className="text-slate-500 text-sm mb-6 font-sans">Assinatura mensal recorrente com total flexibilidade.</p>
               
               <div className="flex items-baseline gap-1 mb-8">
                 <span className="text-slate-400 text-lg font-medium">R$</span>
                 <span className="text-4xl font-bold text-slate-800">47,90</span>
-                <span className="text-slate-400 font-medium">/mÃªs</span>
+                <span className="text-slate-400 font-medium">/mÃƒÂªs</span>
               </div>
 
               <ul className="space-y-3.5 mb-8">
-                {['DiagnÃ³sticos Ilimitados', 'IA Generativa Integrada', 'RelatÃ³rios Customizados', 'GestÃ£o Kanban'].map((text, i) => (
+                {['DiagnÃƒÂ³sticos Ilimitados', 'IA Generativa Integrada', 'RelatÃƒÂ³rios Customizados', 'GestÃƒÂ£o Kanban'].map((text, i) => (
                   <li key={i} className="flex items-center gap-2.5 text-slate-700 text-sm">
                     <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
                     <span>{text}</span>
@@ -8950,12 +8950,12 @@ const LicensingDataView = ({ setView }: { setView?: (v: any) => void }) => {
               <div className="flex items-baseline gap-1 mb-1">
                 <span className="text-slate-400 text-lg font-bold w-fit">R$</span>
                 <span className="text-4xl font-bold text-emerald-600">41,49</span>
-                <span className="text-slate-400 font-medium">/mÃªs</span>
+                <span className="text-slate-400 font-medium">/mÃƒÂªs</span>
               </div>
-              <p className="text-slate-400 text-xs mb-8">R$ 497,90 Ã  vista ou no cartÃ£o de crÃ©dito em atÃ© 12x</p>
+              <p className="text-slate-400 text-xs mb-8">R$ 497,90 ÃƒÂ  vista ou no cartÃƒÂ£o de crÃƒÂ©dito em atÃƒÂ© 12x</p>
 
               <ul className="space-y-3.5 mb-8">
-                {['Tudo do plano mensal', 'Acesso Antecipado a Novas IAs', 'Suporte PrioritÃ¡rio', 'Mentoria em DiagnÃ³sticos'].map((text, i) => (
+                {['Tudo do plano mensal', 'Acesso Antecipado a Novas IAs', 'Suporte PrioritÃƒÂ¡rio', 'Mentoria em DiagnÃƒÂ³sticos'].map((text, i) => (
                   <li key={i} className="flex items-center gap-2.5 text-slate-700 text-sm">
                     <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0" />
                     <span>{text}</span>
@@ -8995,9 +8995,9 @@ const HomeView = ({
   empresasCredenciadas?: EmpresaCredenciada[],
   user?: any
 }) => {
-  const pendingTasks = tarefas.filter(t => t.status !== 'ConcluÃ­do');
+  const pendingTasks = tarefas.filter(t => t.status !== 'ConcluÃƒÂ­do');
   
-  // Identifica a credenciada ativa do usuÃ¡rio logado ou a primeira cadastrada
+  // Identifica a credenciada ativa do usuÃƒÂ¡rio logado ou a primeira cadastrada
   const currentCredenciada = (user ? empresasCredenciadas.find(c => c.ownerId === user.uid || (user.email && c.email?.toLowerCase() === user.email.toLowerCase())) : null) 
     || empresasCredenciadas[0] 
     || null;
@@ -9035,7 +9035,7 @@ const HomeView = ({
                     CNPJ: {formatCNPJ(currentCredenciada.cnpj)}
                   </span>
                 ) : (
-                  <span className="text-slate-400 italic text-[11px]">CNPJ nÃ£o informado</span>
+                  <span className="text-slate-400 italic text-[11px]">CNPJ nÃƒÂ£o informado</span>
                 )}
                 {currentCredenciada.consultor && (
                   <span className="text-slate-600">
@@ -9043,7 +9043,7 @@ const HomeView = ({
                   </span>
                 )}
                 {currentCredenciada.cpfConsultor && (
-                  <span className="font-mono bg-slate-50 border border-slate-200/60 px-2 py-0.5 rounded text-slate-700 font-semibold" title="CPF do Consultor ResponsÃ¡vel">
+                  <span className="font-mono bg-slate-50 border border-slate-200/60 px-2 py-0.5 rounded text-slate-700 font-semibold" title="CPF do Consultor ResponsÃƒÂ¡vel">
                     CPF: {formatCPF(currentCredenciada.cpfConsultor)}
                   </span>
                 )}
@@ -9081,15 +9081,15 @@ const HomeView = ({
             </div>
           )}
           <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-white/15 backdrop-blur-md rounded-full text-xs font-bold text-sky-100 mb-4 tracking-widest uppercase border border-white/20 ml-2">
-            by ItÃ mar Gomes
+            by ItÃƒÂ mar Gomes
           </div>
           <h2 className="text-5xl font-black tracking-tighter mb-6 leading-none">Melhore os resultados dos seus clientes.</h2>
           <p className="text-sky-100 text-lg max-w-2xl font-medium leading-relaxed opacity-90">
-            Gerencie clientes, realize diagnÃ³sticos precisos e acompanhe a execuÃ§Ã£o dos planos de aÃ§Ã£o em tempo real.
+            Gerencie clientes, realize diagnÃƒÂ³sticos precisos e acompanhe a execuÃƒÂ§ÃƒÂ£o dos planos de aÃƒÂ§ÃƒÂ£o em tempo real.
           </p>
           <div className="mt-8 flex gap-4">
             <Button onClick={() => setView('companies')} variant="secondary" className="bg-white text-sky-600 hover:bg-sky-50 border-none px-8 py-6 text-sm font-bold uppercase tracking-widest rounded-3xl shadow-lg">
-              ComeÃ§ar Agora
+              ComeÃƒÂ§ar Agora
             </Button>
           </div>
         </div>
@@ -9101,7 +9101,7 @@ const HomeView = ({
             <Building2 size={32} />
           </div>
           <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight uppercase">Clientes</h3>
-          <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">GestÃ£o completa da base de clientes e histÃ³ricos de atendimento.</p>
+          <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">GestÃƒÂ£o completa da base de clientes e histÃƒÂ³ricos de atendimento.</p>
           <div className="pt-6 border-t border-slate-50 flex justify-between items-center">
             <span className="text-[10px] font-black text-sky-600 bg-sky-50 px-3 py-1.5 rounded-full uppercase tracking-widest">{empresas.length} cadastrados</span>
             <ChevronRight size={20} className="text-slate-300 group-hover:text-sky-600 transform group-hover:translate-x-1 transition-all" />
@@ -9112,8 +9112,8 @@ const HomeView = ({
           <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 shadow-sm border border-emerald-100/50">
             <Layout size={32} />
           </div>
-          <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight uppercase">Plano de AÃ§Ã£o</h3>
-          <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">Quadro Kanban para monitorar a execuÃ§Ã£o das tarefas e prazos.</p>
+          <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight uppercase">Plano de AÃƒÂ§ÃƒÂ£o</h3>
+          <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">Quadro Kanban para monitorar a execuÃƒÂ§ÃƒÂ£o das tarefas e prazos.</p>
           <div className="pt-6 border-t border-slate-50 flex justify-between items-center">
             <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full uppercase tracking-widest">{tarefas.length} Tarefas Ativas</span>
             <ChevronRight size={20} className="text-slate-300 group-hover:text-emerald-600 transform group-hover:translate-x-1 transition-all" />
@@ -9124,8 +9124,8 @@ const HomeView = ({
           <div className="w-16 h-16 bg-violet-50 text-violet-600 rounded-3xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 shadow-sm border border-violet-100/50">
             <BarChart3 size={32} />
           </div>
-          <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight uppercase">EvoluÃ§Ã£o Macro</h3>
-          <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">Dashboard consolidado com a evoluÃ§Ã£o histÃ³rica de todos os clientes.</p>
+          <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight uppercase">EvoluÃƒÂ§ÃƒÂ£o Macro</h3>
+          <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">Dashboard consolidado com a evoluÃƒÂ§ÃƒÂ£o histÃƒÂ³rica de todos os clientes.</p>
           <div className="pt-6 border-t border-slate-50 flex justify-between items-center">
             <span className="text-[10px] font-black text-violet-600 bg-violet-50 px-3 py-1.5 rounded-full uppercase tracking-widest">Dashboard Macro</span>
             <ChevronRight size={20} className="text-slate-300 group-hover:text-violet-600 transform group-hover:translate-x-1 transition-all" />
@@ -9136,8 +9136,8 @@ const HomeView = ({
            <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-3xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 shadow-sm border border-amber-100/50">
             <HistoryIcon size={32} />
           </div>
-          <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight uppercase">DiagnÃ³sticos</h3>
-          <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">Execute novos diagnÃ³sticos e visualize a evoluÃ§Ã£o da maturidade.</p>
+          <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight uppercase">DiagnÃƒÂ³sticos</h3>
+          <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">Execute novos diagnÃƒÂ³sticos e visualize a evoluÃƒÂ§ÃƒÂ£o da maturidade.</p>
           <div className="pt-6 border-t border-slate-50 flex justify-between items-center">
             <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full uppercase tracking-widest">{diagnosticos.filter(d => !d.status || d.status === 'Finalizado').length} Realizados</span>
             <ChevronRight size={20} className="text-slate-300 group-hover:text-amber-600 transform group-hover:translate-x-1 transition-all" />
@@ -9149,7 +9149,7 @@ const HomeView = ({
             <FileText size={32} />
           </div>
           <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight uppercase">Biblioteca</h3>
-          <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">Biblioteca de conhecimento com base de problemas, premissas de perguntas e soluÃ§Ãµes.</p>
+          <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">Biblioteca de conhecimento com base de problemas, premissas de perguntas e soluÃƒÂ§ÃƒÂµes.</p>
           <div className="pt-6 border-t border-slate-50 flex justify-between items-center">
             <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full uppercase tracking-widest">{problemas.length} Registrados</span>
             <ChevronRight size={20} className="text-slate-300 group-hover:text-blue-600 transform group-hover:translate-x-1 transition-all" />
@@ -9161,9 +9161,9 @@ const HomeView = ({
 };
 
 // --- Main App ---
-// A chave do criador NÃƒO fica mais no cÃ³digo do navegador: ela mora apenas no servidor
-// (variÃ¡vel GEMINI_API_KEY na Netlify Function /api/gemini/*). Quem quiser pode usar a
-// prÃ³pria chave em ConfiguraÃ§Ãµes; ela vai no cabeÃ§alho x-custom-api-key.
+// A chave do criador NÃƒÆ’O fica mais no cÃƒÂ³digo do navegador: ela mora apenas no servidor
+// (variÃƒÂ¡vel GEMINI_API_KEY na Netlify Function /api/gemini/*). Quem quiser pode usar a
+// prÃƒÂ³pria chave em ConfiguraÃƒÂ§ÃƒÂµes; ela vai no cabeÃƒÂ§alho x-custom-api-key.
 import { readCustomGeminiKey, geminiAuthHeaders, apiUrl } from './lib/gemini';
 import { selectLibraryForDeletion } from './lib/librarySelection';
 export { readCustomGeminiKey, geminiAuthHeaders };
@@ -9307,7 +9307,7 @@ export const getAI = () => {
         // 2. Executar via Groq Cloud (Llama 3.3 70B) se for o provedor ativo ou se a chave for detectada
         if (activeProvider === 'groq' || groqKey) {
           try {
-            // Se a chave nÃ£o estava no armazenamento correto do Groq, temporariamente seta ela no contexto da chamada ou usa localStorage
+            // Se a chave nÃƒÂ£o estava no armazenamento correto do Groq, temporariamente seta ela no contexto da chamada ou usa localStorage
             if (groqKey && !getGroqApiKey()) {
               localStorage.setItem('custom_groq_api_key', groqKey);
             }
@@ -9327,7 +9327,7 @@ export const getAI = () => {
         }
 
         // 3. Provedor Google Gemini (Backend Proxy ou Chamada Direta)
-        // SÃ³ a chave prÃ³pria do usuÃ¡rio Ã© usada fora do servidor.
+        // SÃƒÂ³ a chave prÃƒÂ³pria do usuÃƒÂ¡rio ÃƒÂ© usada fora do servidor.
         const activeKey = savedKey;
         
         // 3.1. Try backend proxy first
@@ -9343,7 +9343,7 @@ export const getAI = () => {
           const response = await fetch(apiUrl("/api/gemini/generate"), {
             method: "POST",
             headers: headers,
-            body: JSON.stringify({ model: model || "gemini-2.5-flash", contents, config })
+            body: JSON.stringify({ model: model || "gemini-1.5-flash", contents, config })
           });
 
           if (response.ok) {
@@ -9383,13 +9383,13 @@ export const getAI = () => {
             }
             throw e;
           }
-          console.warn("[Gemini] Proxy indisponÃ­vel ou estÃ¡tico. Tentando chamada direta com a chave configurada.");
+          console.warn("[Gemini] Proxy indisponÃƒÂ­vel ou estÃƒÂ¡tico. Tentando chamada direta com a chave configurada.");
         }
 
         // 3.2. Direct Client Call
         const finalKey = savedKey; // Use the properly routed key
         if (!finalKey || !isValidGeminiApiKey(finalKey)) {
-          // Se nÃ£o hÃ¡ chave vÃ¡lida do Gemini mas hÃ¡ chave da Groq, tenta Groq
+          // Se nÃƒÂ£o hÃƒÂ¡ chave vÃƒÂ¡lida do Gemini mas hÃƒÂ¡ chave da Groq, tenta Groq
           if (groqKey) {
             const groqRes = await callGroqChat({ contents, config, model: 'llama-3.1-70b-versatile' });
             if (groqRes && groqRes.text) {
@@ -9401,13 +9401,12 @@ export const getAI = () => {
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('open-gemini-tutorial-modal'));
           }
-          throw new Error("Chave de InteligÃªncia Artificial nÃ£o configurada.\n\nPor favor, insira sua chave gratuita da Groq (Llama 3.3) ou do Google Gemini no menu ConfiguraÃ§Ãµes.");
+          throw new Error("Chave de InteligÃƒÂªncia Artificial nÃƒÂ£o configurada.\n\nPor favor, insira sua chave gratuita da Groq (Llama 3.3) ou do Google Gemini no menu ConfiguraÃƒÂ§ÃƒÂµes.");
         }
 
-        const GEMINI_PRIMARY = "gemini-2.5-flash";
+        const GEMINI_PRIMARY = "gemini-1.5-flash";
         const GEMINI_CHAIN = [
-          "gemini-2.5-flash",
-          "gemini-2.0-flash",
+          "gemini-1.5-flash",
           "gemini-1.5-flash"
         ];
 
@@ -9454,7 +9453,7 @@ export const getAI = () => {
                 const errData = await response.json().catch(() => ({}));
                 const rawErr = errData.error?.message || `Erro HTTP! Status: ${response.status}`;
                 if (rawErr.toLowerCase().includes("api key not valid") || rawErr.toLowerCase().includes("api_key_invalid")) {
-                  throw new Error("Chave de API do Gemini invÃ¡lida.\n\nA chave oficial do Google AI Studio comeÃ§a com 'AIzaSy...'.\nPor favor, atualize sua chave no menu ConfiguraÃ§Ãµes ou obtenha uma em: https://aistudio.google.com/app/apikey");
+                  throw new Error("Chave de API do Gemini invÃƒÂ¡lida.\n\nA chave oficial do Google AI Studio comeÃƒÂ§a com 'AIzaSy...'.\nPor favor, atualize sua chave no menu ConfiguraÃƒÂ§ÃƒÂµes ou obtenha uma em: https://aistudio.google.com/app/apikey");
                 }
                 throw new Error(rawErr);
               }
@@ -9503,16 +9502,16 @@ export const getAI = () => {
           } catch (mErr: any) {
             console.warn(`[Gemini Client Fallback] Model ${tgtModel} failed:`, mErr?.message || mErr);
             lastErr = mErr;
-            if (mErr?.message?.includes("AIzaSy") || mErr?.message?.includes("invÃ¡lida")) {
+            if (mErr?.message?.includes("AIzaSy") || mErr?.message?.includes("invÃƒÂ¡lida")) {
               break;
             }
           }
         }
 
-        // Se o Gemini falhou mas a chave da Groq estÃ¡ configurada, tenta Groq como Ãºltima contingÃªncia
+        // Se o Gemini falhou mas a chave da Groq estÃƒÂ¡ configurada, tenta Groq como ÃƒÂºltima contingÃƒÂªncia
         if (groqKey) {
           try {
-            console.log("[AI Fallback] Falha no Gemini. Tentando Groq como contingÃªncia...");
+            console.log("[AI Fallback] Falha no Gemini. Tentando Groq como contingÃƒÂªncia...");
             const groqRes = await callGroqChat({ contents, config, model: 'llama-3.1-70b-versatile' });
             if (groqRes && groqRes.text) {
               setCachedAI(cacheKey, groqRes.text).catch(() => {});
@@ -9524,8 +9523,8 @@ export const getAI = () => {
         }
 
         const friendlyMsg = lastErr?.message?.includes("API_KEY")
-          ? "Chave de API do Gemini invÃ¡lida ou nÃ£o configurada."
-          : (lastErr?.message || "NÃ£o foi possÃ­vel conectar aos modelos do Gemini.");
+          ? "Chave de API do Gemini invÃƒÂ¡lida ou nÃƒÂ£o configurada."
+          : (lastErr?.message || "NÃƒÂ£o foi possÃƒÂ­vel conectar aos modelos do Gemini.");
         throw new Error(friendlyMsg);
       }
     }
@@ -9537,35 +9536,35 @@ const generateAIFeedback = async (resposta: string, pergunta: string, problema: 
   const cached = await getCachedAI<string>(cacheKey);
   if (cached) return cached;
 
-  const prompt = `Como um consultor empresarial especializado do SEBRAE, analise o significado da pergunta e da resposta fornecida no contexto do diagnÃ³stico empresarial.
+  const prompt = `Como um consultor empresarial especializado do SEBRAE, analise o significado da pergunta e da resposta fornecida no contexto do diagnÃƒÂ³stico empresarial.
   
   CONTEXTO:
   Problema/Tema: ${problema}
   Premissa/Pergunta: ${pergunta}
   Resposta do Cliente: ${resposta}
   
-  DIRETRIZES DE ANÃLISE SEMÃ‚NTICA DA PERGUNTA E RESPOSTA:
+  DIRETRIZES DE ANÃƒÂLISE SEMÃƒâ€šNTICA DA PERGUNTA E RESPOSTA:
   1. Avalie o sentido da pergunta/premissa:
-     - Se a pergunta investiga a ocorrÃªncia de um problema, falha, prejuÃ­zo, inadimplÃªncia ou rejeiÃ§Ã£o (ex: "O produtor jÃ¡ tentou acessar crÃ©dito rural e foi rejeitado por falta de documentaÃ§Ã£o?", "Possui pendÃªncias?"):
-       * Resposta "Sim": Representa um PROBLEMA / RISCO / GARGALO (prejudicial para a maturidade). Aponte diretamente a aÃ§Ã£o recomendada.
-       * Resposta "NÃ£o": Representa uma SITUAÃ‡ÃƒO POSITIVA / CONFORMIDADE (nÃ£o sofre do problema). ReconheÃ§a objetivamente o ponto forte.
-       * Resposta "Parcial": Representa risco moderado. Aponte diretamente a aÃ§Ã£o recomendada.
-     - Se a pergunta investiga a existÃªncia de um controle, planejamento ou boa prÃ¡tica (ex: "Possui controle financeiro?"):
-       * Resposta "Sim": Representa uma SITUAÃ‡ÃƒO POSITIVA / MATURIDADE. ReconheÃ§a objetivamente o ponto forte.
-       * Resposta "NÃ£o" ou "Parcial": Representa um PONTO DE ATENÃ‡ÃƒO / GARGALO. Aponte diretamente a aÃ§Ã£o recomendada.
+     - Se a pergunta investiga a ocorrÃƒÂªncia de um problema, falha, prejuÃƒÂ­zo, inadimplÃƒÂªncia ou rejeiÃƒÂ§ÃƒÂ£o (ex: "O produtor jÃƒÂ¡ tentou acessar crÃƒÂ©dito rural e foi rejeitado por falta de documentaÃƒÂ§ÃƒÂ£o?", "Possui pendÃƒÂªncias?"):
+       * Resposta "Sim": Representa um PROBLEMA / RISCO / GARGALO (prejudicial para a maturidade). Aponte diretamente a aÃƒÂ§ÃƒÂ£o recomendada.
+       * Resposta "NÃƒÂ£o": Representa uma SITUAÃƒâ€¡ÃƒÆ’O POSITIVA / CONFORMIDADE (nÃƒÂ£o sofre do problema). ReconheÃƒÂ§a objetivamente o ponto forte.
+       * Resposta "Parcial": Representa risco moderado. Aponte diretamente a aÃƒÂ§ÃƒÂ£o recomendada.
+     - Se a pergunta investiga a existÃƒÂªncia de um controle, planejamento ou boa prÃƒÂ¡tica (ex: "Possui controle financeiro?"):
+       * Resposta "Sim": Representa uma SITUAÃƒâ€¡ÃƒÆ’O POSITIVA / MATURIDADE. ReconheÃƒÂ§a objetivamente o ponto forte.
+       * Resposta "NÃƒÂ£o" ou "Parcial": Representa um PONTO DE ATENÃƒâ€¡ÃƒÆ’O / GARGALO. Aponte diretamente a aÃƒÂ§ÃƒÂ£o recomendada.
   
-  REQUISITOS DE SAÃDA (OBRIGATÃ“RIOS):
-  - Responda em PortuguÃªs do Brasil, de forma profissional e direta.
-  - Gere APENAS 1 (uma) Ãºnica frase curta e objetiva, entre 12 e 18 palavras.
-  - VÃ¡ direto ao ponto: a aÃ§Ã£o recomendada ou o reconhecimento do ponto forte.
-  - NÃƒO use preÃ¢mbulos, saudaÃ§Ãµes, introduÃ§Ãµes ou explicaÃ§Ãµes longas (ex: nada de "Ã‰ importante notar que..." ou "Recomenda-se que...").
-  - NÃƒO use mais de uma frase. NÃƒO use quebras de linha, listas ou marcadores.`;
+  REQUISITOS DE SAÃƒÂDA (OBRIGATÃƒâ€œRIOS):
+  - Responda em PortuguÃƒÂªs do Brasil, de forma profissional e direta.
+  - Gere APENAS 1 (uma) ÃƒÂºnica frase curta e objetiva, entre 12 e 18 palavras.
+  - VÃƒÂ¡ direto ao ponto: a aÃƒÂ§ÃƒÂ£o recomendada ou o reconhecimento do ponto forte.
+  - NÃƒÆ’O use preÃƒÂ¢mbulos, saudaÃƒÂ§ÃƒÂµes, introduÃƒÂ§ÃƒÂµes ou explicaÃƒÂ§ÃƒÂµes longas (ex: nada de "Ãƒâ€° importante notar que..." ou "Recomenda-se que...").
+  - NÃƒÆ’O use mais de uma frase. NÃƒÆ’O use quebras de linha, listas ou marcadores.`;
 
   try {
     const ai = getAI();
     if (!ai) return null;
     const response = await ai.models.generateContent({ 
-      model: "gemini-2.5-flash", 
+      model: "gemini-1.5-flash", 
       contents: prompt,
     });
     const result = response.text?.trim() || "";
@@ -9594,38 +9593,38 @@ const generateAIMaturityLevel = async (respostas: Resposta[], scorePercent: numb
     return cached;
   }
 
-  const prompt = `Como um consultor empresarial sÃªnior do SEBRAE, analise estas respostas de um diagnÃ³stico empresarial e determine o NÃ­vel de Maturidade da empresa.
+  const prompt = `Como um consultor empresarial sÃƒÂªnior do SEBRAE, analise estas respostas de um diagnÃƒÂ³stico empresarial e determine o NÃƒÂ­vel de Maturidade da empresa.
   
-  DADOS DO DIAGNÃ“STICO:
-  - Tipo de Empresa: ${tipoEmpresa || 'NÃ£o especificado'}
+  DADOS DO DIAGNÃƒâ€œSTICO:
+  - Tipo de Empresa: ${tipoEmpresa || 'NÃƒÂ£o especificado'}
   - Score Indicativo: ${scorePercent}%
   - Respostas detalhadas: ${JSON.stringify(simplifiedRespostas)}
   
-  DIRETRIZES FUNDAMENTAIS DE AVALIAÃ‡ÃƒO SEMÃ‚NTICA:
-  - Avalie obrigatoriamente a SEMÃ‚NTICA de cada pergunta juntamente com a resposta dada:
-    * Perguntas com sentido negativo ou sobre ocorrÃªncia de falhas/problemas/rejeiÃ§Ãµes (ex: "O produtor jÃ¡ tentou acessar crÃ©dito rural e foi rejeitado por falta de documentaÃ§Ã£o?"):
-      - "Sim" indica um GARGALO/DESVIO CRÃTICO prejudicial Ã  maturidade.
-      - "NÃ£o" indica ausÃªncia de problema (PONTO FORTE/BOA GESTÃƒO).
-    * Perguntas sobre controles e boas prÃ¡ticas (ex: "Possui planejamento financeiro?"):
+  DIRETRIZES FUNDAMENTAIS DE AVALIAÃƒâ€¡ÃƒÆ’O SEMÃƒâ€šNTICA:
+  - Avalie obrigatoriamente a SEMÃƒâ€šNTICA de cada pergunta juntamente com a resposta dada:
+    * Perguntas com sentido negativo ou sobre ocorrÃƒÂªncia de falhas/problemas/rejeiÃƒÂ§ÃƒÂµes (ex: "O produtor jÃƒÂ¡ tentou acessar crÃƒÂ©dito rural e foi rejeitado por falta de documentaÃƒÂ§ÃƒÂ£o?"):
+      - "Sim" indica um GARGALO/DESVIO CRÃƒÂTICO prejudicial ÃƒÂ  maturidade.
+      - "NÃƒÂ£o" indica ausÃƒÂªncia de problema (PONTO FORTE/BOA GESTÃƒÆ’O).
+    * Perguntas sobre controles e boas prÃƒÂ¡ticas (ex: "Possui planejamento financeiro?"):
       - "Sim" indica PONTO FORTE.
-      - "NÃ£o" ou "Parcial" indica GARGALO/DESVIO.
-  - Determine o NÃ­vel de Maturidade considerando a realidade semÃ¢ntica das respostas obtidas.
+      - "NÃƒÂ£o" ou "Parcial" indica GARGALO/DESVIO.
+  - Determine o NÃƒÂ­vel de Maturidade considerando a realidade semÃƒÂ¢ntica das respostas obtidas.
 
-  REQUISITOS DE SAÃDA:
-  Determine o nÃ­vel de maturidade:
-  - Escolha um destes nÃ­veis padrÃ£o: "Inicial (Inexistente/Ad-hoc)", "BÃ¡sico (Reativo)", "IntermediÃ¡rio (Definido)", "AvanÃ§ado (Gerenciado)", ou "Otimizado (ContÃ­nuo)".
-  - OfereÃ§a uma justificativa analÃ­tica de no mÃ¡ximo 3 frases, destacando os reais pontos fortes e gargalos identificados.
+  REQUISITOS DE SAÃƒÂDA:
+  Determine o nÃƒÂ­vel de maturidade:
+  - Escolha um destes nÃƒÂ­veis padrÃƒÂ£o: "Inicial (Inexistente/Ad-hoc)", "BÃƒÂ¡sico (Reativo)", "IntermediÃƒÂ¡rio (Definido)", "AvanÃƒÂ§ado (Gerenciado)", ou "Otimizado (ContÃƒÂ­nuo)".
+  - OfereÃƒÂ§a uma justificativa analÃƒÂ­tica de no mÃƒÂ¡ximo 3 frases, destacando os reais pontos fortes e gargalos identificados.
   - Retorne a resposta obrigatoriamente no formato JSON abaixo:
   {
-    "nivel": "NÃ­vel Determinado aqui",
-    "justificativa": "Sua justificativa analÃ­tica aqui em PortuguÃªs do Brasil de forma clara e profissional."
+    "nivel": "NÃƒÂ­vel Determinado aqui",
+    "justificativa": "Sua justificativa analÃƒÂ­tica aqui em PortuguÃƒÂªs do Brasil de forma clara e profissional."
   }`;
 
   try {
     const ai = getAI();
     if (!ai) return null;
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-1.5-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -9654,38 +9653,38 @@ const generateAISuggestions = async (probNome: string, noResponses: Resposta[], 
     return cached;
   }
 
-  const prompt = `Como um consultor empresarial sÃªnior do SEBRAE, analise as respostas do diagnÃ³stico para o problema abaixo e sugira soluÃ§Ãµes estruturadas.
+  const prompt = `Como um consultor empresarial sÃƒÂªnior do SEBRAE, analise as respostas do diagnÃƒÂ³stico para o problema abaixo e sugira soluÃƒÂ§ÃƒÂµes estruturadas.
   
   PROBLEMA PRINCIPAL: ${probNome}
   
   RESPOSTAS REGISTRADAS NAS PREMISSAS DESTE PROBLEMA:
-  ${allResponses.map(r => `- Premissa/Pergunta: "${r.pergunta}" | Resposta: "${r.resposta}"${r.observacao ? ` (ObservaÃ§Ã£o: ${r.observacao})` : ''}`).join('\n')}
+  ${allResponses.map(r => `- Premissa/Pergunta: "${r.pergunta}" | Resposta: "${r.resposta}"${r.observacao ? ` (ObservaÃƒÂ§ÃƒÂ£o: ${r.observacao})` : ''}`).join('\n')}
   
-  DIRETRIZES DE ANÃLISE SEMÃ‚NTICA:
+  DIRETRIZES DE ANÃƒÂLISE SEMÃƒâ€šNTICA:
   - Avalie o sentido de cada pergunta:
-    * Perguntas sobre falhas, rejeiÃ§Ãµes ou erros (ex: "O produtor jÃ¡ tentou acessar crÃ©dito rural e foi rejeitado por falta de documentaÃ§Ã£o?"):
-      - Resposta "Sim" Ã© um PONTO CRÃTICO que exige correÃ§Ã£o.
-      - Resposta "NÃ£o" Ã© um PONTO FORTE.
-    * Perguntas sobre controles e boas prÃ¡ticas:
-      - Resposta "NÃ£o" ou "Parcial" Ã© um PONTO CRÃTICO.
-      - Resposta "Sim" Ã© um PONTO FORTE.
-  - Elabore as recomendaÃ§Ãµes focando nos pontos crÃ­ticos reais identificados.
+    * Perguntas sobre falhas, rejeiÃƒÂ§ÃƒÂµes ou erros (ex: "O produtor jÃƒÂ¡ tentou acessar crÃƒÂ©dito rural e foi rejeitado por falta de documentaÃƒÂ§ÃƒÂ£o?"):
+      - Resposta "Sim" ÃƒÂ© um PONTO CRÃƒÂTICO que exige correÃƒÂ§ÃƒÂ£o.
+      - Resposta "NÃƒÂ£o" ÃƒÂ© um PONTO FORTE.
+    * Perguntas sobre controles e boas prÃƒÂ¡ticas:
+      - Resposta "NÃƒÂ£o" ou "Parcial" ÃƒÂ© um PONTO CRÃƒÂTICO.
+      - Resposta "Sim" ÃƒÂ© um PONTO FORTE.
+  - Elabore as recomendaÃƒÂ§ÃƒÂµes focando nos pontos crÃƒÂ­ticos reais identificados.
   
   POR FAVOR, GERE UMA RESPOSTA EM JSON NO SEGUINTE FORMATO:
   {
     "solucao_recomendada": "...",
     "acoes_sugeridas": "1. ...\\n2. ...\\n3. ...",
     "prazo_sugerido": "X dias",
-    "responsavel_sugerido": "Quem executarÃ¡...",
+    "responsavel_sugerido": "Quem executarÃƒÂ¡...",
     "kpis_sugeridos": "Indicadores para medir sucesso...",
-    "comentario_sucesso": "Se houver pontos fortes reais (como ausÃªncia de rejeiÃ§Ã£o de crÃ©dito ou presenÃ§a de boas prÃ¡ticas), faÃ§a um comentÃ¡rio reconhecendo o sucesso das aÃ§Ãµes do produtor/empresa."
+    "comentario_sucesso": "Se houver pontos fortes reais (como ausÃƒÂªncia de rejeiÃƒÂ§ÃƒÂ£o de crÃƒÂ©dito ou presenÃƒÂ§a de boas prÃƒÂ¡ticas), faÃƒÂ§a um comentÃƒÂ¡rio reconhecendo o sucesso das aÃƒÂ§ÃƒÂµes do produtor/empresa."
   }`;
 
   try {
     const ai = getAI();
     if (!ai) return null;
     const response = await ai.models.generateContent({ 
-      model: "gemini-2.5-flash",
+      model: "gemini-1.5-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json"
@@ -9712,7 +9711,7 @@ const MarkdownText = ({ text }: { text: string }) => {
       {paragraphs.map((p, idx) => {
         if (!p.trim()) return <div key={idx} className="h-2" />;
         // Check if paragraph starts with bullet points or dashes
-        const isBullet = p.trim().startsWith('-') || p.trim().startsWith('â€¢');
+        const isBullet = p.trim().startsWith('-') || p.trim().startsWith('Ã¢â‚¬Â¢');
         const content = isBullet ? p.trim().substring(1).trim() : p;
         
         // Parse bold markers **something**
@@ -9727,7 +9726,7 @@ const MarkdownText = ({ text }: { text: string }) => {
         if (isBullet) {
           return (
             <div key={idx} className="flex gap-2 pl-4">
-              <span className="text-emerald-550 font-bold">â€¢</span>
+              <span className="text-emerald-550 font-bold">Ã¢â‚¬Â¢</span>
               <p className="flex-1">{parsedContent}</p>
             </div>
           );
@@ -9822,10 +9821,10 @@ export default function App() {
         performSmartCloudSync().then(() => {
           showToast('Dados sincronizados com a Nuvem com sucesso!', 'success');
         }).catch((err) => {
-          console.warn('Erro na sincronizaÃ§Ã£o automÃ¡tica:', err);
+          console.warn('Erro na sincronizaÃƒÂ§ÃƒÂ£o automÃƒÂ¡tica:', err);
         });
       } else {
-        showToast('Modo Nuvem selecionado. FaÃ§a login para salvar online.', 'info');
+        showToast('Modo Nuvem selecionado. FaÃƒÂ§a login para salvar online.', 'info');
       }
     } else {
       showToast('Modo de salvamento alterado para Local.', 'info');
@@ -9857,7 +9856,7 @@ export default function App() {
     const originalAlert = window.alert;
     (window as any).alert = (msg: any) => {
       const str = String(msg || '');
-      const isError = str.toLowerCase().includes('erro') || str.toLowerCase().includes('invÃ¡lid') || str.toLowerCase().includes('falha') || str.toLowerCase().includes('por favor');
+      const isError = str.toLowerCase().includes('erro') || str.toLowerCase().includes('invÃƒÂ¡lid') || str.toLowerCase().includes('falha') || str.toLowerCase().includes('por favor');
       showToast(str, isError ? 'error' : 'success');
     };
     (window as any).showToast = showToast;
@@ -10108,7 +10107,7 @@ export default function App() {
 
   const performSmartCloudSync = async () => {
     if (!user) {
-      alert("Por favor, faÃ§a login com sua conta para sincronizar seus dados com a Nuvem.");
+      alert("Por favor, faÃƒÂ§a login com sua conta para sincronizar seus dados com a Nuvem.");
       return;
     }
 
@@ -10162,7 +10161,7 @@ export default function App() {
 
       const batchQueue = createBatchQueue();
 
-      // --- A. Sync Empresas (Isolado por usuÃ¡rio) ---
+      // --- A. Sync Empresas (Isolado por usuÃƒÂ¡rio) ---
       const cloudEmpresasSnap = await getDocs(query(collection(db, 'empresas'), where('ownerId', '==', user.uid)));
       const cloudEmpresasMap = new Map<string, Empresa>();
       cloudEmpresasSnap.forEach(d => {
@@ -10217,7 +10216,7 @@ export default function App() {
       setEmpresas(finalEmpresas);
       localStorage.setItem('local_empresas', JSON.stringify(finalEmpresas));
 
-      // --- B. Sync DiagnÃ³sticos (Isolado por usuÃ¡rio) ---
+      // --- B. Sync DiagnÃƒÂ³sticos (Isolado por usuÃƒÂ¡rio) ---
       const cloudDiagsSnap = await getDocs(query(collection(db, 'diagnosticos'), where('ownerId', '==', user.uid)));
       const cloudDiagsMap = new Map<string, Diagnostico>();
       cloudDiagsSnap.forEach(d => {
@@ -10272,7 +10271,7 @@ export default function App() {
       setDiagnosticos(finalDiagnosticos);
       localStorage.setItem('local_diagnosticos', JSON.stringify(finalDiagnosticos));
 
-      // --- C. Sync Respostas (Isolado por usuÃ¡rio) ---
+      // --- C. Sync Respostas (Isolado por usuÃƒÂ¡rio) ---
       const cloudRespsSnap = await getDocs(query(collection(db, 'respostas'), where('ownerId', '==', user.uid)));
       const cloudRespsMap = new Map<string, Resposta>();
       cloudRespsSnap.forEach(d => {
@@ -10336,7 +10335,7 @@ export default function App() {
         setRespostas(finalRespostas.filter(r => r.diagnosticoId === selectedDiagnostico.id));
       }
 
-      // --- D. Sync Tarefas Plano (Isolado por usuÃ¡rio) ---
+      // --- D. Sync Tarefas Plano (Isolado por usuÃƒÂ¡rio) ---
       const cloudTasksSnap = await getDocs(query(collection(db, 'tarefas_plano'), where('ownerId', '==', user.uid)));
       const cloudTasksMap = new Map<string, TarefaPlanoAcao>();
       cloudTasksSnap.forEach(d => {
@@ -10391,7 +10390,7 @@ export default function App() {
       setTarefasPlano(finalTasks);
       localStorage.setItem('local_tarefas_plano', JSON.stringify(finalTasks));
 
-      // --- D2. Sync Empresas Credenciadas do UsuÃ¡rio (Isolado por usuÃ¡rio) ---
+      // --- D2. Sync Empresas Credenciadas do UsuÃƒÂ¡rio (Isolado por usuÃƒÂ¡rio) ---
       const cloudCredSnap = await getDocs(query(collection(db, 'empresas_credenciadas'), where('ownerId', '==', user.uid)));
       const cloudCredMap = new Map<string, EmpresaCredenciada>();
       cloudCredSnap.forEach(d => {
@@ -10431,8 +10430,8 @@ export default function App() {
           const tLocal = extractItemTimestamp(local);
           const tCloud = extractItemTimestamp(cloud);
           if (tLocal > tCloud) {
-            // Os campos de licenÃ§a sÃ£o definidos pelo servidor (webhook Kiwify) ou pelo admin.
-            // Uma cÃ³pia local antiga nunca pode sobrescrevÃª-los (ex.: desfazer um plano recÃ©m-pago).
+            // Os campos de licenÃƒÂ§a sÃƒÂ£o definidos pelo servidor (webhook Kiwify) ou pelo admin.
+            // Uma cÃƒÂ³pia local antiga nunca pode sobrescrevÃƒÂª-los (ex.: desfazer um plano recÃƒÂ©m-pago).
             const merged = { ...cloud, ...local, ...pickLicenseFields(cloud) };
             batchQueue.pushItem(doc(db, 'empresas_credenciadas', id), { ...merged, ownerId: user.uid, updatedAt: new Date().toISOString() });
             summary.updatedInCloud++;
@@ -10451,7 +10450,7 @@ export default function App() {
       setEmpresasCredenciadas(finalCreds);
       localStorage.setItem('local_empresas_credenciadas', JSON.stringify(finalCreds));
 
-      // --- E. Sync Metodologia/Biblioteca (Premissas, Problemas, SoluÃ§Ãµes, Ãreas, Segmentos) ---
+      // --- E. Sync Metodologia/Biblioteca (Premissas, Problemas, SoluÃƒÂ§ÃƒÂµes, ÃƒÂreas, Segmentos) ---
       const syncBiblioItem = async (colName: string, localList: any[], setter: (val: any) => void, storageKey: string) => {
         try {
           const cloudSnap = await getDocs(isAdmin ? query(collection(db, colName)) : query(collection(db, colName), where('ownerId', '==', user.uid)));
@@ -10507,7 +10506,7 @@ export default function App() {
       localStorage.setItem('last_sync_summary', JSON.stringify(summary));
       playSuccessSound();
     } catch (err: any) {
-      console.error("Erro durante a sincronizaÃ§Ã£o inteligente com a Nuvem:", err);
+      console.error("Erro durante a sincronizaÃƒÂ§ÃƒÂ£o inteligente com a Nuvem:", err);
       setSyncError(err?.message || "Ocorreu um erro ao sincronizar com a Nuvem. Tente novamente.");
     } finally {
       setIsSyncingCloud(false);
@@ -10598,7 +10597,7 @@ export default function App() {
     if (data.discAvaliacoes || data.disc_avaliacoes) await syncCollection(data.discAvaliacoes || data.disc_avaliacoes, 'disc_avaliacoes');
     if (data.maturidadeAvaliacoes || data.maturidade_avaliacoes) await syncCollection(data.maturidadeAvaliacoes || data.maturidade_avaliacoes, 'maturidade_avaliacoes');
     if (failed.length > 0) {
-      console.warn('[Backup] Itens nÃ£o enviados por coleÃ§Ã£o:', failed.reduce((acc: Record<string, number>, c) => ({ ...acc, [c]: (acc[c] || 0) + 1 }), {}));
+      console.warn('[Backup] Itens nÃƒÂ£o enviados por coleÃƒÂ§ÃƒÂ£o:', failed.reduce((acc: Record<string, number>, c) => ({ ...acc, [c]: (acc[c] || 0) + 1 }), {}));
     }
   };
 
@@ -10721,7 +10720,7 @@ export default function App() {
             exportCredenciadas = Array.from(credMap.values());
           }
         } catch (cloudErr) {
-          console.warn("Nuvem indisponÃ­vel no momento do backup, compilando com dados locais seguros:", cloudErr);
+          console.warn("Nuvem indisponÃƒÂ­vel no momento do backup, compilando com dados locais seguros:", cloudErr);
         }
       }
 
@@ -10990,18 +10989,18 @@ export default function App() {
               discAvaliacoes: importedDiscAvaliacoes,
               maturidadeAvaliacoes: importedMaturidadeAvaliacoes
             }, user.uid);
-            showToast(`Backup completo importado e sincronizado com a Nuvem!`, 'success', 'RestauraÃ§Ã£o ConcluÃ­da');
+            showToast(`Backup completo importado e sincronizado com a Nuvem!`, 'success', 'RestauraÃƒÂ§ÃƒÂ£o ConcluÃƒÂ­da');
           } catch (cloudErr) {
             console.error("Erro ao sincronizar backup com a nuvem:", cloudErr);
-            showToast(`Backup restaurado localmente com sucesso!`, 'info', 'RestauraÃ§Ã£o Local');
+            showToast(`Backup restaurado localmente com sucesso!`, 'info', 'RestauraÃƒÂ§ÃƒÂ£o Local');
           }
         } else {
-          showToast(`Backup local restaurado com sucesso!`, 'success', 'RestauraÃ§Ã£o ConcluÃ­da');
+          showToast(`Backup local restaurado com sucesso!`, 'success', 'RestauraÃƒÂ§ÃƒÂ£o ConcluÃƒÂ­da');
         }
         playSuccessSound();
       } catch (err) {
         console.error("Erro ao importar backup:", err);
-        showToast("Erro ao ler arquivo .JSON de backup. Verifique o formato.", "error", "Falha na ImportaÃ§Ã£o");
+        showToast("Erro ao ler arquivo .JSON de backup. Verifique o formato.", "error", "Falha na ImportaÃƒÂ§ÃƒÂ£o");
       } finally {
         if (inputElement) {
           inputElement.value = '';
@@ -11222,7 +11221,7 @@ export default function App() {
         await updateDoc(doc(db, 'empresas_credenciadas', existingDoc.id), sanitizeForFirestore(updates));
       }
     } catch (e) {
-      console.error("Erro na sincronizaÃ§Ã£o do usuÃ¡rio autenticado com empresas_credenciadas:", e);
+      console.error("Erro na sincronizaÃƒÂ§ÃƒÂ£o do usuÃƒÂ¡rio autenticado com empresas_credenciadas:", e);
     }
   };
 
@@ -11248,7 +11247,7 @@ export default function App() {
       } catch {}
 
       if (u) {
-        // SanitizaÃ§Ã£o automÃ¡tica: expurga do cache local registros com ownerId de terceiros
+        // SanitizaÃƒÂ§ÃƒÂ£o automÃƒÂ¡tica: expurga do cache local registros com ownerId de terceiros
         setEmpresasCredenciadas(prev => {
           const filtered = prev.filter(c => !c.ownerId || c.ownerId === 'local' || c.ownerId === u.uid);
           try { localStorage.setItem('local_empresas_credenciadas', JSON.stringify(filtered)); } catch {}
@@ -11276,7 +11275,7 @@ export default function App() {
         setIsAdmin(isUserAdminEmail);
         
         if (isUserAdminEmail && !u.emailVerified) {
-          console.warn("UsuÃ¡rio administrador detectado (itamartrairi@gmail.com). Acesso irrestrito concedido.");
+          console.warn("UsuÃƒÂ¡rio administrador detectado (itamartrairi@gmail.com). Acesso irrestrito concedido.");
         }
 
         // Auto-check and register credenciada record if not existing yet
@@ -11322,7 +11321,7 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
 
-    // O workspace operacional do consultor SEMPRE Ã© restrito ao seu prÃ³prio ownerId
+    // O workspace operacional do consultor SEMPRE ÃƒÂ© restrito ao seu prÃƒÂ³prio ownerId
     const qEmpresas = query(collection(db, 'empresas'), where('ownerId', '==', user.uid));
 
     const unsubEmpresas = onSnapshot(qEmpresas, (snap) => {
@@ -11344,7 +11343,7 @@ export default function App() {
       }
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'empresas'));
 
-    // As credenciadas operacionais do consultor SEMPRE sÃ£o filtradas por ownerId == user.uid
+    // As credenciadas operacionais do consultor SEMPRE sÃƒÂ£o filtradas por ownerId == user.uid
     const qCredenciadas = query(collection(db, 'empresas_credenciadas'), where('ownerId', '==', user.uid));
     
     const unsubCredenciadas = onSnapshot(qCredenciadas, (snap) => {
@@ -11359,7 +11358,7 @@ export default function App() {
       });
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'empresas_credenciadas'));
 
-    // Se admin, escuta TODAS as credenciadas do sistema EXCLUSIVAMENTE para a tela de GestÃ£o de LicenÃ§as
+    // Se admin, escuta TODAS as credenciadas do sistema EXCLUSIVAMENTE para a tela de GestÃƒÂ£o de LicenÃƒÂ§as
     let unsubAllCred: (() => void) | undefined;
     if (isAdmin) {
       const qAllCred = query(collection(db, 'empresas_credenciadas'));
@@ -11370,7 +11369,7 @@ export default function App() {
       }, (error) => handleFirestoreError(error, OperationType.LIST, 'empresas_credenciadas_admin'));
     }
 
-    // Biblioteca metodolÃ³gica compartilhada (Premissas, Problemas, SoluÃ§Ãµes, Ãreas, Segmentos)
+    // Biblioteca metodolÃƒÂ³gica compartilhada (Premissas, Problemas, SoluÃƒÂ§ÃƒÂµes, ÃƒÂreas, Segmentos)
     const qPremissas = query(collection(db, 'premissas'), ownerFilter());
     const unsubPremissas = onSnapshot(qPremissas, (snap) => {
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Premissa));
@@ -11402,7 +11401,7 @@ export default function App() {
       });
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'solucoes'));
 
-    // Tarefas do plano de aÃ§Ã£o restritas ao usuÃ¡rio
+    // Tarefas do plano de aÃƒÂ§ÃƒÂ£o restritas ao usuÃƒÂ¡rio
     const qTarefas = query(collection(db, 'tarefas_plano'), where('ownerId', '==', user.uid));
     const unsubTarefas = onSnapshot(qTarefas, (snap) => {
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as TarefaPlanoAcao));
@@ -11523,7 +11522,7 @@ export default function App() {
     claimOrphanedDocs();
   }, [user?.uid]);
 
-  // Redireciona usuÃ¡rios logados da Landing para Home
+  // Redireciona usuÃƒÂ¡rios logados da Landing para Home
   useEffect(() => {
     if (user && view === 'landing' && !loading) {
       setView('home');
@@ -11559,7 +11558,7 @@ export default function App() {
           return updated ? { ...prev, ...updated } : prev;
         });
       }
-    }, (error) => console.error("Erro ao escutar diagnÃ³sticos:", error));
+    }, (error) => console.error("Erro ao escutar diagnÃƒÂ³sticos:", error));
   }, [user, isAdmin]);
 
   // Listen to Respostas for selected Diagnostico with persistent local-first hydration
@@ -11746,7 +11745,7 @@ export default function App() {
     }
   }, [view, selectedEmpresa, diagnosticos]);
   
-  // Sincroniza dados da credenciada e do consultor automaticamente nos relatÃ³rios
+  // Sincroniza dados da credenciada e do consultor automaticamente nos relatÃƒÂ³rios
   useEffect(() => {
     if (selectedDiagnostico?.dadosConsultoria?.razaoSocial && empresasCredenciadas.length > 0) {
       const currentDados = selectedDiagnostico.dadosConsultoria;
@@ -11793,7 +11792,7 @@ export default function App() {
         return;
       }
       if (error.code === 'auth/unauthorized-domain' || (error.message && error.message.includes('unauthorized-domain'))) {
-        setAuthError('O domÃ­nio desta aplicaÃ§Ã£o nÃ£o estÃ¡ autorizado no Firebase Console para login via Google. Utilize o login ou cadastro por E-mail e Senha abaixo.');
+        setAuthError('O domÃƒÂ­nio desta aplicaÃƒÂ§ÃƒÂ£o nÃƒÂ£o estÃƒÂ¡ autorizado no Firebase Console para login via Google. Utilize o login ou cadastro por E-mail e Senha abaixo.');
         return;
       }
       console.error("Login failed", error);
@@ -11812,18 +11811,18 @@ export default function App() {
     setIsSendingResetEmail(true);
     try {
       await sendPasswordResetEmail(auth, authEmail.trim());
-      setAuthSuccess(`Enviamos um link de recuperaÃ§Ã£o de senha para ${authEmail.trim()}. Verifique sua caixa de entrada (e o spam).`);
+      setAuthSuccess(`Enviamos um link de recuperaÃƒÂ§ÃƒÂ£o de senha para ${authEmail.trim()}. Verifique sua caixa de entrada (e o spam).`);
     } catch (error: any) {
       console.error('Password reset failed', error);
       if (error.code === 'auth/user-not-found') {
-        // Por seguranÃ§a, nÃ£o revelamos se o e-mail existe ou nÃ£o na base.
-        setAuthSuccess(`Se houver uma conta cadastrada com o e-mail ${authEmail.trim()}, enviamos um link de recuperaÃ§Ã£o de senha para ela.`);
+        // Por seguranÃƒÂ§a, nÃƒÂ£o revelamos se o e-mail existe ou nÃƒÂ£o na base.
+        setAuthSuccess(`Se houver uma conta cadastrada com o e-mail ${authEmail.trim()}, enviamos um link de recuperaÃƒÂ§ÃƒÂ£o de senha para ela.`);
       } else if (error.code === 'auth/invalid-email') {
-        setAuthError('Digite um e-mail vÃ¡lido.');
+        setAuthError('Digite um e-mail vÃƒÂ¡lido.');
       } else if (error.code === 'auth/too-many-requests') {
         setAuthError('Muitas tentativas em pouco tempo. Aguarde alguns minutos e tente novamente.');
       } else {
-        setAuthError(error.message || 'NÃ£o foi possÃ­vel enviar o e-mail de recuperaÃ§Ã£o. Tente novamente.');
+        setAuthError(error.message || 'NÃƒÂ£o foi possÃƒÂ­vel enviar o e-mail de recuperaÃƒÂ§ÃƒÂ£o. Tente novamente.');
       }
     } finally {
       setIsSendingResetEmail(false);
@@ -11850,15 +11849,15 @@ export default function App() {
     } catch (error: any) {
       console.error("Auth failed", error);
       if (error.code === 'auth/email-already-in-use') {
-        setAuthError('Este e-mail jÃ¡ estÃ¡ em uso. Por favor faÃ§a login com sua senha.');
+        setAuthError('Este e-mail jÃƒÂ¡ estÃƒÂ¡ em uso. Por favor faÃƒÂ§a login com sua senha.');
       } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
         setAuthError('E-mail ou senha incorretos.');
       } else if (error.code === 'auth/weak-password') {
         setAuthError('A senha deve ter pelo menos 6 caracteres.');
       } else if (error.code === 'auth/unauthorized-domain' || (error.message && error.message.includes('unauthorized-domain'))) {
-        setAuthError('DomÃ­nio nÃ£o autorizado no Firebase Console. Adicione o domÃ­nio nas configuraÃ§Ãµes do Firebase Authentication.');
+        setAuthError('DomÃƒÂ­nio nÃƒÂ£o autorizado no Firebase Console. Adicione o domÃƒÂ­nio nas configuraÃƒÂ§ÃƒÂµes do Firebase Authentication.');
       } else {
-        setAuthError('Erro na autenticaÃ§Ã£o. Verifique seus dados.');
+        setAuthError('Erro na autenticaÃƒÂ§ÃƒÂ£o. Verifique seus dados.');
       }
     }
   };
@@ -11879,7 +11878,7 @@ export default function App() {
         });
       
       if (!selectedEmpresa || filteredTarefas.length === 0) {
-        alert("NÃ£o hÃ¡ tarefas no plano de aÃ§Ã£o vinculadas a este diagnÃ³stico para gerar o relatÃ³rio.");
+        alert("NÃƒÂ£o hÃƒÂ¡ tarefas no plano de aÃƒÂ§ÃƒÂ£o vinculadas a este diagnÃƒÂ³stico para gerar o relatÃƒÂ³rio.");
         return;
       }
 
@@ -11918,7 +11917,7 @@ export default function App() {
             const logoHeight = (imgProps.height * logoWidth) / imgProps.width;
             d.addImage(activeLogoForPdf, 'PNG', pageWidth - margin - logoWidth, 10, logoWidth, logoHeight, undefined, 'FAST');
           } catch (e) {
-            console.warn("Could not add active logo to Plano de AÃ§Ã£o PDF", e);
+            console.warn("Could not add active logo to Plano de AÃƒÂ§ÃƒÂ£o PDF", e);
           }
         } else {
           // App Name / Logo substitution if no custom logo is present
@@ -11930,7 +11929,7 @@ export default function App() {
           d.text("CONSULTORIA PRO", pageWidth - margin - 17.5, 17.5, { align: 'center' });
         }
 
-        d.setFontSize(13); // Reduzido para caber de forma garantida em uma sÃ³ linha
+        d.setFontSize(13); // Reduzido para caber de forma garantida em uma sÃƒÂ³ linha
         d.setTextColor(15, 23, 42); // slate-900
         d.setFont("helvetica", "bold");
         d.text(title, margin, 20);
@@ -11938,14 +11937,14 @@ export default function App() {
         d.setFontSize(9.5);
         d.setTextColor(100);
         d.setFont("helvetica", "normal");
-        d.text(`Cliente: ${selectedEmpresa.nomeFantasia || selectedEmpresa.nome} | Horas ConcluÃ­das: ${totalHorasConcluidasPlano}h / Total: ${totalHorasPlano}h`, margin, 30);
-        d.text(`EmissÃ£o: ${new Date().toLocaleDateString('pt-BR')} Ã s ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`, margin, 36);
+        d.text(`Cliente: ${selectedEmpresa.nomeFantasia || selectedEmpresa.nome} | Horas ConcluÃƒÂ­das: ${totalHorasConcluidasPlano}h / Total: ${totalHorasPlano}h`, margin, 30);
+        d.text(`EmissÃƒÂ£o: ${new Date().toLocaleDateString('pt-BR')} ÃƒÂ s ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`, margin, 36);
         
         d.setDrawColor(226, 232, 240); // slate-200
         d.line(margin, 42, pageWidth - margin, 42);
       };
 
-      addHeader(doc, 'RELATÃ“RIO: PLANO DE AÃ‡ÃƒO ESTRATÃ‰GICO');
+      addHeader(doc, 'RELATÃƒâ€œRIO: PLANO DE AÃƒâ€¡ÃƒÆ’O ESTRATÃƒâ€°GICO');
 
       const tableData = filteredTarefas.map((t, index) => {
         const defaultDateStr = getActivityDateStr(selectedDiagnostico?.dataDiagnostico, index);
@@ -11978,12 +11977,12 @@ export default function App() {
 
       autoTable(doc, {
         startY: 50,
-        head: [['#', 'ÃREA', 'DIAGNÃ“STICO / PROBLEMA', 'AÃ‡Ã•ES E MELHORIAS PROPOSTAS', 'RESPONSÃVEL', 'INÃCIO', 'PRAZO', 'DUR.', 'PRIOR.', 'SITUAÃ‡ÃƒO']],
+        head: [['#', 'ÃƒÂREA', 'DIAGNÃƒâ€œSTICO / PROBLEMA', 'AÃƒâ€¡Ãƒâ€¢ES E MELHORIAS PROPOSTAS', 'RESPONSÃƒÂVEL', 'INÃƒÂCIO', 'PRAZO', 'DUR.', 'PRIOR.', 'SITUAÃƒâ€¡ÃƒÆ’O']],
         body: tableData,
         margin: { left: margin, right: margin, top: 48, bottom: 20 },
         didDrawPage: (data) => {
           if (data.pageNumber > 1) {
-            addHeader(doc, 'RELATÃ“RIO: PLANO DE AÃ‡ÃƒO ESTRATÃ‰GICO');
+            addHeader(doc, 'RELATÃƒâ€œRIO: PLANO DE AÃƒâ€¡ÃƒÆ’O ESTRATÃƒâ€°GICO');
           }
         },
         headStyles: { 
@@ -12015,11 +12014,11 @@ export default function App() {
           if (data.section === 'body' && data.column.index === 8) {
             const val = data.cell.text[0];
             if (val === 'ALTA') data.cell.styles.textColor = [225, 29, 72]; // rose-600
-            if (val === 'MÃ‰DIA') data.cell.styles.textColor = [217, 119, 6]; // amber-600
+            if (val === 'MÃƒâ€°DIA') data.cell.styles.textColor = [217, 119, 6]; // amber-600
           }
           if (data.section === 'body' && data.column.index === 9) {
             const val = data.cell.text[0];
-            if (val === 'CONCLUÃDO') data.cell.styles.textColor = [5, 150, 105]; // emerald-600
+            if (val === 'CONCLUÃƒÂDO') data.cell.styles.textColor = [5, 150, 105]; // emerald-600
             if (val === 'PENDENTE') data.cell.styles.textColor = [225, 29, 72]; // rose-600
           }
         },
@@ -12034,7 +12033,7 @@ export default function App() {
         doc.setFontSize(8);
         doc.setTextColor(150);
         doc.text(
-          `RelatÃ³rio de Plano de AÃ§Ã£o - PÃ¡gina ${i} de ${totalPages}`,
+          `RelatÃƒÂ³rio de Plano de AÃƒÂ§ÃƒÂ£o - PÃƒÂ¡gina ${i} de ${totalPages}`,
           pageWidth / 2,
           doc.internal.pageSize.getHeight() - 10,
           { align: 'center' }
@@ -12043,8 +12042,8 @@ export default function App() {
 
       window.open(doc.output('bloburl').toString(), '_blank');
     } catch (error) {
-      console.error("Error generating Plano de AÃ§Ã£o PDF:", error);
-      alert("Erro ao gerar o plano de aÃ§Ã£o PDF.");
+      console.error("Error generating Plano de AÃƒÂ§ÃƒÂ£o PDF:", error);
+      alert("Erro ao gerar o plano de aÃƒÂ§ÃƒÂ£o PDF.");
     }
   };
 
@@ -12134,27 +12133,27 @@ export default function App() {
           </div>
           <div className="flex flex-col">
             <span className="font-black text-xl tracking-tight text-slate-800 leading-none">Consultoria Pro</span>
-            <span className="text-[11px] font-bold text-emerald-600 tracking-wide mt-1">by ItÃ mar Gomes</span>
+            <span className="text-[11px] font-bold text-emerald-600 tracking-wide mt-1">by ItÃƒÂ mar Gomes</span>
           </div>
         </div>
 
         <nav className="flex-1 space-y-2 overflow-y-auto">
           <NavItem 
             icon={Home} 
-            label="InÃ­cio" 
+            label="InÃƒÂ­cio" 
             active={view === 'home'} 
             onClick={() => { setView('home'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }} 
           />
           <NavItem 
             icon={Settings} 
-            label="ConfiguraÃ§Ãµes" 
+            label="ConfiguraÃƒÂ§ÃƒÂµes" 
             active={view === 'settings'} 
             onClick={() => setView('settings')} 
           />
 
           <div className="pt-2" />
 
-          <NavGroup icon={Briefcase} label="GestÃ£o & Atendimento" groupKey="gestao" count={4}>
+          <NavGroup icon={Briefcase} label="GestÃƒÂ£o & Atendimento" groupKey="gestao" count={4}>
             <NavItem 
               icon={Building2} 
               label="Clientes" 
@@ -12181,7 +12180,7 @@ export default function App() {
             />
           </NavGroup>
 
-          <NavGroup icon={TrendingUp} label="DiagnÃ³sticos & AvaliaÃ§Ã£o" groupKey="diagnosticos" count={4}>
+          <NavGroup icon={TrendingUp} label="DiagnÃƒÂ³sticos & AvaliaÃƒÂ§ÃƒÂ£o" groupKey="diagnosticos" count={4}>
             <NavItem 
               icon={TrendingUp} 
               label="Maturidade Empresarial" 
@@ -12196,7 +12195,7 @@ export default function App() {
             />
             <NavItem 
               icon={History} 
-              label="HistÃ³rico" 
+              label="HistÃƒÂ³rico" 
               active={view === 'dashboard' && !selectedDiagnostico} 
               onClick={() => { setView('companies'); }} 
             />
@@ -12217,10 +12216,10 @@ export default function App() {
           </button>
 
           {isAdmin && (
-            <NavGroup icon={Trophy} label="LicenÃ§as & Acesso" groupKey="licencas" count={2}>
+            <NavGroup icon={Trophy} label="LicenÃƒÂ§as & Acesso" groupKey="licencas" count={2}>
               <NavItem 
                 icon={ShieldCheck} 
-                label="GestÃ£o de LicenÃ§as" 
+                label="GestÃƒÂ£o de LicenÃƒÂ§as" 
                 active={view === 'licenses'} 
                 onClick={() => { setView('licenses'); }} 
               />
@@ -12234,7 +12233,7 @@ export default function App() {
           )}
 
           {selectedDiagnostico && (
-            <NavGroup icon={FileSpreadsheet} label="DiagnÃ³stico Ativo" groupKey="diagnosticoAtivo" count={3}>
+            <NavGroup icon={FileSpreadsheet} label="DiagnÃƒÂ³stico Ativo" groupKey="diagnosticoAtivo" count={3}>
               <NavItem 
                 icon={FileSpreadsheet} 
                 label="Dados da Consultoria" 
@@ -12243,13 +12242,13 @@ export default function App() {
               />
               <NavItem 
                 icon={Calendar} 
-                label="RelatÃ³rio de Consultoria" 
+                label="RelatÃƒÂ³rio de Consultoria" 
                 active={view === 'cronograma'} 
                 onClick={() => setView('cronograma')} 
               />
               <NavItem 
                 icon={FileText} 
-                label="RelatÃ³rio" 
+                label="RelatÃƒÂ³rio" 
                 active={view === 'relatorio'} 
                 onClick={() => setView('relatorio')} 
               />
@@ -12299,7 +12298,7 @@ export default function App() {
     </div>
   );
 
-  // Consulta os dados pÃºblicos do CNPJ na Receita Federal (via BrasilAPI) e
+  // Consulta os dados pÃƒÂºblicos do CNPJ na Receita Federal (via BrasilAPI) e
   // preenche automaticamente os campos do cadastro da empresa.
   const fetchCnpjData = async (rawCnpj: string) => {
     const digits = cleanDigits(rawCnpj);
@@ -12312,7 +12311,7 @@ export default function App() {
     try {
       const response = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
       if (!response.ok) {
-        throw new Error(response.status === 404 ? 'CNPJ nÃ£o encontrado na Receita Federal.' : 'NÃ£o foi possÃ­vel consultar o CNPJ agora.');
+        throw new Error(response.status === 404 ? 'CNPJ nÃƒÂ£o encontrado na Receita Federal.' : 'NÃƒÂ£o foi possÃƒÂ­vel consultar o CNPJ agora.');
       }
       const data = await response.json();
 
@@ -12350,7 +12349,7 @@ export default function App() {
       }));
     } catch (err: any) {
       console.error('Erro ao consultar CNPJ:', err);
-      setCnpjLookupError(err?.message || 'Erro ao consultar o CNPJ. Verifique sua conexÃ£o e tente novamente.');
+      setCnpjLookupError(err?.message || 'Erro ao consultar o CNPJ. Verifique sua conexÃƒÂ£o e tente novamente.');
     } finally {
       setIsFetchingCnpjData(false);
     }
@@ -12358,27 +12357,27 @@ export default function App() {
 
   const createEmpresa = async () => {
     if (!empresaForm.razaoSocial?.trim()) {
-      showToast("Por favor, preencha a RazÃ£o Social da empresa.", "error");
+      showToast("Por favor, preencha a RazÃƒÂ£o Social da empresa.", "error");
       return;
     }
 
-    // ValidaÃ§Ã£o estrita de CNPJ do Cliente (se preenchido)
+    // ValidaÃƒÂ§ÃƒÂ£o estrita de CNPJ do Cliente (se preenchido)
     if (empresaForm.cnpj && empresaForm.cnpj.trim()) {
       if (!isValidCNPJ(empresaForm.cnpj)) {
-        showToast("CNPJ da Empresa (Cliente) invÃ¡lido! Informe um CNPJ vÃ¡lido com 14 dÃ­gitos.", "error");
+        showToast("CNPJ da Empresa (Cliente) invÃƒÂ¡lido! Informe um CNPJ vÃƒÂ¡lido com 14 dÃƒÂ­gitos.", "error");
         return;
       }
     }
 
-    // ValidaÃ§Ã£o estrita de CPF do Representante (se preenchido)
+    // ValidaÃƒÂ§ÃƒÂ£o estrita de CPF do Representante (se preenchido)
     if (empresaForm.cpfRepresentante && empresaForm.cpfRepresentante.trim()) {
       if (!isValidCPF(empresaForm.cpfRepresentante)) {
-        showToast("CPF do Representante Legal invÃ¡lido! Informe um CPF vÃ¡lido com 11 dÃ­gitos.", "error");
+        showToast("CPF do Representante Legal invÃƒÂ¡lido! Informe um CPF vÃƒÂ¡lido com 11 dÃƒÂ­gitos.", "error");
         return;
       }
     }
 
-    // Fechar modal imediatamente para resposta instantÃ¢nea na interface
+    // Fechar modal imediatamente para resposta instantÃƒÂ¢nea na interface
     setIsModalOpen(false);
     setModalType(null);
     setModalData(null);
@@ -12436,27 +12435,27 @@ export default function App() {
   const editEmpresa = async () => {
     const targetId = modalData?.id || empresaForm?.id;
     if (!empresaForm.razaoSocial?.trim() || !targetId) {
-      showToast("Por favor, preencha a RazÃ£o Social da empresa.", "error");
+      showToast("Por favor, preencha a RazÃƒÂ£o Social da empresa.", "error");
       return;
     }
 
-    // ValidaÃ§Ã£o estrita de CNPJ do Cliente (se preenchido)
+    // ValidaÃƒÂ§ÃƒÂ£o estrita de CNPJ do Cliente (se preenchido)
     if (empresaForm.cnpj && empresaForm.cnpj.trim()) {
       if (!isValidCNPJ(empresaForm.cnpj)) {
-        showToast("CNPJ da Empresa (Cliente) invÃ¡lido! Informe um CNPJ vÃ¡lido com 14 dÃ­gitos.", "error");
+        showToast("CNPJ da Empresa (Cliente) invÃƒÂ¡lido! Informe um CNPJ vÃƒÂ¡lido com 14 dÃƒÂ­gitos.", "error");
         return;
       }
     }
 
-    // ValidaÃ§Ã£o estrita de CPF do Representante (se preenchido)
+    // ValidaÃƒÂ§ÃƒÂ£o estrita de CPF do Representante (se preenchido)
     if (empresaForm.cpfRepresentante && empresaForm.cpfRepresentante.trim()) {
       if (!isValidCPF(empresaForm.cpfRepresentante)) {
-        showToast("CPF do Representante Legal invÃ¡lido! Informe um CPF vÃ¡lido com 11 dÃ­gitos.", "error");
+        showToast("CPF do Representante Legal invÃƒÂ¡lido! Informe um CPF vÃƒÂ¡lido com 11 dÃƒÂ­gitos.", "error");
         return;
       }
     }
 
-    // Fechar modal imediatamente para resposta instantÃ¢nea na interface
+    // Fechar modal imediatamente para resposta instantÃƒÂ¢nea na interface
     setIsModalOpen(false);
     setModalType(null);
     setModalData(null);
@@ -12504,27 +12503,27 @@ export default function App() {
 
   const createCredenciada = async () => {
     if (!credenciadaForm.razaoSocial?.trim()) {
-      showToast("Por favor, preencha a RazÃ£o Social da empresa credenciada.", "error");
+      showToast("Por favor, preencha a RazÃƒÂ£o Social da empresa credenciada.", "error");
       return;
     }
 
-    // ValidaÃ§Ã£o estrita de CNPJ da Credenciada (se preenchido)
+    // ValidaÃƒÂ§ÃƒÂ£o estrita de CNPJ da Credenciada (se preenchido)
     if (credenciadaForm.cnpj && credenciadaForm.cnpj.trim()) {
       if (!isValidCNPJ(credenciadaForm.cnpj)) {
-        showToast("CNPJ da Empresa Credenciada invÃ¡lido! Informe um CNPJ no padrÃ£o brasileiro.", "error");
+        showToast("CNPJ da Empresa Credenciada invÃƒÂ¡lido! Informe um CNPJ no padrÃƒÂ£o brasileiro.", "error");
         return;
       }
     }
 
-    // ValidaÃ§Ã£o estrita de CPF do Consultor (se preenchido)
+    // ValidaÃƒÂ§ÃƒÂ£o estrita de CPF do Consultor (se preenchido)
     if (credenciadaForm.cpfConsultor && credenciadaForm.cpfConsultor.trim()) {
       if (!isValidCPF(credenciadaForm.cpfConsultor)) {
-        showToast("CPF do Consultor invÃ¡lido! Informe um CPF no padrÃ£o brasileiro.", "error");
+        showToast("CPF do Consultor invÃƒÂ¡lido! Informe um CPF no padrÃƒÂ£o brasileiro.", "error");
         return;
       }
     }
 
-    // Fechar modal imediatamente para resposta instantÃ¢nea
+    // Fechar modal imediatamente para resposta instantÃƒÂ¢nea
     setIsModalOpen(false);
     setModalType(null);
     setModalData(null);
@@ -12595,27 +12594,27 @@ export default function App() {
   const editCredenciada = async () => {
     const targetId = modalData?.id || credenciadaForm?.id;
     if (!credenciadaForm.razaoSocial?.trim() || !targetId) {
-      showToast("Por favor, preencha a RazÃ£o Social para salvar as alteraÃ§Ãµes.", "error");
+      showToast("Por favor, preencha a RazÃƒÂ£o Social para salvar as alteraÃƒÂ§ÃƒÂµes.", "error");
       return;
     }
 
-    // ValidaÃ§Ã£o estrita de CNPJ da Credenciada (se preenchido)
+    // ValidaÃƒÂ§ÃƒÂ£o estrita de CNPJ da Credenciada (se preenchido)
     if (credenciadaForm.cnpj && credenciadaForm.cnpj.trim()) {
       if (!isValidCNPJ(credenciadaForm.cnpj)) {
-        showToast("CNPJ da Empresa Credenciada invÃ¡lido! Informe um CNPJ no padrÃ£o brasileiro.", "error");
+        showToast("CNPJ da Empresa Credenciada invÃƒÂ¡lido! Informe um CNPJ no padrÃƒÂ£o brasileiro.", "error");
         return;
       }
     }
 
-    // ValidaÃ§Ã£o estrita de CPF do Consultor (se preenchido)
+    // ValidaÃƒÂ§ÃƒÂ£o estrita de CPF do Consultor (se preenchido)
     if (credenciadaForm.cpfConsultor && credenciadaForm.cpfConsultor.trim()) {
       if (!isValidCPF(credenciadaForm.cpfConsultor)) {
-        showToast("CPF do Consultor invÃ¡lido! Informe um CPF no padrÃ£o brasileiro.", "error");
+        showToast("CPF do Consultor invÃƒÂ¡lido! Informe um CPF no padrÃƒÂ£o brasileiro.", "error");
         return;
       }
     }
 
-    // Fechar modal imediatamente para resposta instantÃ¢nea
+    // Fechar modal imediatamente para resposta instantÃƒÂ¢nea
     setIsModalOpen(false);
     setModalType(null);
     setModalData(null);
@@ -12798,8 +12797,8 @@ export default function App() {
     }
   };
 
-  // Exclui APENAS os documentos do prÃ³prio usuÃ¡rio. Antes, esta funÃ§Ã£o tambÃ©m varria a
-  // coleÃ§Ã£o inteira e, para o admin, apagava os dados de todos os consultores.
+  // Exclui APENAS os documentos do prÃƒÂ³prio usuÃƒÂ¡rio. Antes, esta funÃƒÂ§ÃƒÂ£o tambÃƒÂ©m varria a
+  // coleÃƒÂ§ÃƒÂ£o inteira e, para o admin, apagava os dados de todos os consultores.
   const safeDeleteDocs = async (colName: string, userId?: string) => {
     if (!userId) return;
     try {
@@ -12833,7 +12832,7 @@ export default function App() {
     setModalType(null);
     setModalData(null);
     playSuccessSound();
-    showToast("Pergunta excluÃ­da com sucesso!", "success");
+    showToast("Pergunta excluÃƒÂ­da com sucesso!", "success");
 
     if (user) {
       (async () => {
@@ -12933,7 +12932,7 @@ export default function App() {
     setModalType(null);
     setModalData(null);
     playSuccessSound();
-    showToast("Problema excluÃ­do com sucesso!", "success");
+    showToast("Problema excluÃƒÂ­do com sucesso!", "success");
 
     if (user) {
       (async () => {
@@ -12958,8 +12957,8 @@ export default function App() {
     }
   };
 
-  // --- ExclusÃ£o da biblioteca pela seleÃ§Ã£o (Tipo de Empresa + Ãrea) ---
-  // Calcula exatamente o que serÃ¡ excluÃ­do com os filtros atuais da Biblioteca.
+  // --- ExclusÃƒÂ£o da biblioteca pela seleÃƒÂ§ÃƒÂ£o (Tipo de Empresa + ÃƒÂrea) ---
+  // Calcula exatamente o que serÃƒÂ¡ excluÃƒÂ­do com os filtros atuais da Biblioteca.
   const getLibrarySelectionToDelete = () => selectLibraryForDeletion(
     { problemas, premissas, solucoes },
     { area: selectedAreaFilter, tipo: selectedTipoEmpresaFilter, tag: selectedTagFilter }
@@ -12967,7 +12966,7 @@ export default function App() {
 
   const deleteAllProblemas = async () => {
     if (!selectedAreaFilter || !selectedTipoEmpresaFilter) {
-      showToast("Selecione o Tipo de Empresa e a Ãrea antes de excluir.", "error");
+      showToast("Selecione o Tipo de Empresa e a ÃƒÂrea antes de excluir.", "error");
       return;
     }
     const { probs, prems, sols } = getLibrarySelectionToDelete();
@@ -12991,10 +12990,10 @@ export default function App() {
     setModalType(null);
     setModalData(null);
     playSuccessSound();
-    showToast(`ExcluÃ­dos ${probs.length} problema(s), ${prems.length} pergunta(s) e ${sols.length} soluÃ§Ã£o(Ãµes) de ${selectedTipoEmpresaFilter} / ${selectedAreaFilter}.`, "success");
+    showToast(`ExcluÃƒÂ­dos ${probs.length} problema(s), ${prems.length} pergunta(s) e ${sols.length} soluÃƒÂ§ÃƒÂ£o(ÃƒÂµes) de ${selectedTipoEmpresaFilter} / ${selectedAreaFilter}.`, "success");
 
     if (user) {
-      // Exclui somente os documentos selecionados (por id), nunca a coleÃ§Ã£o inteira.
+      // Exclui somente os documentos selecionados (por id), nunca a coleÃƒÂ§ÃƒÂ£o inteira.
       const refs = [
         ...Array.from(probIds).map(id => doc(db, 'problemas', id)),
         ...Array.from(premIds).map(id => doc(db, 'premissas', id)),
@@ -13008,7 +13007,7 @@ export default function App() {
         }
       } catch (e) {
         console.error("Erro ao excluir itens selecionados da biblioteca na nuvem:", e);
-        // Algum item pode nÃ£o existir mais na nuvem (id local); tenta um a um.
+        // Algum item pode nÃƒÂ£o existir mais na nuvem (id local); tenta um a um.
         for (const r of refs) await deleteDoc(r).catch(() => {});
       }
     }
@@ -13026,7 +13025,7 @@ export default function App() {
     setModalType(null);
     setModalData(null);
     playSuccessSound();
-    showToast("Todas as perguntas foram excluÃ­das com sucesso!", "success");
+    showToast("Todas as perguntas foram excluÃƒÂ­das com sucesso!", "success");
 
     if (user) {
       for (const id of idsToDelete) {
@@ -13061,7 +13060,7 @@ export default function App() {
     setModalData(null);
     setSolucaoForm({ idProblema: '', problema: '', area: '', solucao_recomendada: '', acoes_sugeridas: '', prazo_sugerido: '', responsavel_sugerido: '', kpis_sugeridos: '', resultado_esperado: '', comentario_sucesso: '', tipoEmpresa: '', tags: [] });
     playSuccessSound();
-    showToast("SoluÃ§Ã£o cadastrada e salva com sucesso!", "success");
+    showToast("SoluÃƒÂ§ÃƒÂ£o cadastrada e salva com sucesso!", "success");
 
     if (user) {
       addDoc(collection(db, 'solucoes'), sanitizeForFirestore({ ...data, tipoEmpresa: seg, ownerId: user.uid }))
@@ -13095,7 +13094,7 @@ export default function App() {
     setModalData(null);
     setSolucaoForm({ idProblema: '', problema: '', area: '', solucao_recomendada: '', acoes_sugeridas: '', prazo_sugerido: '', responsavel_sugerido: '', kpis_sugeridos: '', resultado_esperado: '', comentario_sucesso: '', tipoEmpresa: '', tags: [] });
     playSuccessSound();
-    showToast("SoluÃ§Ã£o alterada e salva com sucesso!", "success");
+    showToast("SoluÃƒÂ§ÃƒÂ£o alterada e salva com sucesso!", "success");
 
     if (user) {
       updateDoc(doc(db, 'solucoes', id), sanitizeForFirestore({ ...data, tipoEmpresa: seg, ownerId: user.uid }))
@@ -13115,7 +13114,7 @@ export default function App() {
     setModalType(null);
     setModalData(null);
     playSuccessSound();
-    showToast("SoluÃ§Ã£o excluÃ­da com sucesso!", "success");
+    showToast("SoluÃƒÂ§ÃƒÂ£o excluÃƒÂ­da com sucesso!", "success");
 
     if (user) {
       (async () => {
@@ -13152,7 +13151,7 @@ export default function App() {
     setModalType(null);
     setModalData(null);
     playSuccessSound();
-    showToast("Todas as soluÃ§Ãµes foram excluÃ­das com sucesso!", "success");
+    showToast("Todas as soluÃƒÂ§ÃƒÂµes foram excluÃƒÂ­das com sucesso!", "success");
 
     if (user) {
       for (const id of idsToDelete) {
@@ -13184,7 +13183,7 @@ export default function App() {
     setModalType(null);
     setModalData(null);
     playSuccessSound();
-    showToast("Toda a biblioteca foi excluÃ­da com sucesso!", "success");
+    showToast("Toda a biblioteca foi excluÃƒÂ­da com sucesso!", "success");
 
     if (user) {
       for (const id of idsProblemas) deleteDoc(doc(db, 'problemas', id)).catch(() => {});
@@ -13208,7 +13207,7 @@ export default function App() {
 
     const exists = allAvailableAreas.some(a => normalizeAndFormatArea(a).toLowerCase() === norm);
     if (exists) {
-      showToast(`A Ã¡rea "${formatted}" jÃ¡ estÃ¡ cadastrada no sistema.`, "error");
+      showToast(`A ÃƒÂ¡rea "${formatted}" jÃƒÂ¡ estÃƒÂ¡ cadastrada no sistema.`, "error");
       return;
     }
 
@@ -13218,13 +13217,13 @@ export default function App() {
     setModalData(null);
     setNewAreaInput('');
     playSuccessSound();
-    showToast(`Ãrea "${formatted}" cadastrada com sucesso!`, "success");
+    showToast(`ÃƒÂrea "${formatted}" cadastrada com sucesso!`, "success");
 
     addDoc(collection(db, 'areas'), sanitizeForFirestore({
       nome: formatted,
       createdAt: new Date().toISOString(),
       ownerId: user.uid
-    })).catch(error => console.error("Erro ao cadastrar Ã¡rea no Firestore:", error));
+    })).catch(error => console.error("Erro ao cadastrar ÃƒÂ¡rea no Firestore:", error));
   };
 
   const deleteArea = (areaName: string) => {
@@ -13264,7 +13263,7 @@ export default function App() {
     setModalData(null);
     setAreaToDelete('');
     playSuccessSound();
-    showToast(`Ãrea "${formattedTarget}" excluÃ­da com sucesso!`, "success");
+    showToast(`ÃƒÂrea "${formattedTarget}" excluÃƒÂ­da com sucesso!`, "success");
 
     (async () => {
       try {
@@ -13300,7 +13299,7 @@ export default function App() {
           }
         }
       } catch (error) {
-        console.error("Erro ao excluir Ã¡rea no Firestore:", error);
+        console.error("Erro ao excluir ÃƒÂ¡rea no Firestore:", error);
       }
     })();
   };
@@ -13339,7 +13338,7 @@ export default function App() {
     setAreaToRename('');
     setNewAreaName('');
     playSuccessSound();
-    showToast(`Ãrea alterada para "${formattedNew}" com sucesso!`, "success");
+    showToast(`ÃƒÂrea alterada para "${formattedNew}" com sucesso!`, "success");
 
     (async () => {
       try {
@@ -13376,7 +13375,7 @@ export default function App() {
           }
         }
       } catch (error) {
-        console.error("Erro ao renomear Ã¡rea no Firestore:", error);
+        console.error("Erro ao renomear ÃƒÂ¡rea no Firestore:", error);
       }
     })();
   };
@@ -13392,9 +13391,9 @@ export default function App() {
         });
       }
       playSuccessSound();
-      showToast("Ãreas padrÃ£o restauradas com sucesso!", "success");
+      showToast("ÃƒÂreas padrÃƒÂ£o restauradas com sucesso!", "success");
     } catch (error) {
-      console.error("Erro ao restaurar Ã¡reas padrÃ£o:", error);
+      console.error("Erro ao restaurar ÃƒÂ¡reas padrÃƒÂ£o:", error);
     }
   };
 
@@ -13417,7 +13416,7 @@ export default function App() {
 
     const exists = availableSegments.some(s => s.trim().toLowerCase() === formatted.toLowerCase());
     if (exists) {
-      showToast(`O segmento "${formatted}" jÃ¡ existe no sistema.`, "error");
+      showToast(`O segmento "${formatted}" jÃƒÂ¡ existe no sistema.`, "error");
       return;
     }
 
@@ -13448,7 +13447,7 @@ export default function App() {
     setModalData(null);
     setSegmentToDelete('');
     playSuccessSound();
-    showToast(`Segmento "${segmentName}" excluÃ­do com sucesso!`, "success");
+    showToast(`Segmento "${segmentName}" excluÃƒÂ­do com sucesso!`, "success");
 
     (async () => {
       try {
@@ -13545,7 +13544,7 @@ export default function App() {
     setModalType(null);
     setModalData(null);
     playSuccessSound();
-    showToast("Plano de AÃ§Ã£o excluÃ­do com sucesso!", "success");
+    showToast("Plano de AÃƒÂ§ÃƒÂ£o excluÃƒÂ­do com sucesso!", "success");
 
     if (user) {
       (async () => {
@@ -13556,7 +13555,7 @@ export default function App() {
           snap.docs.forEach(d => batch.delete(d.ref));
           await batch.commit();
         } catch (cloudErr) {
-          console.error("Error deleting plano de aÃ§Ã£o from cloud:", cloudErr);
+          console.error("Error deleting plano de aÃƒÂ§ÃƒÂ£o from cloud:", cloudErr);
         }
       })();
     }
@@ -13566,7 +13565,7 @@ export default function App() {
     if (!empresaId) return;
     const companyDiags = diagnosticos.filter(d => d.empresaId === empresaId);
     if (companyDiags.length <= 1) {
-      showToast("NÃ£o hÃ¡ diagnÃ³sticos duplicados para esta empresa.", "info");
+      showToast("NÃƒÂ£o hÃƒÂ¡ diagnÃƒÂ³sticos duplicados para esta empresa.", "info");
       return;
     }
 
@@ -13607,7 +13606,7 @@ export default function App() {
     }
 
     playSuccessSound();
-    showToast(`${duplicatesToDelete.length} diagnÃ³stico(s) duplicado(s) excluÃ­do(s) com sucesso!`, "success");
+    showToast(`${duplicatesToDelete.length} diagnÃƒÂ³stico(s) duplicado(s) excluÃƒÂ­do(s) com sucesso!`, "success");
 
     // 2. Direct Cloud deletion in Firestore
     if (user) {
@@ -13695,7 +13694,7 @@ export default function App() {
       setModalType(null);
       setModalData(null);
       playSuccessSound();
-      showToast("DiagnÃ³stico excluÃ­do com sucesso!", "success");
+      showToast("DiagnÃƒÂ³stico excluÃƒÂ­do com sucesso!", "success");
 
       // 2. Direct Cloud deletion in Firestore without transactions to prevent lock or timeout aborts
       if (user) {
@@ -13734,7 +13733,7 @@ export default function App() {
               await batch.commit();
             }
           } catch (cloudErr) {
-            console.warn("Notice: sincronizaÃ§Ã£o de exclusÃ£o em cascata completada:", cloudErr);
+            console.warn("Notice: sincronizaÃƒÂ§ÃƒÂ£o de exclusÃƒÂ£o em cascata completada:", cloudErr);
           }
         })();
       }
@@ -13788,7 +13787,7 @@ export default function App() {
       setModalType(null);
       setModalData(null);
       playSuccessSound();
-      showToast("Empresa excluÃ­da com sucesso!", "success");
+      showToast("Empresa excluÃƒÂ­da com sucesso!", "success");
 
       // 2. Cascade delete on Firestore in cloud
       if (user) {
@@ -13883,13 +13882,13 @@ export default function App() {
       const sourceDiag = diagnosticos.find(d => d.id === sourceDiagId);
       const targetEmpresa = empresas.find(e => e.id === targetEmpresaId);
       if (!sourceDiag || !targetEmpresa) {
-        alert("DiagnÃ³stico de origem ou empresa de destino nÃ£o encontrados.");
+        alert("DiagnÃƒÂ³stico de origem ou empresa de destino nÃƒÂ£o encontrados.");
         return;
       }
 
       const diagDate = options.customDate ? new Date(options.customDate + 'T12:00:00') : new Date();
       const newDiagId = user ? doc(collection(db, 'diagnosticos')).id : 'diag_' + Date.now();
-      const finalProjName = (options.customName || '').trim() || `${targetEmpresa.nome} - DiagnÃ³stico Replicado (${sourceDiag.tipoEmpresa || 'Geral'})`;
+      const finalProjName = (options.customName || '').trim() || `${targetEmpresa.nome} - DiagnÃƒÂ³stico Replicado (${sourceDiag.tipoEmpresa || 'Geral'})`;
 
       const newDiagObj: Diagnostico = {
         id: newDiagId,
@@ -13898,7 +13897,7 @@ export default function App() {
         ownerId: user?.uid || 'local',
         areasDiagnostico: sourceDiag.areasDiagnostico && sourceDiag.areasDiagnostico.length > 0
           ? sourceDiag.areasDiagnostico 
-          : ['EstratÃ©gia', 'Processos', 'Marketing & Vendas', 'Financeiro', 'Recursos Humanos', 'Tecnologia & IA'],
+          : ['EstratÃƒÂ©gia', 'Processos', 'Marketing & Vendas', 'Financeiro', 'Recursos Humanos', 'Tecnologia & IA'],
         status: 'Planejamento',
         tipoEmpresa: sourceDiag.tipoEmpresa || targetEmpresa.tipoEmpresa || 'Geral',
         nomeProjeto: finalProjName,
@@ -14050,11 +14049,11 @@ export default function App() {
         })();
       }
 
-      alert(`DiagnÃ³stico replicado com sucesso para ${targetEmpresa.nome}! O novo diagnÃ³stico estÃ¡ pronto para revisÃ£o e ajustes.`);
+      alert(`DiagnÃƒÂ³stico replicado com sucesso para ${targetEmpresa.nome}! O novo diagnÃƒÂ³stico estÃƒÂ¡ pronto para revisÃƒÂ£o e ajustes.`);
       return newDiagObj;
     } catch (err: any) {
-      console.error("Erro ao replicar diagnÃ³stico:", err);
-      alert("Ocorreu um erro ao replicar o diagnÃ³stico.");
+      console.error("Erro ao replicar diagnÃƒÂ³stico:", err);
+      alert("Ocorreu um erro ao replicar o diagnÃƒÂ³stico.");
     }
   };
 
@@ -14080,7 +14079,7 @@ export default function App() {
       playSuccessSound();
       setTimeout(() => setManualSaveSuccess(false), 3500);
     } catch (err) {
-      console.error("Erro ao salvar diagnÃ³stico manualmente:", err);
+      console.error("Erro ao salvar diagnÃƒÂ³stico manualmente:", err);
       setManualSaveSuccess(true);
       setTimeout(() => setManualSaveSuccess(false), 3500);
     } finally {
@@ -14107,7 +14106,7 @@ export default function App() {
       });
 
       if (relevantRespostas.length === 0) {
-        alert("NÃ£o foram encontradas respostas nas Ã¡reas diagnosticadas para gerar o plano.");
+        alert("NÃƒÂ£o foram encontradas respostas nas ÃƒÂ¡reas diagnosticadas para gerar o plano.");
         setGeneratingPlan(false);
         return;
       }
@@ -14115,22 +14114,22 @@ export default function App() {
       // 2. Call AI
       const ai = getAI();
       if (!ai) {
-        alert("Chave de InteligÃªncia Artificial nÃ£o configurada. Por favor, adicione sua Chave (Groq ou Gemini) nas ConfiguraÃ§Ãµes para habilitar a geraÃ§Ã£o de Planos de AÃ§Ã£o.");
+        alert("Chave de InteligÃƒÂªncia Artificial nÃƒÂ£o configurada. Por favor, adicione sua Chave (Groq ou Gemini) nas ConfiguraÃƒÂ§ÃƒÂµes para habilitar a geraÃƒÂ§ÃƒÂ£o de Planos de AÃƒÂ§ÃƒÂ£o.");
         setGeneratingPlan(false);
         return;
       }
 
-      const prompt = `Com base nestas respostas do diagnÃ³stico: ${JSON.stringify(relevantRespostas)}, e considerando as seguintes soluÃ§Ãµes registradas: ${JSON.stringify(solucoes.slice(0, 8))}, gere um plano de aÃ§Ã£o estruturado.
+      const prompt = `Com base nestas respostas do diagnÃƒÂ³stico: ${JSON.stringify(relevantRespostas)}, e considerando as seguintes soluÃƒÂ§ÃƒÂµes registradas: ${JSON.stringify(solucoes.slice(0, 8))}, gere um plano de aÃƒÂ§ÃƒÂ£o estruturado.
 
-ORIENTAÃ‡ÃƒO CRÃTICA DE ANÃLISE SEMÃ‚NTICA DAS PERGUNTAS E RESPOSTAS:
+ORIENTAÃƒâ€¡ÃƒÆ’O CRÃƒÂTICA DE ANÃƒÂLISE SEMÃƒâ€šNTICA DAS PERGUNTAS E RESPOSTAS:
 Analise o significado de cada pergunta (premissa) e a resposta dada:
-1. Para perguntas sobre ocorrÃªncia de problemas, falhas ou rejeiÃ§Ãµes (ex: "O produtor jÃ¡ tentou acessar crÃ©dito rural e foi rejeitado por falta de documentaÃ§Ã£o?", "Possui inadimplÃªncia?"):
-   - A resposta "Sim" ou "Parcial" representa um PROBLEMA / GARGALO REAL. VocÃª DEVE incluir tarefas no plano de aÃ§Ã£o para resolver e sanar este problema.
-   - A resposta "NÃ£o" indica que o problema nÃ£o ocorre (situaÃ§Ã£o positiva). NÃ£o crie tarefas de correÃ§Ã£o para respostas "NÃ£o" neste tipo de pergunta.
-2. Para perguntas sobre controles, planejamentos e boas prÃ¡ticas (ex: "Possui controle financeiro?", "Tem licenÃ§a ambiental?"):
-   - A resposta "NÃ£o" ou "Parcial" representa uma LACUNA / GARGALO REAL. Crie tarefas de aÃ§Ã£o para implementar a prÃ¡tica.
+1. Para perguntas sobre ocorrÃƒÂªncia de problemas, falhas ou rejeiÃƒÂ§ÃƒÂµes (ex: "O produtor jÃƒÂ¡ tentou acessar crÃƒÂ©dito rural e foi rejeitado por falta de documentaÃƒÂ§ÃƒÂ£o?", "Possui inadimplÃƒÂªncia?"):
+   - A resposta "Sim" ou "Parcial" representa um PROBLEMA / GARGALO REAL. VocÃƒÂª DEVE incluir tarefas no plano de aÃƒÂ§ÃƒÂ£o para resolver e sanar este problema.
+   - A resposta "NÃƒÂ£o" indica que o problema nÃƒÂ£o ocorre (situaÃƒÂ§ÃƒÂ£o positiva). NÃƒÂ£o crie tarefas de correÃƒÂ§ÃƒÂ£o para respostas "NÃƒÂ£o" neste tipo de pergunta.
+2. Para perguntas sobre controles, planejamentos e boas prÃƒÂ¡ticas (ex: "Possui controle financeiro?", "Tem licenÃƒÂ§a ambiental?"):
+   - A resposta "NÃƒÂ£o" ou "Parcial" representa uma LACUNA / GARGALO REAL. Crie tarefas de aÃƒÂ§ÃƒÂ£o para implementar a prÃƒÂ¡tica.
    - A resposta "Sim" representa conformidade (ponto forte).
-3. IMPORTANTE: Gere APENAS tarefas para os itens que efetivamente representem gargalos ou problemas segundo a anÃ¡lise semÃ¢ntica acima. Se as respostas selecionadas forem de Ã¡reas especÃ­ficas, limite as tarefas a essas Ã¡reas.
+3. IMPORTANTE: Gere APENAS tarefas para os itens que efetivamente representem gargalos ou problemas segundo a anÃƒÂ¡lise semÃƒÂ¢ntica acima. Se as respostas selecionadas forem de ÃƒÂ¡reas especÃƒÂ­ficas, limite as tarefas a essas ÃƒÂ¡reas.
       
       Cada tarefa precisa de:
       - solucaoSugerida (string)
@@ -14138,13 +14137,13 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       - area (string)
       - acoes (detalhado, string)
       - status: 'Pendente'
-      - prioridade: 'MÃ©dia'
+      - prioridade: 'MÃƒÂ©dia'
       - responsavel: 'Consultor'
       - idProblema: (ID do problema/premissa relacionado)
       `;
       
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-1.5-flash",
         contents: prompt,
         config: {
             responseMimeType: "application/json",
@@ -14185,10 +14184,10 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
         });
       }
       playSuccessSound();
-      alert("Plano de AÃ§Ã£o gerado com sucesso por InteligÃªncia Artificial!");
+      alert("Plano de AÃƒÂ§ÃƒÂ£o gerado com sucesso por InteligÃƒÂªncia Artificial!");
     } catch(e: any) {
       console.error("Error generating or saving action plan:", e);
-      alert("Houve um erro ao gerar o plano de aÃ§Ã£o pela IA. Por favor, verifique sua conexÃ£o ou a chave de API nas ConfiguraÃ§Ãµes.\n\nDetalhes:\n" + (e.message || e));
+      alert("Houve um erro ao gerar o plano de aÃƒÂ§ÃƒÂ£o pela IA. Por favor, verifique sua conexÃƒÂ£o ou a chave de API nas ConfiguraÃƒÂ§ÃƒÂµes.\n\nDetalhes:\n" + (e.message || e));
     } finally {
       setGeneratingPlan(false);
     }
@@ -14196,7 +14195,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
   const replicateActionPlanFromSameActivity = async (targetTipoParam?: string) => {
     if (!selectedDiagnostico || !user) {
-      alert("Selecione um diagnÃ³stico para replicar o plano de aÃ§Ã£o.");
+      alert("Selecione um diagnÃƒÂ³stico para replicar o plano de aÃƒÂ§ÃƒÂ£o.");
       return;
     }
 
@@ -14244,7 +14243,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
             solucaoProposta: t.solucaoSugerida,
             responsavel: t.responsavel || "Consultor",
             status: t.status || "Pendente",
-            prioridade: t.prioridade || "MÃ©dia",
+            prioridade: t.prioridade || "MÃƒÂ©dia",
             idProblema: t.idProblema
           }));
         } else {
@@ -14258,7 +14257,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               solucaoProposta: s.solucao_recomendada,
               responsavel: s.responsavel_sugerido || "Consultor",
               status: "Pendente",
-              prioridade: "MÃ©dia",
+              prioridade: "MÃƒÂ©dia",
               resultadoEsperado: s.resultado_esperado
             }));
           } else {
@@ -14292,7 +14291,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
           solucaoSugerida: atv.solucaoProposta || atv.nome,
           acoes: atv.descricao || '',
           status: atv.status || 'Pendente',
-          prioridade: atv.prioridade || 'MÃ©dia',
+          prioridade: atv.prioridade || 'MÃƒÂ©dia',
           responsavel: atv.responsavel || 'Consultor',
           cargaHoraria: atv.cargaHoraria || '4h',
           dataInicio: atv.dataInicio || defaultDate,
@@ -14306,13 +14305,13 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       }
 
       // 5. Build summary strings for Report
-      const solucoesTexto = adjustedActivities.map(a => `â€¢ ${a.solucaoProposta || a.nome}`).join('\n');
-      const resultadosTexto = adjustedActivities.map(a => `â€¢ ${a.resultadoEsperado || a.descricao || 'Atividade concluÃ­da'}`).join('\n');
+      const solucoesTexto = adjustedActivities.map(a => `Ã¢â‚¬Â¢ ${a.solucaoProposta || a.nome}`).join('\n');
+      const resultadosTexto = adjustedActivities.map(a => `Ã¢â‚¬Â¢ ${a.resultadoEsperado || a.descricao || 'Atividade concluÃƒÂ­da'}`).join('\n');
 
       const updatedDadosConsultoria = {
         ...(selectedDiagnostico.dadosConsultoria || {}),
         cargaHoraria: totalCargaHoraria,
-        solucoesIndicadas: `AÃ‡Ã•ES REPLICADAS DO SEGMENTO (${currentType.toUpperCase()}):\n${solucoesTexto}`,
+        solucoesIndicadas: `AÃƒâ€¡Ãƒâ€¢ES REPLICADAS DO SEGMENTO (${currentType.toUpperCase()}):\n${solucoesTexto}`,
         resultadosEsperados: resultadosTexto
       };
 
@@ -14349,14 +14348,14 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       });
 
       playSuccessSound();
-      alert(`Plano de aÃ§Ã£o e relatÃ³rio de consultoria replicados com sucesso do segmento "${currentType}"!\n\n` +
-            `â€¢ Quantidade de atividades: ${adjustedActivities.length}\n` +
-            `â€¢ Carga horÃ¡ria mÃ¡xima por atividade: 4h\n` +
-            `â€¢ Carga horÃ¡ria total da consultoria: ${totalCargaHoraria}`);
+      alert(`Plano de aÃƒÂ§ÃƒÂ£o e relatÃƒÂ³rio de consultoria replicados com sucesso do segmento "${currentType}"!\n\n` +
+            `Ã¢â‚¬Â¢ Quantidade de atividades: ${adjustedActivities.length}\n` +
+            `Ã¢â‚¬Â¢ Carga horÃƒÂ¡ria mÃƒÂ¡xima por atividade: 4h\n` +
+            `Ã¢â‚¬Â¢ Carga horÃƒÂ¡ria total da consultoria: ${totalCargaHoraria}`);
 
     } catch (error: any) {
-      console.error("Erro ao replicar plano de aÃ§Ã£o por segmento:", error);
-      alert("Erro ao replicar plano de aÃ§Ã£o: " + (error.message || error));
+      console.error("Erro ao replicar plano de aÃƒÂ§ÃƒÂ£o por segmento:", error);
+      alert("Erro ao replicar plano de aÃƒÂ§ÃƒÂ£o: " + (error.message || error));
     } finally {
       setGeneratingPlan(false);
     }
@@ -14373,7 +14372,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
         ordem: targetOrdem,
         ownerId: user?.uid || 'local',
         status: data.status || 'Pendente',
-        prioridade: data.prioridade || 'MÃ©dia',
+        prioridade: data.prioridade || 'MÃƒÂ©dia',
         diagnosticoId: data.diagnosticoId || '',
         empresaId: data.empresaId || '',
         idProblema: data.idProblema || '',
@@ -14397,7 +14396,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
             ordem: targetOrdem,
             ownerId: user.uid,
             status: data.status || 'Pendente',
-            prioridade: data.prioridade || 'MÃ©dia',
+            prioridade: data.prioridade || 'MÃƒÂ©dia',
             diagnosticoId: data.diagnosticoId,
             empresaId: data.empresaId
           });
@@ -14413,7 +14412,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       setModalData(null);
       setTarefaForm({});
       playSuccessSound();
-      showToast("Tarefa do Plano de AÃ§Ã£o salva com sucesso!", "success");
+      showToast("Tarefa do Plano de AÃƒÂ§ÃƒÂ£o salva com sucesso!", "success");
     } catch (error) {
       console.error("Error creating tarefa:", error);
       setIsModalOpen(false);
@@ -14466,7 +14465,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       setModalData(null);
       setTarefaForm({});
       playSuccessSound();
-      showToast("Tarefa do Plano de AÃ§Ã£o alterada e salva com sucesso!", "success");
+      showToast("Tarefa do Plano de AÃƒÂ§ÃƒÂ£o alterada e salva com sucesso!", "success");
     } catch (error) {
       console.error("Error updating tarefa:", error);
       setIsModalOpen(false);
@@ -14556,14 +14555,14 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       setModalType(null);
       setModalData(null);
       playSuccessSound();
-      showToast("Tarefa excluÃ­da com sucesso!", "success");
+      showToast("Tarefa excluÃƒÂ­da com sucesso!", "success");
     } catch (error) {
       console.error("Error deleting tarefa:", error);
       setIsModalOpen(false);
       setModalType(null);
       setModalData(null);
       playSuccessSound();
-      showToast("Tarefa excluÃ­da com sucesso!", "success");
+      showToast("Tarefa excluÃƒÂ­da com sucesso!", "success");
     }
   };
 
@@ -14580,7 +14579,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       {
         descricao_problemas: 'Exemplo de Problema 2',
         area: 'RH',
-        impacto: 'MÃ©dio'
+        impacto: 'MÃƒÂ©dio'
       }
     ]);
     XLSX.utils.book_append_sheet(wb, wsProblemas, 'Problemas');
@@ -14595,19 +14594,19 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
     ]);
     XLSX.utils.book_append_sheet(wb, wsPremissas, 'Premissas');
 
-    // SoluÃ§Ãµes Template
+    // SoluÃƒÂ§ÃƒÂµes Template
     const wsSolucoes = XLSX.utils.json_to_sheet([
       {
         'Problema': 'Exemplo de Problema 1',
-        'Ãrea': 'Financeiro',
-        'SoluÃ§Ã£o Recomendada': 'Implementar backup automÃ¡tico',
-        'AÃ§Ãµes Sugeridas': '1. Contratar serviÃ§o de nuvem; 2. Configurar rotina diÃ¡ria',
-        'ResponsÃ¡vel': 'Gestor de TI',
+        'ÃƒÂrea': 'Financeiro',
+        'SoluÃƒÂ§ÃƒÂ£o Recomendada': 'Implementar backup automÃƒÂ¡tico',
+        'AÃƒÂ§ÃƒÂµes Sugeridas': '1. Contratar serviÃƒÂ§o de nuvem; 2. Configurar rotina diÃƒÂ¡ria',
+        'ResponsÃƒÂ¡vel': 'Gestor de TI',
         'KPIs': 'Disponibilidade de backup 100%',
-        'ComentÃ¡rio de Sucesso': 'ParabÃ©ns pela maturidade na gestÃ£o de dados e seguranÃ§a da informaÃ§Ã£o!'
+        'ComentÃƒÂ¡rio de Sucesso': 'ParabÃƒÂ©ns pela maturidade na gestÃƒÂ£o de dados e seguranÃƒÂ§a da informaÃƒÂ§ÃƒÂ£o!'
       }
     ]);
-    XLSX.utils.book_append_sheet(wb, wsSolucoes, 'SoluÃ§Ãµes');
+    XLSX.utils.book_append_sheet(wb, wsSolucoes, 'SoluÃƒÂ§ÃƒÂµes');
 
     XLSX.writeFile(wb, 'modelo_importacao.xlsx');
   };
@@ -14617,8 +14616,8 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
     
     // Problemas Registrados
     const wsProblemas = XLSX.utils.json_to_sheet(problemas.map(p => ({
-        'DescriÃ§Ã£o': p.descricao_problemas,
-        'Ãrea': p.area,
+        'DescriÃƒÂ§ÃƒÂ£o': p.descricao_problemas,
+        'ÃƒÂrea': p.area,
         'Impacto': p.impacto
     })));
     XLSX.utils.book_append_sheet(wb, wsProblemas, 'Problemas');
@@ -14631,17 +14630,17 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
     })));
     XLSX.utils.book_append_sheet(wb, wsPremissas, 'Premissas');
 
-    // SoluÃ§Ãµes Registradas
+    // SoluÃƒÂ§ÃƒÂµes Registradas
     const wsSolucoes = XLSX.utils.json_to_sheet(solucoes.map(s => ({
         'Problema': s.problema,
-        'Ãrea': s.area,
-        'SoluÃ§Ã£o Recomendada': s.solucao_recomendada,
-        'AÃ§Ãµes Sugeridas': s.acoes_sugeridas,
-        'ResponsÃ¡vel': s.responsavel_sugerido,
+        'ÃƒÂrea': s.area,
+        'SoluÃƒÂ§ÃƒÂ£o Recomendada': s.solucao_recomendada,
+        'AÃƒÂ§ÃƒÂµes Sugeridas': s.acoes_sugeridas,
+        'ResponsÃƒÂ¡vel': s.responsavel_sugerido,
         'KPIs': s.kpis_sugeridos,
-        'ComentÃ¡rio de Sucesso': s.comentario_sucesso
+        'ComentÃƒÂ¡rio de Sucesso': s.comentario_sucesso
     })));
-    XLSX.utils.book_append_sheet(wb, wsSolucoes, 'SoluÃ§Ãµes');
+    XLSX.utils.book_append_sheet(wb, wsSolucoes, 'SoluÃƒÂ§ÃƒÂµes');
 
     XLSX.writeFile(wb, 'dados_registrados.xlsx');
   };
@@ -14775,9 +14774,9 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
             id: newId,
             descricao_problemas: String(probName).trim().slice(0, 950),
             area: cleanArea,
-            impacto: 'MÃ©dio',
+            impacto: 'MÃƒÂ©dio',
             tipoEmpresa: strType,
-            NivelMaturidade: 'NÃ­vel 1',
+            NivelMaturidade: 'NÃƒÂ­vel 1',
             ownerId: user?.uid || 'local'
           };
 
@@ -14840,7 +14839,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
         const wsProblemas = findSheetByName(['problema', 'prob', 'problemas']);
         const wsPremissas = findSheetByName(['premissa', 'prem', 'perg', 'quest', 'perguntas', 'diagnostico']);
-        const wsSolucoes = findSheetByName(['solucao', 'soluÃ§Ã£o', 'solu', 'rec', 'acao', 'aÃ§Ã£o', 'solucoes', 'soluÃ§Ãµes', 'planodeacao']);
+        const wsSolucoes = findSheetByName(['solucao', 'soluÃƒÂ§ÃƒÂ£o', 'solu', 'rec', 'acao', 'aÃƒÂ§ÃƒÂ£o', 'solucoes', 'soluÃƒÂ§ÃƒÂµes', 'planodeacao']);
 
         const hasDedicatedSheets = (wsProblemas || wsPremissas || wsSolucoes);
 
@@ -14861,8 +14860,8 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               const cleanArea = normalizeAndFormatArea((area && String(area).trim()) ? String(area).trim().slice(0, 90) : 'Geral') || 'Geral';
               detectedAreas.add(cleanArea);
 
-              const strImpacto = (impacto && String(impacto).trim()) ? String(impacto).trim().slice(0, 90) : 'MÃ©dio';
-              const strNivel = (nivel && String(nivel).trim()) ? String(nivel).trim().slice(0, 90) : 'NÃ­vel 1';
+              const strImpacto = (impacto && String(impacto).trim()) ? String(impacto).trim().slice(0, 90) : 'MÃƒÂ©dio';
+              const strNivel = (nivel && String(nivel).trim()) ? String(nivel).trim().slice(0, 90) : 'NÃƒÂ­vel 1';
               const strType = (rowType && String(rowType).trim() && String(rowType).trim() !== 'Geral')
                 ? String(rowType).trim().slice(0, 90)
                 : selectedGlobalType;
@@ -14951,7 +14950,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
             }
           }
 
-          // 3. Process Dedicated SoluÃ§Ãµes
+          // 3. Process Dedicated SoluÃƒÂ§ÃƒÂµes
           if (wsSolucoes) {
             const rows = extractSheetRows(wsSolucoes);
             let lastProbName = '';
@@ -15026,8 +15025,8 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
             let currentArea = 'Geral';
             let currentProblem = '';
-            let currentImpacto = 'MÃ©dio';
-            let currentNivel = 'NÃ­vel 1';
+            let currentImpacto = 'MÃƒÂ©dio';
+            let currentNivel = 'NÃƒÂ­vel 1';
             let currentTipoEmpresa = selectedGlobalType;
 
             for (const row of rows) {
@@ -15066,7 +15065,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               } else if (currentProblem) {
                 activeProblemName = currentProblem;
               } else if (rowPergunta || rowSolucao) {
-                activeProblemName = `DiagnÃ³stico de ${currentArea}`;
+                activeProblemName = `DiagnÃƒÂ³stico de ${currentArea}`;
                 currentProblem = activeProblemName;
               }
 
@@ -15103,7 +15102,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                 }
               }
 
-              // Handle SoluÃ§Ã£o
+              // Handle SoluÃƒÂ§ÃƒÂ£o
               if (rowSolucao && String(rowSolucao).trim() && problemId) {
                 const strSolucao = String(rowSolucao).trim();
                 const isDup = solucoes.some(s => 
@@ -15157,7 +15156,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
             }
           } catch (err: any) {
             console.error("Aviso ao persistir batch no Firestore:", err);
-            errors.push("Aviso de sincronizaÃ§Ã£o na nuvem: " + err.message);
+            errors.push("Aviso de sincronizaÃƒÂ§ÃƒÂ£o na nuvem: " + err.message);
           }
         }
 
@@ -15241,7 +15240,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
         setPendingImportFile(null);
       } catch (err: any) {
         console.error("Error reading excel:", err);
-        alert("ERRO CRÃTICO ao ler o arquivo Excel: " + err.message);
+        alert("ERRO CRÃƒÂTICO ao ler o arquivo Excel: " + err.message);
       }
     };
     reader.readAsArrayBuffer(file);
@@ -15283,7 +15282,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
   const createDiagnostico = async (empresaId: string, areas: string[] = [], dateStr?: string, companyTypeFilter: string = 'Geral', projectName: string = '', stayOnProjectsView: boolean = false) => {
     if (!empresaId) return;
     if (isCreatingDiagRef.current) {
-      console.warn("createDiagnostico jÃ¡ estÃ¡ em execuÃ§Ã£o, bloqueando criaÃ§Ã£o duplicada.");
+      console.warn("createDiagnostico jÃƒÂ¡ estÃƒÂ¡ em execuÃƒÂ§ÃƒÂ£o, bloqueando criaÃƒÂ§ÃƒÂ£o duplicada.");
       return;
     }
     isCreatingDiagRef.current = true;
@@ -15435,7 +15434,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       return newDiagObj;
     } catch (err: any) {
       console.error("Error creating diagnosis:", err);
-      alert("Erro ao criar diagnÃ³stico: " + (err?.message || "Por favor, tente novamente."));
+      alert("Erro ao criar diagnÃƒÂ³stico: " + (err?.message || "Por favor, tente novamente."));
     } finally {
       setCreatingDiagnosis(false);
       isCreatingDiagRef.current = false;
@@ -15621,12 +15620,12 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
   const updateResposta = (
     id: string, 
-    val: 'Sim' | 'NÃ£o' | 'Parcial' | '' = '', 
+    val: 'Sim' | 'NÃƒÂ£o' | 'Parcial' | '' = '', 
     obs: string = '', 
     peso: number = 1,
     extraData?: Partial<Resposta>
   ) => {
-    // Score calculation: Sim=2, Parcial=1, NÃ£o=0
+    // Score calculation: Sim=2, Parcial=1, NÃƒÂ£o=0
     const points = val === 'Sim' ? 2 : val === 'Parcial' ? 1 : 0;
     const score = points * peso;
 
@@ -15683,7 +15682,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       }
 
       if (isNaN(parsedDate.getTime())) {
-        showToast("Data invÃ¡lida.", "error");
+        showToast("Data invÃƒÂ¡lida.", "error");
         return;
       }
       const newTimestamp = Timestamp.fromDate(parsedDate);
@@ -15728,10 +15727,10 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       setModalType(null);
       setModalData(null);
       playSuccessSound();
-      showToast("Data do diagnÃ³stico alterada com sucesso!", "success");
+      showToast("Data do diagnÃƒÂ³stico alterada com sucesso!", "success");
     } catch (err) {
-      console.error("Erro ao alterar data do diagnÃ³stico:", err);
-      showToast("Erro ao alterar data do diagnÃ³stico.", "error");
+      console.error("Erro ao alterar data do diagnÃƒÂ³stico:", err);
+      showToast("Erro ao alterar data do diagnÃƒÂ³stico.", "error");
     }
   };
 
@@ -15744,18 +15743,18 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
     doc.setFontSize(20);
     doc.setTextColor(5, 150, 105); // Emerald 600
-    doc.text('RelatÃ³rio de DiagnÃ³stico', 105, 20, { align: 'center' });
+    doc.text('RelatÃƒÂ³rio de DiagnÃƒÂ³stico', 105, 20, { align: 'center' });
     
     doc.setFontSize(12);
     doc.setTextColor(100);
     doc.text(`Data: ${dateStr}`, 20, 35);
     if (selectedDiagnostico.areasDiagnostico && selectedDiagnostico.areasDiagnostico.length > 0) {
       doc.setFontSize(10);
-      doc.text(`Ãreas Diagnosticadas: ${selectedDiagnostico.areasDiagnostico.join(', ')}`, 20, 42);
+      doc.text(`ÃƒÂreas Diagnosticadas: ${selectedDiagnostico.areasDiagnostico.join(', ')}`, 20, 42);
     }
 
     // Summary
-    const answeredRespostas = cleanResps.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'NÃ£o');
+    const answeredRespostas = cleanResps.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'NÃƒÂ£o');
     const totalScore = answeredRespostas.reduce((acc, r) => acc + (r.score || 0), 0);
     const maxScore = answeredRespostas.reduce((acc, r) => acc + (2 * (r.peso || 1)), 0);
     const performance = answeredRespostas.length > 0 ? ((totalScore / (maxScore || 1)) * 100).toFixed(1) : '0';
@@ -15775,22 +15774,22 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       .sort((a, b) => (a.area || '').localeCompare(b.area || ''));
     
     doc.setFontSize(16);
-    doc.text('Problemas Identificados e SugestÃµes', 20, 70);
+    doc.text('Problemas Identificados e SugestÃƒÂµes', 20, 70);
 
     const tableData = problems.map(p => [
       p.area || 'Geral',
       p.pergunta,
       p.resposta,
-      p.observacao || 'Sem observaÃ§Ãµes'
+      p.observacao || 'Sem observaÃƒÂ§ÃƒÂµes'
     ]);
 
     if (tableData.length === 0) {
       doc.setFontSize(12);
-      doc.text('Nenhum problema crÃ­tico identificado.', 20, 75);
+      doc.text('Nenhum problema crÃƒÂ­tico identificado.', 20, 75);
     } else {
       autoTable(doc, {
         startY: 75,
-        head: [['Ãrea', 'Pergunta', 'Resposta', 'ObservaÃ§Ã£o']],
+        head: [['ÃƒÂrea', 'Pergunta', 'Resposta', 'ObservaÃƒÂ§ÃƒÂ£o']],
         body: tableData,
         theme: 'grid',
         headStyles: { fillColor: [5, 150, 105] }
@@ -15813,11 +15812,11 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
         doc.addPage();
         doc.setFontSize(16);
         doc.setTextColor(0);
-        doc.text('Plano de AÃ§Ã£o (RelatÃ³rio de Consultoria)', 20, 20);
+        doc.text('Plano de AÃƒÂ§ÃƒÂ£o (RelatÃƒÂ³rio de Consultoria)', 20, 20);
 
         autoTable(doc, {
           startY: 25,
-          head: [['Atividade', 'DescriÃ§Ã£o', 'SoluÃ§Ã£o', 'ResponsÃ¡vel', 'Prazo']],
+          head: [['Atividade', 'DescriÃƒÂ§ÃƒÂ£o', 'SoluÃƒÂ§ÃƒÂ£o', 'ResponsÃƒÂ¡vel', 'Prazo']],
           body: cronogramaData,
           theme: 'grid',
           headStyles: { fillColor: [5, 150, 105] }
@@ -15957,7 +15956,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-black text-slate-800 tracking-tight">Biblioteca de Conhecimento</h1>
-            <p className="text-slate-500 font-medium">GestÃ£o de Problemas e Perguntas</p>
+            <p className="text-slate-500 font-medium">GestÃƒÂ£o de Problemas e Perguntas</p>
           </div>
           <div className="flex gap-2 flex-wrap">
             <input 
@@ -15985,7 +15984,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     setModalType('deleteAllBiblioteca');
                     setIsModalOpen(true);
                   }}
-                  title="Excluir todos os problemas, perguntas e soluÃ§Ãµes da biblioteca de uma sÃ³ vez"
+                  title="Excluir todos os problemas, perguntas e soluÃƒÂ§ÃƒÂµes da biblioteca de uma sÃƒÂ³ vez"
                 >
                   <Trash2 size={16} /> Limpar Toda a Biblioteca
                 </Button>
@@ -15995,10 +15994,10 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                   <Button
                     variant="outline"
                     className="text-rose-600 border-rose-100 hover:bg-rose-50"
-                    title="Exclui os problemas, perguntas e soluÃ§Ãµes do Tipo de Empresa e da Ãrea selecionados nos filtros"
+                    title="Exclui os problemas, perguntas e soluÃƒÂ§ÃƒÂµes do Tipo de Empresa e da ÃƒÂrea selecionados nos filtros"
                     onClick={() => {
                       if (!selectedAreaFilter || !selectedTipoEmpresaFilter) {
-                        showToast("Selecione o Tipo de Empresa e a Ãrea nos filtros para excluir somente essa seleÃ§Ã£o.", "error");
+                        showToast("Selecione o Tipo de Empresa e a ÃƒÂrea nos filtros para excluir somente essa seleÃƒÂ§ÃƒÂ£o.", "error");
                         document.getElementById('library-filter-panel')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         return;
                       }
@@ -16039,7 +16038,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                       setModalType('deleteAllSolucoes');
                       setIsModalOpen(true);
                     }}>
-                      <Trash2 size={18} /> Excluir SoluÃ§Ãµes
+                      <Trash2 size={18} /> Excluir SoluÃƒÂ§ÃƒÂµes
                     </Button>
                     <Button onClick={() => {
                       setModalType('createSolucao');
@@ -16047,7 +16046,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                       setSelectedAreaFilter('');
                       setIsModalOpen(true);
                     }}>
-                      <Plus size={18} /> Nova SoluÃ§Ã£o
+                      <Plus size={18} /> Nova SoluÃƒÂ§ÃƒÂ£o
                     </Button>
                   </>
                 ) : libraryTab === 'areas' ? (
@@ -16056,7 +16055,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     setModalType('createArea');
                     setIsModalOpen(true);
                   }}>
-                    <Plus size={18} /> Nova Ãrea
+                    <Plus size={18} /> Nova ÃƒÂrea
                   </Button>
                 ) : (
                   <Button onClick={() => {
@@ -16064,7 +16063,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     setModalType('createSegmento');
                     setIsModalOpen(true);
                   }}>
-                    <Plus size={18} /> Novo Tipo de NegÃ³cio
+                    <Plus size={18} /> Novo Tipo de NegÃƒÂ³cio
                   </Button>
                 )}
               </div>
@@ -16097,7 +16096,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               libraryTab === 'solucoes' ? "border-emerald-600 text-emerald-600" : "border-transparent text-slate-400 hover:text-slate-600"
             )}
           >
-            SoluÃ§Ãµes
+            SoluÃƒÂ§ÃƒÂµes
           </button>
           <button 
             onClick={() => setLibraryTab('areas')}
@@ -16106,7 +16105,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               libraryTab === 'areas' ? "border-emerald-600 text-emerald-600" : "border-transparent text-slate-400 hover:text-slate-600"
             )}
           >
-            Ãreas
+            ÃƒÂreas
           </button>
           <button 
             onClick={() => setLibraryTab('segmentos')}
@@ -16115,7 +16114,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               libraryTab === 'segmentos' ? "border-emerald-600 text-emerald-600" : "border-transparent text-slate-400 hover:text-slate-600"
             )}
           >
-            Tipos de NegÃ³cio
+            Tipos de NegÃƒÂ³cio
           </button>
         </div>
 
@@ -16123,13 +16122,13 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
           <div id="library-filter-panel" className="space-y-3 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Filtrar por Ãrea</label>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Filtrar por ÃƒÂrea</label>
                 <select 
                   className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-white"
                   value={selectedAreaFilter}
                   onChange={(e) => setSelectedAreaFilter(e.target.value)}
                 >
-                  <option value="">Todas as Ãreas</option>
+                  <option value="">Todas as ÃƒÂreas</option>
                   {uniqueLibraryAreas.map(nome => <option key={nome} value={nome}>{nome}</option>)}
                 </select>
               </div>
@@ -16494,7 +16493,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                               setIsModalOpen(true);
                             }}
                             className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-emerald-600 transition-colors cursor-pointer"
-                            title="Editar SoluÃ§Ã£o"
+                            title="Editar SoluÃƒÂ§ÃƒÂ£o"
                           >
                             <FileText size={15} />
                           </button>
@@ -16505,7 +16504,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                               setIsModalOpen(true);
                             }}
                             className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-                            title="Excluir SoluÃ§Ã£o"
+                            title="Excluir SoluÃƒÂ§ÃƒÂ£o"
                           >
                             <Trash2 size={15} />
                           </button>
@@ -16514,16 +16513,16 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">SoluÃ§Ã£o Recomendada</h4>
+                          <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">SoluÃƒÂ§ÃƒÂ£o Recomendada</h4>
                           <p className="text-sm text-slate-700 font-medium">{s.solucao_recomendada}</p>
                           
-                          <h4 className="text-xs font-bold text-slate-400 uppercase mt-4 mb-2">AÃ§Ãµes Sugeridas</h4>
+                          <h4 className="text-xs font-bold text-slate-400 uppercase mt-4 mb-2">AÃƒÂ§ÃƒÂµes Sugeridas</h4>
                           <p className="text-sm text-slate-600 whitespace-pre-wrap">{s.acoes_sugeridas}</p>
                         </div>
                         
                         <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-4">
                           <div>
-                            <h4 className="text-[10px] font-bold text-slate-400 uppercase">ResponsÃ¡vel</h4>
+                            <h4 className="text-[10px] font-bold text-slate-400 uppercase">ResponsÃƒÂ¡vel</h4>
                             <p className="text-xs font-bold text-slate-700">{s.responsavel_sugerido || 'N/A'}</p>
                           </div>
                           <div>
@@ -16583,7 +16582,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                 return s.tags?.some(t => normalizedMatch(t, selectedTagFilter)) || prob?.tags?.some(t => normalizedMatch(t, selectedTagFilter));
               }).length === 0 && (
                 <div className="py-12 text-center border-2 border-dashed border-slate-100 rounded-2xl">
-                  <p className="text-slate-400">Nenhuma soluÃ§Ã£o encontrada para os filtros selecionados.</p>
+                  <p className="text-slate-400">Nenhuma soluÃƒÂ§ÃƒÂ£o encontrada para os filtros selecionados.</p>
                 </div>
               )}
             </div>
@@ -16596,14 +16595,14 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                   <Layers size={20} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-800">GestÃ£o de Ãreas da Biblioteca</h3>
-                  <p className="text-xs text-slate-500">Cadastre, edite ou remova Ã¡reas organizacionais da biblioteca.</p>
+                  <h3 className="text-sm font-bold text-slate-800">GestÃƒÂ£o de ÃƒÂreas da Biblioteca</h3>
+                  <p className="text-xs text-slate-500">Cadastre, edite ou remova ÃƒÂ¡reas organizacionais da biblioteca.</p>
                 </div>
               </div>
               <div className="flex gap-2 flex-wrap">
                 {allAvailableAreas.length === 0 && (
-                  <Button variant="outline" onClick={restoreDefaultAreas} title="Restaurar as 10 Ã¡reas padrÃ£o do sistema no banco de dados">
-                    <RotateCcw size={18} /> Restaurar Ãreas PadrÃ£o
+                  <Button variant="outline" onClick={restoreDefaultAreas} title="Restaurar as 10 ÃƒÂ¡reas padrÃƒÂ£o do sistema no banco de dados">
+                    <RotateCcw size={18} /> Restaurar ÃƒÂreas PadrÃƒÂ£o
                   </Button>
                 )}
                 <Button onClick={() => {
@@ -16611,7 +16610,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                   setModalType('createArea');
                   setIsModalOpen(true);
                 }}>
-                  <Plus size={18} /> Nova Ãrea
+                  <Plus size={18} /> Nova ÃƒÂrea
                 </Button>
               </div>
             </div>
@@ -16634,8 +16633,8 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                             <h4 className="font-bold text-slate-800 text-sm">{nomeArea}</h4>
                             <div className="flex items-center gap-2 text-[11px] font-medium text-slate-400 mt-0.5">
                               <span>{probCount} problema(s)</span>
-                              <span>â€¢</span>
-                              <span>{solCount} soluÃ§Ã£o(Ãµes)</span>
+                              <span>Ã¢â‚¬Â¢</span>
+                              <span>{solCount} soluÃƒÂ§ÃƒÂ£o(ÃƒÂµes)</span>
                             </div>
                           </div>
                         </div>
@@ -16678,21 +16677,21 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                   <Layers size={24} />
                 </div>
                 <div className="max-w-md mx-auto space-y-1">
-                  <h4 className="font-bold text-slate-800 text-base">Nenhuma Ã¡rea cadastrada</h4>
+                  <h4 className="font-bold text-slate-800 text-base">Nenhuma ÃƒÂ¡rea cadastrada</h4>
                   <p className="text-xs text-slate-500 leading-relaxed">
-                    A biblioteca estÃ¡ limpa. VocÃª pode cadastrar suas prÃ³prias Ã¡reas personalizadas ou restaurar as Ã¡reas padrÃ£o a qualquer momento.
+                    A biblioteca estÃƒÂ¡ limpa. VocÃƒÂª pode cadastrar suas prÃƒÂ³prias ÃƒÂ¡reas personalizadas ou restaurar as ÃƒÂ¡reas padrÃƒÂ£o a qualquer momento.
                   </p>
                 </div>
                 <div className="flex items-center justify-center gap-3 pt-2">
                   <Button variant="outline" onClick={restoreDefaultAreas}>
-                    <RotateCcw size={18} /> Restaurar Ãreas PadrÃ£o
+                    <RotateCcw size={18} /> Restaurar ÃƒÂreas PadrÃƒÂ£o
                   </Button>
                   <Button onClick={() => {
                     setNewAreaInput('');
                     setModalType('createArea');
                     setIsModalOpen(true);
                   }}>
-                    <Plus size={18} /> Criar Primeira Ãrea
+                    <Plus size={18} /> Criar Primeira ÃƒÂrea
                   </Button>
                 </div>
               </div>
@@ -16706,8 +16705,8 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                   <Building2 size={20} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-800">GestÃ£o de Tipos de NegÃ³cio e Segmentos</h3>
-                  <p className="text-xs text-slate-500">Cadastre, edite ou remova tipos de negÃ³cio para categorizar empresas, diagnÃ³sticos e a biblioteca.</p>
+                  <h3 className="text-sm font-bold text-slate-800">GestÃƒÂ£o de Tipos de NegÃƒÂ³cio e Segmentos</h3>
+                  <p className="text-xs text-slate-500">Cadastre, edite ou remova tipos de negÃƒÂ³cio para categorizar empresas, diagnÃƒÂ³sticos e a biblioteca.</p>
                 </div>
               </div>
               <Button onClick={() => {
@@ -16715,7 +16714,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                 setModalType('createSegmento');
                 setIsModalOpen(true);
               }}>
-                <Plus size={18} /> Novo Tipo de NegÃ³cio
+                <Plus size={18} /> Novo Tipo de NegÃƒÂ³cio
               </Button>
             </div>
 
@@ -16737,14 +16736,14 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                           <div className="flex items-center gap-2">
                             <h4 className="font-bold text-slate-800 text-sm">{segmento}</h4>
                             {isStandard && (
-                              <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full uppercase">PadrÃ£o</span>
+                              <span className="px-2 py-0.5 bg-slate-100 text-slate-500 text-[10px] font-bold rounded-full uppercase">PadrÃƒÂ£o</span>
                             )}
                           </div>
                           <div className="flex items-center gap-2 text-[11px] font-medium text-slate-400 mt-0.5">
                             <span>{empCount} empresa(s)</span>
-                            <span>â€¢</span>
-                            <span>{diagCount} diagnÃ³stico(s)</span>
-                            <span>â€¢</span>
+                            <span>Ã¢â‚¬Â¢</span>
+                            <span>{diagCount} diagnÃƒÂ³stico(s)</span>
+                            <span>Ã¢â‚¬Â¢</span>
                             <span>{probCount} problema(s)</span>
                           </div>
                         </div>
@@ -16850,7 +16849,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
         }
       }
       playSuccessSound();
-      alert("Data de validade da licenÃ§a atualizada com sucesso!");
+      alert("Data de validade da licenÃƒÂ§a atualizada com sucesso!");
     } catch (error) {
       console.error("Error updating license validity:", error);
     }
@@ -16858,14 +16857,14 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
   const handleInitializeAdminCredenciada = async () => {
     if (!user) {
-      alert("VocÃª precisa estar autenticado no sistema.");
+      alert("VocÃƒÂª precisa estar autenticado no sistema.");
       return;
     }
     try {
       const q = query(collection(db, 'empresas_credenciadas'), where('ownerId', '==', user.uid));
       const snap = await getDocs(q);
       if (!snap.empty) {
-        alert("O registro do seu perfil jÃ¡ existe na base de dados!");
+        alert("O registro do seu perfil jÃƒÂ¡ existe na base de dados!");
         return;
       }
       const adminDoc = {
@@ -16881,7 +16880,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       };
       await addDoc(collection(db, 'empresas_credenciadas'), sanitizeForFirestore(adminDoc));
       playSuccessSound();
-      alert("Registro de Administrador com LicenÃ§a Definitiva criado com sucesso na nuvem!");
+      alert("Registro de Administrador com LicenÃƒÂ§a Definitiva criado com sucesso na nuvem!");
     } catch (err: any) {
       console.error("Erro ao inicializar administrador:", err);
       alert("Erro ao salvar no banco de dados: " + (err.message || err));
@@ -16907,13 +16906,13 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       return { expired: false, daysLeft: 99999, plan: 'Definitiva' };
     }
 
-    // Dias restantes calculados de forma robusta (nunca NaN â€” antes um NaN fazia o teste nunca vencer).
+    // Dias restantes calculados de forma robusta (nunca NaN Ã¢â‚¬â€ antes um NaN fazia o teste nunca vencer).
     const daysLeft = computeLicenseDaysLeft(myCredenciada);
     return { expired: daysLeft <= 0, daysLeft: Math.max(0, daysLeft), plan: plano };
   };
 
   const subStatus = checkSubscriptionExpiration();
-  // Planos comprados: o card de compra fica oculto atÃ© a licenÃ§a vencer.
+  // Planos comprados: o card de compra fica oculto atÃƒÂ© a licenÃƒÂ§a vencer.
   const isPaidPlan = (plan: string) => ['Mensal', 'Anual', 'Definitiva'].includes(plan);
   const isUserBlocked = !isAdmin && empresasCredenciadas.length > 0 && empresasCredenciadas.some(e => e.ownerId === user?.uid && e.status === 'Bloqueada');
   const isPlanExpired = subStatus.expired;
@@ -16930,8 +16929,8 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
           </h1>
           <p className="text-slate-500 mb-8 leading-relaxed">
             {isPlanExpired 
-              ? `Seu plano ${subStatus.plan} expirou. Para continuar utilizando todas as funcionalidades, por favor, realize a renovaÃ§Ã£o ou assine um novo plano.`
-              : "Sua licenÃ§a de uso estÃ¡ temporariamente suspensa pelo administrador. Entre em contato com o suporte para regularizar sua situaÃ§Ã£o."}
+              ? `Seu plano ${subStatus.plan} expirou. Para continuar utilizando todas as funcionalidades, por favor, realize a renovaÃƒÂ§ÃƒÂ£o ou assine um novo plano.`
+              : "Sua licenÃƒÂ§a de uso estÃƒÂ¡ temporariamente suspensa pelo administrador. Entre em contato com o suporte para regularizar sua situaÃƒÂ§ÃƒÂ£o."}
           </p>
           <div className="space-y-4">
             {isPlanExpired && (
@@ -16993,7 +16992,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               </div>
               <div className="flex flex-col">
                 <span className="font-black text-lg tracking-tight text-slate-800 leading-none">Consultoria Pro</span>
-                <span className="text-[10px] font-bold text-emerald-600 tracking-wide mt-0.5">by ItÃ mar Gomes</span>
+                <span className="text-[10px] font-bold text-emerald-600 tracking-wide mt-0.5">by ItÃƒÂ mar Gomes</span>
               </div>
             </div>
             <button 
@@ -17062,7 +17061,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                   size="sm"
                   onClick={handleExportLocalBackup}
                   className="text-xs font-bold border-slate-200 text-slate-700 hover:bg-slate-100 flex items-center gap-1.5 h-8 py-1 px-3"
-                  title="Baixar cÃ³pia de seguranÃ§a local (.JSON)"
+                  title="Baixar cÃƒÂ³pia de seguranÃƒÂ§a local (.JSON)"
                 >
                   <Download size={13} className="text-emerald-600" />
                   <span>Exportar Backup</span>
@@ -17082,9 +17081,9 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                 </label>
               </div>
             </div>
-            {/* Warning Banner for Client â€” card de compra sÃ³ aparece no perÃ­odo de TESTE.
-                Quem jÃ¡ comprou (Mensal/Anual) nÃ£o vÃª este card; ao vencer, aparece a tela
-                "Plano Expirado" com o botÃ£o "Renovar Assinatura". */}
+            {/* Warning Banner for Client Ã¢â‚¬â€ card de compra sÃƒÂ³ aparece no perÃƒÂ­odo de TESTE.
+                Quem jÃƒÂ¡ comprou (Mensal/Anual) nÃƒÂ£o vÃƒÂª este card; ao vencer, aparece a tela
+                "Plano Expirado" com o botÃƒÂ£o "Renovar Assinatura". */}
             {!isAdmin && !isPaidPlan(subStatus.plan) && subStatus.daysLeft <= 3 && subStatus.daysLeft >= 0 && (
               <motion.div 
                 initial={{ opacity: 0, y: -20 }}
@@ -17095,7 +17094,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                   <ShieldCheck size={20} />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-bold text-amber-900">Sua licenÃ§a {subStatus.plan} expira em breve!</p>
+                  <p className="text-sm font-bold text-amber-900">Sua licenÃƒÂ§a {subStatus.plan} expira em breve!</p>
                   <p className="text-xs text-amber-700">Restam apenas {subStatus.daysLeft} dias. Renove agora para evitar o bloqueio do sistema.</p>
                 </div>
                 <Button 
@@ -17127,8 +17126,8 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                         <Lock size={20} />
                       </div>
                       <div className="flex-1">
-                        <p className="text-sm font-bold text-rose-900">AtenÃ§Ã£o Admin: LicenÃ§as CrÃ­ticas</p>
-                        <p className="text-xs text-rose-700">Existem {expiringSoon.length} {expiringSoon.length === 1 ? 'empresa' : 'empresas'} com licenÃ§a expirada ou prestes a expirar nas prÃ³ximas 72 horas.</p>
+                        <p className="text-sm font-bold text-rose-900">AtenÃƒÂ§ÃƒÂ£o Admin: LicenÃƒÂ§as CrÃƒÂ­ticas</p>
+                        <p className="text-xs text-rose-700">Existem {expiringSoon.length} {expiringSoon.length === 1 ? 'empresa' : 'empresas'} com licenÃƒÂ§a expirada ou prestes a expirar nas prÃƒÂ³ximas 72 horas.</p>
                       </div>
                       <Button 
                         size="sm" 
@@ -17136,7 +17135,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                         onClick={() => setView('licenses')}
                         className="text-rose-600 border-rose-200 hover:bg-rose-100 text-xs font-bold"
                       >
-                        Gerenciar LicenÃ§as
+                        Gerenciar LicenÃƒÂ§as
                       </Button>
                     </motion.div>
                   );
@@ -17332,7 +17331,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     onImportLocalBackup={handleImportLocalBackup}
                     onOpenSmartSync={() => {
                       if (!user) {
-                        alert("Por favor, faÃ§a login com sua conta para sincronizar seus dados com a Nuvem.");
+                        alert("Por favor, faÃƒÂ§a login com sua conta para sincronizar seus dados com a Nuvem.");
                         return;
                       }
                       setIsSmartSyncModalOpen(true);
@@ -17360,9 +17359,9 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     onSyncWithAuth={async () => {
                       if (user) {
                         await syncUserWithCredenciada(user);
-                        alert("SincronizaÃ§Ã£o com Firebase Auth realizada com sucesso!");
+                        alert("SincronizaÃƒÂ§ÃƒÂ£o com Firebase Auth realizada com sucesso!");
                       } else {
-                        alert("Nenhum usuÃ¡rio logado no momento.");
+                        alert("Nenhum usuÃƒÂ¡rio logado no momento.");
                       }
                     }}
                     onOpenCreateModal={() => {
@@ -17550,7 +17549,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                     setIsEditSegmentModalOpen(true);
                                   }}
                                   className="hover:text-emerald-600 hover:bg-slate-250/30 p-0.5 rounded cursor-pointer border-none flex items-center justify-center transition-all"
-                                  title="Editar Tipo de NegÃ³cio"
+                                  title="Editar Tipo de NegÃƒÂ³cio"
                                 >
                                   <Edit2 size={10} />
                                 </button>
@@ -17575,7 +17574,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                               )}
                               {(emp.porteEmpresa || emp.naturezaJuridica) && (
                                 <p className="text-xs font-medium text-slate-500 flex items-center gap-1">
-                                  <span className="font-bold text-slate-400 uppercase text-[9px]">Tipo:</span> {[emp.porteEmpresa, emp.naturezaJuridica].filter(Boolean).join(' â€” ')}
+                                  <span className="font-bold text-slate-400 uppercase text-[9px]">Tipo:</span> {[emp.porteEmpresa, emp.naturezaJuridica].filter(Boolean).join(' Ã¢â‚¬â€ ')}
                                 </p>
                               )}
                               {emp.cafNumero && (
@@ -17608,7 +17607,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                 setSelectedAreasForDiagnosis([]); // Reset selection
                                 setIsModalOpen(true);
                               }}>
-                                Novo DiagnÃ³stico
+                                Novo DiagnÃƒÂ³stico
                               </Button>
                               <ChevronRight size={18} className="text-slate-300 group-hover:text-emerald-500 transition-colors" />
                             </div>
@@ -17635,7 +17634,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                         Anterior
                       </Button>
                       <span className="text-sm font-medium text-slate-500 mx-4">
-                        PÃ¡gina {currentPage} de {Math.ceil(empresas.length / itemsPerPage)}
+                        PÃƒÂ¡gina {currentPage} de {Math.ceil(empresas.length / itemsPerPage)}
                       </span>
                       <Button 
                         variant="outline" 
@@ -17643,7 +17642,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                         disabled={currentPage === Math.ceil(empresas.length / itemsPerPage)}
                         onClick={() => setCurrentPage(prev => Math.min(Math.ceil(empresas.length / itemsPerPage), prev + 1))}
                       >
-                        PrÃ³xima
+                        PrÃƒÂ³xima
                       </Button>
                     </div>
                   )}
@@ -17652,9 +17651,9 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     <div className="mt-12">
                       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                         <div>
-                          <h3 className="text-xl font-bold text-slate-800">HistÃ³rico: {selectedEmpresa.nome}</h3>
+                          <h3 className="text-xl font-bold text-slate-800">HistÃƒÂ³rico: {selectedEmpresa.nome}</h3>
                           <p className="text-xs text-slate-500 mt-0.5">
-                            {diagnosticos.filter(d => d.empresaId === selectedEmpresa.id).length} diagnÃ³stico(s) registrado(s)
+                            {diagnosticos.filter(d => d.empresaId === selectedEmpresa.id).length} diagnÃƒÂ³stico(s) registrado(s)
                           </p>
                         </div>
                         <div className="flex items-center gap-2">
@@ -17664,13 +17663,13 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                               size="sm" 
                               className="text-amber-700 bg-amber-50 hover:bg-amber-100 border-amber-200"
                               onClick={() => {
-                                if (confirm(`Deseja remover as repetiÃ§Ãµes e manter apenas o diagnÃ³stico principal mais recente de ${selectedEmpresa.nome}?`)) {
+                                if (confirm(`Deseja remover as repetiÃƒÂ§ÃƒÂµes e manter apenas o diagnÃƒÂ³stico principal mais recente de ${selectedEmpresa.nome}?`)) {
                                   cleanDuplicateDiagnosticosForEmpresa(selectedEmpresa.id);
                                 }
                               }}
-                              title="Remove diagnÃ³sticos duplicados deste cliente mantendo o principal"
+                              title="Remove diagnÃƒÂ³sticos duplicados deste cliente mantendo o principal"
                             >
-                              <RefreshCw size={14} className="mr-1.5" /> Limpar DiagnÃ³sticos Repetidos
+                              <RefreshCw size={14} className="mr-1.5" /> Limpar DiagnÃƒÂ³sticos Repetidos
                             </Button>
                           )}
                           <Button variant="outline" onClick={() => setSelectedEmpresa(null)}>Fechar</Button>
@@ -17691,7 +17690,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                 </div>
                                 <div>
                                   <p className="font-medium text-slate-800 flex items-center gap-2">
-                                    <span>{diag.nomeProjeto || diag.nome || 'DiagnÃ³stico Realizado'}</span>
+                                    <span>{diag.nomeProjeto || diag.nome || 'DiagnÃƒÂ³stico Realizado'}</span>
                                     {diagIdx === 0 && diagnosticos.filter(d => d.empresaId === selectedEmpresa.id).length > 1 && (
                                       <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">Principal</span>
                                     )}
@@ -17706,11 +17705,11 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                         setIsEditDateModalOpen(true);
                                       }}
                                       className="text-slate-400 hover:text-emerald-600 p-0.5 rounded transition-colors inline-flex items-center"
-                                      title="Alterar data deste diagnÃ³stico"
+                                      title="Alterar data deste diagnÃƒÂ³stico"
                                     >
                                       <Calendar size={12} />
                                     </button>
-                                    {diag.areasDiagnostico && diag.areasDiagnostico.length > 0 && <span>â€¢ {diag.areasDiagnostico.length} Ã¡rea(s)</span>}
+                                    {diag.areasDiagnostico && diag.areasDiagnostico.length > 0 && <span>Ã¢â‚¬Â¢ {diag.areasDiagnostico.length} ÃƒÂ¡rea(s)</span>}
                                   </p>
                                 </div>
                               </div>
@@ -17745,7 +17744,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                       setModalData(diag);
                                       setIsModalOpen(true);
                                     }}
-                                    title="Excluir este diagnÃ³stico permanentemente"
+                                    title="Excluir este diagnÃƒÂ³stico permanentemente"
                                   >
                                     <Trash2 size={16} />
                                   </Button>
@@ -17756,7 +17755,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                           </motion.div>
                         ))}
                         {diagnosticos.filter(d => d.empresaId === selectedEmpresa.id).length === 0 && (
-                          <p className="text-center py-8 text-slate-400 italic">Nenhum diagnÃ³stico encontrado para esta empresa.</p>
+                          <p className="text-center py-8 text-slate-400 italic">Nenhum diagnÃƒÂ³stico encontrado para esta empresa.</p>
                         )}
                       </div>
                     </div>
@@ -17777,10 +17776,10 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     <ArrowLeft size={18} /> Voltar
                   </Button>
                   <div>
-                    <h2 className="text-2xl font-bold">Realizando DiagnÃ³stico</h2>
+                    <h2 className="text-2xl font-bold">Realizando DiagnÃƒÂ³stico</h2>
                     <div className="flex flex-wrap items-center gap-2 text-slate-500 mt-1">
                       <span className="text-sm font-semibold">{selectedEmpresa?.nome}</span>
-                      <span className="text-slate-300 text-xs">â€¢</span>
+                      <span className="text-slate-300 text-xs">Ã¢â‚¬Â¢</span>
                       <span className="inline-flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 transition-colors">
                         <Calendar size={13} className="text-emerald-600" />
                         <span>{formatFirestoreDate(selectedDiagnostico.dataDiagnostico)}</span>
@@ -17791,12 +17790,12 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                             setIsEditDateModalOpen(true);
                           }}
                           className="text-slate-400 hover:text-emerald-600 ml-0.5 p-0.5 rounded hover:bg-slate-200 transition-colors"
-                          title="Alterar Data do DiagnÃ³stico"
+                          title="Alterar Data do DiagnÃƒÂ³stico"
                         >
                           <Edit2 size={11} />
                         </button>
                       </span>
-                      <span className="text-slate-300 text-xs">â€¢</span>
+                      <span className="text-slate-300 text-xs">Ã¢â‚¬Â¢</span>
                       <span className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
                         Segmento: {selectedDiagnostico.tipoEmpresa || 'Geral'}
                         <button
@@ -17808,7 +17807,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                             setIsEditSegmentModalOpen(true);
                           }}
                           className="hover:text-emerald-600 transition-colors p-0.5 rounded bg-slate-200/50 cursor-pointer flex items-center justify-center border-none"
-                          title="Editar Tipo de NegÃ³cio para este DiagnÃ³stico"
+                          title="Editar Tipo de NegÃƒÂ³cio para este DiagnÃƒÂ³stico"
                         >
                           <Edit2 size={10} />
                         </button>
@@ -17838,12 +17837,12 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     {saveStatus === 'saving' ? (
                       <>
                         <RefreshCw size={14} className="animate-spin text-amber-600" />
-                        <span>Salvando alteraÃ§Ãµes...</span>
+                        <span>Salvando alteraÃƒÂ§ÃƒÂµes...</span>
                       </>
                     ) : (
                       <>
                         <CheckCircle2 size={14} className="text-emerald-600" />
-                        <span>Salvamento ConcluÃ­do {lastSavedTime ? `(${lastSavedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })})` : ''}</span>
+                        <span>Salvamento ConcluÃƒÂ­do {lastSavedTime ? `(${lastSavedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })})` : ''}</span>
                       </>
                     )}
                   </div>
@@ -17855,7 +17854,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
                     disabled={isManualSaving}
                     onClick={handleManualSaveDiagnostico}
-                    title="ForÃ§ar salvamento de todas as respostas"
+                    title="ForÃƒÂ§ar salvamento de todas as respostas"
                   >
                     {isManualSaving ? (
                       <RefreshCw size={15} className="animate-spin mr-1.5" />
@@ -17874,9 +17873,9 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                       setReplicateSourceDiagId(selectedDiagnostico.id);
                       setIsReplicateModalOpen(true);
                     }}
-                    title="Replicar este diagnÃ³stico para clientes do mesmo segmento ou outros segmentos"
+                    title="Replicar este diagnÃƒÂ³stico para clientes do mesmo segmento ou outros segmentos"
                   >
-                    <Copy size={15} className="mr-1.5 text-sky-600" /> Replicar DiagnÃ³stico
+                    <Copy size={15} className="mr-1.5 text-sky-600" /> Replicar DiagnÃƒÂ³stico
                   </Button>
 
                   {/* Delete Button */}
@@ -17890,9 +17889,9 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                         setModalData(selectedDiagnostico);
                         setIsModalOpen(true);
                       }}
-                      title="Excluir este diagnÃ³stico e todas as suas respostas"
+                      title="Excluir este diagnÃƒÂ³stico e todas as suas respostas"
                     >
-                      <Trash2 size={15} className="mr-1.5" /> Excluir DiagnÃ³stico
+                      <Trash2 size={15} className="mr-1.5" /> Excluir DiagnÃƒÂ³stico
                     </Button>
                   )}
                 </div>
@@ -17984,19 +17983,19 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                   if (sortedAreaGroups.length === 0) {
                     return (
                       <div className="py-12 text-center text-slate-500 font-sans">
-                        Nenhuma pergunta encontrada para este diagnÃ³stico.
+                        Nenhuma pergunta encontrada para este diagnÃƒÂ³stico.
                       </div>
                     );
                   }
 
                   const totalOverall = uniqueRespostas.length;
-                  const answeredOverall = uniqueRespostas.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'NÃ£o').length;
+                  const answeredOverall = uniqueRespostas.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'NÃƒÂ£o').length;
                   const isAllPremissasAnswered = totalOverall > 0 && answeredOverall === totalOverall;
                   const pctOverall = totalOverall > 0 ? (isAllPremissasAnswered ? 100 : Math.min(99, Math.floor((answeredOverall / totalOverall) * 100))) : 0;
 
                   const getAreaProgress = (resps: Resposta[]) => {
                     const total = resps.length;
-                    const answered = resps.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'NÃ£o').length;
+                    const answered = resps.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'NÃƒÂ£o').length;
                     const isComplete = total > 0 && answered === total;
                     const pct = total > 0 ? (isComplete ? 100 : Math.min(99, Math.floor((answered / total) * 100))) : 0;
                     return { answered, total, pct, isComplete };
@@ -18034,7 +18033,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                       <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-black uppercase tracking-wider text-slate-500">Progresso Geral do DiagnÃ³stico</span>
+                            <span className="text-xs font-black uppercase tracking-wider text-slate-500">Progresso Geral do DiagnÃƒÂ³stico</span>
                             {isAllPremissasAnswered ? (
                               <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
                                 <CheckCircle2 size={12} /> 100% Preenchido
@@ -18066,7 +18065,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                       {/* Sidebar Tabs */}
                       <div className="lg:col-span-1 space-y-3">
                         <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl">
-                          <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Progresso por Ãrea</h4>
+                          <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3">Progresso por ÃƒÂrea</h4>
                           <div className="space-y-1.5">
                             {sortedAreaGroups.map(([area, areaResps]) => {
                               const prog = getAreaProgress(areaResps);
@@ -18111,7 +18110,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                           <div>
                             <h3 className="text-xl font-bold text-slate-800">{currentSelectedArea}</h3>
                             <p className="text-xs text-slate-500 mt-1 font-sans">
-                              Responda as perguntas desta Ã¡rea para diagnosticar o negÃ³cio do cliente.
+                              Responda as perguntas desta ÃƒÂ¡rea para diagnosticar o negÃƒÂ³cio do cliente.
                             </p>
                           </div>
                           {(() => {
@@ -18122,7 +18121,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                             return (
                               <div className="text-right">
                                 <span className="text-2xl font-black text-emerald-600 font-mono">{prog.pct}%</span>
-                                <span className="text-xs text-slate-400 block font-semibold">ConcluÃ­do</span>
+                                <span className="text-xs text-slate-400 block font-semibold">ConcluÃƒÂ­do</span>
                               </div>
                             );
                           })()}
@@ -18131,7 +18130,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                         <div className="space-y-12">
                           {sortedProblems.length === 0 ? (
                             <div className="p-8 text-center bg-slate-50 border border-slate-200/80 rounded-2xl text-slate-500 font-sans">
-                              Nenhuma pergunta vinculada para a Ã¡rea "{currentSelectedArea}".
+                              Nenhuma pergunta vinculada para a ÃƒÂ¡rea "{currentSelectedArea}".
                             </div>
                           ) : (
                             sortedProblems.map(([problema, probRespostas]) => {
@@ -18150,7 +18149,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                     <span className={cn(
                                       "px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest border",
                                       impacto === 'Alto' ? "bg-rose-50 text-rose-600 border-rose-100" :
-                                      impacto === 'MÃ©dio' ? "bg-amber-50 text-amber-600 border-amber-100" :
+                                      impacto === 'MÃƒÂ©dio' ? "bg-amber-50 text-amber-600 border-amber-100" :
                                       "bg-emerald-50 text-emerald-600 border-emerald-100"
                                     )}>
                                       Impacto: {impacto}
@@ -18181,7 +18180,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                                       }, 3500);
                                                     }
                                                   } catch (e) {
-                                                    console.warn("Erro na geraÃ§Ã£o automÃ¡tica de sugestÃ£o:", e);
+                                                    console.warn("Erro na geraÃƒÂ§ÃƒÂ£o automÃƒÂ¡tica de sugestÃƒÂ£o:", e);
                                                   } finally {
                                                     setGeneratingAction(null);
                                                   }
@@ -18211,7 +18210,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                                       }, 3500);
                                                     }
                                                   } catch (e) {
-                                                    console.warn("Erro na geraÃ§Ã£o automÃ¡tica de sugestÃ£o:", e);
+                                                    console.warn("Erro na geraÃƒÂ§ÃƒÂ£o automÃƒÂ¡tica de sugestÃƒÂ£o:", e);
                                                   } finally {
                                                     setGeneratingAction(null);
                                                   }
@@ -18228,20 +18227,20 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                             </button>
                                             <button 
                                               onClick={async () => {
-                                                await updateResposta(resp.id, 'NÃ£o', resp.observacao, resp.peso, resp);
+                                                await updateResposta(resp.id, 'NÃƒÂ£o', resp.observacao, resp.peso, resp);
                                                 if (!resp.observacao || resp.observacao.trim() === '') {
                                                   setGeneratingAction(resp.id);
                                                   try {
-                                                    const feedback = await generateAIFeedback('NÃ£o', resp.pergunta, resp.problema);
+                                                    const feedback = await generateAIFeedback('NÃƒÂ£o', resp.pergunta, resp.problema);
                                                     if (feedback) {
-                                                      await updateResposta(resp.id, 'NÃ£o', feedback, resp.peso, resp);
+                                                      await updateResposta(resp.id, 'NÃƒÂ£o', feedback, resp.peso, resp);
                                                       setCompletedAction(resp.id);
                                                       setTimeout(() => {
                                                         setCompletedAction(prev => prev === resp.id ? null : prev);
                                                       }, 3500);
                                                     }
                                                   } catch (e) {
-                                                    console.warn("Erro na geraÃ§Ã£o automÃ¡tica de sugestÃ£o:", e);
+                                                    console.warn("Erro na geraÃƒÂ§ÃƒÂ£o automÃƒÂ¡tica de sugestÃƒÂ£o:", e);
                                                   } finally {
                                                     setGeneratingAction(null);
                                                   }
@@ -18249,19 +18248,19 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                               }}
                                               className={cn(
                                                 "flex-1 min-w-[100px] py-3 rounded-lg border-2 font-bold transition-all flex items-center justify-center gap-2 cursor-pointer",
-                                                resp.resposta === 'NÃ£o' 
+                                                resp.resposta === 'NÃƒÂ£o' 
                                                   ? "bg-rose-50 border-rose-500 text-rose-700" 
                                                   : "bg-white border-slate-100 text-slate-400 hover:border-rose-200"
                                               )}
                                             >
-                                              <XCircle size={18} /> NÃ£o
+                                              <XCircle size={18} /> NÃƒÂ£o
                                             </button>
                                           </div>
                                         </div>
 
                                         <div className="md:w-1/3">
                                           <div className="flex items-center justify-between mb-2">
-                                            <label className="text-xs font-bold text-slate-400 uppercase block">ObservaÃ§Ãµes / SugestÃµes</label>
+                                            <label className="text-xs font-bold text-slate-400 uppercase block">ObservaÃƒÂ§ÃƒÂµes / SugestÃƒÂµes</label>
                                             <button
                                               type="button"
                                               disabled={generatingAction === resp.id}
@@ -18270,21 +18269,21 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                                 try {
                                                   const ai = getAI();
                                                   if (!ai) {
-                                                    alert("Chave de InteligÃªncia Artificial nÃ£o configurada. Por favor, adicione sua Chave (Groq ou Gemini) nas ConfiguraÃ§Ãµes para usar os recursos de InteligÃªncia Artificial.");
+                                                    alert("Chave de InteligÃƒÂªncia Artificial nÃƒÂ£o configurada. Por favor, adicione sua Chave (Groq ou Gemini) nas ConfiguraÃƒÂ§ÃƒÂµes para usar os recursos de InteligÃƒÂªncia Artificial.");
                                                     return;
                                                   }
-                                                  const feedback = await generateAIFeedback(resp.resposta || 'NÃ£o', resp.pergunta, resp.problema);
+                                                  const feedback = await generateAIFeedback(resp.resposta || 'NÃƒÂ£o', resp.pergunta, resp.problema);
                                                   if (feedback) {
-                                                    await updateResposta(resp.id, resp.resposta || 'NÃ£o', feedback, resp.peso, resp);
+                                                    await updateResposta(resp.id, resp.resposta || 'NÃƒÂ£o', feedback, resp.peso, resp);
                                                     setCompletedAction(resp.id);
                                                     setTimeout(() => {
                                                       setCompletedAction(prev => prev === resp.id ? null : prev);
                                                     }, 3500);
                                                   } else {
-                                                    alert("Falha ao gerar sugestÃ£o: Resposta vazia recebida do serviÃ§o de IA.");
+                                                    alert("Falha ao gerar sugestÃƒÂ£o: Resposta vazia recebida do serviÃƒÂ§o de IA.");
                                                   }
                                                 } catch (err: any) {
-                                                  alert("Falha ao gerar sugestÃ£o:\n" + (err.message || err));
+                                                  alert("Falha ao gerar sugestÃƒÂ£o:\n" + (err.message || err));
                                                 } finally {
                                                   setGeneratingAction(null);
                                                 }
@@ -18297,7 +18296,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                                   ? "bg-sky-50 text-sky-600 border-sky-200"
                                                   : "bg-sky-50 text-sky-600 hover:bg-sky-100 border-sky-100"
                                               )}
-                                              title="Gerar sugestÃµes com IA"
+                                              title="Gerar sugestÃƒÂµes com IA"
                                             >
                                               {generatingAction === resp.id ? (
                                                 <>
@@ -18307,7 +18306,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                               ) : completedAction === resp.id ? (
                                                 <>
                                                   <CheckCircle2 size={11} className="text-emerald-600" />
-                                                  <span>SugestÃ£o Gerada!</span>
+                                                  <span>SugestÃƒÂ£o Gerada!</span>
                                                 </>
                                               ) : (
                                                 <>
@@ -18319,7 +18318,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                           </div>
                                           <textarea 
                                             className="w-full h-24 p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all font-sans"
-                                            placeholder="Digite aqui pontos de melhoria ou use o botÃ£o 'Gerar com IA' acima..."
+                                            placeholder="Digite aqui pontos de melhoria ou use o botÃƒÂ£o 'Gerar com IA' acima..."
                                             value={resp.observacao || ''}
                                             onChange={(e) => updateResposta(resp.id, resp.resposta, e.target.value, resp.peso, resp)}
                                           />
@@ -18378,7 +18377,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                 <Button className="px-12 py-4 text-lg font-bold shadow-lg shadow-emerald-500/20 cursor-pointer" onClick={() => setView('dashboard')}>
                   Finalizar e Ver Dashboard
                 </Button>
-                <p className="text-xs text-slate-400 font-medium">VocÃª pode alternar entre o DiagnÃ³stico e o Dashboard a qualquer momento.</p>
+                <p className="text-xs text-slate-400 font-medium">VocÃƒÂª pode alternar entre o DiagnÃƒÂ³stico e o Dashboard a qualquer momento.</p>
               </div>
             </motion.div>
           )}
@@ -18399,7 +18398,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     <h2 className="text-2xl font-bold">Dashboard de Resultados</h2>
                     <div className="flex flex-wrap items-center gap-2 mt-1">
                       <span className="text-sm font-semibold text-slate-700">{selectedEmpresa?.nome}</span>
-                      <span className="text-slate-300 text-xs">â€¢</span>
+                      <span className="text-slate-300 text-xs">Ã¢â‚¬Â¢</span>
                       <span className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
                         Segmento: {selectedDiagnostico.tipoEmpresa || 'Geral'}
                         <button
@@ -18411,7 +18410,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                             setIsEditSegmentModalOpen(true);
                           }}
                           className="hover:text-emerald-600 transition-colors p-0.5 rounded bg-slate-200/50 cursor-pointer flex items-center justify-center border-none"
-                          title="Editar Tipo de NegÃ³cio para este DiagnÃ³stico"
+                          title="Editar Tipo de NegÃƒÂ³cio para este DiagnÃƒÂ³stico"
                         >
                           <Edit2 size={10} />
                         </button>
@@ -18443,10 +18442,10 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     </Button>
                   )}
                   <Button variant="outline" onClick={() => setView('plan')}>
-                    <Target size={18} /> Plano de AÃ§Ã£o
+                    <Target size={18} /> Plano de AÃƒÂ§ÃƒÂ£o
                   </Button>
                   <Button variant="outline" onClick={() => setView('cronograma')}>
-                    <Calendar size={18} /> RelatÃ³rio de Consultoria
+                    <Calendar size={18} /> RelatÃƒÂ³rio de Consultoria
                   </Button>
                   <Button variant="primary" onClick={generatePDF}>
                     <Download size={18} /> Exportar PDF
@@ -18465,14 +18464,14 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                   uniqueRespsDash.push(resp);
                 });
 
-                const answeredDash = uniqueRespsDash.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'NÃ£o');
+                const answeredDash = uniqueRespsDash.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'NÃƒÂ£o');
                 const totalScoreDash = answeredDash.reduce((acc, r) => acc + (r.score || 0), 0);
                 const maxScoreDash = answeredDash.reduce((acc, r) => acc + (2 * (r.peso || 1)), 0);
                 const scoreGeralPct = answeredDash.length > 0 ? Math.round((totalScoreDash / (maxScoreDash || 1)) * 100) : 0;
 
                 const countSim = uniqueRespsDash.filter(r => r.resposta === 'Sim').length;
                 const countParcial = uniqueRespsDash.filter(r => r.resposta === 'Parcial').length;
-                const countNao = uniqueRespsDash.filter(r => r.resposta === 'NÃ£o').length;
+                const countNao = uniqueRespsDash.filter(r => r.resposta === 'NÃƒÂ£o').length;
                 const countPendente = uniqueRespsDash.length - answeredDash.length;
 
                 return (
@@ -18500,10 +18499,10 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                       </Card>
 
                       <Card className="p-6">
-                        <p className="text-slate-400 text-sm font-medium mb-1 uppercase tracking-wider">Pontos CrÃ­ticos</p>
+                        <p className="text-slate-400 text-sm font-medium mb-1 uppercase tracking-wider">Pontos CrÃƒÂ­ticos</p>
                         <div className="flex items-baseline gap-2">
                           <p className="text-4xl font-bold text-rose-500">{countNao}</p>
-                          <span className="text-xs text-slate-400 font-medium">urgÃªncias</span>
+                          <span className="text-xs text-slate-400 font-medium">urgÃƒÂªncias</span>
                         </div>
                       </Card>
 
@@ -18530,7 +18529,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                             </div>
                           ) : (
                             <p className="text-[12px] font-semibold text-slate-400 mt-2">
-                              {answeredDash.length === 0 ? "Aguardando preenchimento" : "NÃ£o calculado ainda"}
+                              {answeredDash.length === 0 ? "Aguardando preenchimento" : "NÃƒÂ£o calculado ainda"}
                             </p>
                           )}
                         </div>
@@ -18568,7 +18567,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                           <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
                             <BarChart3 size={16} />
                           </div>
-                          <span>Velocidade de ExecuÃ§Ã£o (Score por Ãrea)</span>
+                          <span>Velocidade de ExecuÃƒÂ§ÃƒÂ£o (Score por ÃƒÂrea)</span>
                         </h4>
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                           {Object.values(uniqueRespsDash.reduce((acc: any, r) => {
@@ -18579,7 +18578,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                             }
                             const normArea = normalizeAndFormatArea(area) || area;
                             if (!acc[normArea]) acc[normArea] = { name: normArea, score: 0, totalPeso: 0 };
-                            if (r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'NÃ£o') {
+                            if (r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'NÃƒÂ£o') {
                               acc[normArea].score += (r.score || 0);
                               acc[normArea].totalPeso += (2 * (r.peso || 1));
                             }
@@ -18594,7 +18593,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                             if (value < 40) {
                               strokeColor = "#f43f5e";
                               badgeBg = "bg-rose-50 text-rose-700 border border-rose-100/50";
-                              levelText = "CrÃ­tico";
+                              levelText = "CrÃƒÂ­tico";
                             } else if (value < 70) {
                               strokeColor = "#f59e0b";
                               badgeBg = "bg-amber-50 text-amber-700 border border-amber-100/50";
@@ -18643,7 +18642,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                       <Card className="p-6">
                         <h4 className="font-bold mb-6 flex items-center gap-2">
                           <Info size={18} className="text-emerald-600" />
-                          DistribuiÃ§Ã£o de Respostas
+                          DistribuiÃƒÂ§ÃƒÂ£o de Respostas
                         </h4>
                         <div className="h-80">
                           <ResponsiveContainer width="100%" height="100%">
@@ -18652,7 +18651,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                 data={[
                                   { name: 'Sim', value: countSim, color: '#10b981' },
                                   { name: 'Parcial', value: countParcial, color: '#f59e0b' },
-                                  { name: 'NÃ£o', value: countNao, color: '#ef4444' },
+                                  { name: 'NÃƒÂ£o', value: countNao, color: '#ef4444' },
                                   ...(countPendente > 0 ? [{ name: 'Pendente', value: countPendente, color: '#94a3b8' }] : [])
                                 ]}
                                 cx="50%"
@@ -18681,7 +18680,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                         <div className="flex justify-center flex-wrap gap-4 mt-4">
                           <div className="flex items-center gap-1.5 text-xs font-medium"><div className="w-3 h-3 rounded-full bg-emerald-500" /> Sim ({countSim})</div>
                           <div className="flex items-center gap-1.5 text-xs font-medium"><div className="w-3 h-3 rounded-full bg-amber-500" /> Parcial ({countParcial})</div>
-                          <div className="flex items-center gap-1.5 text-xs font-medium"><div className="w-3 h-3 rounded-full bg-rose-500" /> NÃ£o ({countNao})</div>
+                          <div className="flex items-center gap-1.5 text-xs font-medium"><div className="w-3 h-3 rounded-full bg-rose-500" /> NÃƒÂ£o ({countNao})</div>
                           {countPendente > 0 && (
                             <div className="flex items-center gap-1.5 text-xs font-medium"><div className="w-3 h-3 rounded-full bg-slate-400" /> Pendentes ({countPendente})</div>
                           )}
@@ -18692,7 +18691,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                 );
               })()}
               <div className="mt-8">
-                <h4 className="font-bold mb-4">Problemas Identificados no DiagnÃ³stico</h4>
+                <h4 className="font-bold mb-4">Problemas Identificados no DiagnÃƒÂ³stico</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {(() => {
                     const cleanResps = deduplicateRespostas(respostas);
@@ -18719,7 +18718,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                           className={cn(
                             "p-4 border-l-4 cursor-pointer hover:shadow-md transition-all group",
                             impacto === 'Alto' ? "border-rose-500 bg-rose-50/30" :
-                            impacto === 'MÃ©dio' ? "border-amber-500 bg-amber-50/30" :
+                            impacto === 'MÃƒÂ©dio' ? "border-amber-500 bg-amber-50/30" :
                             "border-emerald-500 bg-emerald-50/30"
                           )}
                           onClick={() => setView('kanban')}
@@ -18731,10 +18730,10 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                             </span>
                           </div>
                           <p className="text-xs text-slate-500 font-medium">
-                            {probRespostas.length} {probRespostas.length === 1 ? 'pergunta nÃ£o atendida' : 'perguntas nÃ£o atendidas'}
+                            {probRespostas.length} {probRespostas.length === 1 ? 'pergunta nÃƒÂ£o atendida' : 'perguntas nÃƒÂ£o atendidas'}
                           </p>
                           <div className="mt-2 text-[10px] text-emerald-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-                            Ver Plano de AÃ§Ã£o <ArrowRight size={10} />
+                            Ver Plano de AÃƒÂ§ÃƒÂ£o <ArrowRight size={10} />
                           </div>
                         </Card>
                       );
@@ -18790,7 +18789,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                   <ArrowLeft size={18} /> Voltar
                 </Button>
                 <div>
-                  <h2 className="text-2xl font-bold">RelatÃ³rio de Consultoria</h2>
+                  <h2 className="text-2xl font-bold">RelatÃƒÂ³rio de Consultoria</h2>
                   <p className="text-slate-500">{selectedEmpresa?.nome}</p>
                 </div>
               </div>
@@ -18834,7 +18833,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                   <ArrowLeft size={18} /> Voltar
                 </Button>
                 <div>
-                  <h2 className="text-2xl font-bold">RelatÃ³rio Final</h2>
+                  <h2 className="text-2xl font-bold">RelatÃƒÂ³rio Final</h2>
                   <p className="text-slate-500">{selectedEmpresa?.nome}</p>
                 </div>
               </div>
@@ -18922,7 +18921,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
       {isModalOpen && modalType === 'confirmImportCompanyType' && (
         <Modal
-          title="Selecionar Tipo de Empresa para ImportaÃ§Ã£o"
+          title="Selecionar Tipo de Empresa para ImportaÃƒÂ§ÃƒÂ£o"
           onClose={() => {
             setIsModalOpen(false);
             setPendingImportFile(null);
@@ -18939,7 +18938,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
         >
           <div className="space-y-4">
             <p className="text-sm text-slate-600">
-              Para qual tipo de empresa vocÃª estÃ¡ importando estes diagnÃ³sticos e perguntas?
+              Para qual tipo de empresa vocÃƒÂª estÃƒÂ¡ importando estes diagnÃƒÂ³sticos e perguntas?
             </p>
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-1">Tipo de Empresa</label>
@@ -18980,18 +18979,18 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
       {isEditSegmentModalOpen && (
         <Modal
-          title="Editar Tipo de NegÃ³cio / Segmento"
+          title="Editar Tipo de NegÃƒÂ³cio / Segmento"
           onClose={() => setIsEditSegmentModalOpen(false)}
           onConfirm={updateSegment}
-          confirmText="Salvar AlteraÃ§Ãµes"
+          confirmText="Salvar AlteraÃƒÂ§ÃƒÂµes"
           disabled={!selectedSegmentForEdit.trim()}
         >
           <div className="space-y-4">
             <p className="text-sm text-slate-600">
-              Selecione o tipo de negÃ³cio / segmento deste cliente e do diagnÃ³stico. Isso facilita a categorizaÃ§Ã£o e geraÃ§Ã£o de relatÃ³rios precisos.
+              Selecione o tipo de negÃƒÂ³cio / segmento deste cliente e do diagnÃƒÂ³stico. Isso facilita a categorizaÃƒÂ§ÃƒÂ£o e geraÃƒÂ§ÃƒÂ£o de relatÃƒÂ³rios precisos.
             </p>
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Tipo de NegÃ³cio / Segmento</label>
+              <label className="block text-sm font-bold text-slate-700 mb-1">Tipo de NegÃƒÂ³cio / Segmento</label>
               <select
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white"
                 value={availableSegments.includes(selectedSegmentForEdit) ? selectedSegmentForEdit : 'Outro'}
@@ -19012,7 +19011,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               {(selectedSegmentForEdit === 'Outro' || (!availableSegments.includes(selectedSegmentForEdit) && selectedSegmentForEdit !== '')) && (
                 <input
                   type="text"
-                  placeholder="Especifique o tipo de negÃ³cio / segmento"
+                  placeholder="Especifique o tipo de negÃƒÂ³cio / segmento"
                   className="w-full mt-2 px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-sans"
                   value={customSegmentForEdit}
                   onChange={(e) => {
@@ -19029,7 +19028,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
       {isModalOpen && modalType === 'selectAreas' && (
         <Modal 
-          title="Escolher Ãreas para DiagnÃ³stico" 
+          title="Escolher ÃƒÂreas para DiagnÃƒÂ³stico" 
           onClose={() => !creatingDiagnosis && setIsModalOpen(false)}
           onConfirm={async () => {
             if (modalData?.id && !creatingDiagnosis) {
@@ -19037,7 +19036,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               setIsModalOpen(false);
             }
           }}
-          confirmText={creatingDiagnosis ? "Criando..." : "Iniciar DiagnÃ³stico"}
+          confirmText={creatingDiagnosis ? "Criando..." : "Iniciar DiagnÃƒÂ³stico"}
           disabled={selectedAreasForDiagnosis.length === 0 || !diagnosisDate || !diagnosisProjectName.trim() || creatingDiagnosis}
         >
           <div className="space-y-6">
@@ -19051,7 +19050,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                 className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium"
                 value={diagnosisProjectName}
                 onChange={(e) => setDiagnosisProjectName(e.target.value)}
-                placeholder="Ex: DiagnÃ³stico Operacional, Projeto - Empresa X"
+                placeholder="Ex: DiagnÃƒÂ³stico Operacional, Projeto - Empresa X"
                 required
               />
             </div>
@@ -19059,7 +19058,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
                 <Calendar size={16} className="text-emerald-600" />
-                Data do DiagnÃ³stico
+                Data do DiagnÃƒÂ³stico
               </label>
               <input 
                 type="date"
@@ -19072,7 +19071,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
                 <Building2 size={16} className="text-emerald-600" />
-                Tipo de Empresa para DiagnÃ³stico (Bloqueado)
+                Tipo de Empresa para DiagnÃƒÂ³stico (Bloqueado)
               </label>
               <input
                 type="text"
@@ -19081,17 +19080,17 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                 value={diagnosisCompanyType || 'Geral'}
               />
               <p className="text-xs text-sky-600 mt-2 font-medium bg-sky-50 border border-sky-100 p-2.5 rounded-lg flex items-center gap-1.5 font-sans">
-                ðŸ’¡ <span className="font-semibold">VÃ­nculo AutomÃ¡tico:</span> O diagnÃ³stico foi travado na biblioteca do Tipo de NegÃ³cio registrado para este cliente (<span className="font-bold underline">{diagnosisCompanyType || 'Geral'}</span>).
+                Ã°Å¸â€™Â¡ <span className="font-semibold">VÃƒÂ­nculo AutomÃƒÂ¡tico:</span> O diagnÃƒÂ³stico foi travado na biblioteca do Tipo de NegÃƒÂ³cio registrado para este cliente (<span className="font-bold underline">{diagnosisCompanyType || 'Geral'}</span>).
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
                 <CheckCircle2 size={16} className="text-emerald-600" />
-                Ãreas para DiagnÃ³stico
+                ÃƒÂreas para DiagnÃƒÂ³stico
               </label>
               <p className="text-xs text-slate-500 mb-4">
-                Selecione as Ã¡reas que deseja incluir neste diagnÃ³stico para a empresa <span className="font-bold text-slate-800">{modalData?.nome}</span>.
+                Selecione as ÃƒÂ¡reas que deseja incluir neste diagnÃƒÂ³stico para a empresa <span className="font-bold text-slate-800">{modalData?.nome}</span>.
               </p>
               <div className="grid grid-cols-2 gap-3 font-sans">
                 {availableAreasForSelectedType.map(area => (
@@ -19137,7 +19136,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                   className="text-xs text-slate-400 font-bold hover:underline"
                   onClick={() => setSelectedAreasForDiagnosis([])}
                 >
-                  Limpar SeleÃ§Ã£o
+                  Limpar SeleÃƒÂ§ÃƒÂ£o
                 </button>
               </div>
             </div>
@@ -19153,22 +19152,22 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
             setEmpresaForm({});
           }}
           onConfirm={modalType === 'create' ? createEmpresa : editEmpresa}
-          confirmText={modalType === 'create' ? "Criar Empresa" : "Salvar AlteraÃ§Ãµes"}
+          confirmText={modalType === 'create' ? "Criar Empresa" : "Salvar AlteraÃƒÂ§ÃƒÂµes"}
           disabled={!empresaForm.razaoSocial?.trim()}
           size="4xl"
         >
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-slate-700">
-            {/* LADO ESQUERDO: IdentificaÃ§Ã£o do Cliente */}
+            {/* LADO ESQUERDO: IdentificaÃƒÂ§ÃƒÂ£o do Cliente */}
             <div className="lg:col-span-7 space-y-4">
               <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100/80 space-y-4">
                 <h4 className="text-xs font-black text-sky-600 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-100">
                   <span className="flex items-center justify-center w-5 h-5 bg-sky-50 rounded-full text-sky-600 text-[10px]">1</span>
-                  IdentificaÃ§Ã£o da Empresa
+                  IdentificaÃƒÂ§ÃƒÂ£o da Empresa
                 </h4>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">RazÃ£o Social (ObrigatÃ³rio)</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">RazÃƒÂ£o Social (ObrigatÃƒÂ³rio)</label>
                     <input 
                       type="text" 
                       className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
@@ -19198,11 +19197,11 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                         ) : empresaForm.cnpj && cleanDigits(empresaForm.cnpj).length === 14 && (
                           isValidCNPJ(empresaForm.cnpj) ? (
                             <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
-                              âœ“ VÃ¡lido
+                              Ã¢Å“â€œ VÃƒÂ¡lido
                             </span>
                           ) : (
                             <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1">
-                              âœ— InvÃ¡lido
+                              Ã¢Å“â€” InvÃƒÂ¡lido
                             </span>
                           )
                         )}
@@ -19278,33 +19277,33 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                       {(empresaForm.naturezaJuridica || empresaForm.cnaePrincipalDescricao || empresaForm.logradouro) ? (
                         <div className="grid grid-cols-2 gap-3 text-xs">
                           <div>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase">Natureza JurÃ­dica</p>
-                            <p className="font-semibold text-slate-700">{empresaForm.naturezaJuridica || 'â€”'}</p>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Natureza JurÃƒÂ­dica</p>
+                            <p className="font-semibold text-slate-700">{empresaForm.naturezaJuridica || 'Ã¢â‚¬â€'}</p>
                           </div>
                           <div>
                             <p className="text-[9px] font-bold text-slate-400 uppercase">Porte</p>
-                            <p className="font-semibold text-slate-700">{empresaForm.porteEmpresa || 'â€”'}</p>
+                            <p className="font-semibold text-slate-700">{empresaForm.porteEmpresa || 'Ã¢â‚¬â€'}</p>
                           </div>
                           <div>
                             <p className="text-[9px] font-bold text-slate-400 uppercase">Data de Abertura</p>
                             <p className="font-semibold text-slate-700">
-                              {empresaForm.dataAberturaReceita ? formatFirestoreDate(empresaForm.dataAberturaReceita, 'dd/MM/yyyy') : 'â€”'}
+                              {empresaForm.dataAberturaReceita ? formatFirestoreDate(empresaForm.dataAberturaReceita, 'dd/MM/yyyy') : 'Ã¢â‚¬â€'}
                             </p>
                           </div>
                           <div>
                             <p className="text-[9px] font-bold text-slate-400 uppercase">Capital Social</p>
                             <p className="font-semibold text-slate-700">
-                              {empresaForm.capitalSocial ? `R$ ${Number(empresaForm.capitalSocial).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'â€”'}
+                              {empresaForm.capitalSocial ? `R$ ${Number(empresaForm.capitalSocial).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'Ã¢â‚¬â€'}
                             </p>
                           </div>
                           <div className="col-span-2">
                             <p className="text-[9px] font-bold text-slate-400 uppercase">Atividade Principal (CNAE)</p>
                             <p className="font-semibold text-slate-700">
-                              {empresaForm.cnaePrincipalCodigo ? `${empresaForm.cnaePrincipalCodigo} - ` : ''}{empresaForm.cnaePrincipalDescricao || 'â€”'}
+                              {empresaForm.cnaePrincipalCodigo ? `${empresaForm.cnaePrincipalCodigo} - ` : ''}{empresaForm.cnaePrincipalDescricao || 'Ã¢â‚¬â€'}
                             </p>
                           </div>
                           <div className="col-span-2">
-                            <p className="text-[9px] font-bold text-slate-400 uppercase">EndereÃ§o</p>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">EndereÃƒÂ§o</p>
                             <p className="font-semibold text-slate-700">
                               {[
                                 empresaForm.logradouro,
@@ -19313,13 +19312,13 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                                 empresaForm.bairro,
                                 empresaForm.municipio && empresaForm.uf ? `${empresaForm.municipio}/${empresaForm.uf}` : null,
                                 empresaForm.cep ? `CEP ${empresaForm.cep}` : null,
-                              ].filter(Boolean).join(', ') || 'â€”'}
+                              ].filter(Boolean).join(', ') || 'Ã¢â‚¬â€'}
                             </p>
                           </div>
                         </div>
                       ) : (
                         <p className="text-[11px] text-slate-500 italic flex items-center gap-1.5">
-                          <Info size={12} /> Dados ainda nÃ£o consultados. Clique no Ã­cone de atualizar acima para buscar direto da Receita Federal.
+                          <Info size={12} /> Dados ainda nÃƒÂ£o consultados. Clique no ÃƒÂ­cone de atualizar acima para buscar direto da Receita Federal.
                         </p>
                       )}
                     </div>
@@ -19327,7 +19326,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">NÃºmero da CAF</label>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">NÃƒÂºmero da CAF</label>
                       <input 
                         type="text" 
                         placeholder="Cadastro Atividade Florestal / Familiar"
@@ -19337,7 +19336,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">MÃªs/Ano de Abertura</label>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">MÃƒÂªs/Ano de Abertura</label>
                       <input 
                         type="text" 
                         className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
@@ -19348,11 +19347,11 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     </div>
                   </div>
 
-                  {/* --- Cadastro MDA (MinistÃ©rio do Desenvolvimento AgrÃ¡rio), vinculado Ã  CAF --- */}
+                  {/* --- Cadastro MDA (MinistÃƒÂ©rio do Desenvolvimento AgrÃƒÂ¡rio), vinculado ÃƒÂ  CAF --- */}
                   <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-1.5">
-                        <ShieldCheck size={12} className="text-emerald-600" /> Cadastro MDA (vinculado Ã  CAF)
+                        <ShieldCheck size={12} className="text-emerald-600" /> Cadastro MDA (vinculado ÃƒÂ  CAF)
                       </span>
                       {empresaForm.mdaDataValidade && (() => {
                         const mdaStatus = getMdaExpirationStatus(empresaForm.mdaDataValidade);
@@ -19380,7 +19379,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">NÃºmero do Cadastro MDA</label>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">NÃƒÂºmero do Cadastro MDA</label>
                         <input 
                           type="text" 
                           placeholder="Ex: MDA-000000000"
@@ -19402,7 +19401,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tipo de NegÃ³cio / Segmento</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tipo de NegÃƒÂ³cio / Segmento</label>
                     <select
                       className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
                       value={availableSegments.includes(empresaForm.tipoEmpresa || 'Geral') ? (empresaForm.tipoEmpresa || 'Geral') : 'Outro'}
@@ -19424,7 +19423,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                       <input 
                         type="text" 
                         className="w-full mt-2 px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 font-sans bg-white"
-                        placeholder="Especifique o tipo de negÃ³cio / segmento"
+                        placeholder="Especifique o tipo de negÃƒÂ³cio / segmento"
                         value={customEmpresaType}
                         onChange={(e) => {
                           const cVal = e.target.value;
@@ -19438,17 +19437,17 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               </div>
             </div>
 
-            {/* LADO DIREITO: Contato, EndereÃ§o e RepresentaÃ§Ã£o */}
+            {/* LADO DIREITO: Contato, EndereÃƒÂ§o e RepresentaÃƒÂ§ÃƒÂ£o */}
             <div className="lg:col-span-5 space-y-4">
               <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100/80 space-y-4">
                 <h4 className="text-xs font-black text-sky-600 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-100">
                   <span className="flex items-center justify-center w-5 h-5 bg-sky-50 rounded-full text-sky-600 text-[10px]">2</span>
-                  Contato & LocalizaÃ§Ã£o
+                  Contato & LocalizaÃƒÂ§ÃƒÂ£o
                 </h4>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">EndereÃ§o Comercial</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">EndereÃƒÂ§o Comercial</label>
                     <input 
                       type="text" 
                       className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
@@ -19512,11 +19511,11 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                       {empresaForm.cpfRepresentante && cleanDigits(empresaForm.cpfRepresentante).length === 11 && (
                         isValidCPF(empresaForm.cpfRepresentante) ? (
                           <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
-                            âœ“ VÃ¡lido
+                            Ã¢Å“â€œ VÃƒÂ¡lido
                           </span>
                         ) : (
                           <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1">
-                            âœ— InvÃ¡lido
+                            Ã¢Å“â€” InvÃƒÂ¡lido
                           </span>
                         )
                       )}
@@ -19552,13 +19551,13 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
             setCredenciadaForm({});
           }}
           onConfirm={modalType === 'createCredenciada' ? createCredenciada : editCredenciada}
-          confirmText={modalType === 'createCredenciada' ? "Criar Credenciada" : "Salvar AlteraÃ§Ãµes"}
+          confirmText={modalType === 'createCredenciada' ? "Criar Credenciada" : "Salvar AlteraÃƒÂ§ÃƒÂµes"}
           disabled={!credenciadaForm.razaoSocial?.trim()}
         >
           <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-bold text-slate-700 mb-1">RazÃ£o Social (ObrigatÃ³rio)</label>
+                <label className="block text-sm font-bold text-slate-700 mb-1">RazÃƒÂ£o Social (ObrigatÃƒÂ³rio)</label>
                 <input 
                   type="text" 
                   className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
@@ -19573,11 +19572,11 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                   {credenciadaForm.cnpj && cleanDigits(credenciadaForm.cnpj).length === 14 && (
                     isValidCNPJ(credenciadaForm.cnpj) ? (
                       <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                        âœ“ CNPJ VÃ¡lido
+                        Ã¢Å“â€œ CNPJ VÃƒÂ¡lido
                       </span>
                     ) : (
                       <span className="text-xs font-bold text-rose-500 flex items-center gap-1">
-                        âœ— CNPJ InvÃ¡lido
+                        Ã¢Å“â€” CNPJ InvÃƒÂ¡lido
                       </span>
                     )
                   )}
@@ -19640,11 +19639,11 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                   {credenciadaForm.cpfConsultor && cleanDigits(credenciadaForm.cpfConsultor).length === 11 && (
                     isValidCPF(credenciadaForm.cpfConsultor) ? (
                       <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                        âœ“ CPF VÃ¡lido
+                        Ã¢Å“â€œ CPF VÃƒÂ¡lido
                       </span>
                     ) : (
                       <span className="text-xs font-bold text-rose-500 flex items-center gap-1">
-                        âœ— CPF InvÃ¡lido
+                        Ã¢Å“â€” CPF InvÃƒÂ¡lido
                       </span>
                     )
                   )}
@@ -19675,11 +19674,11 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                   <option value="Teste">Teste Gratuito</option>
                   <option value="Mensal">Mensal (30 dias)</option>
                   <option value="Anual">Anual (365 dias)</option>
-                  <option value="Definitiva">â­ Definitiva (VitalÃ­cia / Ilimitada)</option>
+                  <option value="Definitiva">Ã¢Â­Â Definitiva (VitalÃƒÂ­cia / Ilimitada)</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1">PerÃ­odo de Teste (Dias)</label>
+                <label className="block text-sm font-bold text-slate-700 mb-1">PerÃƒÂ­odo de Teste (Dias)</label>
                 <input 
                   type="number" 
                   min="1"
@@ -19722,7 +19721,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               setModalType(null);
               setModalData(null);
               playSuccessSound();
-              showToast("Empresa Credenciada excluÃ­da com sucesso!", "success");
+              showToast("Empresa Credenciada excluÃƒÂ­da com sucesso!", "success");
 
               if (user) {
                 try {
@@ -19739,7 +19738,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
         >
           <p className="text-slate-600">
             Tem certeza que deseja excluir a empresa credenciada <span className="font-bold text-slate-900">{modalData?.razaoSocial}</span>? 
-            Esta aÃ§Ã£o Ã© irreversÃ­vel.
+            Esta aÃƒÂ§ÃƒÂ£o ÃƒÂ© irreversÃƒÂ­vel.
           </p>
         </Modal>
       )}
@@ -19752,25 +19751,25 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
           return (
             <Modal 
-              title="Excluir Ãrea da Biblioteca" 
+              title="Excluir ÃƒÂrea da Biblioteca" 
               onClose={() => setIsModalOpen(false)}
               onConfirm={() => deleteArea(areaToDelete)}
-              confirmText="Excluir Ãrea"
+              confirmText="Excluir ÃƒÂrea"
               variant="danger"
               disabled={!areaToDelete}
             >
               <div className="space-y-4">
                 <p className="text-sm text-slate-600">
-                  Selecione a Ã¡rea que deseja excluir da biblioteca.
+                  Selecione a ÃƒÂ¡rea que deseja excluir da biblioteca.
                 </p>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Ãrea a ser excluÃ­da</label>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">ÃƒÂrea a ser excluÃƒÂ­da</label>
                   <select
                     className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 bg-white text-sm font-semibold text-slate-800"
                     value={areaToDelete}
                     onChange={(e) => setAreaToDelete(e.target.value)}
                   >
-                    <option value="">Selecione uma Ã¡rea...</option>
+                    <option value="">Selecione uma ÃƒÂ¡rea...</option>
                     {allAvailableAreas.map(nome => (
                       <option key={nome} value={nome}>{nome}</option>
                     ))}
@@ -19781,22 +19780,22 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                   (linkedProblemsCount > 0 || linkedSolucoesCount > 0) ? (
                     <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1.5">
                       <p className="font-bold flex items-center gap-1.5 text-amber-800">
-                        <AlertTriangle size={15} /> AtenÃ§Ã£o ao Excluir
+                        <AlertTriangle size={15} /> AtenÃƒÂ§ÃƒÂ£o ao Excluir
                       </p>
                       <p className="font-medium">
-                        Esta Ã¡rea possui <span className="font-bold underline">{linkedProblemsCount} problema(s)</span> e <span className="font-bold underline">{linkedSolucoesCount} soluÃ§Ã£o(Ãµes)</span> vinculados.
+                        Esta ÃƒÂ¡rea possui <span className="font-bold underline">{linkedProblemsCount} problema(s)</span> e <span className="font-bold underline">{linkedSolucoesCount} soluÃƒÂ§ÃƒÂ£o(ÃƒÂµes)</span> vinculados.
                       </p>
                       <p className="text-[11px] text-amber-700">
-                        Ao confirmar a exclusÃ£o, esta Ã¡rea e todos os seus problemas e soluÃ§Ãµes associados serÃ£o permanentemente removidos da biblioteca.
+                        Ao confirmar a exclusÃƒÂ£o, esta ÃƒÂ¡rea e todos os seus problemas e soluÃƒÂ§ÃƒÂµes associados serÃƒÂ£o permanentemente removidos da biblioteca.
                       </p>
                     </div>
                   ) : (
                     <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl text-xs text-emerald-800 space-y-1">
                       <p className="font-bold flex items-center gap-1.5 text-emerald-700">
-                        <CheckCircle size={14} /> Ãrea liberada para exclusÃ£o
+                        <CheckCircle size={14} /> ÃƒÂrea liberada para exclusÃƒÂ£o
                       </p>
                       <p className="text-emerald-700 font-medium">
-                        Esta Ã¡rea nÃ£o possui nenhum problema vinculado e pode ser removida com seguranÃ§a.
+                        Esta ÃƒÂ¡rea nÃƒÂ£o possui nenhum problema vinculado e pode ser removida com seguranÃƒÂ§a.
                       </p>
                     </div>
                   )
@@ -19809,22 +19808,22 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
       {isModalOpen && modalType === 'createSegmento' && (
         <Modal 
-          title="Cadastrar Novo Tipo de NegÃ³cio / Segmento" 
+          title="Cadastrar Novo Tipo de NegÃƒÂ³cio / Segmento" 
           onClose={() => setIsModalOpen(false)}
           onConfirm={() => createSegmento(newSegmentInput)}
-          confirmText="Salvar Tipo de NegÃ³cio"
+          confirmText="Salvar Tipo de NegÃƒÂ³cio"
           disabled={!newSegmentInput.trim()}
         >
           <div className="space-y-4">
             <p className="text-sm text-slate-600">
-              Digite o nome do novo tipo de negÃ³cio / segmento. Ele estarÃ¡ disponÃ­vel para categorizar empresas, diagnÃ³sticos, problemas, perguntas e soluÃ§Ãµes no sistema.
+              Digite o nome do novo tipo de negÃƒÂ³cio / segmento. Ele estarÃƒÂ¡ disponÃƒÂ­vel para categorizar empresas, diagnÃƒÂ³sticos, problemas, perguntas e soluÃƒÂ§ÃƒÂµes no sistema.
             </p>
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome do Segmento / Tipo de NegÃ³cio</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome do Segmento / Tipo de NegÃƒÂ³cio</label>
               <input
                 type="text"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-sm font-semibold text-slate-800"
-                placeholder="Ex: Tecnologia, Varejo, SaÃºde, EducaÃ§Ã£o, RestauraÃ§Ã£o..."
+                placeholder="Ex: Tecnologia, Varejo, SaÃƒÂºde, EducaÃƒÂ§ÃƒÂ£o, RestauraÃƒÂ§ÃƒÂ£o..."
                 value={newSegmentInput}
                 onChange={(e) => setNewSegmentInput(e.target.value)}
                 autoFocus
@@ -19836,15 +19835,15 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
       {isModalOpen && modalType === 'renameSegmento' && (
         <Modal 
-          title="Editar / Renomear Tipo de NegÃ³cio" 
+          title="Editar / Renomear Tipo de NegÃƒÂ³cio" 
           onClose={() => setIsModalOpen(false)}
           onConfirm={() => renameSegmento(segmentToRename, newSegmentName)}
-          confirmText="Salvar AlteraÃ§Ã£o"
+          confirmText="Salvar AlteraÃƒÂ§ÃƒÂ£o"
           disabled={!segmentToRename || !newSegmentName.trim() || segmentToRename.trim().toLowerCase() === newSegmentName.trim().toLowerCase()}
         >
           <div className="space-y-4">
             <p className="text-sm text-slate-600">
-              Insira o novo nome para o tipo de negÃ³cio / segmento.
+              Insira o novo nome para o tipo de negÃƒÂ³cio / segmento.
             </p>
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Segmento Selecionado</label>
@@ -19872,10 +19871,10 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
       {isModalOpen && modalType === 'deleteSegmento' && (
         <Modal 
-          title="Excluir Tipo de NegÃ³cio" 
+          title="Excluir Tipo de NegÃƒÂ³cio" 
           onClose={() => setIsModalOpen(false)}
           onConfirm={() => deleteSegmento(segmentToDelete)}
-          confirmText="Confirmar ExclusÃ£o"
+          confirmText="Confirmar ExclusÃƒÂ£o"
           variant="danger"
         >
           <div className="space-y-3">
@@ -19883,7 +19882,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               Tem certeza que deseja excluir o segmento <span className="font-bold text-slate-900">"{segmentToDelete}"</span>?
             </p>
             <p className="text-xs text-slate-500">
-              Ele deixarÃ¡ de ser exibido na lista de segmentos personalizados do sistema.
+              Ele deixarÃƒÂ¡ de ser exibido na lista de segmentos personalizados do sistema.
             </p>
           </div>
         </Modal>
@@ -19903,19 +19902,19 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
             </p>
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 space-y-1.5">
               <p className="font-bold flex items-center gap-1.5">
-                <AlertTriangle size={15} /> AÃ§Ã£o IrreversÃ­vel!
+                <AlertTriangle size={15} /> AÃƒÂ§ÃƒÂ£o IrreversÃƒÂ­vel!
               </p>
               <p>
-                Esta aÃ§Ã£o apagarÃ¡ permanentemente do banco de dados:
+                Esta aÃƒÂ§ÃƒÂ£o apagarÃƒÂ¡ permanentemente do banco de dados:
               </p>
               <ul className="list-disc pl-4 space-y-0.5 font-medium">
-                <li>Todos os diagnÃ³sticos e histÃ³rico de respostas</li>
+                <li>Todos os diagnÃƒÂ³sticos e histÃƒÂ³rico de respostas</li>
                 <li>Todas as empresas registradas</li>
-                <li>Todas as perguntas, problemas e soluÃ§Ãµes de teste</li>
-                <li>Todas as tarefas do plano de aÃ§Ã£o</li>
+                <li>Todas as perguntas, problemas e soluÃƒÂ§ÃƒÂµes de teste</li>
+                <li>Todas as tarefas do plano de aÃƒÂ§ÃƒÂ£o</li>
               </ul>
               <p className="text-[11px] pt-1 text-rose-700 font-semibold">
-                O sistema serÃ¡ zerado e ficarÃ¡ pronto para o uso real.
+                O sistema serÃƒÂ¡ zerado e ficarÃƒÂ¡ pronto para o uso real.
               </p>
             </div>
           </div>
@@ -19924,18 +19923,18 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
       {isModalOpen && modalType === 'renameArea' && (
         <Modal 
-          title="Editar / Renomear Ãrea" 
+          title="Editar / Renomear ÃƒÂrea" 
           onClose={() => setIsModalOpen(false)}
           onConfirm={() => renameArea(areaToRename, newAreaName)}
-          confirmText="Salvar AlteraÃ§Ã£o"
+          confirmText="Salvar AlteraÃƒÂ§ÃƒÂ£o"
           disabled={!areaToRename || !newAreaName.trim() || areaToRename.trim().toLowerCase() === newAreaName.trim().toLowerCase()}
         >
           <div className="space-y-4">
             <p className="text-sm text-slate-600">
-              Insira o novo nome para a Ã¡rea. Esta alteraÃ§Ã£o atualizarÃ¡ automaticamente o nome da Ã¡rea em todos os problemas, soluÃ§Ãµes, perguntas e diagnÃ³sticos no banco de dados.
+              Insira o novo nome para a ÃƒÂ¡rea. Esta alteraÃƒÂ§ÃƒÂ£o atualizarÃƒÂ¡ automaticamente o nome da ÃƒÂ¡rea em todos os problemas, soluÃƒÂ§ÃƒÂµes, perguntas e diagnÃƒÂ³sticos no banco de dados.
             </p>
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Ãrea Selecionada</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">ÃƒÂrea Selecionada</label>
               <input
                 type="text"
                 readOnly
@@ -19944,11 +19943,11 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Novo Nome da Ãrea</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Novo Nome da ÃƒÂrea</label>
               <input
                 type="text"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-sm font-semibold text-slate-800"
-                placeholder="Digite o novo nome para a Ã¡rea"
+                placeholder="Digite o novo nome para a ÃƒÂ¡rea"
                 value={newAreaName}
                 onChange={(e) => setNewAreaName(e.target.value)}
                 autoFocus
@@ -19960,18 +19959,18 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
       {isModalOpen && modalType === 'createArea' && (
         <Modal 
-          title="Cadastrar Nova Ãrea" 
+          title="Cadastrar Nova ÃƒÂrea" 
           onClose={() => setIsModalOpen(false)}
           onConfirm={() => createArea(newAreaInput)}
-          confirmText="Salvar Ãrea"
+          confirmText="Salvar ÃƒÂrea"
           disabled={!newAreaInput.trim()}
         >
           <div className="space-y-4">
             <p className="text-sm text-slate-600">
-              Digite o nome da nova Ã¡rea organizacional para a biblioteca. Esta Ã¡rea ficarÃ¡ disponÃ­vel para seleÃ§Ã£o em todas as telas e cadastros do sistema.
+              Digite o nome da nova ÃƒÂ¡rea organizacional para a biblioteca. Esta ÃƒÂ¡rea ficarÃƒÂ¡ disponÃƒÂ­vel para seleÃƒÂ§ÃƒÂ£o em todas as telas e cadastros do sistema.
             </p>
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome da Ãrea</label>
+              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome da ÃƒÂrea</label>
               <input
                 type="text"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-sm font-semibold text-slate-800"
@@ -19989,21 +19988,21 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
         const { probs, prems, sols } = getLibrarySelectionToDelete();
         return (
         <Modal 
-          title="Excluir Problemas da SeleÃ§Ã£o" 
+          title="Excluir Problemas da SeleÃƒÂ§ÃƒÂ£o" 
           onClose={() => setIsModalOpen(false)}
           onConfirm={deleteAllProblemas}
-          confirmText="Excluir SeleÃ§Ã£o"
+          confirmText="Excluir SeleÃƒÂ§ÃƒÂ£o"
           variant="danger"
         >
           <div className="space-y-3">
             <p className="text-slate-700 font-medium">
-              Excluir os itens de <span className="font-bold text-rose-600">{selectedTipoEmpresaFilter}</span> na Ã¡rea <span className="font-bold text-rose-600">{selectedAreaFilter}</span>{selectedTagFilter ? <> com a tag <span className="font-bold text-rose-600">{selectedTagFilter}</span></> : null}?
+              Excluir os itens de <span className="font-bold text-rose-600">{selectedTipoEmpresaFilter}</span> na ÃƒÂ¡rea <span className="font-bold text-rose-600">{selectedAreaFilter}</span>{selectedTagFilter ? <> com a tag <span className="font-bold text-rose-600">{selectedTagFilter}</span></> : null}?
             </p>
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 space-y-1">
-              <p className="font-bold">â€¢ {probs.length} problema(s)</p>
-              <p className="font-bold">â€¢ {prems.length} pergunta(s)</p>
-              <p className="font-bold">â€¢ {sols.length} soluÃ§Ã£o(Ãµes)</p>
-              <p className="font-medium text-slate-700 mt-2">â€¢ Itens de outros tipos e Ã¡reas, suas Ãreas e Tipos de NegÃ³cio sÃ£o preservados.</p>
+              <p className="font-bold">Ã¢â‚¬Â¢ {probs.length} problema(s)</p>
+              <p className="font-bold">Ã¢â‚¬Â¢ {prems.length} pergunta(s)</p>
+              <p className="font-bold">Ã¢â‚¬Â¢ {sols.length} soluÃƒÂ§ÃƒÂ£o(ÃƒÂµes)</p>
+              <p className="font-medium text-slate-700 mt-2">Ã¢â‚¬Â¢ Itens de outros tipos e ÃƒÂ¡reas, suas ÃƒÂreas e Tipos de NegÃƒÂ³cio sÃƒÂ£o preservados.</p>
             </div>
           </div>
         </Modal>
@@ -20023,8 +20022,8 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               Tem certeza que deseja excluir <span className="font-bold text-rose-600">TODAS</span> as perguntas cadastradas?
             </p>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 space-y-1">
-              <p className="font-semibold text-slate-800">â€¢ As perguntas da biblioteca serÃ£o removidas.</p>
-              <p className="font-semibold text-emerald-700">â€¢ Suas Ãreas e Tipos de NegÃ³cio cadastrados serÃ£o preservados intactos.</p>
+              <p className="font-semibold text-slate-800">Ã¢â‚¬Â¢ As perguntas da biblioteca serÃƒÂ£o removidas.</p>
+              <p className="font-semibold text-emerald-700">Ã¢â‚¬Â¢ Suas ÃƒÂreas e Tipos de NegÃƒÂ³cio cadastrados serÃƒÂ£o preservados intactos.</p>
             </div>
           </div>
         </Modal>
@@ -20032,7 +20031,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
       {isModalOpen && modalType === 'deleteAllSolucoes' && (
         <Modal 
-          title="Excluir Todas as SoluÃ§Ãµes" 
+          title="Excluir Todas as SoluÃƒÂ§ÃƒÂµes" 
           onClose={() => setIsModalOpen(false)}
           onConfirm={deleteAllSolucoes}
           confirmText="Excluir Tudo"
@@ -20040,11 +20039,11 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
         >
           <div className="space-y-3">
             <p className="text-slate-700 font-medium">
-              Tem certeza que deseja excluir <span className="font-bold text-rose-600">TODAS</span> as soluÃ§Ãµes cadastradas?
+              Tem certeza que deseja excluir <span className="font-bold text-rose-600">TODAS</span> as soluÃƒÂ§ÃƒÂµes cadastradas?
             </p>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 space-y-1">
-              <p className="font-semibold text-slate-800">â€¢ As soluÃ§Ãµes da biblioteca serÃ£o removidas.</p>
-              <p className="font-semibold text-emerald-700">â€¢ Suas Ãreas e Tipos de NegÃ³cio cadastrados serÃ£o preservados intactos.</p>
+              <p className="font-semibold text-slate-800">Ã¢â‚¬Â¢ As soluÃƒÂ§ÃƒÂµes da biblioteca serÃƒÂ£o removidas.</p>
+              <p className="font-semibold text-emerald-700">Ã¢â‚¬Â¢ Suas ÃƒÂreas e Tipos de NegÃƒÂ³cio cadastrados serÃƒÂ£o preservados intactos.</p>
             </div>
           </div>
         </Modal>
@@ -20060,13 +20059,13 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
         >
           <div className="space-y-3">
             <p className="text-slate-700 font-medium">
-              Tem certeza que deseja excluir <span className="font-bold text-rose-600">TODOS</span> os Problemas, Perguntas e SoluÃ§Ãµes cadastrados?
+              Tem certeza que deseja excluir <span className="font-bold text-rose-600">TODOS</span> os Problemas, Perguntas e SoluÃƒÂ§ÃƒÂµes cadastrados?
             </p>
             <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 space-y-1">
-              <p className="font-bold">â€¢ {problemas.length} problemas serÃ£o excluÃ­dos.</p>
-              <p className="font-bold">â€¢ {premissas.length} perguntas serÃ£o excluÃ­das.</p>
-              <p className="font-bold">â€¢ {solucoes.length} soluÃ§Ãµes serÃ£o excluÃ­das.</p>
-              <p className="font-medium text-slate-700 mt-2">â€¢ Suas Ãreas e Tipos de NegÃ³cio cadastrados serÃ£o preservados intactos.</p>
+              <p className="font-bold">Ã¢â‚¬Â¢ {problemas.length} problemas serÃƒÂ£o excluÃƒÂ­dos.</p>
+              <p className="font-bold">Ã¢â‚¬Â¢ {premissas.length} perguntas serÃƒÂ£o excluÃƒÂ­das.</p>
+              <p className="font-bold">Ã¢â‚¬Â¢ {solucoes.length} soluÃƒÂ§ÃƒÂµes serÃƒÂ£o excluÃƒÂ­das.</p>
+              <p className="font-medium text-slate-700 mt-2">Ã¢â‚¬Â¢ Suas ÃƒÂreas e Tipos de NegÃƒÂ³cio cadastrados serÃƒÂ£o preservados intactos.</p>
             </div>
           </div>
         </Modal>
@@ -20082,14 +20081,14 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
         >
           <p className="text-slate-600">
             Tem certeza que deseja excluir a empresa <span className="font-bold text-slate-800">{modalData?.nome}</span>? 
-            Esta aÃ§Ã£o nÃ£o pode ser desfeita e removerÃ¡ todos os diagnÃ³sticos, respostas e planos de aÃ§Ã£o vinculados.
+            Esta aÃƒÂ§ÃƒÂ£o nÃƒÂ£o pode ser desfeita e removerÃƒÂ¡ todos os diagnÃƒÂ³sticos, respostas e planos de aÃƒÂ§ÃƒÂ£o vinculados.
           </p>
         </Modal>
       )}
 
       {isModalOpen && modalType === 'deleteDiagnostico' && (
         <Modal 
-          title="Excluir DiagnÃ³stico" 
+          title="Excluir DiagnÃƒÂ³stico" 
           onClose={() => !isDeletingDiagnostico && setIsModalOpen(false)}
           onConfirm={() => deleteDiagnostico(modalData?.id)}
           confirmText={isDeletingDiagnostico ? "Excluindo..." : "Excluir"}
@@ -20097,27 +20096,27 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
           variant="danger"
         >
           <p className="text-slate-600">
-            Tem certeza que deseja excluir este diagnÃ³stico? 
-            Todas as respostas e o cronograma associado serÃ£o removidos permanentemente.
+            Tem certeza que deseja excluir este diagnÃƒÂ³stico? 
+            Todas as respostas e o cronograma associado serÃƒÂ£o removidos permanentemente.
           </p>
         </Modal>
       )}
 
       {isModalOpen && modalType === 'deletePlanoAcao' && (
         <Modal 
-          title="Excluir Plano de AÃ§Ã£o" 
+          title="Excluir Plano de AÃƒÂ§ÃƒÂ£o" 
           onClose={() => setIsModalOpen(false)}
           onConfirm={() => deletePlanoAcao()}
-          confirmText="Excluir Plano de AÃ§Ã£o"
+          confirmText="Excluir Plano de AÃƒÂ§ÃƒÂ£o"
           variant="danger"
         >
-          <p className="text-slate-600">Tem certeza que deseja excluir este plano de aÃ§Ã£o? Esta aÃ§Ã£o nÃ£o pode ser desfeita.</p>
+          <p className="text-slate-600">Tem certeza que deseja excluir este plano de aÃƒÂ§ÃƒÂ£o? Esta aÃƒÂ§ÃƒÂ£o nÃƒÂ£o pode ser desfeita.</p>
         </Modal>
       )}
 
       {isModalOpen && modalType === 'importSuccess' && (
         <Modal 
-          title="ImportaÃ§Ã£o ConcluÃ­da" 
+          title="ImportaÃƒÂ§ÃƒÂ£o ConcluÃƒÂ­da" 
           onClose={() => setIsModalOpen(false)}
           onConfirm={() => setIsModalOpen(false)}
           confirmText="Entendido"
@@ -20143,7 +20142,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                 <span className="text-sm font-bold text-slate-800">{modalData?.premissas?.imported} novas / {modalData?.premissas?.skipped} duplicados</span>
               </div>
               <div className="flex justify-between p-2 bg-slate-50 rounded border border-slate-100">
-                <span className="text-sm text-slate-600">SoluÃ§Ãµes:</span>
+                <span className="text-sm text-slate-600">SoluÃƒÂ§ÃƒÂµes:</span>
                 <span className="text-sm font-bold text-slate-800">{modalData?.solucoes?.imported} novas / {modalData?.solucoes?.skipped} duplicados</span>
               </div>
             </div>
@@ -20153,7 +20152,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                 <p className="text-xs font-bold text-rose-500 uppercase mb-1">Avisos/Erros:</p>
                 <div className="max-h-32 overflow-y-auto p-2 bg-rose-50 rounded border border-rose-100 text-[10px] text-rose-700 font-mono">
                   {modalData.errors.map((err: string, i: number) => (
-                    <div key={i} className="mb-1">â€¢ {err}</div>
+                    <div key={i} className="mb-1">Ã¢â‚¬Â¢ {err}</div>
                   ))}
                 </div>
               </div>
@@ -20164,7 +20163,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
       {isModalOpen && modalType === 'viewMaturityDetails' && (
         <Modal 
-          title="NÃ­vel de Maturidade com IA" 
+          title="NÃƒÂ­vel de Maturidade com IA" 
           onClose={() => setIsModalOpen(false)}
           onConfirm={() => setIsModalOpen(false)}
           confirmText="Entendido"
@@ -20174,21 +20173,21 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-1">
                 <Sparkles size={24} className="text-emerald-500 animate-pulse" />
               </div>
-              <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">NÃ­vel de Maturidade Detectado</p>
+              <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">NÃƒÂ­vel de Maturidade Detectado</p>
               <h4 className="text-xl font-extrabold text-emerald-900 leading-tight">
                 {modalData?.nivel}
               </h4>
             </div>
 
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2 text-left">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Justificativa da InteligÃªncia Artificial:</p>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Justificativa da InteligÃƒÂªncia Artificial:</p>
               <p className="text-sm text-slate-700 leading-relaxed font-semibold">
                 {modalData?.justificativa}
               </p>
             </div>
             
             <p className="text-[10px] text-slate-400 text-center leading-relaxed">
-              *Este nÃ­vel de maturidade Ã© recalculado automaticamente se as perguntas do diagnÃ³stico forem alteradas ou novas respostas forem inseridas.
+              *Este nÃƒÂ­vel de maturidade ÃƒÂ© recalculado automaticamente se as perguntas do diagnÃƒÂ³stico forem alteradas ou novas respostas forem inseridas.
             </p>
           </div>
         </Modal>
@@ -20210,7 +20209,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
         >
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Filtrar por Ãrea</label>
+              <label className="block text-sm font-bold text-slate-700 mb-1">Filtrar por ÃƒÂrea</label>
               <select 
                 className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white"
                 value={selectedAreaFilter}
@@ -20226,7 +20225,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                   }
                 }}
               >
-                <option value="">Todas as Ã¡reas</option>
+                <option value="">Todas as ÃƒÂ¡reas</option>
                 {allAvailableAreas.map(nome => (
                   <option key={nome} value={nome}>{nome}</option>
                 ))}
@@ -20266,13 +20265,13 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               <label className="block text-sm font-bold text-slate-700 mb-1">Texto da Pergunta</label>
               <textarea 
                 className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 h-24"
-                placeholder="Digite a pergunta para o diagnÃ³stico..."
+                placeholder="Digite a pergunta para o diagnÃƒÂ³stico..."
                 value={premissaForm.pergunta}
                 onChange={(e) => setPremissaForm({ ...premissaForm, pergunta: e.target.value })}
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Peso (ImportÃ¢ncia)</label>
+              <label className="block text-sm font-bold text-slate-700 mb-1">Peso (ImportÃƒÂ¢ncia)</label>
               <input 
                 type="number" 
                 min="1"
@@ -20332,17 +20331,17 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               updateTarefa(modalData.id, tarefaForm);
             }
           }}
-          confirmText={modalType === 'createTarefa' ? "Criar Tarefa" : "Salvar AlteraÃ§Ãµes"}
+          confirmText={modalType === 'createTarefa' ? "Criar Tarefa" : "Salvar AlteraÃƒÂ§ÃƒÂµes"}
           disabled={!tarefaForm.problema || !tarefaForm.empresaId}
           size="4xl"
         >
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-slate-700">
-            {/* LADO ESQUERDO: Escopo e IdentificaÃ§Ã£o */}
+            {/* LADO ESQUERDO: Escopo e IdentificaÃƒÂ§ÃƒÂ£o */}
             <div className="lg:col-span-7 space-y-4">
               <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100/80 space-y-4">
                 <h4 className="text-xs font-black text-sky-600 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-100">
                   <span className="flex items-center justify-center w-5 h-5 bg-sky-50 rounded-full text-sky-600 text-[10px]">1</span>
-                  Escopo & IdentificaÃ§Ã£o
+                  Escopo & IdentificaÃƒÂ§ÃƒÂ£o
                 </h4>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -20360,7 +20359,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     </select>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">SoluÃ§Ã£o Associada</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">SoluÃƒÂ§ÃƒÂ£o Associada</label>
                     <select 
                       className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all bg-white"
                       value={tarefaForm.solucaoId || ''}
@@ -20386,7 +20385,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                           return respostas.some(resp => 
                             resp.diagnosticoId === diag.id && 
                             (resp.idProblema === sol.idProblema || resp.problema === sol.problema) && 
-                            (resp.resposta === 'NÃ£o' || resp.resposta === 'Parcial')
+                            (resp.resposta === 'NÃƒÂ£o' || resp.resposta === 'Parcial')
                           );
                         });
                         return hasNegativeResponse;
@@ -20399,7 +20398,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">TÃ­tulo / Problema</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">TÃƒÂ­tulo / Problema</label>
                     <input 
                       type="text" 
                       className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all bg-white"
@@ -20409,20 +20408,20 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ãrea de Consultoria</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">ÃƒÂrea de Consultoria</label>
                     <input 
                       type="text" 
                       list="areas-sugeridas-form"
                       className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all bg-white"
-                      placeholder="Ex: FINANÃ‡AS, ESTRATÃ‰GIA..."
+                      placeholder="Ex: FINANÃƒâ€¡AS, ESTRATÃƒâ€°GIA..."
                       value={tarefaForm.area || ''}
                       onChange={(e) => setTarefaForm({...tarefaForm, area: e.target.value.toUpperCase()})}
                     />
                     <datalist id="areas-sugeridas-form">
-                      <option value="ESTRATÃ‰GIA" />
-                      <option value="FINANÃ‡AS" />
+                      <option value="ESTRATÃƒâ€°GIA" />
+                      <option value="FINANÃƒâ€¡AS" />
                       <option value="MARKETING & VENDAS" />
-                      <option value="OPERAÃ‡Ã•ES & PROCESSOS" />
+                      <option value="OPERAÃƒâ€¡Ãƒâ€¢ES & PROCESSOS" />
                       <option value="RECURSOS HUMANOS" />
                       <option value="TECNOLOGIA & IA" />
                     </datalist>
@@ -20433,24 +20432,24 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100/80 space-y-4">
                 <h4 className="text-xs font-black text-emerald-600 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-100">
                   <span className="flex items-center justify-center w-5 h-5 bg-emerald-50 rounded-full text-emerald-600 text-[10px]">2</span>
-                  Detalhamento TÃ©cnico
+                  Detalhamento TÃƒÂ©cnico
                 </h4>
 
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">SoluÃ§Ã£o Sugerida</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">SoluÃƒÂ§ÃƒÂ£o Sugerida</label>
                   <textarea 
                     className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all h-20 resize-none bg-white"
-                    placeholder="Detalhamento da soluÃ§Ã£o..."
+                    placeholder="Detalhamento da soluÃƒÂ§ÃƒÂ£o..."
                     value={tarefaForm.solucaoSugerida || ''}
                     onChange={(e) => setTarefaForm({...tarefaForm, solucaoSugerida: e.target.value})}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">AÃ§Ãµes Recomendadas</label>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">AÃƒÂ§ÃƒÂµes Recomendadas</label>
                   <textarea 
                     className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all h-24 resize-none bg-white"
-                    placeholder="Quais aÃ§Ãµes devem ser tomadas?"
+                    placeholder="Quais aÃƒÂ§ÃƒÂµes devem ser tomadas?"
                     value={tarefaForm.acoes || ''}
                     onChange={(e) => setTarefaForm({...tarefaForm, acoes: e.target.value})}
                   />
@@ -20471,11 +20470,11 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Prioridade</label>
                     <select 
                       className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all bg-white"
-                      value={tarefaForm.prioridade || 'MÃ©dia'}
+                      value={tarefaForm.prioridade || 'MÃƒÂ©dia'}
                       onChange={(e) => setTarefaForm({...tarefaForm, prioridade: e.target.value})}
                     >
                       <option value="Alta">Alta</option>
-                      <option value="MÃ©dia">MÃ©dia</option>
+                      <option value="MÃƒÂ©dia">MÃƒÂ©dia</option>
                       <option value="Baixa">Baixa</option>
                     </select>
                   </div>
@@ -20488,7 +20487,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     >
                       <option value="Pendente">Pendente</option>
                       <option value="Em Andamento">Em Andamento</option>
-                      <option value="ConcluÃ­do">ConcluÃ­do</option>
+                      <option value="ConcluÃƒÂ­do">ConcluÃƒÂ­do</option>
                     </select>
                   </div>
                 </div>
@@ -20496,7 +20495,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                 <div>
                   <label className="block text-[10px] font-black text-sky-600 uppercase tracking-widest mb-1 flex items-center gap-1">
                     <ListOrdered size={12} className="text-sky-500" />
-                    Ordem / Posicionamento da AÃ§Ã£o
+                    Ordem / Posicionamento da AÃƒÂ§ÃƒÂ£o
                   </label>
                   <input 
                     type="number" 
@@ -20509,12 +20508,12 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                       setTarefaForm({...tarefaForm, ordem: isNaN(val) ? undefined : Math.max(0, val - 1)});
                     }}
                   />
-                  <p className="text-[9px] text-slate-400 mt-0.5">Define a posiÃ§Ã£o desta aÃ§Ã£o na lista e nos relatÃ³rios gerados.</p>
+                  <p className="text-[9px] text-slate-400 mt-0.5">Define a posiÃƒÂ§ÃƒÂ£o desta aÃƒÂ§ÃƒÂ£o na lista e nos relatÃƒÂ³rios gerados.</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Data InÃ­cio</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Data InÃƒÂ­cio</label>
                     <input 
                       type="date"
                       className="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all bg-white"
@@ -20535,11 +20534,11 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">ResponsÃ¡vel</label>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">ResponsÃƒÂ¡vel</label>
                     <input 
                       type="text" 
                       className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 outline-none transition-all bg-white"
-                      placeholder="ResponsÃ¡vel"
+                      placeholder="ResponsÃƒÂ¡vel"
                       value={tarefaForm.responsavel || ''}
                       onChange={(e) => setTarefaForm({...tarefaForm, responsavel: e.target.value})}
                     />
@@ -20556,7 +20555,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                 </div>
               </div>
 
-              {/* SeÃ§Ã£o de Lembretes */}
+              {/* SeÃƒÂ§ÃƒÂ£o de Lembretes */}
               <div className="bg-slate-50/50 p-4 rounded-2xl border border-slate-100/80 space-y-3">
                 <h4 className="text-xs font-black text-purple-600 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-100">
                   <Bell size={13} className="text-purple-600" />
@@ -20599,7 +20598,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                       if (nextVal && 'Notification' in window) {
                         const perm = await Notification.requestPermission();
                         if (perm !== 'granted') {
-                          alert("Por favor, habilite as notificaÃ§Ãµes no seu navegador para receber alertas de tarefas.");
+                          alert("Por favor, habilite as notificaÃƒÂ§ÃƒÂµes no seu navegador para receber alertas de tarefas.");
                         }
                       }
                       setTarefaForm({ ...tarefaForm, lembretePush: nextVal });
@@ -20659,7 +20658,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
           confirmText="Excluir"
           variant="danger"
         >
-          <p className="text-slate-600">Tem certeza que deseja remover esta tarefa do plano de aÃ§Ã£o?</p>
+          <p className="text-slate-600">Tem certeza que deseja remover esta tarefa do plano de aÃƒÂ§ÃƒÂ£o?</p>
         </Modal>
       )}
 
@@ -20679,7 +20678,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
         >
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">DescriÃ§Ã£o do Problema</label>
+              <label className="block text-sm font-bold text-slate-700 mb-1">DescriÃƒÂ§ÃƒÂ£o do Problema</label>
               <textarea 
                 className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                 placeholder="Ex: Falta de controle financeiro"
@@ -20689,13 +20688,13 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-slate-700 mb-1">Ãrea</label>
+              <label className="block text-sm font-bold text-slate-700 mb-1">ÃƒÂrea</label>
               <select 
                 className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-sans"
                 value={normalizeAndFormatArea(problemaForm.area)}
                 onChange={(e) => setProblemaForm({ ...problemaForm, area: e.target.value })}
               >
-                <option value="">Selecione uma Ã¡rea...</option>
+                <option value="">Selecione uma ÃƒÂ¡rea...</option>
                 {allAvailableAreas.map(nome => (
                   <option key={nome} value={nome}>{nome}</option>
                 ))}
@@ -20706,7 +20705,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               <input 
                 type="text" 
                 className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                placeholder="Ex: Alto, MÃ©dio, Baixo"
+                placeholder="Ex: Alto, MÃƒÂ©dio, Baixo"
                 value={problemaForm.impacto}
                 onChange={(e) => setProblemaForm({ ...problemaForm, impacto: e.target.value })}
               />
@@ -20766,7 +20765,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
         >
           <p className="text-slate-600">
             Tem certeza que deseja excluir o problema <span className="font-bold text-slate-800">{modalData?.descricao_problemas}</span>? 
-            Esta aÃ§Ã£o nÃ£o pode ser desfeita e pode afetar perguntas relacionadas.
+            Esta aÃƒÂ§ÃƒÂ£o nÃƒÂ£o pode ser desfeita e pode afetar perguntas relacionadas.
           </p>
         </Modal>
       )}
@@ -20781,7 +20780,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
         >
           <p className="text-slate-600">
             Tem certeza que deseja excluir esta pergunta? 
-            Esta aÃ§Ã£o nÃ£o pode ser desfeita.
+            Esta aÃƒÂ§ÃƒÂ£o nÃƒÂ£o pode ser desfeita.
           </p>
           <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-100">
             <p className="text-xs font-bold text-slate-400 uppercase mb-1">{modalData?.problema}</p>
@@ -20792,15 +20791,15 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
       {isModalOpen && modalType === 'deleteSolucao' && (
         <Modal 
-          title="Excluir SoluÃ§Ã£o" 
+          title="Excluir SoluÃƒÂ§ÃƒÂ£o" 
           onClose={() => setIsModalOpen(false)}
           onConfirm={() => deleteSolucao(modalData.id)}
           confirmText="Excluir"
           variant="danger"
         >
           <p className="text-slate-600">
-            Tem certeza que deseja excluir esta soluÃ§Ã£o? 
-            Esta aÃ§Ã£o nÃ£o pode ser desfeita.
+            Tem certeza que deseja excluir esta soluÃƒÂ§ÃƒÂ£o? 
+            Esta aÃƒÂ§ÃƒÂ£o nÃƒÂ£o pode ser desfeita.
           </p>
           <div className="mt-4 p-4 bg-slate-50 rounded-lg border border-slate-100">
             <p className="text-xs font-bold text-slate-400 uppercase mb-1">{modalData?.problema}</p>
@@ -20811,7 +20810,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
       {isModalOpen && (modalType === 'createSolucao' || modalType === 'editSolucao') && (
         <Modal 
-          title={modalType === 'createSolucao' ? "Nova SoluÃ§Ã£o" : "Editar SoluÃ§Ã£o"} 
+          title={modalType === 'createSolucao' ? "Nova SoluÃƒÂ§ÃƒÂ£o" : "Editar SoluÃƒÂ§ÃƒÂ£o"} 
           size="3xl"
           onClose={() => setIsModalOpen(false)}
           onConfirm={() => {
@@ -20825,10 +20824,10 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
           disabled={!solucaoForm.idProblema || !solucaoForm.solucao_recomendada}
         >
           <div className="space-y-5 py-1">
-            {/* Contexto e ClassificaÃ§Ã£o */}
+            {/* Contexto e ClassificaÃƒÂ§ÃƒÂ£o */}
             <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Ãrea de AtuaÃ§Ã£o</label>
+                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">ÃƒÂrea de AtuaÃƒÂ§ÃƒÂ£o</label>
                 <select 
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-sm font-medium text-slate-800 shadow-sm"
                   value={normalizeAndFormatArea(solucaoForm.area)}
@@ -20837,7 +20836,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                     setSolucaoForm({ ...solucaoForm, area: newArea, idProblema: '', problema: '' });
                   }}
                 >
-                  <option value="">Selecione a Ã¡rea...</option>
+                  <option value="">Selecione a ÃƒÂ¡rea...</option>
                   {allAvailableAreas.map(nome => (
                     <option key={nome} value={nome}>{nome}</option>
                   ))}
@@ -20864,10 +20863,10 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               </div>
             </div>
 
-            {/* SoluÃ§Ã£o Recomendada */}
+            {/* SoluÃƒÂ§ÃƒÂ£o Recomendada */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="block text-sm font-bold text-slate-800">SoluÃ§Ã£o Recomendada <span className="text-rose-500">*</span></label>
+                <label className="block text-sm font-bold text-slate-800">SoluÃƒÂ§ÃƒÂ£o Recomendada <span className="text-rose-500">*</span></label>
                 <button
                   type="button"
                   onClick={async () => {
@@ -20888,44 +20887,44 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                           comentario_sucesso: result.comentario_sucesso || ''
                         });
                       } else {
-                        alert("Falha ao gerar sugestÃµes de soluÃ§Ã£o: Resposta invÃ¡lida da InteligÃªncia Artificial.");
+                        alert("Falha ao gerar sugestÃƒÂµes de soluÃƒÂ§ÃƒÂ£o: Resposta invÃƒÂ¡lida da InteligÃƒÂªncia Artificial.");
                       }
                     } catch (err: any) {
-                      alert("Falha ao gerar sugestÃµes de soluÃ§Ã£o:\n" + (err.message || err));
+                      alert("Falha ao gerar sugestÃƒÂµes de soluÃƒÂ§ÃƒÂ£o:\n" + (err.message || err));
                     }
                   }}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-600 hover:text-sky-700 bg-sky-50 hover:bg-sky-100/80 border border-sky-100 px-3 py-1.5 rounded-xl transition-all shadow-sm"
-                  title="Usar IA para gerar sugestÃµes baseadas no problema"
+                  title="Usar IA para gerar sugestÃƒÂµes baseadas no problema"
                 >
                   <Sparkles size={14} className="text-sky-500" />
-                  Gerar com InteligÃªncia Artificial
+                  Gerar com InteligÃƒÂªncia Artificial
                 </button>
               </div>
               <textarea 
                 rows={3}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm font-medium text-slate-800 shadow-sm leading-relaxed"
-                placeholder="Descreva detalhadamente a soluÃ§Ã£o recomendada..."
+                placeholder="Descreva detalhadamente a soluÃƒÂ§ÃƒÂ£o recomendada..."
                 value={solucaoForm.solucao_recomendada}
                 onChange={(e) => setSolucaoForm({ ...solucaoForm, solucao_recomendada: e.target.value })}
               />
             </div>
 
-            {/* AÃ§Ãµes Sugeridas */}
+            {/* AÃƒÂ§ÃƒÂµes Sugeridas */}
             <div className="space-y-1.5">
-              <label className="block text-sm font-bold text-slate-800">AÃ§Ãµes Sugeridas</label>
+              <label className="block text-sm font-bold text-slate-800">AÃƒÂ§ÃƒÂµes Sugeridas</label>
               <textarea 
                 rows={3}
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm font-medium text-slate-800 shadow-sm leading-relaxed"
-                placeholder="Liste as etapas prÃ¡ticas ou aÃ§Ãµes necessÃ¡rias para implementar..."
+                placeholder="Liste as etapas prÃƒÂ¡ticas ou aÃƒÂ§ÃƒÂµes necessÃƒÂ¡rias para implementar..."
                 value={solucaoForm.acoes_sugeridas}
                 onChange={(e) => setSolucaoForm({ ...solucaoForm, acoes_sugeridas: e.target.value })}
               />
             </div>
 
-            {/* ExecuÃ§Ã£o (ResponsÃ¡vel, KPIs) em 2 colunas */}
+            {/* ExecuÃƒÂ§ÃƒÂ£o (ResponsÃƒÂ¡vel, KPIs) em 2 colunas */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">ResponsÃ¡vel Sugerido</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">ResponsÃƒÂ¡vel Sugerido</label>
                 <input 
                   type="text"
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm font-medium text-slate-800 shadow-sm"
@@ -20946,10 +20945,10 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               </div>
             </div>
 
-            {/* ComentÃ¡rio de Sucesso e Tipo de Empresa */}
+            {/* ComentÃƒÂ¡rio de Sucesso e Tipo de Empresa */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">ComentÃ¡rio de Sucesso (Reconhecimento)</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">ComentÃƒÂ¡rio de Sucesso (Reconhecimento)</label>
                 <textarea 
                   rows={2}
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 text-sm font-medium text-slate-800 shadow-sm"
@@ -20960,7 +20959,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Tipo de Empresa (SegmentaÃ§Ã£o)</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Tipo de Empresa (SegmentaÃƒÂ§ÃƒÂ£o)</label>
                 <select 
                   className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-sm font-medium text-slate-800 shadow-sm"
                   value={availableSegments.includes(solucaoForm.tipoEmpresa || '') ? (solucaoForm.tipoEmpresa || '') : (solucaoForm.tipoEmpresa ? 'Outro' : '')}
@@ -21080,7 +21079,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
                 <div className="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center">
                   <FileText size={18} />
                 </div>
-                <h3 className="text-lg font-bold text-slate-800">VisualizaÃ§Ã£o do RelatÃ³rio</h3>
+                <h3 className="text-lg font-bold text-slate-800">VisualizaÃƒÂ§ÃƒÂ£o do RelatÃƒÂ³rio</h3>
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => window.open(pdfUrl, '_blank')}>
