@@ -117,7 +117,7 @@ export function LoginView({ onSuccess, className }: LoginViewProps) {
                 value={authPassword}
                 onChange={(e) => setAuthPassword(e.target.value)}
                 placeholder="••••••••"
-                required={authMode !== 'reset'}
+                required
                 minLength={6}
               />
             </div>
