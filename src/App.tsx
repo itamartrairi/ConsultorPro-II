@@ -6297,7 +6297,7 @@ const GestaoPlanoView = ({
         const dateB = b.dataVencimento ? new Date(b.dataVencimento).getTime() : b.dataFim ? new Date(b.dataFim).getTime() : 0;
         return dateA - dateB;
       } else if (sortBy === 'prioridade') {
-        const priorityWeight = { Alta: 3, Média: 2, Baixa: 1 };
+        const priorityWeight = { Alta: 3, "Média": 2, Baixa: 1 };
         const weightA = priorityWeight[a.prioridade] || 0;
         const weightB = priorityWeight[b.prioridade] || 0;
         return weightB - weightA;
