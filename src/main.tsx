@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import { HashRouter } from 'react-router-dom';
 import App from './App.tsx';
 import './index.css';
+import { AuthProvider } from './features/auth/hooks/useAuth';
 
 // Suppress benign Vite dev server HMR websocket closure warnings
 if (typeof window !== 'undefined') {
@@ -31,8 +32,9 @@ if (typeof window !== 'undefined') {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <HashRouter>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </HashRouter>
   </StrictMode>,
 );
-
