@@ -530,7 +530,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
             method: "POST",
             headers: headers,
             body: JSON.stringify({
-              model: "gemini-2.0-flash",
+              model: "gemini-3.6-flash",
               contents: prompt
             })
           });
@@ -557,7 +557,7 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
               throw new Error("Não foi possível falar com o servidor de IA. Configure uma chave da Groq (Llama 3) ou do Gemini em Configurações.");
             }
           } else {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${activeKey}`;
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${activeKey}`;
             const directRes = await fetch(url, {
               method: "POST",
               headers: { "Content-Type": "application/json" },

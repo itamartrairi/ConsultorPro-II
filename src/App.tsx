@@ -2473,7 +2473,7 @@ const CronogramaView = ({
       }`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
+        model: "gemini-3.6-flash",
         contents: prompt,
         config: {
           responseMimeType: "application/json",
@@ -7580,7 +7580,7 @@ const SettingsView = ({
     setTestingGemini(true);
     setGeminiStatus(null);
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${keyToTest}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${keyToTest}`;
       const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -7592,8 +7592,8 @@ const SettingsView = ({
       if (!res.ok) {
         throw new Error(data.error?.message || `Erro HTTP ${res.status}`);
       }
-      setGeminiStatus({ ok: true, message: 'Conexão ativa! O modelo gemini-2.0-flash respondeu com sucesso.' });
-      alert('Sucesso! A chave de API do Gemini está conectada e operacional com o modelo gemini-2.0-flash.');
+      setGeminiStatus({ ok: true, message: 'Conexão ativa! O modelo gemini-3.6-flash respondeu com sucesso.' });
+      alert('Sucesso! A chave de API do Gemini está conectada e operacional com o modelo gemini-3.6-flash.');
     } catch (e: any) {
       const err = e?.message || String(e);
       setGeminiStatus({ ok: false, message: 'Falha: ' + err });
@@ -9125,7 +9125,7 @@ export const getAI = () => {
           const response = await fetch(apiUrl("/api/gemini/generate"), {
             method: "POST",
             headers: headers,
-            body: JSON.stringify({ model: model || "gemini-2.0-flash", contents, config })
+            body: JSON.stringify({ model: model || "gemini-3.6-flash", contents, config })
           });
 
           if (response.ok) {
@@ -9165,10 +9165,10 @@ export const getAI = () => {
           throw new Error("Chave de Inteligência Artificial não configurada.\n\nPor favor, insira sua chave do Google Gemini no menu Configurações.");
         }
 
-        const GEMINI_PRIMARY = "gemini-2.0-flash";
+        const GEMINI_PRIMARY = "gemini-3.6-flash";
         const GEMINI_CHAIN = [
-          "gemini-2.0-flash",
-          "gemini-2.0-flash"
+          "gemini-3.6-flash",
+          "gemini-3.6-flash"
         ];
 
         function normalizeClientModel(m?: string): string {
@@ -9312,7 +9312,7 @@ const generateAIFeedback = async (resposta: string, pergunta: string, problema: 
     const ai = getAI();
     if (!ai) return null;
     const response = await ai.models.generateContent({ 
-      model: "gemini-2.0-flash", 
+      model: "gemini-3.6-flash", 
       contents: prompt,
     });
     const result = response.text?.trim() || "";
@@ -9372,7 +9372,7 @@ const generateAIMaturityLevel = async (respostas: Resposta[], scorePercent: numb
     const ai = getAI();
     if (!ai) return null;
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: "gemini-3.6-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -9432,7 +9432,7 @@ const generateAISuggestions = async (probNome: string, noResponses: Resposta[], 
     const ai = getAI();
     if (!ai) return null;
     const response = await ai.models.generateContent({ 
-      model: "gemini-2.0-flash",
+      model: "gemini-3.6-flash",
       contents: prompt,
       config: {
         responseMimeType: "application/json"
@@ -13891,7 +13891,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       `;
       
       const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
+        model: "gemini-3.6-flash",
         contents: prompt,
         config: {
             responseMimeType: "application/json",
