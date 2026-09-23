@@ -6,7 +6,7 @@
 - [x] Auth: `useAuth`, `LoginView`
 - [x] `main.tsx` com `<AuthProvider>`
 - [x] `scripts/wire-phase2-app.mjs`
-- [x] `scripts/remove-phase1-duplicates.mjs`
+- [x] `scripts/remove-phase1-duplicates.mjs` (**versão segura**)
 - [x] Testes + `package.json`
 
 ## Aplicar localmente (ordem)
@@ -18,7 +18,7 @@ git checkout refactor/phase1-utils
 # 1) Wiring Auth + imports
 node scripts/wire-phase2-app.mjs
 
-# 2) Remover duplicatas e usar módulos Fase 1
+# 2) Remover duplicatas (versão segura — preserva imports)
 node scripts/remove-phase1-duplicates.mjs
 
 npm test
@@ -28,17 +28,12 @@ npm run dev
 
 Ambos os scripts são **idempotentes**.
 
-### O que o remove-phase1-duplicates faz
+### Proteções do remove script
 
-1. Troca imports com alias `_` por imports reais + reexports
-2. Remove do `App.tsx`:
-   - enum `Type`
-   - formatters BR / dates
-   - sanitize, oklch, logo
-   - interfaces de domínio
-   - AREAS, CONSULTORIA_AREAS, TIPOS_EMPRESA, AREAS_ORDER
-   - deduplicateRespostas, extractAndParseJSON, load/save respostas
-3. Reduz ~30–40 KB do App (o restante continua sendo UI/views)
+- Remove funções/constantes **uma a uma** (brace matching)
+- **Nunca** apaga imports de recharts, Button, Modal, cryptoStorage, etc.
+- Preserva / restaura `enum OperationType`
+- Se algo crítico sumir, **aborta sem gravar** o App.tsx
 
 ### Depois
 
