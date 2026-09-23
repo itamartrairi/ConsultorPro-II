@@ -1,71 +1,103 @@
 rules_version = '2';
+
+// =====================================================================================
+//  Consultor Pro — Regras do Firestore
+//  Cada consultor só enxerga e altera os PRÓPRIOS dados (campo ownerId = uid do login).
+//  O app filtra todas as consultas por ownerId (src/lib/firestoreOwned.ts) e preenche
+//  ownerId em toda gravação, então estas regras não bloqueiam o uso normal.
+//
+//  Publicar: Console do Firebase → Firestore Database → (banco do app) → Regras → Publicar.
+// =====================================================================================
 service cloud.firestore {
   match /databases/{database}/documents {
+
     function isAuthenticated() {
       return request.auth != null;
     }
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
-    function isDocOwner() {
-      return isAuthenticated() && request.auth.uid == resource.data.ownerId;
-    }
+
+    // Admin é definido apenas pelo e-mail verificado do login.
     function isAdmin() {
       return isAuthenticated() &&
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
-        request.auth.token.email == "itamartrairi@gmail.com");
-    }
-    function isValidEmail(email) {
-      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+        request.auth.token.email == "ithamar1307@gmail.com" &&
+        request.auth.token.email_verified == true;
     }
 
-    match /users/{userId} {
-      allow read, write: if isOwner(userId) || isAdmin();
+    // --- Dono do documento ---------------------------------------------------------
+    function ownsExisting() {
+      return isAuthenticated() && resource.data.ownerId == request.auth.uid;
     }
-    match /empresas/{empresaId} {
-      allow read, write: if isAuthenticated();
+    function createsOwn() {
+      return isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
     }
-    match /areas/{areaId} {
-      allow read, write: if isAuthenticated();
+    function keepsOwner() {
+      return request.resource.data.ownerId == request.auth.uid;
     }
-    match /segmentos/{segmentoId} {
-      allow read, write: if isAuthenticated();
+
+    // Coleções isoladas por usuário (dados de trabalho e biblioteca de cada consultor).
+    function isOwnedCollection(col) {
+      return col in [
+        'empresas', 'diagnosticos', 'respostas', 'tarefas_plano',
+        'agenda_eventos', 'disc_avaliacoes', 'maturidade_avaliacoes', 'analises_resultado',
+        'premissas', 'problemas', 'solucoes', 'areas', 'segmentos'
+      ];
     }
-    match /problemas/{problemaId} {
-      allow read, write: if isAuthenticated();
+
+    match /{col}/{docId} {
+      // resource == null: leitura/exclusão de um documento que não existe (não vaza nada).
+      allow read:   if isOwnedCollection(col) && (resource == null || ownsExisting());
+      allow create: if isOwnedCollection(col) && createsOwn();
+      allow update: if isOwnedCollection(col) && ownsExisting() && keepsOwner();
+      allow delete: if isOwnedCollection(col) && (resource == null || ownsExisting());
     }
-    match /premissas/{premissaId} {
-      allow read, write: if isAuthenticated();
+
+    // --- Licenças -------------------------------------------------------------------
+    // O consultor lê e edita o próprio cadastro, mas não altera status, plano, dias de
+    // teste ou validade — isso é feito pelo admin ou pelo webhook da Kiwify (Firebase
+    // Admin SDK, que não passa por estas regras).
+    function licenseFields() {
+      return ['status', 'tipoPlano', 'diasTeste', 'validadeLicenca', 'role', 'dataCadastro',
+              'kiwifyOrderId', 'dataAtivacaoKiwify', 'dataCancelamentoKiwify'];
     }
-    match /diagnosticos/{diagnosticoId} {
-      allow read, write: if isAuthenticated();
+    function isCredOwner() {
+      return isAuthenticated() &&
+        (resource.data.ownerId == request.auth.uid ||
+         (request.auth.token.email != null && resource.data.email == request.auth.token.email));
     }
-    match /respostas/{respostaId} {
-      allow read, write: if isAuthenticated();
-    }
-    match /solucoes/{solucaoId} {
-      allow read, write: if isAuthenticated();
-    }
+
     match /empresas_credenciadas/{credId} {
+      allow read: if isAdmin() || resource == null || isCredOwner();
+      allow create: if isAdmin() ||
+        (createsOwn() &&
+         request.resource.data.get('tipoPlano', 'Teste') == 'Teste' &&
+         request.resource.data.get('role', 'cliente') != 'admin' &&
+         request.resource.data.get('status', 'Ativa') == 'Ativa' &&
+         request.resource.data.get('diasTeste', 30) <= 30 &&
+         !('validadeLicenca' in request.resource.data));
+      allow update: if isAdmin() ||
+        (isCredOwner() && keepsOwner() &&
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(licenseFields()));
+      allow delete: if isAdmin() || resource == null || ownsExisting();
+    }
+
+    // --- Perfil de usuário ------------------------------------------------------------
+    match /users/{userId} {
+      allow read: if isAdmin() || (isAuthenticated() && request.auth.uid == userId);
+      allow create: if isAdmin() ||
+        (isAuthenticated() && request.auth.uid == userId && !('role' in request.resource.data));
+      allow update: if isAdmin() ||
+        (isAuthenticated() && request.auth.uid == userId &&
+         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
+      allow delete: if isAdmin();
+    }
+
+    // --- Teste de conexão do app ------------------------------------------------------
+    match /system_health/connection_probe {
       allow read, write: if isAuthenticated();
     }
-    match /tarefas_plano/{tarefaId} {
-      allow read, write: if isAuthenticated();
+    match /test/connection {
+      allow read: if isAuthenticated();
     }
-    match /agenda_eventos/{eventoId} {
-      allow read, write: if isAuthenticated();
-    }
-    match /disc_avaliacoes/{id} {
-      allow read, write: if isAuthenticated();
-    }
-    match /maturidade_avaliacoes/{id} {
-      allow read, write: if isAuthenticated();
-    }
-    match /analises_resultado/{id} {
-      allow read, write: if isAuthenticated();
-    }
-    match /system_health/{id} {
-      allow read, write: if isAuthenticated();
-    }
+
+    // Qualquer outra coleção fica fechada.
   }
 }

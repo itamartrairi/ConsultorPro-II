@@ -4,7 +4,7 @@ import {
   getFirestore, 
   initializeFirestore, 
   persistentLocalCache, 
-  persistentSingleTabManager,
+  persistentMultipleTabManager,
   memoryLocalCache,
   Firestore,
   collection, 
@@ -44,14 +44,15 @@ function initFirestoreInstance(): Firestore {
   try {
     if (firestoreDbId && firestoreDbId !== '(default)') {
       return initializeFirestore(app, {
+        // Várias abas abertas compartilham o mesmo cache (antes a 2ª aba perdia a cópia local).
         localCache: persistentLocalCache({
-          tabManager: persistentSingleTabManager({})
+          tabManager: persistentMultipleTabManager()
         })
       }, firestoreDbId);
     }
     return initializeFirestore(app, {
       localCache: persistentLocalCache({
-        tabManager: persistentSingleTabManager({})
+        tabManager: persistentMultipleTabManager()
       })
     });
   } catch {

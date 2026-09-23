@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db, auth } from '../firebase';
-import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { readCustomGeminiKey, geminiAuthHeaders, apiUrl } from '../lib/gemini';
+import { getActiveAiProvider, getGroqApiKey, callGroqChat } from '../lib/ai/aiService';
+import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc, updateDoc } from '../lib/firestoreOwned';
 import {
   User,
   FileText,
@@ -516,52 +518,84 @@ Retorne estritamente o relatório estruturado em formato Markdown de alta qualid
 
     try {
       let aiText = "";
-      const customKey = (localStorage.getItem('custom_gemini_api_key') || "").trim();
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (customKey) {
-        headers["x-custom-api-key"] = customKey;
-      }
+      const activeProvider = getActiveAiProvider();
+      const groqKey = getGroqApiKey();
+      const customKey = readCustomGeminiKey();
 
-      try {
-        const response = await fetch("/api/gemini/generate", {
-          method: "POST",
-          headers: headers,
-          body: JSON.stringify({
-            model: "gemini-3.6-flash",
-            contents: prompt
-          })
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data && data.text) {
-            aiText = data.text;
+      // 1. Tenta Groq se configurado ou se for o provedor ativo
+      if (activeProvider === 'groq' || (groqKey && !customKey)) {
+        try {
+          const groqRes = await callGroqChat({ contents: prompt, model: 'llama-3.3-70b-versatile' });
+          if (groqRes && groqRes.text) {
+            aiText = groqRes.text;
+          }
+        } catch (gErr: any) {
+          console.warn("[DISC Groq] Falha ao consultar Groq:", gErr?.message);
+          if (!customKey) {
+            throw gErr;
           }
         }
-      } catch (e) {
-        console.warn("[DISC AI] Proxy indisponível, tentando chamada direta:", e);
       }
 
+      // 2. Se não obteve resposta com Groq, tenta Gemini (Proxy ou Direto)
       if (!aiText) {
-        const activeKey = customKey || "AQ.Ab8RN6LGK4um2g_8db72CBQC-9NFFnIDWCj4hg4m7xl7MxcEFA";
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${activeKey}`;
-        const directRes = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }]
-          })
-        });
-        if (!directRes.ok) {
-          const errData = await directRes.json().catch(() => ({}));
-          throw new Error(errData.error?.message || `Erro HTTP ${directRes.status}`);
+        const headers: Record<string, string> = { "Content-Type": "application/json", ...(await geminiAuthHeaders()) };
+        if (customKey) {
+          headers["x-custom-api-key"] = customKey;
         }
-        const directData = await directRes.json();
-        aiText = directData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+        try {
+          const response = await fetch(apiUrl("/api/gemini/generate"), {
+            method: "POST",
+            headers: headers,
+            body: JSON.stringify({
+              model: "gemini-2.5-flash",
+              contents: prompt
+            })
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data && data.text) {
+              aiText = data.text;
+            }
+          }
+        } catch (e) {
+          console.warn("[DISC AI] Proxy indisponível, tentando chamada direta:", e);
+        }
+
+        if (!aiText) {
+          // Chamada direta só é possível com a chave própria do usuário.
+          const activeKey = customKey;
+          if (!activeKey) {
+            if (groqKey) {
+              // Tentativa de contingência com Groq se ainda não tentou
+              const groqRes = await callGroqChat({ contents: prompt, model: 'llama-3.3-70b-versatile' });
+              aiText = groqRes.text;
+            } else {
+              throw new Error("Não foi possível falar com o servidor de IA. Configure uma chave da Groq (Llama 3.3) ou do Gemini em Configurações.");
+            }
+          } else {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeKey}`;
+            const directRes = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+              })
+            });
+            if (!directRes.ok) {
+              const errData = await directRes.json().catch(() => ({}));
+              throw new Error(errData.error?.message || `Erro HTTP ${directRes.status}`);
+            }
+            const directData = await directRes.json();
+            aiText = directData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+          }
+        }
       }
 
       if (!aiText) {
-        throw new Error("Não foi possível obter uma resposta do Gemini.");
+        throw new Error("Não foi possível obter uma resposta do serviço de IA.");
       }
 
       if (aiText) {

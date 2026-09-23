@@ -13,7 +13,11 @@
     "lint": "tsc --noEmit",
     "electron:dev": "vite build && electron electron/main.cjs",
     "electron:build:win": "vite build && electron-builder --win --config electron-builder.json",
-    "electron:build": "vite build && electron-builder --config electron-builder.json"
+    "electron:build": "vite build && electron-builder --config electron-builder.json",
+    "test": "tsx test/librarySelection.test.ts && tsx test/licenseDays.test.ts && tsx test/formatters.br.test.ts && tsx test/domain.respostas.test.ts",
+    "ast:inventory": "tsx scripts/ast-inventory-app.ts",
+    "ast:remove-phase1": "tsx scripts/ast-remove-phase1.ts",
+    "ast:remove-phase1:dry": "tsx scripts/ast-remove-phase1.ts --dry-run"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
@@ -44,6 +48,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@netlify/functions": "^6.0.0",
     "@types/crypto-js": "^4.2.2",
     "@types/express": "^4.17.21",
     "@types/node": "^22.14.0",
@@ -52,6 +57,7 @@
     "electron-builder": "^26.15.3",
     "esbuild": "^0.28.1",
     "tailwindcss": "^4.1.14",
+    "ts-morph": "^25.0.0",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2"
   }
