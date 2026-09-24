@@ -7921,57 +7921,7 @@ const SettingsView = ({
         </div>
       </Card>
 
-      <Card className="p-8 max-w-5xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-          <div>
-            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-              <ShieldCheck className="text-emerald-600" size={20} />
-              Criptografia em Repouso Local (AES-256)
-            </h3>
-            <p className="text-xs text-slate-500 mt-1">
-              Proteção local para evitar que diagnósticos, empresas e chaves salvas no navegador fiquem em texto simples.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3.5 py-1.5 rounded-xl text-xs font-bold shrink-0">
-            <Lock size={14} className="text-emerald-600" />
-            <span>AES-256 Ativado</span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1">
-            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">Algoritmo &amp; Chave</p>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Criptografia simétrica AES-256 derivada via SHA-256 a partir do seu ID de Usuário / Sessão no dispositivo.
-            </p>
-          </div>
-          <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 space-y-1">
-            <p className="text-xs font-bold text-slate-700 uppercase tracking-wider">Identificador de Segurança</p>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Todos os registros armazenados no <code className="bg-slate-200 px-1 py-0.5 rounded text-[11px] font-mono">localStorage</code> são gravados sob o formato cifrado <code className="text-sky-600 font-mono text-[11px]">enc:v1:...</code>.
-            </p>
-          </div>
-        </div>
-
-        <div className="p-4 bg-sky-50/60 rounded-xl border border-sky-100 flex flex-wrap items-center justify-between gap-3">
-          <div className="space-y-0.5">
-            <p className="text-xs font-bold text-sky-950">Verificar e Re-criptografar Dados Locais</p>
-            <p className="text-[11px] text-sky-700">Converte dados legados não criptografados no navegador para a nova estrutura AES-256.</p>
-          </div>
-          <Button
-            onClick={() => {
-              const count = encryptedLocalStorage.migrateAllToEncrypted();
-              alert(`Varredura concluída! ${count} item(ns) legados foram criptografados e salvos com AES-256 no LocalStorage.`);
-            }}
-            variant="outline"
-            size="sm"
-            className="text-xs border-sky-200 hover:bg-sky-100 text-sky-700 font-bold py-1.5 px-3"
-          >
-            <RefreshCw size={13} className="mr-1.5" />
-            Executar Criptografia Agora
-          </Button>
-        </div>
-      </Card>
+      {/* Card "Criptografia em Repouso Local" oculto a pedido: a criptografia continua ativa (roda a cada login). */}
 
       <div className="bg-amber-50 border border-amber-100 p-6 rounded-xl flex items-start gap-4 max-w-2xl">
         <Info className="text-amber-600 shrink-0" size={20} />
