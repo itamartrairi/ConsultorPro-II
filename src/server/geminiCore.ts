@@ -40,11 +40,14 @@ export function getSystemGeminiApiKey(): string {
   return '';
 }
 
-function resolveKey(customKey: unknown): { key: string; source: 'user' | 'system' | 'none' } {
+/** Chaves a tentar, em ordem: a do usuário (se houver) e depois a do sistema. */
+function resolveKeys(customKey: unknown): { key: string; source: 'user' | 'system' }[] {
+  const out: { key: string; source: 'user' | 'system' }[] = [];
   const custom = cleanApiKey(customKey);
-  if (isValidGeminiApiKey(custom)) return { key: custom, source: 'user' };
+  if (isValidGeminiApiKey(custom)) out.push({ key: custom, source: 'user' });
   const sys = getSystemGeminiApiKey();
-  return sys ? { key: sys, source: 'system' } : { key: '', source: 'none' };
+  if (sys && sys !== custom) out.push({ key: sys, source: 'system' });
+  return out;
 }
 
 function primaryModel(): string {
@@ -81,23 +84,27 @@ export function geminiConfig(): CoreResult {
 }
 
 export async function geminiTest(customKey: unknown): Promise<CoreResult> {
-  const { key, source } = resolveKey(customKey);
-  if (!key) return { status: 400, body: { ok: false, error: 'Chave API do Gemini não configurada no servidor (variável GEMINI_API_KEY).' } };
-  const ai = new GoogleGenAI({ apiKey: key });
+  const keys = resolveKeys(customKey);
+  if (!keys.length) return { status: 400, body: { ok: false, error: 'Chave API do Gemini não configurada no servidor (variável GEMINI_API_KEY).' } };
   let lastErr: any = null;
-  for (const model of modelChain()) {
-    try {
-      const r: any = await withTimeout(ai.models.generateContent({ model, contents: "Responda apenas 'OK'." }), 10000, 'Timeout de teste da API');
-      if (r?.text) {
-        const origem = source === 'user' ? 'sua chave' : 'a chave do sistema';
-        return { status: 200, body: { ok: true, model, source, message: `Conexão bem-sucedida usando ${origem} com o modelo ${model}!` } };
+  for (const { key, source } of keys) {
+    const ai = new GoogleGenAI({ apiKey: key });
+    for (const model of modelChain()) {
+      try {
+        const r: any = await withTimeout(ai.models.generateContent({ model, contents: "Responda apenas 'OK'." }), 10000, 'Timeout de teste da API');
+        if (r?.text) {
+          const origem = source === 'user' ? 'sua chave' : 'a chave do sistema';
+          const aviso = source === 'system' && keys[0].source === 'user' ? ' (a chave salva no navegador foi recusada e foi ignorada)' : '';
+          return { status: 200, body: { ok: true, model, source, message: `Conexão bem-sucedida usando ${origem} com o modelo ${model}!${aviso}` } };
+        }
+      } catch (e) {
+        lastErr = e;
+        console.warn(`[Gemini Test] ${source}/${model} falhou:`, (e as any)?.status, (e as any)?.message);
+        if (isAuthOrQuotaError(e)) break; // próxima chave
       }
-    } catch (e) {
-      lastErr = e;
-      if (isAuthOrQuotaError(e)) break;
     }
   }
-  return { status: errorStatus(lastErr), body: { ok: false, error: friendlyGeminiError(lastErr) } };
+  return { status: errorStatus(lastErr), body: { ok: false, error: friendlyGeminiError(lastErr), detail: String(lastErr?.message || '').slice(0, 300) } };
 }
 
 export async function geminiGenerate(body: any, customKey: unknown): Promise<CoreResult> {
@@ -105,36 +112,38 @@ export async function geminiGenerate(body: any, customKey: unknown): Promise<Cor
   if (contents === undefined || contents === null || contents === '') {
     return { status: 400, body: { error: 'Conteúdo vazio.' } };
   }
-  const { key } = resolveKey(customKey);
-  if (!key) {
+  const keys = resolveKeys(customKey);
+  if (!keys.length) {
     return {
       status: 400,
       body: { error: 'Chave API do Gemini não configurada no servidor. Cadastre GEMINI_API_KEY nas variáveis do Netlify ou use sua própria chave em Configurações.' },
     };
   }
 
-  const ai = new GoogleGenAI({ apiKey: key });
   let lastErr: any = null;
   // Netlify Functions síncronas têm limite de ~26s no total: reparte esse tempo entre as tentativas.
   const deadline = Date.now() + 23000;
-  for (const m of modelChain(model)) {
-    const remaining = deadline - Date.now();
-    if (remaining < 2000) break;
-    try {
-      const response: any = await withTimeout(
-        ai.models.generateContent({ model: m, contents, config }),
-        Math.min(20000, remaining),
-        'Tempo limite de resposta do Gemini excedido'
-      );
-      if (response && typeof response.text === 'string' && response.text !== '') {
-        return { status: 200, body: { text: response.text, model: m } };
+  for (const { key, source } of keys) {
+    const ai = new GoogleGenAI({ apiKey: key });
+    for (const m of modelChain(model)) {
+      const remaining = deadline - Date.now();
+      if (remaining < 2000) break;
+      try {
+        const response: any = await withTimeout(
+          ai.models.generateContent({ model: m, contents, config }),
+          Math.min(20000, remaining),
+          'Tempo limite de resposta do Gemini excedido'
+        );
+        if (response && typeof response.text === 'string' && response.text !== '') {
+          return { status: 200, body: { text: response.text, model: m } };
+        }
+        lastErr = new Error(`O modelo ${m} retornou resposta vazia.`);
+      } catch (err: any) {
+        console.warn(`[Gemini Proxy] ${source}/${m} falhou:`, err?.status, err?.message || err);
+        lastErr = err;
+        if (isAuthOrQuotaError(err)) break; // chave recusada: tenta a próxima chave
       }
-      lastErr = new Error(`O modelo ${m} retornou resposta vazia.`);
-    } catch (err: any) {
-      console.warn(`[Gemini Proxy] Modelo ${m} falhou:`, err?.message || err);
-      lastErr = err;
-      if (isAuthOrQuotaError(err)) break;
     }
   }
-  return { status: errorStatus(lastErr), body: { error: friendlyGeminiError(lastErr) } };
+  return { status: errorStatus(lastErr), body: { error: friendlyGeminiError(lastErr), detail: String(lastErr?.message || '').slice(0, 300) } };
 }
