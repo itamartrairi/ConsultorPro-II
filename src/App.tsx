@@ -8181,7 +8181,13 @@ const LicenseManagementView = ({
   const calculateDaysLeft = (emp: EmpresaCredenciada) => computeLicenseDaysLeft(emp);
 
   const handleAddDays = async (emp: EmpresaCredenciada, daysToAdd: number) => {
-    const currentLimit = emp.diasTeste || (emp.tipoPlano === 'Mensal' ? 30 : emp.tipoPlano === 'Anual' ? 365 : 30);
+    // Plano pago: estende a validade (a partir do vencimento atual, ou de hoje se já venceu).
+    if (emp.tipoPlano === 'Mensal' || emp.tipoPlano === 'Anual') {
+      const restantes = Math.max(0, computeLicenseDaysLeft(emp));
+      await onUpdateCredenciadaValidade?.(emp.id, addDaysIso(restantes + daysToAdd));
+      return;
+    }
+    const currentLimit = emp.diasTeste || 30;
     const newLimit = currentLimit + daysToAdd;
     await onUpdateCredenciadaDiasTeste?.(emp.id, newLimit);
   };
@@ -8321,7 +8327,7 @@ const LicenseManagementView = ({
                 const daysLeft = calculateDaysLeft(emp);
                 const isExpired = !isDefinitive && daysLeft <= 0;
                 const isExpiringSoon = !isDefinitive && daysLeft > 0 && daysLeft <= 5;
-                const totalLimitDays = (Number(emp.diasTeste) > 0 ? Number(emp.diasTeste) : 0) || (emp.tipoPlano === 'Mensal' ? 30 : emp.tipoPlano === 'Anual' ? 365 : 30);
+                const totalLimitDays = emp.tipoPlano === 'Teste' && Number(emp.diasTeste) > 0 ? Number(emp.diasTeste) : licensePeriodDays(emp.tipoPlano || 'Teste');
                 const cadastroFormatted = formatItemDate(emp.dataCadastro);
                 const loginFormatted = formatItemDate(emp.ultimoLogin);
                 const isCurrentUser = currentUser?.uid === emp.ownerId;
@@ -9026,6 +9032,7 @@ import {
   toJsDate,
   computeLicenseDaysLeft,
 } from './lib/domain/license';
+import { addDaysIso, licensePeriodDays } from './lib/licenseDays';
 import {
   deduplicateRespostas,
   loadAllLocalRespostas,
@@ -10164,9 +10171,11 @@ export default function App() {
     if (data.agendaEventos || data.agenda_eventos) await syncCollection(data.agendaEventos || data.agenda_eventos, 'agenda_eventos');
     if (data.discAvaliacoes || data.disc_avaliacoes) await syncCollection(data.discAvaliacoes || data.disc_avaliacoes, 'disc_avaliacoes');
     if (data.maturidadeAvaliacoes || data.maturidade_avaliacoes) await syncCollection(data.maturidadeAvaliacoes || data.maturidade_avaliacoes, 'maturidade_avaliacoes');
+    if (data.analisesResultado || data.analises_resultado) await syncCollection(data.analisesResultado || data.analises_resultado, 'analises_resultado');
     if (failed.length > 0) {
       console.warn('[Backup] Itens não enviados por coleção:', failed.reduce((acc: Record<string, number>, c) => ({ ...acc, [c]: (acc[c] || 0) + 1 }), {}));
     }
+    return failed.length;
   };
 
   const handleExportLocalBackup = async () => {
@@ -10181,6 +10190,8 @@ export default function App() {
       let exportAgendaEventos: any[] = [];
       let exportDiscAvaliacoes: any[] = [];
       let exportMaturidadeAvaliacoes: any[] = [];
+      let exportAnalisesResultado: any[] = [];
+      const colecoesIncompletas: string[] = [];
       let exportCredenciadas: EmpresaCredenciada[] = [...empresasCredenciadas];
       let exportPremissas: Premissa[] = [...premissas];
       let exportProblemas: Problema[] = [...problemas];
@@ -10203,7 +10214,16 @@ export default function App() {
         }
       } catch (e) {}
 
-      // 2. Fetch fresh cloud records in PARALLEL with a strict 2.5-second timeout safeguard
+      // Análises da tela "Resultado da Consultoria" salvas no navegador
+      try {
+        const localAnalises = localStorage.getItem('analises_resultado_local');
+        if (localAnalises) {
+          const parsed = JSON.parse(localAnalises);
+          if (Array.isArray(parsed)) exportAnalisesResultado = parsed;
+        }
+      } catch (e) {}
+
+      // 2. Busca a versão da nuvem de TODAS as coleções do usuário, em paralelo
       if (user) {
         const withTimeout = async <T,>(p: Promise<T>, timeoutMs = 2500, fallback: T): Promise<T> => {
           return Promise.race([
@@ -10220,6 +10240,16 @@ export default function App() {
         const discQuery = query(collection(db, 'disc_avaliacoes'), where('ownerId', '==', user.uid));
         const matQuery = query(collection(db, 'maturidade_avaliacoes'), where('ownerId', '==', user.uid));
         const credQuery = query(collection(db, 'empresas_credenciadas'), where('ownerId', '==', user.uid));
+        const ownQ = (col: string) => query(collection(db, col), where('ownerId', '==', user.uid));
+
+        // Antes o limite era 2 s: com muitas respostas/fotos a consulta não terminava e o
+        // backup saía só com o que estava na memória, sem avisar. Agora são 25 s e cada
+        // coleção que falhar é informada ao usuário.
+        const fetchCol = (label: string, q: any) =>
+          withTimeout(getDocs(q).catch(() => null), 25000, null).then((snap: any) => {
+            if (!snap) colecoesIncompletas.push(label);
+            return snap;
+          });
 
         try {
           const [
@@ -10230,17 +10260,43 @@ export default function App() {
             snapAgenda,
             snapDisc,
             snapMat,
-            snapCred
+            snapCred,
+            snapAnalises,
+            snapPremissas,
+            snapProblemas,
+            snapSolucoes,
+            snapAreas,
+            snapSegmentos
           ] = await Promise.all([
-            withTimeout(getDocs(empQuery).catch(() => null), 2000, null),
-            withTimeout(getDocs(diagQuery).catch(() => null), 2000, null),
-            withTimeout(getDocs(respQuery).catch(() => null), 2000, null),
-            withTimeout(getDocs(tarefasQuery).catch(() => null), 2000, null),
-            withTimeout(getDocs(agendaQuery).catch(() => null), 2000, null),
-            withTimeout(getDocs(discQuery).catch(() => null), 2000, null),
-            withTimeout(getDocs(matQuery).catch(() => null), 2000, null),
-            withTimeout(getDocs(credQuery).catch(() => null), 2000, null)
+            fetchCol('Empresas', empQuery),
+            fetchCol('Diagnósticos', diagQuery),
+            fetchCol('Respostas', respQuery),
+            fetchCol('Plano de ação', tarefasQuery),
+            fetchCol('Agenda', agendaQuery),
+            fetchCol('DISC', discQuery),
+            fetchCol('Maturidade', matQuery),
+            fetchCol('Credenciadas', credQuery),
+            fetchCol('Resultado da consultoria', ownQ('analises_resultado')),
+            fetchCol('Premissas', ownQ('premissas')),
+            fetchCol('Problemas', ownQ('problemas')),
+            fetchCol('Soluções', ownQ('solucoes')),
+            fetchCol('Áreas', ownQ('areas')),
+            fetchCol('Segmentos', ownQ('segmentos'))
           ]);
+
+          const mergeById = <T extends { id: string }>(base: T[], snap: any): T[] => {
+            if (!snap || snap.empty) return base;
+            const m = new Map<string, T>();
+            base.forEach(x => { if (x?.id) m.set(x.id, x); });
+            snap.docs.forEach((d: any) => m.set(d.id, { id: d.id, ...d.data() } as T));
+            return Array.from(m.values());
+          };
+          exportAnalisesResultado = mergeById(exportAnalisesResultado, snapAnalises);
+          exportPremissas = mergeById(exportPremissas, snapPremissas);
+          exportProblemas = mergeById(exportProblemas, snapProblemas);
+          exportSolucoes = mergeById(exportSolucoes, snapSolucoes);
+          exportDbAreas = mergeById(exportDbAreas as any[], snapAreas) as any;
+          exportDbSegmentos = mergeById(exportDbSegmentos as any[], snapSegmentos) as any;
 
           if (snapEmp && !snapEmp.empty) {
             const empMap = new Map<string, Empresa>();
@@ -10269,17 +10325,10 @@ export default function App() {
             exportTarefasPlano = Array.from(taskMap.values());
           }
 
-          if (snapAgenda && !snapAgenda.empty) {
-            exportAgendaEventos = snapAgenda.docs.map(d => ({ id: d.id, ...d.data() }));
-          }
-
-          if (snapDisc && !snapDisc.empty) {
-            exportDiscAvaliacoes = snapDisc.docs.map(d => ({ id: d.id, ...d.data() }));
-          }
-
-          if (snapMat && !snapMat.empty) {
-            exportMaturidadeAvaliacoes = snapMat.docs.map(d => ({ id: d.id, ...d.data() }));
-          }
+          // Soma nuvem + cópia local (antes a nuvem substituía a lista local inteira).
+          exportAgendaEventos = mergeById(exportAgendaEventos, snapAgenda);
+          exportDiscAvaliacoes = mergeById(exportDiscAvaliacoes, snapDisc);
+          exportMaturidadeAvaliacoes = mergeById(exportMaturidadeAvaliacoes, snapMat);
 
           if (snapCred && !snapCred.empty) {
             const credMap = new Map<string, EmpresaCredenciada>();
@@ -10312,17 +10361,23 @@ export default function App() {
       // Local storage DISC and Maturidade fallbacks
       try {
         const localDisc = localStorage.getItem('local_disc_avaliacoes');
-        if (localDisc && exportDiscAvaliacoes.length === 0) {
+        if (localDisc) {
           const parsed = JSON.parse(localDisc);
-          if (Array.isArray(parsed)) exportDiscAvaliacoes = parsed;
+          if (Array.isArray(parsed)) {
+            const ids = new Set(exportDiscAvaliacoes.map((x: any) => x?.id));
+            exportDiscAvaliacoes = [...exportDiscAvaliacoes, ...parsed.filter((x: any) => !ids.has(x?.id))];
+          }
         }
       } catch (e) {}
 
       try {
         const localMat = localStorage.getItem('local_maturidade_avaliacoes');
-        if (localMat && exportMaturidadeAvaliacoes.length === 0) {
+        if (localMat) {
           const parsed = JSON.parse(localMat);
-          if (Array.isArray(parsed)) exportMaturidadeAvaliacoes = parsed;
+          if (Array.isArray(parsed)) {
+            const ids = new Set(exportMaturidadeAvaliacoes.map((x: any) => x?.id));
+            exportMaturidadeAvaliacoes = [...exportMaturidadeAvaliacoes, ...parsed.filter((x: any) => !ids.has(x?.id))];
+          }
         }
       } catch (e) {}
 
@@ -10348,7 +10403,9 @@ export default function App() {
           totalProblemas: exportProblemas.length,
           totalSolucoes: exportSolucoes.length,
           totalModelosRelatorio: exportModelosRelatorio.length,
-          totalCustomAreas: exportCustomConsultoriaAreas.length
+          totalCustomAreas: exportCustomConsultoriaAreas.length,
+          totalAnalisesResultado: exportAnalisesResultado.length,
+          colecoesIncompletas
         },
         empresas: exportEmpresas,
         diagnosticos: exportDiagnosticos,
@@ -10357,6 +10414,7 @@ export default function App() {
         agendaEventos: exportAgendaEventos,
         discAvaliacoes: exportDiscAvaliacoes,
         maturidadeAvaliacoes: exportMaturidadeAvaliacoes,
+        analisesResultado: exportAnalisesResultado,
         empresasCredenciadas: exportCredenciadas,
         premissas: exportPremissas,
         problemas: exportProblemas,
@@ -10411,8 +10469,12 @@ export default function App() {
       // Trigger automatic browser download
       triggerDownloadBackupFile(jsonStr, genFileName);
 
-      playSuccessSound();
-      showToast(`Backup completo gerado com sucesso! (${sizeKb} KB)`, 'success', 'Backup dos Dados');
+      if (colecoesIncompletas.length > 0) {
+        showToast(`Backup gerado, mas a nuvem não respondeu para: ${colecoesIncompletas.join(', ')}. Esses itens saíram só com a cópia deste aparelho. Verifique a internet e gere o backup de novo.`, 'error', 'Backup Incompleto');
+      } else {
+        playSuccessSound();
+        showToast(`Backup completo gerado com sucesso! (${sizeKb} KB)`, 'success', 'Backup dos Dados');
+      }
     } catch (err: any) {
       console.error("Erro ao gerar backup:", err);
       setIsExportingBackup(false);
@@ -10450,6 +10512,7 @@ export default function App() {
         const importedAgendaEventos = data.agendaEventos || data.agenda_eventos || data.eventos || [];
         const importedDiscAvaliacoes = data.discAvaliacoes || data.disc_avaliacoes || [];
         const importedMaturidadeAvaliacoes = data.maturidadeAvaliacoes || data.maturidade_avaliacoes || [];
+        const importedAnalisesResultado = data.analisesResultado || data.analises_resultado || [];
 
         if (Array.isArray(importedEmpresas) && importedEmpresas.length > 0) {
           setEmpresas(importedEmpresas);
@@ -10503,6 +10566,15 @@ export default function App() {
         if (Array.isArray(importedAgendaEventos) && importedAgendaEventos.length > 0) {
           try { localStorage.setItem('local_agenda_eventos', JSON.stringify(importedAgendaEventos)); } catch {}
         }
+        if (Array.isArray(importedDiscAvaliacoes) && importedDiscAvaliacoes.length > 0) {
+          try { localStorage.setItem('local_disc_avaliacoes', JSON.stringify(importedDiscAvaliacoes)); } catch {}
+        }
+        if (Array.isArray(importedMaturidadeAvaliacoes) && importedMaturidadeAvaliacoes.length > 0) {
+          try { localStorage.setItem('local_maturidade_avaliacoes', JSON.stringify(importedMaturidadeAvaliacoes)); } catch {}
+        }
+        if (Array.isArray(importedAnalisesResultado) && importedAnalisesResultado.length > 0) {
+          try { localStorage.setItem('analises_resultado_local', JSON.stringify(importedAnalisesResultado)); } catch {}
+        }
         if (data.customLogo) {
           setCustomLogo(data.customLogo);
           try { localStorage.setItem('sebrae_custom_logo', data.customLogo); } catch {}
@@ -10533,6 +10605,12 @@ export default function App() {
         if (importedSettings.storageMode) {
           try { localStorage.setItem('storage_mode', importedSettings.storageMode); } catch {}
         }
+        if (typeof importedSettings.dailyReminderEnabled === 'boolean') {
+          try { localStorage.setItem('daily_reminder_enabled', String(importedSettings.dailyReminderEnabled)); } catch {}
+        }
+        if (importedSettings.dailyReminderTime) {
+          try { localStorage.setItem('daily_reminder_time', importedSettings.dailyReminderTime); } catch {}
+        }
         if (importedSettings.preferredLogo) {
           try { localStorage.setItem('preferred_logo', importedSettings.preferredLogo); } catch {}
           setLogoChoice(importedSettings.preferredLogo);
@@ -10542,7 +10620,7 @@ export default function App() {
 
         if (user) {
           try {
-            await uploadBackupToCloud({
+            const naoEnviados = await uploadBackupToCloud({
               empresas: importedEmpresas,
               diagnosticos: importedDiagnosticos,
               respostas: importedRespostas,
@@ -10555,9 +10633,14 @@ export default function App() {
               dbSegmentos: importedDbSegmentos,
               agendaEventos: importedAgendaEventos,
               discAvaliacoes: importedDiscAvaliacoes,
-              maturidadeAvaliacoes: importedMaturidadeAvaliacoes
+              maturidadeAvaliacoes: importedMaturidadeAvaliacoes,
+              analisesResultado: importedAnalisesResultado
             }, user.uid);
-            showToast(`Backup completo importado e sincronizado com a Nuvem!`, 'success', 'Restauração Concluída');
+            if (naoEnviados > 0) {
+              showToast(`Backup restaurado neste aparelho, mas ${naoEnviados} ${naoEnviados === 1 ? 'item não foi enviado' : 'itens não foram enviados'} para a nuvem. Tente importar de novo com a internet estável.`, 'error', 'Restauração Parcial');
+            } else {
+              showToast(`Backup completo importado e sincronizado com a Nuvem!`, 'success', 'Restauração Concluída');
+            }
           } catch (cloudErr) {
             console.error("Erro ao sincronizar backup com a nuvem:", cloudErr);
             showToast(`Backup restaurado localmente com sucesso!`, 'info', 'Restauração Local');
@@ -16375,10 +16458,21 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
 
   const updateCredenciadaPlano = async (id: string, tipoPlano: 'Teste' | 'Mensal' | 'Anual' | 'Definitiva') => {
     try {
-      setEmpresasCredenciadas(prev => prev.map(c => c.id === id ? { ...c, tipoPlano } : c));
+      // Plano pago ativado manualmente: validade explícita a partir de hoje (antes o
+      // período era contado desde o cadastro do teste e o diasTeste limitava o Anual a 30 dias).
+      const paid = tipoPlano === 'Mensal' || tipoPlano === 'Anual';
+      const validadeLicenca = paid ? addDaysIso(licensePeriodDays(tipoPlano)) : undefined;
+      setEmpresasCredenciadas(prev => prev.map(c => {
+        if (c.id !== id) return c;
+        if (!paid) return { ...c, tipoPlano };
+        const { diasTeste: _d, ...rest } = c as any;
+        return { ...rest, tipoPlano, validadeLicenca };
+      }));
       if (user) {
         try {
-          await updateDoc(doc(db, 'empresas_credenciadas', id), { tipoPlano });
+          await updateDoc(doc(db, 'empresas_credenciadas', id), paid
+            ? { tipoPlano, validadeLicenca, diasTeste: deleteField() }
+            : { tipoPlano });
         } catch (cloudErr) {
           console.error("Error updating plan in cloud:", cloudErr);
         }
