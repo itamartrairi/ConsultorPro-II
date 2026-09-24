@@ -3,6 +3,22 @@ import CryptoJS from 'crypto-js';
 // Base application salt for key derivation
 const BASE_SALT = 'sebrae_diag_at_rest_v1_2026';
 
+// Leitura "crua" do localStorage (sem a descriptografia automática instalada abaixo).
+const originalGetItem: ((this: Storage, key: string) => string | null) | null =
+  typeof Storage !== 'undefined' ? Storage.prototype.getItem : null;
+
+export function rawGetItem(key: string): string | null {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage || !originalGetItem) return null;
+    return originalGetItem.call(window.localStorage, key);
+  } catch {
+    return null;
+  }
+}
+
+// Cache da descriptografia transparente (ver instalarLeituraDescriptografada).
+const cacheDescriptografia = new Map<string, { raw: string; valor: string }>();
+
 // Persistent machine/device seed key in memory or unencrypted metadata
 let currentUserId: string | null = null;
 let customSessionPassword: string | null = null;
@@ -12,6 +28,7 @@ let customSessionPassword: string | null = null;
  */
 export function setStorageUserId(uid: string | null) {
   currentUserId = uid;
+  cacheDescriptografia.clear();
 }
 
 export function setStorageSessionPassword(pass: string | null) {
@@ -24,7 +41,7 @@ export function setStorageSessionPassword(pass: string | null) {
 function getDeviceKey(): string {
   if (typeof window === 'undefined') return 'server_fallback_key';
   try {
-    let devKey = window.localStorage.getItem('_sys_dev_key');
+    let devKey = rawGetItem('_sys_dev_key');
     if (!devKey) {
       devKey = 'dev_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
       window.localStorage.setItem('_sys_dev_key', devKey);
@@ -110,6 +127,39 @@ const UNENCRYPTED_KEYS = new Set([
   'preferred_logo'
 ]);
 
+/** Chaves internas do Firebase/Firestore: criptografá-las quebra o SDK (nunca migrar). */
+function isChaveDoSistema(key: string): boolean {
+  return key.startsWith('firebase:') || key.startsWith('firestore') || key.includes('firestore') || key.startsWith('_sys_');
+}
+
+/**
+ * Descriptografia transparente: o app guarda os dados locais criptografados ("enc:v1:"),
+ * mas muitos trechos leem com localStorage.getItem + JSON.parse. Sem esta camada, depois de
+ * cada login essas leituras recebiam o texto cifrado, o JSON.parse falhava em silêncio e as
+ * cópias locais (offline, sincronização, backup) ficavam invisíveis.
+ *
+ * - Valor em texto puro: devolvido como está.
+ * - Valor cifrado: devolvido descriptografado (com cache, para não repetir o AES).
+ * - Valor cifrado que não dá para abrir (ex.: antes do login): devolve null — "sem dado",
+ *   em vez de lixo que quebraria o JSON.parse.
+ */
+export function instalarLeituraDescriptografada(): void {
+  if (typeof window === 'undefined' || typeof Storage === 'undefined' || !originalGetItem) return;
+  if ((Storage.prototype.getItem as any).__descriptografa) return;
+  const lerDescriptografado = function (this: Storage, key: string): string | null {
+    const raw = originalGetItem!.call(this, key);
+    if (raw === null || this !== window.localStorage || !raw.startsWith('enc:v1:')) return raw;
+    const cache = cacheDescriptografia.get(key);
+    if (cache && cache.raw === raw) return cache.valor;
+    const valor = decryptValue(raw);
+    if (valor.startsWith('enc:v1:')) return null;
+    cacheDescriptografia.set(key, { raw, valor });
+    return valor;
+  };
+  (lerDescriptografado as any).__descriptografa = true;
+  Storage.prototype.getItem = lerDescriptografado;
+}
+
 /**
  * Safe local storage wrapper with automatic AES-256 Encryption at Rest.
  */
@@ -120,7 +170,7 @@ export const encryptedLocalStorage = {
     let rawVal: string | null = null;
     try {
       if (typeof window !== 'undefined' && window.localStorage) {
-        rawVal = window.localStorage.getItem(key);
+        rawVal = rawGetItem(key);
       } else {
         rawVal = memoryStorage[key] || null;
       }
@@ -175,13 +225,13 @@ export const encryptedLocalStorage = {
       const keysToMigrate: string[] = [];
       for (let i = 0; i < window.localStorage.length; i++) {
         const k = window.localStorage.key(i);
-        if (k && !UNENCRYPTED_KEYS.has(k)) {
+        if (k && !UNENCRYPTED_KEYS.has(k) && !isChaveDoSistema(k)) {
           keysToMigrate.push(k);
         }
       }
 
       for (const k of keysToMigrate) {
-        const val = window.localStorage.getItem(k);
+        const val = rawGetItem(k);
         if (val && !val.startsWith('enc:v1:')) {
           const enc = encryptValue(val);
           window.localStorage.setItem(k, enc);
