@@ -23,3 +23,18 @@ assert.equal(computeLicenseDaysLeft({ tipoPlano: 'Definitiva' }), 99999);
 assert.equal(computeLicenseDaysLeft({ tipoPlano: 'Teste', validadeLicenca: new Date(Date.now() + 5 * DAY - 1000).toISOString() }), 5);
 assert.equal(computeLicenseDaysLeft({ tipoPlano: 'Teste', diasTeste: 'abc' }), 30);
 console.log('OK: dias restantes (14 verificações)');
+
+// --- Planos pagos não podem usar diasTeste (bug: Anual vencia em 30 dias) ---
+{
+  const { computeLicenseDaysLeft: calc, addDaysIso } = await import('../src/lib/licenseDays');
+  const hoje = new Date().toISOString();
+  const anual = calc({ tipoPlano: 'Anual', diasTeste: 30, dataCadastro: hoje });
+  if (anual < 364) throw new Error(`Anual com diasTeste=30 deveria ter ~365 dias, deu ${anual}`);
+  const mensal7 = calc({ tipoPlano: 'Mensal', diasTeste: 7, dataCadastro: hoje });
+  if (mensal7 < 29) throw new Error(`Mensal com diasTeste=7 deveria ter ~30 dias, deu ${mensal7}`);
+  const teste7 = calc({ tipoPlano: 'Teste', diasTeste: 7, dataCadastro: hoje });
+  if (teste7 !== 7) throw new Error(`Teste com 7 dias deveria ter 7, deu ${teste7}`);
+  const comValidade = calc({ tipoPlano: 'Anual', diasTeste: 30, validadeLicenca: addDaysIso(365) });
+  if (comValidade < 364 || comValidade > 366) throw new Error(`Validade explícita errada: ${comValidade}`);
+  console.log('  OK: plano pago ignora diasTeste; validade explícita respeitada');
+}
