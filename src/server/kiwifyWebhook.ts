@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import admin from 'firebase-admin';
 import { timingSafeEqual, createHmac } from 'crypto';
 import { getAdminDb } from './firebaseAdmin';
+import { addDaysIso, isPaidPlan, licensePeriodDays, toJsDate } from '../lib/licenseDays';
 
 /**
  * ------------------------------------------------------------------------------------
@@ -166,17 +167,36 @@ export async function processKiwifyWebhook(input: {
 
     if (normalizeApprovedStatus(body)) {
       const plano = resolvePlano(body);
+      const atual = snap.docs[0].data() || {};
+      const eventType = String(pick(body, ['webhook_event_type', 'event']) || '').toLowerCase();
+      const isRenewal = eventType.includes('renew') || eventType.includes('renova');
+
+      // A Kiwify reenvia o mesmo evento se não receber resposta a tempo: o mesmo pedido,
+      // já ativado e ainda válido, não pode somar outro período.
+      const validadeAtual = toJsDate(atual.validadeLicenca);
+      const aindaValida = !!validadeAtual && validadeAtual.getTime() > Date.now();
+      if (!isRenewal && orderId && atual.kiwifyOrderId === orderId && atual.status === 'Ativa' && atual.tipoPlano === plano && aindaValida) {
+        return res.status(200).json({ ok: true, matched: true, plano, duplicate: true });
+      }
+
+      // Validade explícita: soma o período a partir de hoje ou do fim da licença atual
+      // (quem renova antes de vencer não perde os dias que faltavam).
+      const base = aindaValida && isPaidPlan(atual.tipoPlano) ? validadeAtual! : new Date();
+      const validadeLicenca = addDaysIso(licensePeriodDays(plano), base);
+
       await docRef.update({
         tipoPlano: plano,
         status: 'Ativa',
-        dataCadastro: admin.firestore.FieldValue.serverTimestamp(), // reinicia o período de vigência
+        validadeLicenca,
+        diasTeste: admin.firestore.FieldValue.delete(), // dias de teste não valem para plano pago
+        dataCadastro: admin.firestore.FieldValue.serverTimestamp(),
         kiwifyOrderId: orderId || null,
         kiwifyNomeComprador: nome || null,
         dataAtivacaoKiwify: admin.firestore.FieldValue.serverTimestamp(),
         updatedAt: new Date().toISOString(),
       });
-      console.log(`[Kiwify Webhook] Plano ${plano} ativado para ${email} (pedido ${orderId}).`);
-      return res.status(200).json({ ok: true, matched: true, plano });
+      console.log(`[Kiwify Webhook] Plano ${plano} ativado para ${email} até ${validadeLicenca} (pedido ${orderId}).`);
+      return res.status(200).json({ ok: true, matched: true, plano, validadeLicenca });
     }
 
     // Outros eventos (boleto gerado, pix gerado, carrinho abandonado, etc.) são apenas confirmados.
