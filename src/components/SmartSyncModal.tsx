@@ -29,14 +29,39 @@ export interface SyncSummary {
   downloadedFromCloud: number;
   updatedInLocal: number;
   identicalOrMerged: number;
+  /** Registros excluídos em outro aparelho e removidos deste. */
+  removedLocal?: number;
   details: {
-    empresas: { uploaded: number; downloaded: number; updated: number };
-    diagnosticos: { uploaded: number; downloaded: number; updated: number };
-    respostas: { uploaded: number; downloaded: number; updated: number };
-    tarefas: { uploaded: number; downloaded: number; updated: number };
-    biblioteca: { uploaded: number; downloaded: number; updated: number };
-    outros: { uploaded: number; downloaded: number; updated: number };
+    empresas: ModuloSync;
+    diagnosticos: ModuloSync;
+    respostas: ModuloSync;
+    tarefas: ModuloSync;
+    biblioteca: ModuloSync;
+    outros: ModuloSync;
   };
+}
+
+export interface ModuloSync {
+  uploaded: number;
+  downloaded: number;
+  updated: number;
+  /** Total de registros do módulo após a sincronização. */
+  total?: number;
+  /** Excluídos em outro aparelho e removidos deste. */
+  removed?: number;
+}
+
+/** Linha do módulo: total de registros e o que mudou nesta sincronização. */
+function resumoModulo(m?: ModuloSync): string {
+  if (!m) return '—';
+  const enviados = (m.uploaded || 0) + (m.updated || 0);
+  const partes: string[] = [];
+  if (enviados) partes.push(`↑ ${enviados} enviado${enviados > 1 ? 's' : ''}`);
+  if (m.downloaded) partes.push(`↓ ${m.downloaded} baixado${m.downloaded > 1 ? 's' : ''}`);
+  if (m.removed) partes.push(`✕ ${m.removed} removido${m.removed > 1 ? 's' : ''}`);
+  const total = typeof m.total === 'number' ? `${m.total} registro${m.total === 1 ? '' : 's'}` : '';
+  if (!partes.length) return total ? `${total} • em dia` : 'em dia';
+  return [total, ...partes].filter(Boolean).join(' • ');
 }
 
 interface SmartSyncModalProps {
@@ -202,6 +227,16 @@ export const SmartSyncModal: React.FC<SmartSyncModalProps> = ({
                 </div>
               </div>
 
+              {(lastSummary.removedLocal || 0) > 0 && (
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-start gap-2">
+                  <AlertCircle size={15} className="shrink-0 mt-0.5" />
+                  <span>
+                    {lastSummary.removedLocal} registro(s) excluído(s) em outro aparelho foram removidos deste computador,
+                    em vez de serem reenviados para a nuvem.
+                  </span>
+                </div>
+              )}
+
               {/* Detailed Breakdown */}
               <div className="p-4 bg-slate-50 border border-slate-200/70 rounded-2xl">
                 <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-3">
@@ -213,7 +248,7 @@ export const SmartSyncModal: React.FC<SmartSyncModalProps> = ({
                     <div className="min-w-0">
                       <p className="font-bold text-slate-800 truncate">Empresas</p>
                       <p className="text-[11px] text-slate-500">
-                        {lastSummary.details.empresas.uploaded + lastSummary.details.empresas.updated} nuvem • {lastSummary.details.empresas.downloaded} local
+                        {resumoModulo(lastSummary.details.empresas)}
                       </p>
                     </div>
                   </div>
@@ -223,7 +258,7 @@ export const SmartSyncModal: React.FC<SmartSyncModalProps> = ({
                     <div className="min-w-0">
                       <p className="font-bold text-slate-800 truncate">Diagnósticos</p>
                       <p className="text-[11px] text-slate-500">
-                        {lastSummary.details.diagnosticos.uploaded + lastSummary.details.diagnosticos.updated} nuvem • {lastSummary.details.diagnosticos.downloaded} local
+                        {resumoModulo(lastSummary.details.diagnosticos)}
                       </p>
                     </div>
                   </div>
@@ -233,7 +268,7 @@ export const SmartSyncModal: React.FC<SmartSyncModalProps> = ({
                     <div className="min-w-0">
                       <p className="font-bold text-slate-800 truncate">Respostas</p>
                       <p className="text-[11px] text-slate-500">
-                        {lastSummary.details.respostas.uploaded + lastSummary.details.respostas.updated} nuvem • {lastSummary.details.respostas.downloaded} local
+                        {resumoModulo(lastSummary.details.respostas)}
                       </p>
                     </div>
                   </div>
@@ -243,7 +278,7 @@ export const SmartSyncModal: React.FC<SmartSyncModalProps> = ({
                     <div className="min-w-0">
                       <p className="font-bold text-slate-800 truncate">Plano &amp; Tarefas</p>
                       <p className="text-[11px] text-slate-500">
-                        {lastSummary.details.tarefas.uploaded + lastSummary.details.tarefas.updated} nuvem • {lastSummary.details.tarefas.downloaded} local
+                        {resumoModulo(lastSummary.details.tarefas)}
                       </p>
                     </div>
                   </div>
@@ -253,7 +288,7 @@ export const SmartSyncModal: React.FC<SmartSyncModalProps> = ({
                     <div className="min-w-0">
                       <p className="font-bold text-slate-800 truncate">Biblioteca &amp; Base</p>
                       <p className="text-[11px] text-slate-500">
-                        {lastSummary.details.biblioteca.uploaded + lastSummary.details.biblioteca.updated} nuvem • {lastSummary.details.biblioteca.downloaded} local
+                        {resumoModulo(lastSummary.details.biblioteca)}
                       </p>
                     </div>
                   </div>
@@ -261,9 +296,9 @@ export const SmartSyncModal: React.FC<SmartSyncModalProps> = ({
                   <div className="p-2.5 bg-white border border-slate-200/60 rounded-xl flex items-center gap-2.5">
                     <ShieldCheck size={16} className="text-purple-600 shrink-0" />
                     <div className="min-w-0">
-                      <p className="font-bold text-slate-800 truncate">Agenda / Outros</p>
+                      <p className="font-bold text-slate-800 truncate">Credenciadas</p>
                       <p className="text-[11px] text-slate-500">
-                        {lastSummary.details.outros.uploaded + lastSummary.details.outros.updated} nuvem • {lastSummary.details.outros.downloaded} local
+                        {resumoModulo(lastSummary.details.outros)}
                       </p>
                     </div>
                   </div>
