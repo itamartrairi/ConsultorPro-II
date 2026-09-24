@@ -101,6 +101,10 @@ export interface AtividadeCronograma {
   evidencias?: string[];
   ordem?: number;
   incluirNoRelatorio?: boolean;
+  /** Área do problema tratado (preenchida pelo gerador do plano). */
+  area?: string;
+  /** Criticidade do problema tratado: Crítico, Alto ou Moderado. */
+  criticidade?: string;
 }
 
 export interface DadosConsultoria {
@@ -178,6 +182,8 @@ export interface TarefaPlanoAcao {
   responsavel: string;
   ownerId: string;
   ordem?: number;
+  cargaHoraria?: string;
+  resultadoEsperado?: string;
   comentarios?: string;
   lembreteEmail?: boolean;
   lembreteWhatsapp?: boolean;
