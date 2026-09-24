@@ -9571,6 +9571,20 @@ export default function App() {
         }
       };
 
+      // Registros que estavam na nuvem na última sincronização. Se um deles não está mais lá,
+      // foi EXCLUÍDO em outro aparelho: remove daqui em vez de reenviar (antes ele "ressuscitava").
+      // Registro que nunca esteve na nuvem é novo neste aparelho e é enviado normalmente.
+      let idsNaNuvemAntes: Record<string, string[]> | null = null;
+      try { idsNaNuvemAntes = JSON.parse(localStorage.getItem('sync_ids_nuvem_v1') || 'null'); } catch { idsNaNuvemAntes = null; }
+      const cacheIds: Record<string, Set<string>> = {};
+      const foiExcluidoNaNuvem = (col: string, id: string) =>
+        !!idsNaNuvemAntes && (cacheIds[col] ||= new Set(idsNaNuvemAntes[col] || [])).has(id);
+      const idsNaNuvemDepois: Record<string, string[]> = {};
+      const registrarRemocao = (modulo: keyof SyncSummary['details']) => {
+        summary.removedLocal = (summary.removedLocal || 0) + 1;
+        summary.details[modulo].removed = (summary.details[modulo].removed || 0) + 1;
+      };
+
       const cloudBatches: Array<() => Promise<void>> = [];
       const createBatchQueue = () => {
         let currentBatch = writeBatch(db);
@@ -9620,6 +9634,10 @@ export default function App() {
         summary.totalAnalyzed++;
         const local = localEmpresasMap.get(id);
         const cloud = cloudEmpresasMap.get(id);
+        if (local && !cloud && foiExcluidoNaNuvem('empresas', id)) {
+          registrarRemocao('empresas');
+          continue;
+        }
 
         if (local && !cloud) {
           batchQueue.pushItem(doc(db, 'empresas', id), { ...local, ownerId: user.uid, updatedAt: (local as any).updatedAt || new Date().toISOString() });
@@ -9648,6 +9666,8 @@ export default function App() {
           }
         }
       }
+      summary.details.empresas.total = (summary.details.empresas.total || 0) + finalEmpresas.length;
+      idsNaNuvemDepois['empresas'] = finalEmpresas.map((x: any) => x.id).filter(Boolean);
       setEmpresas(finalEmpresas);
       localStorage.setItem('local_empresas', JSON.stringify(finalEmpresas));
 
@@ -9675,6 +9695,10 @@ export default function App() {
         summary.totalAnalyzed++;
         const local = localDiagsMap.get(id);
         const cloud = cloudDiagsMap.get(id);
+        if (local && !cloud && foiExcluidoNaNuvem('diagnosticos', id)) {
+          registrarRemocao('diagnosticos');
+          continue;
+        }
 
         if (local && !cloud) {
           batchQueue.pushItem(doc(db, 'diagnosticos', id), { ...local, ownerId: user.uid, updatedAt: (local as any).updatedAt || new Date().toISOString() });
@@ -9703,6 +9727,8 @@ export default function App() {
           }
         }
       }
+      summary.details.diagnosticos.total = (summary.details.diagnosticos.total || 0) + finalDiagnosticos.length;
+      idsNaNuvemDepois['diagnosticos'] = finalDiagnosticos.map((x: any) => x.id).filter(Boolean);
       setDiagnosticos(finalDiagnosticos);
       localStorage.setItem('local_diagnosticos', JSON.stringify(finalDiagnosticos));
 
@@ -9725,6 +9751,10 @@ export default function App() {
         summary.totalAnalyzed++;
         const local = localRespsMap.get(id);
         const cloud = cloudRespsMap.get(id);
+        if (local && !cloud && foiExcluidoNaNuvem('respostas', id)) {
+          registrarRemocao('respostas');
+          continue;
+        }
 
         if (local && !cloud) {
           batchQueue.pushItem(doc(db, 'respostas', id), { ...local, ownerId: user.uid, updatedAt: (local as any).updatedAt || new Date().toISOString() });
@@ -9765,6 +9795,8 @@ export default function App() {
           }
         }
       }
+      summary.details.respostas.total = (summary.details.respostas.total || 0) + finalRespostas.length;
+      idsNaNuvemDepois['respostas'] = finalRespostas.map((x: any) => x.id).filter(Boolean);
       saveAllLocalRespostas(finalRespostas);
       if (selectedDiagnostico) {
         setRespostas(finalRespostas.filter(r => r.diagnosticoId === selectedDiagnostico.id));
@@ -9794,6 +9826,10 @@ export default function App() {
         summary.totalAnalyzed++;
         const local = localTasksMap.get(id);
         const cloud = cloudTasksMap.get(id);
+        if (local && !cloud && foiExcluidoNaNuvem('tarefas_plano', id)) {
+          registrarRemocao('tarefas');
+          continue;
+        }
 
         if (local && !cloud) {
           batchQueue.pushItem(doc(db, 'tarefas_plano', id), { ...local, ownerId: user.uid, updatedAt: (local as any).updatedAt || new Date().toISOString() });
@@ -9822,6 +9858,8 @@ export default function App() {
           }
         }
       }
+      summary.details.tarefas.total = (summary.details.tarefas.total || 0) + finalTasks.length;
+      idsNaNuvemDepois['tarefas_plano'] = finalTasks.map((x: any) => x.id).filter(Boolean);
       setTarefasPlano(finalTasks);
       localStorage.setItem('local_tarefas_plano', JSON.stringify(finalTasks));
 
@@ -9851,6 +9889,10 @@ export default function App() {
         summary.totalAnalyzed++;
         const local = localCredMap.get(id);
         const cloud = cloudCredMap.get(id);
+        if (local && !cloud && foiExcluidoNaNuvem('empresas_credenciadas', id)) {
+          registrarRemocao('outros');
+          continue;
+        }
 
         if (local && !cloud) {
           batchQueue.pushItem(doc(db, 'empresas_credenciadas', id), { ...local, ownerId: user.uid, updatedAt: (local as any).updatedAt || new Date().toISOString() });
@@ -9882,6 +9924,8 @@ export default function App() {
           }
         }
       }
+      summary.details.outros.total = (summary.details.outros.total || 0) + finalCreds.length;
+      idsNaNuvemDepois['empresas_credenciadas'] = finalCreds.map((x: any) => x.id).filter(Boolean);
       setEmpresasCredenciadas(finalCreds);
       localStorage.setItem('local_empresas_credenciadas', JSON.stringify(finalCreds));
 
@@ -9903,6 +9947,10 @@ export default function App() {
             const l = lMap.get(k);
             const c = cMap.get(k);
             const docId = l?.id || c?.id || String(k);
+            if (l && !c && foiExcluidoNaNuvem(colName, docId)) {
+              registrarRemocao('biblioteca');
+              continue;
+            }
 
             if (l && !c) {
               batchQueue.pushItem(doc(db, colName, docId), { ...(typeof l === 'object' ? l : { nome: l }), ownerId: user.uid, updatedAt: new Date().toISOString() });
@@ -9918,6 +9966,8 @@ export default function App() {
               merged.push({ ...c, ...l });
             }
           }
+          summary.details.biblioteca.total = (summary.details.biblioteca.total || 0) + merged.length;
+          idsNaNuvemDepois[colName] = merged.map((x: any) => (typeof x === 'object' ? x?.id : undefined)).filter(Boolean);
           setter(merged);
           localStorage.setItem(storageKey, JSON.stringify(merged));
         } catch (e) {
@@ -9936,6 +9986,8 @@ export default function App() {
       for (const commitTask of cloudBatches) {
         await commitTask();
       }
+
+      try { localStorage.setItem('sync_ids_nuvem_v1', JSON.stringify(idsNaNuvemDepois)); } catch { /* opcional */ }
 
       setLastSyncSummary(summary);
       localStorage.setItem('last_sync_summary', JSON.stringify(summary));
