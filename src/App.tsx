@@ -7549,9 +7549,7 @@ const SettingsView = ({
   const [dailyReminderTime, setDailyReminderTime] = React.useState(() => localStorage.getItem('daily_reminder_time') || '09:00');
   const [cloudStatus, setCloudStatus] = React.useState<{ checking: boolean; ok?: boolean; message?: string; details?: string } | null>(null);
   const [copiedRules, setCopiedRules] = React.useState(false);
-  const [geminiApiKeyInput, setGeminiApiKeyInput] = React.useState(() => {
-    return localStorage.getItem('custom_gemini_api_key') || '';
-  });
+  const [geminiApiKeyInput, setGeminiApiKeyInput] = React.useState(() => readCustomGeminiKey());
   const [isGeminiKeyVisible, setIsGeminiKeyVisible] = React.useState(false);
   const [testingGemini, setTestingGemini] = React.useState(false);
   const [geminiStatus, setGeminiStatus] = React.useState<{ ok?: boolean; message?: string } | null>(null);
@@ -7561,19 +7559,23 @@ const SettingsView = ({
   const handleSaveGeminiKey = () => {
     const cleanKey = geminiApiKeyInput.trim();
     if (!cleanKey) {
-      localStorage.removeItem('custom_gemini_api_key');
+      saveCustomGeminiKey('');
       setGeminiStatus(null);
       alert('Chave da API do Gemini removida com sucesso!');
       return;
     }
-    localStorage.setItem('custom_gemini_api_key', cleanKey);
+    if (!isValidGeminiApiKey(cleanKey)) {
+      setGeminiStatus({ ok: false, message: 'Chave inválida: a chave do Google AI Studio começa com "AQ." ou "AIza".' });
+      return;
+    }
+    saveCustomGeminiKey(cleanKey);
     setGeminiStatus({ ok: true, message: 'Chave salva com sucesso no dispositivo!' });
     alert('Chave salva com sucesso no seu dispositivo! Ela será utilizada para gerar planos e análises.');
   };
 
   const handleTestGeminiKey = async () => {
     // Campo vazio → testa a chave do sistema (GEMINI_API_KEY no servidor).
-    const keyToTest = geminiApiKeyInput.trim() || localStorage.getItem('custom_gemini_api_key')?.trim() || '';
+    const keyToTest = geminiApiKeyInput.trim() || readCustomGeminiKey();
     setTestingGemini(true);
     setGeminiStatus(null);
     try {
@@ -8960,7 +8962,7 @@ const HomeView = ({
 // A chave do criador NÃO fica mais no código do navegador: ela mora apenas no servidor
 // (variável GEMINI_API_KEY na Netlify Function /api/gemini/*). Quem quiser pode usar a
 // própria chave em Configurações; ela vai no cabeçalho x-custom-api-key.
-import { readCustomGeminiKey, geminiAuthHeaders, apiUrl, callGemini, testGeminiKey } from './lib/gemini';
+import { readCustomGeminiKey, saveCustomGeminiKey, geminiAuthHeaders, apiUrl, callGemini, testGeminiKey } from './lib/gemini';
 import { selectLibraryForDeletion } from './lib/librarySelection';
 export { readCustomGeminiKey, geminiAuthHeaders };
 
