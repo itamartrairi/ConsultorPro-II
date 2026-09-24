@@ -16,9 +16,10 @@ service cloud.firestore {
     }
 
     // Admin é definido apenas pelo e-mail verificado do login.
+    // (O app e o servidor usam itamartrairi@gmail.com; as regras só tinham ithamar1307.)
     function isAdmin() {
       return isAuthenticated() &&
-        request.auth.token.email == "ithamar1307@gmail.com" &&
+        request.auth.token.email in ["itamartrairi@gmail.com", "ithamar1307@gmail.com"] &&
         request.auth.token.email_verified == true;
     }
 
@@ -64,6 +65,13 @@ service cloud.firestore {
          (request.auth.token.email != null && resource.data.email == request.auth.token.email));
     }
 
+    // Cadastro de LICENÇA do próprio consultor (criado no primeiro login): tem providerId
+    // ou o mesmo e-mail do login. Os demais documentos são empresas que ele cadastrou.
+    function isOwnLicenseRecord() {
+      return ('providerId' in resource.data) ||
+        (request.auth.token.email != null && resource.data.get('email', '') == request.auth.token.email);
+    }
+
     match /empresas_credenciadas/{credId} {
       allow read: if isAdmin() || resource == null || isCredOwner();
       allow create: if isAdmin() ||
@@ -76,7 +84,10 @@ service cloud.firestore {
       allow update: if isAdmin() ||
         (isCredOwner() && keepsOwner() &&
          !request.resource.data.diff(resource.data).affectedKeys().hasAny(licenseFields()));
-      allow delete: if isAdmin() || resource == null || ownsExisting();
+      // O consultor pode excluir empresas que cadastrou, mas NÃO o próprio cadastro de
+      // licença: apagá-lo fazia o app criar um novo com mais 30 dias de teste no próximo
+      // login (e desbloqueava quem estava bloqueado ou vencido).
+      allow delete: if isAdmin() || resource == null || (ownsExisting() && !isOwnLicenseRecord());
     }
 
     // --- Perfil de usuário ------------------------------------------------------------
