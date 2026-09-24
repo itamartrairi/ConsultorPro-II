@@ -1,27 +1,17 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import {defineConfig, loadEnv} from 'vite';
+import {defineConfig} from 'vite';
 
-export default defineConfig(({mode}) => {
-  const env = loadEnv(mode, '.', '');
-  
+export default defineConfig(() => {
   // A chave do Gemini NUNCA é embutida no JavaScript do navegador (qualquer visitante
   // conseguiria lê-la). Ela fica só no servidor: variável GEMINI_API_KEY da Netlify
   // Function /api/gemini/* (ou do server.ts no Docker/dev).
-  void env;
+  // Por isso NÃO existe mais o bloco `define` com GEMINI_API_KEY aqui.
 
   return {
     base: './',
     plugins: [react(), tailwindcss()],
-    define: {
-      'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || ''),
-      'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY || ''),
-      'process.env.VITE_GEMINI_API_KEY': JSON.stringify(env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY || ''),
-      'process.env.GROQ_API_KEY': JSON.stringify(env.GROQ_API_KEY || ''),
-      'import.meta.env.VITE_GROQ_API_KEY': JSON.stringify(env.VITE_GROQ_API_KEY || env.GROQ_API_KEY || ''),
-      'process.env.VITE_GROQ_API_KEY': JSON.stringify(env.VITE_GROQ_API_KEY || env.GROQ_API_KEY || ''),
-    },
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
