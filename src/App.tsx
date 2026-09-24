@@ -19378,6 +19378,16 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
           onConfirm={async () => {
             if (modalData?.id) {
               const targetId = modalData.id;
+              const loginEmail = (user?.email || '').toLowerCase().trim();
+              const isOwnLicense = !!(modalData as any).providerId ||
+                (!!loginEmail && String((modalData as any).email || '').toLowerCase().trim() === loginEmail);
+              if (!isAdmin && isOwnLicense) {
+                setIsModalOpen(false);
+                setModalType(null);
+                setModalData(null);
+                showToast("Este é o cadastro da sua licença de uso e não pode ser excluído. Para encerrar a conta, fale com o suporte.", "error", "Exclusão não permitida");
+                return;
+              }
               setEmpresasCredenciadas(prev => prev.filter(c => c.id !== targetId));
               setIsModalOpen(false);
               setModalType(null);
