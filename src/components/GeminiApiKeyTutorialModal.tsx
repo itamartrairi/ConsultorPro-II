@@ -15,7 +15,7 @@ import {
   HelpCircle
 } from 'lucide-react';
 import { Button } from './Button';
-import { testGeminiKey } from '../lib/gemini';
+import { testGeminiKey, saveCustomGeminiKey, isValidGeminiApiKey } from '../lib/gemini';
 
 
 interface GeminiApiKeyTutorialModalProps {
@@ -79,7 +79,11 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
       setTestResult({ ok: false, message: 'Insira uma chave válida antes de salvar.' });
       return;
     }
-    localStorage.setItem('custom_gemini_api_key', key);
+    if (!isValidGeminiApiKey(key)) {
+      setTestResult({ ok: false, message: 'Chave inválida: a chave do Google AI Studio começa com "AQ." ou "AIza".' });
+      return;
+    }
+    saveCustomGeminiKey(key);
     onKeySaved(key);
     onClose();
   };
@@ -87,7 +91,7 @@ export const GeminiApiKeyTutorialModal: React.FC<GeminiApiKeyTutorialModalProps>
   // Volta a usar a chave do sistema, que fica guardada só no servidor.
   const handleUseSystemDefault = () => {
     setApiKeyInput('');
-    localStorage.removeItem('custom_gemini_api_key');
+    saveCustomGeminiKey('');
     onKeySaved('');
     onClose();
   };
