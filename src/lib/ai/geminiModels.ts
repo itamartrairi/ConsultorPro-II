@@ -36,7 +36,8 @@ export function cleanApiKey(val: unknown): string {
 export function isValidGeminiApiKey(val: unknown): boolean {
   const t = cleanApiKey(val);
   if (!t || t === 'undefined' || t === 'null') return false;
-  return t.startsWith('AQ.') || t.startsWith('AIza') || t.length >= 30;
+  // Só os formatos reais do Google. Evita mandar lixo (ex.: texto criptografado "enc:v1:...").
+  return (t.startsWith('AQ.') || t.startsWith('AIza')) && t.length >= 30 && /^[A-Za-z0-9._-]+$/.test(t);
 }
 
 /** Traduz os erros mais comuns da API do Google para mensagens claras. */
