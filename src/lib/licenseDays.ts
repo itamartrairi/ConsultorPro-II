@@ -33,10 +33,28 @@ export function toJsDate(v: any): Date | null {
 
 const DAY_MS = 1000 * 60 * 60 * 24;
 
+/** Duração de cada plano pago, em dias. */
+export function licensePeriodDays(plano: string): number {
+  return plano === 'Anual' ? 365 : 30;
+}
+
+export function isPaidPlan(plano: unknown): boolean {
+  return plano === 'Mensal' || plano === 'Anual' || plano === 'Definitiva';
+}
+
+/** Data (aaaa-mm-dd) daqui a N dias a partir de uma data base (padrão: hoje). */
+export function addDaysIso(days: number, base: Date = new Date()): string {
+  const d = new Date(base.getTime() + days * DAY_MS);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 /**
  * Dias restantes da licença de uma credenciada. Nunca retorna NaN.
  * Definitiva → 99999. Com validadeLicenca → dias até a validade.
- * Senão → limite (diasTeste ou padrão do plano) menos os dias desde o cadastro.
+ * Senão → limite menos os dias desde o cadastro. O limite vem de `diasTeste` SÓ no
+ * plano Teste; nos planos pagos vale a duração do plano (30 ou 365 dias). Antes, o
+ * `diasTeste: 30` criado no cadastro fazia o plano Anual vencer em 30 dias.
  */
 export function computeLicenseDaysLeft(emp: any): number {
   const plano = emp?.tipoPlano || 'Teste';
@@ -44,7 +62,7 @@ export function computeLicenseDaysLeft(emp: any): number {
   const validade = toJsDate(emp?.validadeLicenca);
   if (validade) return Math.ceil((validade.getTime() - Date.now()) / DAY_MS);
   const diasTeste = Number(emp?.diasTeste);
-  const limitDays = Number.isFinite(diasTeste) && diasTeste > 0 ? diasTeste : (plano === 'Mensal' ? 30 : plano === 'Anual' ? 365 : 30);
+  const limitDays = plano === 'Teste' && Number.isFinite(diasTeste) && diasTeste > 0 ? diasTeste : licensePeriodDays(plano);
   const cadastro = toJsDate(emp?.dataCadastro);
   if (!cadastro) return limitDays;
   return limitDays - Math.floor((Date.now() - cadastro.getTime()) / DAY_MS);
