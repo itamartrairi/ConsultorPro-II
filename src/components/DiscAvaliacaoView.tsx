@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db, auth } from '../firebase';
-import { readCustomGeminiKey, geminiAuthHeaders, apiUrl } from '../lib/gemini';
+import { callGemini } from '../lib/gemini';
 
 import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc, updateDoc } from '../lib/firestoreOwned';
 import {
@@ -517,63 +517,8 @@ Por favor, escreva o relatório em português brasileiro (PT-BR) contendo as seg
 Retorne estritamente o relatório estruturado em formato Markdown de alta qualidade profissional, sem cabeçalhos irrelevantes ou metadados de sistema.`;
 
     try {
-      let aiText = "";
-      const customKey = readCustomGeminiKey();
-      if (!aiText) {
-        const headers: Record<string, string> = { "Content-Type": "application/json", ...(await geminiAuthHeaders()) };
-        if (customKey) {
-          headers["x-custom-api-key"] = customKey;
-        }
-
-        try {
-          const response = await fetch(apiUrl("/api/gemini/generate"), {
-            method: "POST",
-            headers: headers,
-            body: JSON.stringify({
-              model: "gemini-3.6-flash",
-              contents: prompt
-            })
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            if (data && data.text) {
-              aiText = data.text;
-            }
-          }
-        } catch (e) {
-          console.warn("[DISC AI] Proxy indisponível, tentando chamada direta:", e);
-        }
-
-        if (!aiText) {
-          // Chamada direta só é possível com a chave própria do usuário.
-          const activeKey = customKey;
-          if (!activeKey) {
-            if (groqKey) {
-              // Tentativa de contingência com Groq se ainda não tentou
-              const groqRes = await callGroqChat({ contents: prompt, model: 'llama3-70b-8192' });
-              aiText = groqRes.text;
-            } else {
-              throw new Error("Não foi possível falar com o servidor de IA. Configure uma chave da Groq (Llama 3) ou do Gemini em Configurações.");
-            }
-          } else {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${activeKey}`;
-            const directRes = await fetch(url, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-              })
-            });
-            if (!directRes.ok) {
-              const errData = await directRes.json().catch(() => ({}));
-              throw new Error(errData.error?.message || `Erro HTTP ${directRes.status}`);
-            }
-            const directData = await directRes.json();
-            aiText = directData.candidates?.[0]?.content?.parts?.[0]?.text || "";
-          }
-        }
-      }
+      // Servidor com a chave GEMINI_API_KEY (ou a chave própria do usuário, se houver).
+      const { text: aiText } = await callGemini({ model: "gemini-3.6-flash", contents: prompt });
 
       if (!aiText) {
         throw new Error("Não foi possível obter uma resposta do serviço de IA.");

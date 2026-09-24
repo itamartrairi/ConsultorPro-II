@@ -833,7 +833,7 @@ export const MacroDashboardView = ({
       Retorne em formato de texto limpo estruturado em markdown clássico, sem cabeçalhos repetidos desnecessários, com tom executivo de consultoria do mais alto nível.`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-3.6-flash",
         contents: prompt
       });
 
