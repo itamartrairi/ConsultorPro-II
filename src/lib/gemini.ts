@@ -1,4 +1,5 @@
 import { auth } from '../firebase';
+import { encryptedLocalStorage } from './cryptoStorage';
 import {
   GEMINI_MODEL_CHAIN,
   GEMINI_PRIMARY_MODEL,
@@ -23,17 +24,32 @@ export function isValidGeminiApiKey(k: any): boolean {
 // Prefixos de chaves que ficaram públicas — removidas do navegador de quem as salvou.
 const LEAKED_GEMINI_KEY_PREFIXES = ['AQ.Ab8RN6LGK4um2g'];
 
+const CUSTOM_KEY_STORAGE = 'custom_gemini_api_key';
+
+/**
+ * Lê a chave própria do usuário. O app criptografa o localStorage ("enc:v1:..."), então a
+ * leitura passa pelo encryptedLocalStorage, que descriptografa. Se o valor não virar uma chave
+ * válida (ex.: não deu para descriptografar), ele é descartado para não ser enviado ao Google.
+ */
 export function readCustomGeminiKey(): string {
   try {
-    const raw = cleanApiKey(localStorage.getItem('custom_gemini_api_key') || '');
-    if (LEAKED_GEMINI_KEY_PREFIXES.some((p) => raw.startsWith(p))) {
-      localStorage.removeItem('custom_gemini_api_key');
+    const raw = cleanApiKey(encryptedLocalStorage.getItem(CUSTOM_KEY_STORAGE) || '');
+    if (!raw) return '';
+    if (LEAKED_GEMINI_KEY_PREFIXES.some((p) => raw.startsWith(p)) || !isValidKey(raw)) {
+      localStorage.removeItem(CUSTOM_KEY_STORAGE);
       return '';
     }
-    return isValidKey(raw) ? raw : '';
+    return raw;
   } catch {
     return '';
   }
+}
+
+/** Salva (criptografada) ou apaga a chave própria do usuário. */
+export function saveCustomGeminiKey(key: string): void {
+  const k = cleanApiKey(key);
+  if (!k) localStorage.removeItem(CUSTOM_KEY_STORAGE);
+  else encryptedLocalStorage.setItem(CUSTOM_KEY_STORAGE, k);
 }
 
 // Token de login do Firebase, exigido pelo proxy do Gemini (evita uso da chave por terceiros).
@@ -145,7 +161,7 @@ export async function callGemini({ model, contents, config }: { model?: string; 
     if (res.ok && typeof data?.text === 'string') return { text: data.text };
     // Resposta HTML/404 = não há servidor (ex.: app desktop sem VITE_API_BASE_URL).
     const serverMissing = !isJson || res.status === 404 || res.status === 502 || res.status === 503;
-    if (!serverMissing) throw new Error(data?.error || `Erro HTTP ${res.status} na API do Gemini`);
+    if (!serverMissing) throw new Error((data?.error || `Erro HTTP ${res.status} na API do Gemini`) + (data?.detail ? `\n\nDetalhe do Google: ${data.detail}` : ''));
     proxyError = new Error('Servidor de IA indisponível.');
   } catch (e: any) {
     const offline = /failed to fetch|networkerror|load failed/i.test(e?.message || '');
@@ -171,7 +187,7 @@ export async function testGeminiKey(key?: string): Promise<{ ok: boolean; messag
     const isJson = (res.headers.get('content-type') || '').includes('application/json');
     if (isJson && res.status !== 404) {
       const data: any = await res.json().catch(() => ({}));
-      return data?.ok ? { ok: true, message: data.message || 'Conexão ativa!' } : { ok: false, message: data?.error || `Erro HTTP ${res.status}` };
+      return data?.ok ? { ok: true, message: data.message || 'Conexão ativa!' } : { ok: false, message: (data?.error || `Erro HTTP ${res.status}`) + (data?.detail ? ` — Detalhe do Google: ${data.detail}` : '') };
     }
   } catch {
     /* servidor fora do ar: tenta direto abaixo */
