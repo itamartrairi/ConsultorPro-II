@@ -7572,32 +7572,14 @@ const SettingsView = ({
   };
 
   const handleTestGeminiKey = async () => {
-    const keyToTest = geminiApiKeyInput.trim() || localStorage.getItem('custom_gemini_api_key')?.trim();
-    if (!keyToTest) {
-      alert('Por favor, digite ou cole uma chave do Google Gemini antes de testar.');
-      return;
-    }
+    // Campo vazio → testa a chave do sistema (GEMINI_API_KEY no servidor).
+    const keyToTest = geminiApiKeyInput.trim() || localStorage.getItem('custom_gemini_api_key')?.trim() || '';
     setTestingGemini(true);
     setGeminiStatus(null);
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${keyToTest}`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: "Responda apenas 'OK'." }] }]
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error?.message || `Erro HTTP ${res.status}`);
-      }
-      setGeminiStatus({ ok: true, message: 'Conexão ativa! O modelo gemini-3.6-flash respondeu com sucesso.' });
-      alert('Sucesso! A chave de API do Gemini está conectada e operacional com o modelo gemini-3.6-flash.');
-    } catch (e: any) {
-      const err = e?.message || String(e);
-      setGeminiStatus({ ok: false, message: 'Falha: ' + err });
-      alert('Erro ao testar a chave do Gemini:\n\n' + err);
+      const r = await testGeminiKey(keyToTest);
+      setGeminiStatus({ ok: r.ok, message: r.ok ? r.message : 'Falha: ' + r.message });
+      alert(r.ok ? 'Sucesso! ' + r.message : 'Erro ao testar a chave do Gemini:\n\n' + r.message);
     } finally {
       setTestingGemini(false);
     }
@@ -8978,7 +8960,7 @@ const HomeView = ({
 // A chave do criador NÃO fica mais no código do navegador: ela mora apenas no servidor
 // (variável GEMINI_API_KEY na Netlify Function /api/gemini/*). Quem quiser pode usar a
 // própria chave em Configurações; ela vai no cabeçalho x-custom-api-key.
-import { readCustomGeminiKey, geminiAuthHeaders, apiUrl } from './lib/gemini';
+import { readCustomGeminiKey, geminiAuthHeaders, apiUrl, callGemini, testGeminiKey } from './lib/gemini';
 import { selectLibraryForDeletion } from './lib/librarySelection';
 export { readCustomGeminiKey, geminiAuthHeaders };
 
@@ -9106,174 +9088,10 @@ export const getAI = () => {
           console.warn("[AICache] Cache lookup error:", e);
         }
 
-        const savedKey = readCustomGeminiKey();
-        const hasValidGeminiKey = Boolean(savedKey && isValidGeminiApiKey(savedKey));
-        // 3. Provedor Google Gemini (Backend Proxy ou Chamada Direta)
-        // Só a chave própria do usuário é usada fora do servidor.
-        const activeKey = savedKey;
-        
-        // 3.1. Try backend proxy first
-        try {
-          const headers: Record<string, string> = {
-            "Content-Type": "application/json",
-            ...(await geminiAuthHeaders())
-          };
-          if (activeKey) {
-            headers["x-custom-api-key"] = activeKey;
-          }
-
-          const response = await fetch(apiUrl("/api/gemini/generate"), {
-            method: "POST",
-            headers: headers,
-            body: JSON.stringify({ model: model || "gemini-3.6-flash", contents, config })
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            if (data && data.text) {
-              setCachedAI(cacheKey, data.text).catch(() => {});
-              return {
-                text: data.text
-              };
-            }
-          }
-          
-          if (response.status !== 404 && response.status !== 502 && response.status !== 503) {
-            const errData = await response.json().catch(() => ({}));
-            throw new Error(errData.error || `Erro HTTP ${response.status} na API do Gemini`);
-          }
-        } catch (e: any) {
-          const isNetworkOr404 = e.message && (
-            e.message.includes("404") || 
-            e.message.includes("Failed to fetch") || 
-            e.message.includes("NetworkError") ||
-            e.message.includes("502") ||
-            e.message.includes("503")
-          );
-          if (!isNetworkOr404) {
-            throw e;
-          }
-          console.warn("[Gemini] Proxy indisponível ou estático. Tentando chamada direta com a chave configurada.");
-        }
-
-        // 3.2. Direct Client Call
-        const finalKey = savedKey; // Use the properly routed key
-        if (!finalKey || !isValidGeminiApiKey(finalKey)) {
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('open-gemini-tutorial-modal'));
-          }
-          throw new Error("Chave de Inteligência Artificial não configurada.\n\nPor favor, insira sua chave do Google Gemini no menu Configurações.");
-        }
-
-        const GEMINI_PRIMARY = "gemini-3.6-flash";
-        const GEMINI_CHAIN = [
-          "gemini-3.6-flash",
-          "gemini-3.6-flash"
-        ];
-
-        function normalizeClientModel(m?: string): string {
-          if (!m) return GEMINI_PRIMARY;
-          return m.startsWith("gemini-") ? m : GEMINI_PRIMARY;
-        }
-
-        const initialModel = normalizeClientModel(model);
-        const candidateModels = Array.from(new Set([initialModel, ...GEMINI_CHAIN]));
-
-        const tryFetchWithModel = async (tgtModel: string) => {
-          const url = `https://generativelanguage.googleapis.com/v1beta/models/${tgtModel}:generateContent?key=${finalKey}`;
-          
-          let partsArr: any[] = [];
-          if (typeof contents === 'string') {
-            partsArr = [{ text: contents }];
-          } else if (contents && Array.isArray(contents)) {
-            partsArr = contents;
-          } else if (contents && contents.parts) {
-            partsArr = contents.parts;
-          } else if (contents) {
-            partsArr = [{ text: JSON.stringify(contents) }];
-          }
-
-          const callApi = async (withConfig: any) => {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 18000);
-            try {
-              const response = await fetch(url, {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json"
-                },
-                signal: controller.signal,
-                body: JSON.stringify({
-                  contents: [{ parts: partsArr }],
-                  generationConfig: withConfig
-                })
-              });
-              clearTimeout(timeoutId);
-
-              if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                const rawErr = errData.error?.message || `Erro HTTP! Status: ${response.status}`;
-                if (rawErr.toLowerCase().includes("api key not valid") || rawErr.toLowerCase().includes("api_key_invalid")) {
-                  throw new Error("Chave de API do Gemini inválida.\n\nA chave oficial do Google AI Studio começa com 'AIzaSy...'.\nPor favor, atualize sua chave no menu Configurações ou obtenha uma em: https://aistudio.google.com/app/apikey");
-                }
-                throw new Error(rawErr);
-              }
-
-              const data = await response.json();
-              return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-            } catch (fetchErr: any) {
-              clearTimeout(timeoutId);
-              if (fetchErr.name === 'AbortError') {
-                throw new Error("Tempo limite de resposta do Gemini excedido (timeout).");
-              }
-              throw fetchErr;
-            }
-          };
-
-          try {
-            const textResult = await callApi(config);
-            if (textResult) {
-              setCachedAI(cacheKey, textResult).catch(() => {});
-            }
-            return { text: textResult };
-          } catch (configErr: any) {
-            if (config && (config.responseMimeType || config.responseSchema)) {
-              console.warn("Retrying direct call without JSON schema constraints...", configErr);
-              try {
-                const strippedConfig = { ...config };
-                delete strippedConfig.responseMimeType;
-                delete strippedConfig.responseSchema;
-                const textResult = await callApi(strippedConfig);
-                if (textResult) {
-                  setCachedAI(cacheKey, textResult).catch(() => {});
-                }
-                return { text: textResult };
-              } catch (fallbackErr: any) {
-                throw fallbackErr;
-              }
-            }
-            throw configErr;
-          }
-        };
-
-        let lastErr: any = null;
-        for (const tgtModel of candidateModels) {
-          try {
-            return await tryFetchWithModel(tgtModel);
-          } catch (mErr: any) {
-            console.warn(`[Gemini Client Fallback] Model ${tgtModel} failed:`, mErr?.message || mErr);
-            lastErr = mErr;
-            if (mErr?.message?.includes("AIzaSy") || mErr?.message?.includes("inválida")) {
-              break;
-            }
-          }
-        }
-
-
-        const friendlyMsg = lastErr?.message?.includes("API_KEY")
-          ? "Chave de API do Gemini inválida ou não configurada."
-          : (lastErr?.message || "Não foi possível conectar aos modelos do Gemini.");
-        throw new Error(friendlyMsg);
+        // Servidor (chave GEMINI_API_KEY das variáveis de ambiente) → contingência com a chave própria do usuário.
+        const result = await callGemini({ model, contents, config });
+        if (result.text) setCachedAI(cacheKey, result.text).catch(() => {});
+        return result;
       }
     }
   };
