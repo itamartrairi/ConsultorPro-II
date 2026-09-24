@@ -359,155 +359,19 @@ const TagInputManager = ({
 };
 
 // --- Helper to limit, balance and adjust activity workloads in logical order ---
+/**
+ * Normaliza qualquer plano para a estrutura padrão da consultoria:
+ * 1. Diagnóstico · 2. Devolutiva · 3. Ferramentas de gestão · problemas críticos · Análise final (2h) · Relatórios.
+ * No máximo 10 atividades e soma de horas igual à carga horária total (ver lib/domain/planoAcao.ts).
+ */
 const adjustActivitiesMax4Hours = (
   activities: AtividadeCronograma[],
   totalCargaHorariaStr?: string
-): AtividadeCronograma[] => {
-  let totalHours = 34;
-  if (totalCargaHorariaStr) {
-    const num = parseInt(totalCargaHorariaStr.replace(/\D/g, ''), 10);
-    if (!isNaN(num) && num > 0) {
-      totalHours = num;
-    }
-  }
-
-  let hasDevSystem = false;
-  let hasAnaliseFinal = false;
-
-  const rawCleanList: AtividadeCronograma[] = [];
-
-  for (const atv of activities) {
-    if (!atv || (!atv.nome && !atv.solucaoProposta)) continue;
-    const nameLower = (atv.nome || atv.solucaoProposta || '').toLowerCase();
-
-    if (nameLower.includes('desenvolvimento de sistema') || nameLower.includes('aplicativo') || nameLower.includes('planilha')) {
-      hasDevSystem = true;
-      rawCleanList.push({
-        ...atv,
-        nome: "Desenvolvimento de sistema, aplicativos ou planilhas",
-        descricao: atv.descricao || "Análise e desenvolvimento de sistema de gestão, aplicativo ou planilhas para automação e controle operacional e financeiro do negócio.",
-        cargaHoraria: "8h",
-        solucaoProposta: atv.solucaoProposta || "Desenvolvimento de sistema, aplicativo e planilhas",
-        resultadoEsperado: atv.resultadoEsperado || "Sistema, aplicativo ou planilhas desenvolvidas e implantadas na rotina da empresa."
-      });
-    } else if (nameLower.includes('análise final') || nameLower.includes('analise final')) {
-      hasAnaliseFinal = true;
-      rawCleanList.push({
-        ...atv,
-        nome: "Análise final de atividades da consultoria",
-        descricao: atv.descricao || "Análise crítica final e mensuração de todas as atividades e resultados executados na consultoria.",
-        cargaHoraria: "2h",
-        solucaoProposta: atv.solucaoProposta || "Análise final de atividades da consultoria",
-        resultadoEsperado: atv.resultadoEsperado || "Avaliação detalhada e validação final do cumprimento do escopo da consultoria."
-      });
-    } else {
-      rawCleanList.push(atv);
-    }
-  }
-
-  // Ensure mandatory special activities exist
-  if (!hasDevSystem) {
-    rawCleanList.push({
-      nome: "Desenvolvimento de sistema, aplicativos ou planilhas",
-      descricao: "Análise e desenvolvimento de sistema de gestão, aplicativo ou planilhas personalizadas para automação dos controles da empresa.",
-      cargaHoraria: "8h",
-      solucaoProposta: "Desenvolvimento de sistema, aplicativo ou planilhas de gestão",
-      responsavel: "Consultor",
-      status: "Pendente",
-      prioridade: "Alta",
-      resultadoEsperado: "Ferramenta/aplicativo/planilha implantada e operando no cliente."
-    });
-  }
-
-  if (!hasAnaliseFinal) {
-    rawCleanList.push({
-      nome: "Análise final de atividades da consultoria",
-      descricao: "Análise de encerramento e verificação do alcance dos indicadores e resultados previstos no plano de trabalho.",
-      cargaHoraria: "2h",
-      solucaoProposta: "Análise final e consolidação de resultados da consultoria",
-      responsavel: "Consultor",
-      status: "Pendente",
-      prioridade: "Média",
-      resultadoEsperado: "Checklist final de entregas e resultados validados."
-    });
-  }
-
-  // Ensure diagnostic start and end report exist
-  const hasStartDiag = rawCleanList.some(a => (a.nome || '').toLowerCase().includes('diagnóstico inicial') || (a.nome || '').toLowerCase().includes('entendimento'));
-  if (!hasStartDiag) {
-    rawCleanList.unshift({
-      nome: "Entendimento da demanda e diagnóstico inicial",
-      descricao: "Alinhamento das expectativas do cliente e levantamento detalhado das necessidades operacionais e financeiras.",
-      cargaHoraria: "4h",
-      solucaoProposta: "Entendimento da demanda e diagnóstico inicial",
-      responsavel: "Consultor",
-      status: "Pendente",
-      prioridade: "Alta",
-      resultadoEsperado: "Expectativas alinhadas e diagnóstico operacional consolidado."
-    });
-  }
-
-  const hasEndReport = rawCleanList.some(a => (a.nome || '').toLowerCase().includes('relatório final') || (a.nome || '').toLowerCase().includes('encerramento'));
-  if (!hasEndReport) {
-    rawCleanList.push({
-      nome: "Relatório final e encerramento",
-      descricao: "Elaboração, apresentação do relatório técnico final da consultoria e formalização do encerramento.",
-      cargaHoraria: "2h",
-      solucaoProposta: "Elaboração e apresentação do relatório final.",
-      responsavel: "Consultor",
-      status: "Pendente",
-      prioridade: "Média",
-      resultadoEsperado: "Relatório final gerencial apresentado e aprovado pelo cliente."
-    });
-  }
-
-  // Assign weight for logical execution sequence
-  const getWeight = (a: AtividadeCronograma): number => {
-    const name = (a.nome || a.solucaoProposta || '').toLowerCase();
-    if (name.includes('diagnóstico inicial') || name.includes('entendimento da demanda')) return 1;
-    if (name.includes('desenvolvimento de sistema') || name.includes('aplicativo') || name.includes('planilha')) return 8;
-    if (name.includes('análise final') || name.includes('analise final')) return 9;
-    if (name.includes('relatório final') || name.includes('encerramento')) return 10;
-    return 5;
-  };
-
-  rawCleanList.sort((a, b) => getWeight(a) - getWeight(b));
-
-  // Balance hours: Dev system = 8h, Analise final = 2h (fixed 10h)
-  const fixedDev = rawCleanList.find(a => getWeight(a) === 8);
-  const fixedAnalise = rawCleanList.find(a => getWeight(a) === 9);
-
-  if (fixedDev) fixedDev.cargaHoraria = "8h";
-  if (fixedAnalise) fixedAnalise.cargaHoraria = "2h";
-
-  const targetOtherHours = Math.max(2, totalHours - 10);
-  const otherItems = rawCleanList.filter(a => getWeight(a) !== 8 && getWeight(a) !== 9);
-
-  if (otherItems.length > 0) {
-    const baseH = Math.max(2, Math.min(4, Math.floor(targetOtherHours / otherItems.length)));
-    otherItems.forEach(item => {
-      item.cargaHoraria = `${baseH}h`;
-    });
-
-    let currentSum = otherItems.length * baseH;
-    let diff = targetOtherHours - currentSum;
-
-    for (let i = 0; i < otherItems.length && diff > 0; i++) {
-      const h = parseInt(otherItems[i].cargaHoraria.replace(/\D/g, ''), 10) || baseH;
-      if (h < 4) {
-        const add = Math.min(4 - h, diff);
-        otherItems[i].cargaHoraria = `${h + add}h`;
-        diff -= add;
-      }
-    }
-  }
-
-  return rawCleanList;
-};
+): AtividadeCronograma[] => estruturarPlano(activities, totalCargaHorariaStr);
 
 // --- View Components ---
 
-const PLANO_DE_ACAO_PADRAO: AtividadeCronograma[] = [
+const PLANO_DE_ACAO_PADRAO_BASE: AtividadeCronograma[] = [
   {
     nome: "Entendimento da demanda e diagnóstico inicial",
     descricao: "Alinhamento das expectativas do cliente e levantamento de dados operacionais e financeiros atuais.",
@@ -589,6 +453,9 @@ const PLANO_DE_ACAO_PADRAO: AtividadeCronograma[] = [
     resultadoEsperado: "Relatório final consolidado, apresentado e validado pelo produtor/cliente."
   }
 ];
+
+/** Plano genérico (sem diagnóstico respondido), já na estrutura padrão de 34h. */
+const PLANO_DE_ACAO_PADRAO: AtividadeCronograma[] = estruturarPlano(PLANO_DE_ACAO_PADRAO_BASE, 34);
 
 interface ModeloRelatorio {
   id: string;
@@ -2180,6 +2047,13 @@ const CronogramaView = ({
   });
 
   const [editingModelo, setEditingModelo] = useState<ModeloRelatorio | null>(null);
+
+  // Recarrega a lista quando um "Modelo Padrão" é criado automaticamente em outra tela.
+  useEffect(() => {
+    const recarregar = () => setModelosRelatorio(carregarModelos(MODELOS_RELATORIO));
+    window.addEventListener(MODELOS_EVENTO, recarregar);
+    return () => window.removeEventListener(MODELOS_EVENTO, recarregar);
+  }, []);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Hydrate missing or offline-cached evidence and consulting report data from IndexedDB on component mount
@@ -2427,115 +2301,66 @@ const CronogramaView = ({
     }
   }, [respostas, solucoes]);
 
+  /**
+   * Gera o PLANO DE AÇÃO e os textos do RELATÓRIO a partir do diagnóstico:
+   * analisa as respostas, classifica os problemas críticos e monta o plano na estrutura
+   * padrão (diagnóstico → devolutiva → ferramentas → problemas críticos → análise final → relatórios).
+   * A IA só melhora a redação; sem IA o plano é gerado do mesmo jeito.
+   */
   const generateSuggestionsAI = async () => {
-    if (!respostas || respostas.length === 0) {
-      alert("Realize o diagnóstico primeiro para gerar sugestões baseadas nos dados.");
+    const doDiagnostico = (respostas || []).filter(r => !r.diagnosticoId || r.diagnosticoId === selectedDiagnostico.id);
+    const areasSel = selectedDiagnostico.areasDiagnostico || [];
+    const relevantes = areasSel.length === 0
+      ? doDiagnostico
+      : doDiagnostico.filter(r => areasSel.some(a => normalizeAndFormatArea(a).toLowerCase() === normalizeAndFormatArea(r.area).toLowerCase()));
+    const analise = analisarDiagnostico(deduplicateRespostas(relevantes), problemas, solucoes);
+
+    if (analise.totalRespondidas === 0) {
+      alert("Responda o diagnóstico primeiro: o plano de ação e o relatório são gerados a partir das respostas.");
       return;
     }
-    
+    if (atividades.some(a => a.status === 'Concluído' || a.status === 'Em Andamento') &&
+        !window.confirm("O plano atual tem atividades em andamento ou concluídas. Gerar um novo plano substituirá todas as atividades. Deseja continuar?")) {
+      return;
+    }
+
     setIsGeneratingAI(true);
     try {
-      const ai = getAI();
-      if (!ai) {
-        alert("IA não configurada ou API Key inválida.");
-        setIsGeneratingAI(false);
-        return;
-      }
+      const carga = dadosConsultoria.cargaHoraria || selectedDiagnostico.dadosConsultoria?.cargaHoraria || selectedDiagnostico.cargaHoraria || (selectedEmpresa as any)?.cargaHoraria || '34h';
+      const contexto = {
+        nomeEmpresa: selectedEmpresa?.nomeFantasia || selectedEmpresa?.nome || selectedDiagnostico.nomeEmpresa,
+        tipoEmpresa: selectedDiagnostico.tipoEmpresa || selectedEmpresa?.tipoEmpresa
+      };
 
-      const totalCargaStr = dadosConsultoria.cargaHoraria || selectedDiagnostico.dadosConsultoria?.cargaHoraria || (selectedEmpresa as any)?.cargaHoraria || '34h';
-      const numTotal = parseInt(totalCargaStr.replace(/\D/g, ''), 10) || 34;
-
-      const prompt = `Como um consultor sênior do SEBRAE, analise o diagnóstico empresarial e as respostas abaixo para sugerir um plano de trabalho/cronograma detalhado para uma consultoria de sucesso.
-      
-      DADOS DO DIAGNÓSTICO:
-      ${JSON.stringify(respostas.map(r => ({ id: r.idProblema, p: r.pergunta, r: r.resposta, o: r.observacao, area: r.area }))).slice(0, 3500)}
-      CARGA HORÁRIA TOTAL REGISTRADA DA CONSULTORIA: ${numTotal}hs
-      
-      DIRETRIZES DE ATIVIDADES E ORDEM LÓGICA DE EXECUÇÃO:
-      - A soma das cargas horárias de todas as atividades DEVE ser exatamente ${numTotal}hs.
-      - As atividades DEVEM ser apresentadas em ordem LÓGICA sequencial de execução:
-        1. "Entendimento da demanda e diagnóstico inicial" (2h a 4h)
-        2. Atividades intermediárias focadas em processos, custos, finanças e comercialização (2h a 4h cada)
-        3. DEVE OBRIGATORIAMENTE incluir a atividade "Desenvolvimento de sistema, aplicativos ou planilhas" com exatamente 8h de carga horária.
-        4. DEVE OBRIGATORIAMENTE incluir a atividade "Análise final de atividades da consultoria" com exatamente 2h de carga horária.
-        5. "Relatório final e encerramento" (2h a 4h)
-      
-      FORMATO CADA ITEM:
-      {
-        "nome": "string",
-        "descricao": "string",
-        "cargaHoraria": "string (ex: 4h, 8h, 2h)",
-        "solucaoProposta": "string",
-        "resultadoEsperado": "string (com KPIs quantitativos)",
-        "responsavel": "string",
-        "prioridade": "Alta" | "Média" | "Baixa",
-        "idProblema": "string (vincular ao id fornecido)"
-      }`;
-
-      const response = await ai.models.generateContent({
-        model: "gemini-3.6-flash",
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.ARRAY,
-            items: {
-              type: Type.OBJECT,
-              properties: {
-                nome: { type: Type.STRING },
-                descricao: { type: Type.STRING },
-                cargaHoraria: { type: Type.STRING },
-                solucaoProposta: { type: Type.STRING },
-                resultadoEsperado: { type: Type.STRING },
-                responsavel: { type: Type.STRING },
-                prioridade: { type: Type.STRING, enum: ["Alta", "Média", "Baixa"] },
-                idProblema: { type: Type.STRING }
-              },
-              required: ["nome", "descricao", "cargaHoraria", "solucaoProposta", "resultadoEsperado", "responsavel", "prioridade"]
-            }
-          }
-        }
+      const base = montarAtividades(analise, carga);
+      const { atividades: redigidas, usouIA, erro } = await enriquecerComIA(getAI() as any, base, analise, contexto);
+      const finais: AtividadeCronograma[] = redigidas.map((a, idx) => {
+        const data = getActivityDateStr(selectedDiagnostico.dataDiagnostico, idx);
+        return { ...a, status: 'Pendente', dataInicio: data, dataFim: data };
       });
+      const textos = montarTextosRelatorio(analise, finais, contexto);
+      const novosDados: DadosConsultoria = { ...dadosConsultoria, cargaHoraria: `${parseCargaHoraria(carga)}h`, ...textos };
 
-      const aiSuggestions = extractAndParseJSON(response.text, []);
-      if (aiSuggestions && aiSuggestions.length > 0) {
-        const adjustedSuggestions = adjustActivitiesMax4Hours(aiSuggestions, totalCargaStr);
-        // Map to include initial status and auto-calculated dates starting at dataDiagnostico (+7 days per activity)
-        const finalizedSuggestions = adjustedSuggestions.map((s: any, idx: number) => {
-          const defaultDate = getActivityDateStr(selectedDiagnostico.dataDiagnostico, idx);
-          return {
-            ...s,
-            status: 'Pendente',
-            dataInicio: s.dataInicio || defaultDate,
-            dataFim: s.dataFim || s.dataInicio || defaultDate
-          };
-        });
-        setAtividades(finalizedSuggestions);
-        
-        // Also update summary
-        const problemasUnicos = Array.from(new Set(respostas.filter(r => r.resposta !== 'Sim').map(r => r.problema))).join('\n• ');
-        const solucoesUnicas = Array.from(new Set(aiSuggestions.map((s: any) => s.solucaoProposta))).join('\n• ');
-        const resultadosUnicos = Array.from(new Set(aiSuggestions.map((s: any) => s.resultadoEsperado))).join('\n• ');
+      setAtividades(finais);
+      setDadosConsultoria(novosDados);
+      await handleSave({ atividades: finais, dadosConsultoria: novosDados });
 
-        setDadosConsultoria({
-          ...dadosConsultoria,
-          objetivo: `Implementar soluções estratégicas baseadas no diagnóstico para otimizar os processos da empresa.`,
-          solucoesIndicadas: `PROBLEMAS IDENTIFICADOS:\n• ${problemasUnicos}\n\nSOLUÇÕES / AÇÕES PROPOSTAS:\n• ${solucoesUnicas}`,
-          resultadosEsperados: `• ${resultadosUnicos}`
-        });
-        
-        playSuccessSound();
+      const { criado, modelo } = garantirModeloPadrao(contexto.tipoEmpresa, finais, carga, MODELOS_RELATORIO);
+      if (criado) setModelosRelatorio(carregarModelos(MODELOS_RELATORIO));
 
-        // Generate the action plan in tandem
-        if (onGenerateActionPlan) {
-          Promise.resolve(onGenerateActionPlan()).catch((e: any) => {
-            console.error("Erro ao gerar o plano de ação de forma integrada:", e);
-          });
-        }
-      }
+      const criticos = analise.problemas.filter(p => p.nivel === 'Crítico').length;
+      alert(
+        `Plano de ação e relatório gerados a partir do diagnóstico.\n\n` +
+        `• ${finais.length} atividades (${parseCargaHoraria(carga)}h)\n` +
+        `• ${analise.problemas.length} problema(s) com lacunas, ${criticos} crítico(s)\n` +
+        `• Índice de conformidade: ${analise.scoreGeral}%\n` +
+        (usouIA ? '• Textos redigidos pela IA\n' : `• Textos gerados pelas regras do app${erro ? ' (IA indisponível: ' + erro.slice(0, 120) + ')' : ''}\n`) +
+        (criado && modelo ? `• Modelo "${modelo.nome}" criado para replicação neste segmento\n` : '') +
+        `\nO plano também foi sincronizado com o Plano de Ação.`
+      );
     } catch (error: any) {
-      console.error("AI Error:", error);
-      alert("Erro ao conectar com a IA:\n" + (error.message || error));
+      console.error("Erro ao gerar plano e relatório:", error);
+      alert("Erro ao gerar o plano de ação e o relatório:\n" + (error?.message || error));
     } finally {
       setIsGeneratingAI(false);
     }
@@ -2624,8 +2449,13 @@ const CronogramaView = ({
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (dadosExplicitos?: { atividades: AtividadeCronograma[]; dadosConsultoria: DadosConsultoria } | React.MouseEvent) => {
     if (!selectedDiagnostico) return;
+    const explicitos = dadosExplicitos && Array.isArray((dadosExplicitos as any).atividades)
+      ? (dadosExplicitos as { atividades: AtividadeCronograma[]; dadosConsultoria: DadosConsultoria })
+      : null;
+    const atividadesParaSalvar = explicitos ? explicitos.atividades : atividades;
+    const dadosParaSalvar = explicitos ? explicitos.dadosConsultoria : dadosConsultoria;
     setIsSaving(true);
     setSaveSuccess(false);
 
@@ -2635,8 +2465,8 @@ const CronogramaView = ({
     }, 2000);
 
     try {
-      const sanitizedDados = sanitizeForFirestore(dadosConsultoria);
-      const sanitizedAtividades = sanitizeForFirestore(atividades);
+      const sanitizedDados = sanitizeForFirestore(dadosParaSalvar);
+      const sanitizedAtividades = sanitizeForFirestore(atividadesParaSalvar);
 
       // Optimistically update state to reflect changes instantly
       const updatedDiag = { ...selectedDiagnostico, cronograma: sanitizedAtividades, dadosConsultoria: sanitizedDados };
@@ -3633,7 +3463,7 @@ const CronogramaView = ({
                       onClick={(e) => {
                         e.stopPropagation();
                         if (window.confirm(`Deseja aplicar o modelo "${modelo.nome}" (${modelo.atividades.length} atividades, ${totalHoras}hs) a este relatório?`)) {
-                          const finalized = modelo.atividades.map((s, idx) => ({
+                          const finalized = estruturarPlano(modelo.atividades, totalHoras || dadosConsultoria.cargaHoraria).map((s, idx): AtividadeCronograma => ({
                             ...s,
                             status: 'Pendente',
                             dataInicio: s.dataInicio || getActivityDateStr(selectedDiagnostico.dataDiagnostico, idx),
@@ -6546,7 +6376,27 @@ const GestaoPlanoView = ({
           <h2 className="text-3xl font-black text-slate-800 tracking-tight">Gestão do Plano de Ação</h2>
           <p className="text-slate-500 font-medium tracking-tight">Acompanhe a execução das melhorias sugeridas nos diagnósticos.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+           <button
+             onClick={() => { if (!generatingPlan) onGenerateActionPlan(); }}
+             disabled={generatingPlan || !selectedDiagnostico}
+             title="Gera o plano a partir do diagnóstico: diagnóstico, devolutiva, ferramentas de gestão, solução dos problemas críticos, análise final e relatórios (até 10 atividades)"
+             className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md shadow-indigo-200 transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+           >
+             {generatingPlan ? <Loader2 className="animate-spin" size={14} /> : <Sparkles size={14} />}
+             <span>{generatingPlan ? 'Gerando plano...' : 'Gerar pelo Diagnóstico'}</span>
+           </button>
+           {onReplicateActionPlan && (
+             <button
+               onClick={() => { if (!generatingPlan) onReplicateActionPlan(); }}
+               disabled={generatingPlan || !selectedDiagnostico}
+               title="Replica o plano de outro cliente ou o modelo do mesmo segmento. Se o segmento ainda não tiver modelo, cria um Modelo Padrão."
+               className="bg-sky-50 text-sky-700 px-4 py-2 rounded-xl text-xs font-bold border border-sky-100 hover:bg-sky-100 transition-colors flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+             >
+               <Copy size={14} />
+               <span>Replicar do Segmento</span>
+             </button>
+           )}
            <button
              onClick={handleSavePlanoAcao}
              disabled={isSavingPlano}
@@ -9033,6 +8883,16 @@ import {
   computeLicenseDaysLeft,
 } from './lib/domain/license';
 import { addDaysIso, licensePeriodDays } from './lib/licenseDays';
+import {
+  analisarDiagnostico,
+  montarAtividades,
+  estruturarPlano,
+  enriquecerComIA,
+  montarTextosRelatorio,
+  parseCargaHoraria,
+  type AnaliseDiagnostico,
+} from './lib/domain/planoAcao';
+import { carregarModelos, garantirModeloPadrao, encontrarModeloDoSegmento, MODELOS_EVENTO } from './lib/domain/modelosRelatorio';
 import {
   deduplicateRespostas,
   loadAllLocalRespostas,
@@ -13738,120 +13598,164 @@ export default function App() {
     }
   };
 
+  /** Respostas do diagnóstico selecionado (estado local + nuvem), filtradas pelas áreas escolhidas. */
+  const carregarRespostasDoDiagnostico = async (diag: Diagnostico): Promise<Resposta[]> => {
+    const mapa = new Map<string, Resposta>();
+    respostas.filter(r => r.diagnosticoId === diag.id).forEach(r => mapa.set(r.id, r));
+    if (user) {
+      try {
+        const snap = await getDocs(query(collection(db, 'respostas'), ownerFilter(), where('diagnosticoId', '==', diag.id)));
+        snap.docs.forEach(d => mapa.set(d.id, { id: d.id, ...d.data() } as Resposta));
+      } catch (e) {
+        console.warn('[Plano] Não foi possível ler as respostas da nuvem; usando as locais.', e);
+      }
+    }
+    const areasSel = diag.areasDiagnostico || [];
+    const lista = Array.from(mapa.values());
+    return areasSel.length === 0
+      ? lista
+      : lista.filter(r => areasSel.some(a => normalizeAndFormatArea(a).toLowerCase() === normalizeAndFormatArea(r.area).toLowerCase()));
+  };
+
+  /**
+   * Grava o plano gerado: cronograma + textos do relatório no diagnóstico e as tarefas do
+   * Plano de Ação (substituindo as anteriores deste diagnóstico), local e na nuvem.
+   */
+  const salvarPlanoGerado = async (diag: Diagnostico, cronograma: AtividadeCronograma[], dados: DadosConsultoria) => {
+    const empresaId = selectedEmpresa?.id || diag.empresaId || '';
+    const tarefasNovas: TarefaPlanoAcao[] = cronograma.map((atv, index) => ({
+      id: user ? doc(collection(db, 'tarefas_plano')).id : `tarefa_${diag.id}_${index}_${Date.now()}`,
+      diagnosticoId: diag.id,
+      empresaId,
+      idProblema: atv.idProblema || '',
+      problema: atv.nome,
+      area: (atv as any).area || diag.tipoEmpresa || 'Consultoria',
+      solucaoSugerida: atv.solucaoProposta || '',
+      acoes: atv.descricao || '',
+      status: 'Pendente',
+      prioridade: atv.prioridade || 'Média',
+      responsavel: atv.responsavel || 'Consultor',
+      cargaHoraria: atv.cargaHoraria,
+      resultadoEsperado: atv.resultadoEsperado || '',
+      dataInicio: atv.dataInicio,
+      dataFim: atv.dataFim,
+      dataVencimento: atv.dataFim,
+      ownerId: user?.uid || 'local',
+      ordem: index
+    }));
+
+    const diagAtualizado: Diagnostico = { ...diag, cronograma, dadosConsultoria: dados };
+    setTarefasPlano(prev => [...prev.filter(t => t.diagnosticoId !== diag.id), ...tarefasNovas]);
+    setSelectedDiagnostico(diagAtualizado);
+    setDiagnosticos(prev => prev.map(d => d.id === diag.id ? diagAtualizado : d));
+    saveLocalDiagnosticoReport(diag.id, sanitizeForFirestore(cronograma), sanitizeForFirestore(dados)).catch(() => {});
+    try {
+      const saved = JSON.parse(localStorage.getItem('local_diagnosticos') || '[]');
+      if (Array.isArray(saved)) localStorage.setItem('local_diagnosticos', JSON.stringify(saved.map((d: any) => d.id === diag.id ? diagAtualizado : d)));
+    } catch { /* cópia local é opcional */ }
+
+    if (!user) return;
+    const existentes = await getDocs(query(collection(db, 'tarefas_plano'), ownerFilter(), where('diagnosticoId', '==', diag.id)));
+    const ops: { tipo: 'del' | 'set' | 'upd'; ref: any; data?: any }[] = [
+      ...existentes.docs.map(d => ({ tipo: 'del' as const, ref: d.ref })),
+      ...tarefasNovas.map(({ id, ...t }) => ({
+        tipo: 'set' as const,
+        ref: doc(db, 'tarefas_plano', id),
+        data: sanitizeForFirestore({ ...t, ownerId: user.uid, dataCadastro: new Date().toISOString() })
+      })),
+      {
+        tipo: 'upd' as const,
+        ref: doc(db, 'diagnosticos', diag.id),
+        data: sanitizeForFirestore({ cronograma, dadosConsultoria: dados, updatedAt: new Date().toISOString() })
+      }
+    ];
+    for (let i = 0; i < ops.length; i += 400) {
+      const batch = writeBatch(db);
+      ops.slice(i, i + 400).forEach(op => {
+        if (op.tipo === 'del') batch.delete(op.ref);
+        else if (op.tipo === 'set') batch.set(op.ref, op.data);
+        else batch.update(op.ref, op.data);
+      });
+      await batch.commit();
+    }
+  };
+
+  /**
+   * Gera o Plano de Ação e o relatório a partir do diagnóstico selecionado, com a estrutura:
+   * diagnóstico → devolutiva → ferramentas → problemas críticos → análise final → relatórios (até 10).
+   */
   const generateActionPlan = async () => {
-    if (!selectedDiagnostico || !user) return;
+    if (!selectedDiagnostico) {
+      alert("Selecione um diagnóstico para gerar o plano de ação.");
+      return;
+    }
+    const diag = selectedDiagnostico;
+    const existentes = tarefasPlano.filter(t => t.diagnosticoId === diag.id);
+    if (existentes.length > 0 && !window.confirm(
+      `Este diagnóstico já tem ${existentes.length} tarefa(s) no Plano de Ação.\n\n` +
+      `Gerar um novo plano substituirá as tarefas atuais (incluindo status e evidências). Deseja continuar?`
+    )) return;
+
     setGeneratingPlan(true);
     try {
-      // 1. Fetch answers 'respostas' related to this diagnosis
-      const q = query(collection(db, 'respostas'), ownerFilter(), where('diagnosticoId', '==', selectedDiagnostico.id));
-      const snap = await getDocs(q);
-      const allRespostas = snap.docs.map(d => d.data());
-      
-      // Filter answers that belong to chosen areas and have been answered
-      const diagnosticoAreas = selectedDiagnostico.areasDiagnostico || [];
-      const relevantRespostas = allRespostas.filter(r => {
-        if (!r.resposta) return false;
-        const normRespArea = normalizeAndFormatArea(r.area).toLowerCase();
-        return diagnosticoAreas.length === 0 || 
-          diagnosticoAreas.some(a => normalizeAndFormatArea(a).toLowerCase() === normRespArea);
-      });
-
-      if (relevantRespostas.length === 0) {
-        alert("Não foram encontradas respostas nas áreas diagnosticadas para gerar o plano.");
-        setGeneratingPlan(false);
+      const lista = await carregarRespostasDoDiagnostico(diag);
+      const analise = analisarDiagnostico(deduplicateRespostas(lista), problemas, solucoes);
+      if (analise.totalRespondidas === 0) {
+        alert("Não há respostas neste diagnóstico (nas áreas selecionadas). Responda o diagnóstico para gerar o plano de ação.");
         return;
       }
 
-      // 2. Call AI
-      const ai = getAI();
-      if (!ai) {
-        alert("Chave de Inteligência Artificial não configurada. Por favor, adicione sua Chave (Groq ou Gemini) nas Configurações para habilitar a geração de Planos de Ação.");
-        setGeneratingPlan(false);
-        return;
-      }
-
-      const prompt = `Com base nestas respostas do diagnóstico: ${JSON.stringify(relevantRespostas)}, e considerando as seguintes soluções registradas: ${JSON.stringify(solucoes.slice(0, 8))}, gere um plano de ação estruturado.
-
-ORIENTAÇÃO CRÍTICA DE ANÁLISE SEMÂNTICA DAS PERGUNTAS E RESPOSTAS:
-Analise o significado de cada pergunta (premissa) e a resposta dada:
-1. Para perguntas sobre ocorrência de problemas, falhas ou rejeições (ex: "O produtor já tentou acessar crédito rural e foi rejeitado por falta de documentação?", "Possui inadimplência?"):
-   - A resposta "Sim" ou "Parcial" representa um PROBLEMA / GARGALO REAL. Você DEVE incluir tarefas no plano de ação para resolver e sanar este problema.
-   - A resposta "Não" indica que o problema não ocorre (situação positiva). Não crie tarefas de correção para respostas "Não" neste tipo de pergunta.
-2. Para perguntas sobre controles, planejamentos e boas práticas (ex: "Possui controle financeiro?", "Tem licença ambiental?"):
-   - A resposta "Não" ou "Parcial" representa uma LACUNA / GARGALO REAL. Crie tarefas de ação para implementar a prática.
-   - A resposta "Sim" representa conformidade (ponto forte).
-3. IMPORTANTE: Gere APENAS tarefas para os itens que efetivamente representem gargalos ou problemas segundo a análise semântica acima. Se as respostas selecionadas forem de áreas específicas, limite as tarefas a essas áreas.
-      
-      Cada tarefa precisa de:
-      - solucaoSugerida (string)
-      - problema (string)
-      - area (string)
-      - acoes (detalhado, string)
-      - status: 'Pendente'
-      - prioridade: 'Média'
-      - responsavel: 'Consultor'
-      - idProblema: (ID do problema/premissa relacionado)
-      `;
-      
-      const response = await ai.models.generateContent({
-        model: "gemini-3.6-flash",
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    solucaoSugerida: { type: Type.STRING },
-                    problema: { type: Type.STRING },
-                    area: { type: Type.STRING },
-                    acoes: { type: Type.STRING },
-                    status: { type: Type.STRING },
-                    prioridade: { type: Type.STRING },
-                    responsavel: { type: Type.STRING },
-                    idProblema: { type: Type.STRING },
-                  }
-                }
-            }
-        }
+      const carga = diag.dadosConsultoria?.cargaHoraria || diag.cargaHoraria || (selectedEmpresa as any)?.cargaHoraria || '34h';
+      const contexto = {
+        nomeEmpresa: selectedEmpresa?.nomeFantasia || selectedEmpresa?.nome || diag.nomeEmpresa,
+        tipoEmpresa: diag.tipoEmpresa || selectedEmpresa?.tipoEmpresa
+      };
+      const base = montarAtividades(analise, carga);
+      const { atividades, usouIA, erro } = await enriquecerComIA(getAI() as any, base, analise, contexto);
+      const cronograma: AtividadeCronograma[] = atividades.map((a, idx) => {
+        const data = getActivityDateStr(diag.dataDiagnostico, idx);
+        return { ...a, status: 'Pendente', dataInicio: data, dataFim: data };
       });
-      const tasks = extractAndParseJSON(response.text, []);
+      const dados: DadosConsultoria = {
+        ...(diag.dadosConsultoria || {}),
+        cargaHoraria: `${parseCargaHoraria(carga)}h`,
+        ...montarTextosRelatorio(analise, cronograma, contexto)
+      };
 
-      // 3. Save tasks
-      for (let i = 0; i < tasks.length; i++) {
-        const t = tasks[i];
-        const defaultDate = getActivityDateStr(selectedDiagnostico.dataDiagnostico, i);
-        const startStr = t.dataInicio || defaultDate;
-        const endStr = t.dataFim || startStr;
-        await createTarefa({
-            ...t,
-            diagnosticoId: selectedDiagnostico.id,
-            empresaId: selectedEmpresa?.id,
-            dataInicio: startStr,
-            dataFim: endStr,
-            dataVencimento: endStr,
-            ownerId: user.uid
-        });
-      }
+      await salvarPlanoGerado(diag, cronograma, dados);
+      const { criado, modelo } = garantirModeloPadrao(contexto.tipoEmpresa, cronograma, carga, MODELOS_RELATORIO);
+
       playSuccessSound();
-      alert("Plano de Ação gerado com sucesso por Inteligência Artificial!");
-    } catch(e: any) {
-      console.error("Error generating or saving action plan:", e);
-      alert("Houve um erro ao gerar o plano de ação pela IA. Por favor, verifique sua conexão ou a chave de API nas Configurações.\n\nDetalhes:\n" + (e.message || e));
+      const criticos = analise.problemas.filter(p => p.nivel === 'Crítico').length;
+      alert(
+        `Plano de Ação gerado a partir do diagnóstico.\n\n` +
+        `• ${cronograma.length} atividades (${parseCargaHoraria(carga)}h)\n` +
+        `• ${analise.problemas.length} problema(s) com lacunas, ${criticos} crítico(s)\n` +
+        `• Índice de conformidade: ${analise.scoreGeral}%\n` +
+        (usouIA ? '• Textos redigidos pela IA\n' : `• Textos gerados pelas regras do app${erro ? ' (IA indisponível: ' + erro.slice(0, 120) + ')' : ''}\n`) +
+        (criado && modelo ? `• Modelo "${modelo.nome}" criado para replicação neste segmento\n` : '') +
+        `\nO relatório da consultoria (objetivo, soluções e resultados esperados) também foi atualizado.`
+      );
+    } catch (e: any) {
+      console.error("Erro ao gerar o plano de ação:", e);
+      alert("Não foi possível gerar o plano de ação.\n\nDetalhes: " + (e?.message || e));
     } finally {
       setGeneratingPlan(false);
     }
   };
 
   const replicateActionPlanFromSameActivity = async (targetTipoParam?: string) => {
-    if (!selectedDiagnostico || !user) {
+    if (!selectedDiagnostico) {
       alert("Selecione um diagnóstico para replicar o plano de ação.");
+      return;
+    }
+    if (!user) {
+      alert("A replicação por segmento usa os planos salvos na nuvem. Entre com sua conta para replicar, ou use \"Gerar pelo Diagnóstico\".");
       return;
     }
 
     const currentType = (targetTipoParam || selectedDiagnostico.tipoEmpresa || selectedEmpresa?.tipoEmpresa || 'Carcinicultura').trim();
-    const totalCargaHoraria = selectedDiagnostico.dadosConsultoria?.cargaHoraria || selectedEmpresa?.cargaHoraria || '16h';
+    const totalCargaHoraria = selectedDiagnostico.dadosConsultoria?.cargaHoraria || selectedDiagnostico.cargaHoraria || (selectedEmpresa as any)?.cargaHoraria || '34h';
 
     setGeneratingPlan(true);
     try {
@@ -13867,25 +13771,42 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       });
 
       let sourceActivities: AtividadeCronograma[] = [];
+      let origem = '';
 
-      if (sameActivityDiags.length > 0) {
-        // Pick the most complete cronograma from another diagnostic of the same activity
-        const otherDiags = sameActivityDiags.filter(d => d.id !== selectedDiagnostico.id);
-        const targetDiag = otherDiags.length > 0 
-          ? otherDiags.sort((a, b) => (b.cronograma?.length || 0) - (a.cronograma?.length || 0))[0]
-          : sameActivityDiags[0];
+      // Análise do diagnóstico atual: usada para gerar o plano quando não há fonte no segmento
+      // e para escrever o relatório com os problemas críticos deste cliente.
+      let analiseAtual: AnaliseDiagnostico | null = null;
+      try {
+        const respsAtuais = await carregarRespostasDoDiagnostico(selectedDiagnostico);
+        const an = analisarDiagnostico(deduplicateRespostas(respsAtuais), problemas, solucoes);
+        if (an.totalRespondidas > 0) analiseAtual = an;
+      } catch { /* segue sem análise */ }
+
+      const otherDiags = sameActivityDiags.filter(d => d.id !== selectedDiagnostico.id);
+      const modeloSegmento = encontrarModeloDoSegmento(carregarModelos(MODELOS_RELATORIO), currentType);
+
+      if (otherDiags.length > 0) {
+        // 1º) Plano de outro cliente do mesmo segmento (o mais completo)
+        const targetDiag = otherDiags.sort((a, b) => (b.cronograma?.length || 0) - (a.cronograma?.length || 0))[0];
         sourceActivities = targetDiag.cronograma || [];
+        origem = `plano de outro cliente do segmento (${targetDiag.nomeEmpresa || targetDiag.nome || 'diagnóstico'})`;
+      } else if (modeloSegmento) {
+        // 2º) Modelo do segmento (criado pelo usuário ou "Modelo Padrão" automático)
+        sourceActivities = modeloSegmento.atividades;
+        origem = `modelo "${modeloSegmento.nome}"`;
+      } else if (analiseAtual) {
+        // 3º) Não há plano nem modelo no segmento: gera a partir do diagnóstico deste cliente
+        sourceActivities = montarAtividades(analiseAtual, totalCargaHoraria);
+        origem = 'diagnóstico deste cliente (novo modelo padrão do segmento)';
       } else {
-        // Check if there are tasks in tarefas_plano for other diagnostics of the same activity
+        // 4º) Sem respostas: tarefas de outros diagnósticos do segmento, soluções cadastradas ou plano genérico
         const tasksSnap = await getDocs(query(collection(db, 'tarefas_plano'), where('ownerId', '==', user.uid)));
         const allTasks = tasksSnap.docs.map(d => d.data()) as TarefaPlanoAcao[];
-        
         const sameActivityTasks = allTasks.filter(t => {
           const diag = allDiags.find(d => d.id === t.diagnosticoId);
-          if (!diag) return false;
-          return (diag.tipoEmpresa || '').trim().toLowerCase() === currentType.toLowerCase();
+          return !!diag && (diag.tipoEmpresa || '').trim().toLowerCase() === currentType.toLowerCase();
         });
-
+        const solucoesDoTipo = solucoes.filter(s => (s.tipoEmpresa || '').trim().toLowerCase() === currentType.toLowerCase());
         if (sameActivityTasks.length > 0) {
           sourceActivities = sameActivityTasks.map(t => ({
             nome: t.problema || t.solucaoSugerida,
@@ -13893,33 +13814,39 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
             cargaHoraria: "4h",
             solucaoProposta: t.solucaoSugerida,
             responsavel: t.responsavel || "Consultor",
-            status: t.status || "Pendente",
+            status: "Pendente" as const,
             prioridade: t.prioridade || "Média",
             idProblema: t.idProblema
           }));
+          origem = 'tarefas de outros diagnósticos do segmento';
+        } else if (solucoesDoTipo.length > 0) {
+          sourceActivities = solucoesDoTipo.slice(0, 6).map(s => ({
+            nome: s.problema,
+            descricao: s.acoes_sugeridas || s.solucao_recomendada,
+            cargaHoraria: "4h",
+            solucaoProposta: s.solucao_recomendada,
+            responsavel: s.responsavel_sugerido || "Consultor",
+            status: "Pendente" as const,
+            prioridade: "Média" as const,
+            resultadoEsperado: s.resultado_esperado,
+            idProblema: s.idProblema
+          }));
+          origem = 'soluções cadastradas para o segmento';
         } else {
-          // Fallback to solutions registered for this tipoEmpresa
-          const solucoesDoTipo = solucoes.filter(s => (s.tipoEmpresa || '').trim().toLowerCase() === currentType.toLowerCase());
-          if (solucoesDoTipo.length > 0) {
-            sourceActivities = solucoesDoTipo.map(s => ({
-              nome: s.problema,
-              descricao: s.acoes_sugeridas || s.solucao_recomendada,
-              cargaHoraria: "4h",
-              solucaoProposta: s.solucao_recomendada,
-              responsavel: s.responsavel_sugerido || "Consultor",
-              status: "Pendente",
-              prioridade: "Média",
-              resultadoEsperado: s.resultado_esperado
-            }));
-          } else {
-            // Default fallback template
-            sourceActivities = PLANO_DE_ACAO_PADRAO;
-          }
+          sourceActivities = PLANO_DE_ACAO_PADRAO;
+          origem = 'plano padrão genérico';
         }
       }
 
-      // 2. Adjust activities to respect max 4h per activity and total consultancy hours
-      const adjustedActivities = adjustActivitiesMax4Hours(sourceActivities, totalCargaHoraria);
+      // 2. Estrutura padrão (diagnóstico, devolutiva, ferramentas, problemas, análise final, relatórios) e horas
+      // Nada do cliente de origem é copiado: status, datas, evidências e KPIs recomeçam do zero.
+      const adjustedActivities: AtividadeCronograma[] = adjustActivitiesMax4Hours(
+        sourceActivities.map(({ evidencias, progressoKPI, metaKPI, dataInicio, dataFim, ...resto }: any) => resto),
+        totalCargaHoraria
+      ).map((atv, idx) => {
+        const data = getActivityDateStr(selectedDiagnostico.dataDiagnostico, idx);
+        return { ...atv, status: 'Pendente', dataInicio: data, dataFim: data };
+      });
 
       // 3. Clear existing tasks for current diagnostic
       const currentTasksQ = query(collection(db, 'tarefas_plano'), ownerFilter(), where('diagnosticoId', '==', selectedDiagnostico.id));
@@ -13928,7 +13855,7 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
       
       currentTasksSnap.docs.forEach(docSnap => ops.push({ type: 'delete', ref: docSnap.ref }));
 
-      // 4. Create new tasks for current diagnostic with max 4h
+      // 4. Create new tasks for current diagnostic
       for (let index = 0; index < adjustedActivities.length; index++) {
         const atv = adjustedActivities[index];
         const newTaskRef = doc(collection(db, 'tarefas_plano'));
@@ -13955,16 +13882,23 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
         ops.push({ type: 'set', ref: newTaskRef, data: taskData });
       }
 
-      // 5. Build summary strings for Report
-      const solucoesTexto = adjustedActivities.map(a => `• ${a.solucaoProposta || a.nome}`).join('\n');
-      const resultadosTexto = adjustedActivities.map(a => `• ${a.resultadoEsperado || a.descricao || 'Atividade concluída'}`).join('\n');
-
-      const updatedDadosConsultoria = {
-        ...(selectedDiagnostico.dadosConsultoria || {}),
-        cargaHoraria: totalCargaHoraria,
-        solucoesIndicadas: `AÇÕES REPLICADAS DO SEGMENTO (${currentType.toUpperCase()}):\n${solucoesTexto}`,
-        resultadosEsperados: resultadosTexto
-      };
+      // 5. Textos do relatório: com a análise deste cliente quando houver respostas
+      const updatedDadosConsultoria: DadosConsultoria = analiseAtual
+        ? {
+            ...(selectedDiagnostico.dadosConsultoria || {}),
+            cargaHoraria: `${parseCargaHoraria(totalCargaHoraria)}h`,
+            ...montarTextosRelatorio(analiseAtual, adjustedActivities, {
+              nomeEmpresa: selectedEmpresa?.nomeFantasia || selectedEmpresa?.nome || selectedDiagnostico.nomeEmpresa,
+              tipoEmpresa: currentType
+            })
+          }
+        : {
+            ...(selectedDiagnostico.dadosConsultoria || {}),
+            cargaHoraria: `${parseCargaHoraria(totalCargaHoraria)}h`,
+            solucoesIndicadas: `AÇÕES REPLICADAS DO SEGMENTO (${currentType.toUpperCase()}):\n` +
+              adjustedActivities.map((a, i) => `${i + 1}. ${a.nome} (${a.cargaHoraria})`).join('\n'),
+            resultadosEsperados: adjustedActivities.map(a => `• ${a.resultadoEsperado || a.descricao || 'Atividade concluída'}`).join('\n')
+          };
 
       // 6. Update current diagnostic doc
       const diagRef = doc(db, 'diagnosticos', selectedDiagnostico.id);
@@ -13998,11 +13932,15 @@ Analise o significado de cada pergunta (premissa) e a resposta dada:
         tipoEmpresa: currentType
       });
 
+      // 9. Segmento sem modelo: cria o "Modelo Padrão" para as próximas replicações
+      const { criado, modelo } = garantirModeloPadrao(currentType, adjustedActivities, totalCargaHoraria, MODELOS_RELATORIO);
+
       playSuccessSound();
-      alert(`Plano de ação e relatório de consultoria replicados com sucesso do segmento "${currentType}"!\n\n` +
-            `• Quantidade de atividades: ${adjustedActivities.length}\n` +
-            `• Carga horária máxima por atividade: 4h\n` +
-            `• Carga horária total da consultoria: ${totalCargaHoraria}`);
+      alert(`Plano de ação e relatório replicados para o segmento "${currentType}".\n\n` +
+            `• Origem: ${origem}\n` +
+            `• Atividades: ${adjustedActivities.length} (diagnóstico, devolutiva, ferramentas, problemas, análise final e relatórios)\n` +
+            `• Carga horária total: ${parseCargaHoraria(totalCargaHoraria)}h` +
+            (criado && modelo ? `\n• Modelo "${modelo.nome}" criado para replicação` : ''));
 
     } catch (error: any) {
       console.error("Erro ao replicar plano de ação por segmento:", error);
