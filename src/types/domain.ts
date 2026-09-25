@@ -105,6 +105,22 @@ export interface AtividadeCronograma {
   area?: string;
   /** Criticidade do problema tratado: Crítico, Alto ou Moderado. */
   criticidade?: string;
+  /** Problemas do diagnóstico tratados nesta atividade (plano por área). Cada um vira uma tarefa. */
+  problemasTratados?: ProblemaTratado[];
+}
+
+/** Um problema do diagnóstico tratado dentro de uma atividade do plano. */
+export interface ProblemaTratado {
+  idProblema: string;
+  problema: string;
+  area: string;
+  nivel: 'Crítico' | 'Alto' | 'Moderado';
+  /** Título da ação (ex.: "Implantar fluxo de caixa diário"). */
+  acao: string;
+  solucao: string;
+  passos: string;
+  resultadoEsperado: string;
+  responsavel: string;
 }
 
 export interface DadosConsultoria {
@@ -194,6 +210,11 @@ export interface TarefaPlanoAcao {
   evidenciaUrl?: string;
   evidenciaNome?: string;
   anexoUrl?: string;
+  /** Atividade do cronograma a que a tarefa pertence (plano por área: várias tarefas por atividade). */
+  atividade?: string;
+  atividadeOrdem?: number;
+  /** Criticidade do problema: Crítico, Alto ou Moderado. */
+  criticidade?: string;
 }
 
 export interface Resposta {
