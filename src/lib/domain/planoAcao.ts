@@ -4,14 +4,15 @@
  * Regras:
  *  1. Os problemas são classificados pela criticidade real das respostas (lacunas × peso)
  *     combinada com o impacto cadastrado do problema (Alto / Médio / Baixo).
- *  2. O plano resolve primeiro os problemas CRÍTICOS, depois os de prioridade alta e,
- *     se sobrar carga horária, os moderados (agrupados numa atividade complementar).
- *  3. A PRIMEIRA atividade é sempre o diagnóstico e a ÚLTIMA é sempre o preparo dos
- *     relatórios e a apresentação dos resultados — independentemente da IA.
+ *  2. O plano é organizado POR ÁREA diagnosticada: cada área com lacunas vira uma atividade
+ *     que trata TODOS os problemas daquela área (críticos primeiro). Nenhum problema fica de
+ *     fora; cada um vira uma tarefa no Plano de Ação.
+ *  3. Estrutura fixa: diagnóstico → devolutiva → ferramentas → áreas → análise final →
+ *     relatórios (máximo de 10 atividades).
  *  4. A IA (opcional) só reescreve os textos de cada atividade; a estrutura é garantida
  *     aqui, então o plano sai correto mesmo sem IA ou se ela falhar.
  */
-import type { AtividadeCronograma, Problema, Resposta, Solucao } from '../../types/domain';
+import type { AtividadeCronograma, Problema, ProblemaTratado, Resposta, Solucao } from '../../types/domain';
 import { Type } from '../ai/schemaTypes';
 
 export type NivelCriticidade = 'Crítico' | 'Alto' | 'Moderado';
@@ -345,33 +346,133 @@ export function atividadeRelatorioFinal(): AtividadeCronograma {
   };
 }
 
-function atividadeDoProblema(p: ProblemaAnalisado): AtividadeCronograma {
+const PESO_NIVEL: Record<NivelCriticidade, number> = { Crítico: 3, Alto: 2, Moderado: 1 };
+
+/** Converte um problema analisado no item que será tratado (e virará tarefa). */
+export function problemaTratado(p: ProblemaAnalisado): ProblemaTratado {
   const s = p.solucao;
-  const lacunasTxt = p.lacunas
+  const evidencias = p.lacunas
     .slice(0, 3)
     .map((l) => `"${l.pergunta}" → ${l.resposta}${l.observacao ? ` (${l.observacao})` : ''}`)
     .join('; ');
   return {
-    nome: s?.solucao_recomendada ? `${p.problema}: ${s.solucao_recomendada}` : `Solução para: ${p.problema}`,
-    descricao:
+    idProblema: p.idProblema,
+    problema: p.problema,
+    area: p.area,
+    nivel: p.nivel,
+    acao: s?.solucao_recomendada || `Corrigir: ${p.problema}`,
+    solucao: s?.solucao_recomendada || `Plano de correção para ${p.problema.toLowerCase()}`,
+    passos:
       s?.acoes_sugeridas ||
-      `Análise das causas, definição e implantação, junto com o empresário, das correções para "${p.problema}" (${p.area}). ` +
-        `Pontos do diagnóstico: ${lacunasTxt}.`,
-    cargaHoraria: '4h',
-    solucaoProposta: s?.solucao_recomendada || `Plano de correção para ${p.problema.toLowerCase()}`,
+      `Levantar as causas com o empresário, definir as correções e implantar o controle na rotina. Evidências: ${evidencias}.`,
     resultadoEsperado:
       [s?.resultado_esperado, s?.kpis_sugeridos ? `Indicadores: ${s.kpis_sugeridos}` : ''].filter(Boolean).join(' — ') ||
       `Problema "${p.problema}" solucionado, com controle implantado e acompanhado mensalmente.`,
     responsavel: s?.responsavel_sugerido || 'Consultor/Cliente',
-    idProblema: p.idProblema,
-    status: 'Pendente',
-    prioridade: PRIORIDADE[p.nivel],
-    area: p.area,
-    criticidade: p.nivel,
   };
 }
 
-function atividadeComplementar(extras: { nome: string; nivel?: string }[]): AtividadeCronograma {
+export interface GrupoArea {
+  area: string;
+  problemas: ProblemaAnalisado[];
+  nivelMax: NivelCriticidade;
+  peso: number;
+}
+
+/** Agrupa os problemas por área, da área mais crítica para a menos crítica. */
+export function agruparPorArea(analise: AnaliseDiagnostico): GrupoArea[] {
+  const mapa = new Map<string, ProblemaAnalisado[]>();
+  for (const p of analise.problemas) {
+    const area = (p.area || 'Geral').trim() || 'Geral';
+    if (!mapa.has(area)) mapa.set(area, []);
+    mapa.get(area)!.push(p);
+  }
+  const grupos: GrupoArea[] = Array.from(mapa, ([area, lista]) => {
+    const problemas = [...lista].sort((a, b) => ORDEM_NIVEL[b.nivel] - ORDEM_NIVEL[a.nivel] || b.pontuacao - a.pontuacao);
+    return {
+      area,
+      problemas,
+      nivelMax: problemas[0].nivel,
+      peso: problemas.reduce((s, p) => s + PESO_NIVEL[p.nivel], 0),
+    };
+  });
+  const conta = (g: GrupoArea, n: NivelCriticidade) => g.problemas.filter((p) => p.nivel === n).length;
+  return grupos.sort(
+    (a, b) =>
+      conta(b, 'Crítico') - conta(a, 'Crítico') ||
+      conta(b, 'Alto') - conta(a, 'Alto') ||
+      b.peso - a.peso ||
+      b.problemas[0].pontuacao - a.problemas[0].pontuacao ||
+      a.area.localeCompare(b.area)
+  );
+}
+
+function resumoNiveis(itens: { nivel: NivelCriticidade }[]): string {
+  const c = itens.filter((p) => p.nivel === 'Crítico').length;
+  const a = itens.filter((p) => p.nivel === 'Alto').length;
+  const m = itens.filter((p) => p.nivel === 'Moderado').length;
+  return [c && `${c} crítico${c > 1 ? 's' : ''}`, a && `${a} alto${a > 1 ? 's' : ''}`, m && `${m} moderado${m > 1 ? 's' : ''}`]
+    .filter(Boolean)
+    .join(', ');
+}
+
+/** (Re)monta os textos de uma atividade de área a partir dos problemas tratados. */
+export function textosDaAtividadeDeArea(area: string, itens: ProblemaTratado[]): Pick<AtividadeCronograma, 'nome' | 'descricao' | 'solucaoProposta' | 'resultadoEsperado' | 'responsavel'> {
+  const plural = itens.length > 1;
+  return {
+    nome: `${area}: solução de ${itens.length} problema${plural ? 's' : ''} (${resumoNiveis(itens)})`,
+    descricao: itens.map((p, i) => `${i + 1}. [${p.nivel}] ${p.problema} — ${p.acao}: ${p.passos}`).join('\n'),
+    solucaoProposta: itens.map((p) => `[${p.nivel}] ${p.solucao}`).join('; '),
+    resultadoEsperado: itens.map((p) => p.resultadoEsperado).join(' | '),
+    responsavel: itens.every((p) => p.responsavel === itens[0].responsavel) ? itens[0].responsavel : 'Consultor/Cliente',
+  };
+}
+
+function atividadeDaArea(area: string, problemas: ProblemaAnalisado[]): AtividadeCronograma {
+  const itens = problemas.map(problemaTratado);
+  const nivelMax = problemas.reduce<NivelCriticidade>((m, p) => (ORDEM_NIVEL[p.nivel] > ORDEM_NIVEL[m] ? p.nivel : m), 'Moderado');
+  return {
+    ...textosDaAtividadeDeArea(area, itens),
+    cargaHoraria: '4h',
+    idProblema: itens[0]?.idProblema,
+    status: 'Pendente',
+    prioridade: PRIORIDADE[nivelMax],
+    area,
+    criticidade: nivelMax,
+    problemasTratados: itens,
+  };
+}
+
+/**
+ * Atividades de área. Cabem `limite` atividades; se houver mais áreas, as MENOS críticas são
+ * reunidas numa atividade "Demais áreas", que ainda trata cada problema individualmente.
+ */
+export function atividadesPorArea(analise: AnaliseDiagnostico, limite: number): AtividadeCronograma[] {
+  const grupos = agruparPorArea(analise);
+  const max = Math.max(1, limite);
+  if (grupos.length <= max) return grupos.map((g) => atividadeDaArea(g.area, g.problemas));
+  const principais = grupos.slice(0, max - 1).map((g) => atividadeDaArea(g.area, g.problemas));
+  const resto = grupos.slice(max - 1);
+  const rotulo = resto.length <= 3 ? resto.map((g) => g.area).join(', ') : 'Demais áreas';
+  return [...principais, atividadeDaArea(rotulo, resto.flatMap((g) => g.problemas))];
+}
+
+function atividadeComplementar(extras: { nome: string; nivel?: string; problemasTratados?: ProblemaTratado[] }[]): AtividadeCronograma {
+  const tratados = extras.flatMap((e) => e.problemasTratados || []);
+  if (tratados.length) {
+    const area = Array.from(new Set(tratados.map((t) => t.area))).slice(0, 3).join(', ') || 'Demais áreas';
+    const nivelMax = tratados.some((t) => t.nivel === 'Crítico') ? 'Crítico' : tratados.some((t) => t.nivel === 'Alto') ? 'Alto' : 'Moderado';
+    return {
+      ...textosDaAtividadeDeArea(area, tratados),
+      cargaHoraria: '4h',
+      idProblema: tratados[0].idProblema,
+      status: 'Pendente',
+      prioridade: PRIORIDADE[nivelMax],
+      area,
+      criticidade: nivelMax,
+      problemasTratados: tratados,
+    };
+  }
   return {
     nome: 'Ações complementares para os demais problemas identificados',
     descricao: `Orientação e plano de correção para: ${extras.map((p) => (p.nivel ? `${p.nome} (${p.nivel.toLowerCase()})` : p.nome)).join('; ')}.`,
@@ -395,6 +496,13 @@ function atividadeSemLacunas(): AtividadeCronograma {
     status: 'Pendente',
     prioridade: 'Média',
   };
+}
+
+/** Peso de uma atividade de área na divisão das horas (críticos pesam mais). */
+function pesoDaAtividade(a: AtividadeCronograma): number {
+  const itens = a.problemasTratados || [];
+  if (!itens.length) return 1;
+  return itens.reduce((s, p) => s + PESO_NIVEL[p.nivel], 0);
 }
 
 /** Horas (número) de uma atividade. */
@@ -439,10 +547,23 @@ export function distribuirCargaHoraria(atividades: AtividadeCronograma[], cargaH
     fixos.forEach((p) => horas.set(idx(p), padrao[p]));
     let resto = total - somaPadrao;
     if (n > 0) {
-      const base = Math.min(4, Math.floor(resto / n));
-      probs.forEach((i) => horas.set(i, base));
-      resto -= base * n;
-      for (let k = 0; resto > 0 && k < n; k++) if (horas.get(probs[k])! < 4) { horas.set(probs[k], horas.get(probs[k])! + 1); resto--; }
+      // Cada área recebe no mínimo 2h; o restante é dividido pelo peso dos problemas
+      // (crítico 3, alto 2, moderado 1), até 8h por área — áreas mais críticas recebem mais.
+      probs.forEach((i) => horas.set(i, 2));
+      resto -= 2 * n;
+      const pesos = probs.map((i) => pesoDaAtividade(lista[i]));
+      const somaPesos = pesos.reduce((a, b) => a + b, 0) || 1;
+      const alvoTotal = Math.min(resto, 6 * n);
+      const extras = probs.map((_, k) => Math.min(6, (alvoTotal * pesos[k]) / somaPesos));
+      const inteiros = extras.map(Math.floor);
+      probs.forEach((i, k) => horas.set(i, horas.get(i)! + inteiros[k]));
+      resto -= inteiros.reduce((a, b) => a + b, 0);
+      let sobraAlvo = alvoTotal - inteiros.reduce((a, b) => a + b, 0);
+      const ordem = probs.map((_, k) => k).sort((x, y) => extras[y] - inteiros[y] - (extras[x] - inteiros[x]) || pesos[y] - pesos[x]);
+      for (const k of ordem) {
+        if (sobraAlvo <= 0 || resto <= 0) break;
+        if (horas.get(probs[k])! < 8) { horas.set(probs[k], horas.get(probs[k])! + 1); resto--; sobraAlvo--; }
+      }
     }
     // Sobra de horas: ferramentas (até 12h), depois problemas (até 8h), depois diagnóstico e relatório.
     const alvos: [number, number][] = [
@@ -504,7 +625,7 @@ export function estruturarPlano(
   const limite = Math.min(MAX_ATIVIDADES_PROBLEMA, capacidadeAtividades(total));
   if (meio.length > limite) {
     const extras = meio.slice(limite - 1);
-    meio = [...meio.slice(0, limite - 1), atividadeComplementar(extras.map((e) => ({ nome: e.nome, nivel: (e as any).criticidade })))];
+    meio = [...meio.slice(0, limite - 1), atividadeComplementar(extras.map((e) => ({ nome: e.nome, nivel: e.criticidade, problemasTratados: e.problemasTratados })))];
   }
   if (meio.length === 0) meio = [atividadeSemLacunas()];
 
@@ -519,20 +640,13 @@ export function estruturarPlano(
   return distribuirCargaHoraria(estruturado, total).map((a, i) => ({ ...a, ordem: i }));
 }
 
-/** Plano completo a partir da análise do diagnóstico (problemas críticos primeiro). */
+/**
+ * Plano completo a partir da análise do diagnóstico: uma atividade por ÁREA com lacunas
+ * (áreas mais críticas primeiro), cada uma tratando todos os problemas daquela área.
+ */
 export function montarAtividades(analise: AnaliseDiagnostico, cargaHorariaTotal: number | string | undefined): AtividadeCronograma[] {
   const total = parseCargaHoraria(cargaHorariaTotal);
-  const limite = capacidadeAtividades(total);
-  const lista = analise.problemas;
-  let meio: AtividadeCronograma[];
-  if (lista.length > limite) {
-    meio = [
-      ...lista.slice(0, limite - 1).map(atividadeDoProblema),
-      atividadeComplementar(lista.slice(limite - 1).map((p) => ({ nome: p.problema, nivel: p.nivel }))),
-    ];
-  } else {
-    meio = lista.map(atividadeDoProblema);
-  }
+  const meio = atividadesPorArea(analise, capacidadeAtividades(total));
   return estruturarPlano(
     [atividadeDiagnostico(analise), atividadeDevolutiva(analise), atividadeFerramentas(analise), ...meio, atividadeAnaliseFinal(), atividadeRelatorioFinal()],
     total,
@@ -561,7 +675,8 @@ export async function enriquecerComIA(
   analise: AnaliseDiagnostico,
   contexto: { tipoEmpresa?: string; nomeEmpresa?: string } = {}
 ): Promise<{ atividades: AtividadeCronograma[]; usouIA: boolean; erro?: string }> {
-  const alvo = analise.problemas.filter((p) => atividades.some((a) => a.idProblema === p.idProblema));
+  const tratadosNoPlano = new Set(atividades.flatMap((a) => (a.problemasTratados || []).map((t) => t.idProblema)));
+  const alvo = analise.problemas.filter((p) => tratadosNoPlano.has(p.idProblema));
   if (!ai || alvo.length === 0) return { atividades, usouIA: false };
 
   const dados = alvo.map((p) => ({
@@ -569,7 +684,6 @@ export async function enriquecerComIA(
     problema: p.problema,
     area: p.area,
     criticidade: p.nivel,
-    horas: horasDe(atividades.find((a) => a.idProblema === p.idProblema)),
     respostas: p.lacunas.slice(0, 5),
     solucaoCadastrada: p.solucao
       ? { solucao: p.solucao.solucao_recomendada, acoes: p.solucao.acoes_sugeridas, kpis: p.solucao.kpis_sugeridos }
@@ -579,21 +693,20 @@ export async function enriquecerComIA(
 
   const prompt = `Você é um consultor empresarial sênior (padrão SEBRAE). Com base no diagnóstico${
     contexto.nomeEmpresa ? ` da empresa "${contexto.nomeEmpresa}"` : ''
-  }${contexto.tipoEmpresa ? ` (segmento: ${contexto.tipoEmpresa})` : ''}, redija as atividades de consultoria abaixo.
+  }${contexto.tipoEmpresa ? ` (segmento: ${contexto.tipoEmpresa})` : ''}, escreva a solução de CADA problema abaixo.
 
-TAREFA 1 — Para CADA problema da lista, escreva uma atividade que SOLUCIONE o problema:
-- "nome": título curto e profissional da ação (até 90 caracteres), começando por um verbo no infinitivo.
-- "descricao": o que será feito, passo a passo resumido, citando as evidências das respostas do diagnóstico.
-- "solucaoProposta": a solução em uma frase.
-- "resultadoEsperado": resultado com pelo menos um indicador mensurável (número, % ou prazo) compatível com a carga horária informada.
+PARA CADA PROBLEMA (um item por idProblema, mantendo o mesmo idProblema):
+- "acao": título curto e profissional da ação (até 80 caracteres), começando por um verbo no infinitivo.
+- "solucao": a solução em uma frase.
+- "passos": passo a passo resumido (2 a 4 passos), citando as evidências das respostas do diagnóstico.
+- "resultadoEsperado": resultado com pelo menos um indicador mensurável (número, % ou prazo).
 - "responsavel": "Consultor", "Cliente" ou "Consultor/Cliente".
-- Se houver solução cadastrada, use-a como base. Mantenha o mesmo "idProblema".
+- Problemas CRÍTICOS exigem ações mais completas e prazos mais curtos. Se houver solução cadastrada, use-a como base.
 
-TAREFA 2 — Inclua também um item com "idProblema": "${ID_FERRAMENTAS}" descrevendo as planilhas e/ou aplicativos de gestão
-que serão desenvolvidos para apoiar a solução desses problemas (quais controles, o que cada um mede e quem vai usar).
+INCLUA TAMBÉM um item com "idProblema": "${ID_FERRAMENTAS}" descrevendo, em "passos", as planilhas e/ou aplicativos de
+gestão que serão desenvolvidos para apoiar a solução desses problemas (quais controles, o que cada um mede e quem vai usar).
 
-REGRAS GERAIS: português do Brasil, linguagem objetiva e técnica, sem inventar dados da empresa. NÃO crie atividades de
-diagnóstico, devolutiva, análise final ou relatório final (elas já existem no plano).
+REGRAS: português do Brasil, linguagem objetiva e técnica, sem inventar dados da empresa.
 
 PROBLEMAS (do mais crítico ao menos crítico):
 ${JSON.stringify(dados)}
@@ -611,13 +724,13 @@ ${ferr ? `\nFERRAMENTAS PREVISTAS (${horasDe(ferr)}h): ${ferr.descricao}` : ''}`
             type: Type.OBJECT,
             properties: {
               idProblema: { type: Type.STRING },
-              nome: { type: Type.STRING },
-              descricao: { type: Type.STRING },
-              solucaoProposta: { type: Type.STRING },
+              acao: { type: Type.STRING },
+              solucao: { type: Type.STRING },
+              passos: { type: Type.STRING },
               resultadoEsperado: { type: Type.STRING },
               responsavel: { type: Type.STRING },
             },
-            required: ['idProblema', 'nome', 'descricao', 'solucaoProposta', 'resultadoEsperado'],
+            required: ['idProblema', 'acao', 'solucao', 'passos', 'resultadoEsperado'],
           },
         },
       },
@@ -625,37 +738,117 @@ ${ferr ? `\nFERRAMENTAS PREVISTAS (${horasDe(ferr)}h): ${ferr.descricao}` : ''}`
     const bruto = String(resp?.text || '').replace(/```json|```/g, '').trim();
     const itens: any[] = JSON.parse(bruto.slice(bruto.indexOf('['), bruto.lastIndexOf(']') + 1));
     const porId = new Map(itens.filter((i) => i && i.idProblema).map((i) => [String(i.idProblema), i]));
-    const txt = (v: any, atual: any, max = 600) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : atual);
+    const txt = (v: any, atual: string, max = 600) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : atual);
 
     let aplicados = 0;
     const novas = atividades.map((a) => {
-      const papel = papelDaAtividade(a.nome);
-      if (papel === 'ferramentas') {
+      if (papelDaAtividade(a.nome) === 'ferramentas') {
         const i = porId.get(ID_FERRAMENTAS);
         if (!i) return a;
         aplicados++;
-        // O nome da atividade fixa não muda (ele identifica a etapa no plano).
-        return { ...a, descricao: txt(i.descricao, a.descricao), solucaoProposta: txt(i.solucaoProposta, a.solucaoProposta), resultadoEsperado: txt(i.resultadoEsperado, a.resultadoEsperado) };
+        return { ...a, descricao: txt(i.passos, a.descricao), solucaoProposta: txt(i.solucao, a.solucaoProposta), resultadoEsperado: txt(i.resultadoEsperado, a.resultadoEsperado || '') };
       }
-      const i = a.idProblema ? porId.get(a.idProblema) : undefined;
-      if (!i) return a;
-      let nome = txt(i.nome, a.nome, 120);
-      // A IA não pode transformar uma atividade de problema em atividade fixa.
-      if (papelDaAtividade(nome) !== 'problema') nome = a.nome;
-      aplicados++;
-      return {
-        ...a,
-        nome,
-        descricao: txt(i.descricao, a.descricao),
-        solucaoProposta: txt(i.solucaoProposta, a.solucaoProposta, 300),
-        resultadoEsperado: txt(i.resultadoEsperado, a.resultadoEsperado, 400),
-        responsavel: txt(i.responsavel, a.responsavel, 40),
-      };
+      if (!a.problemasTratados?.length) return a;
+      const tratados = a.problemasTratados.map((t) => {
+        const i = porId.get(t.idProblema);
+        if (!i) return t;
+        aplicados++;
+        return {
+          ...t,
+          acao: txt(i.acao, t.acao, 120),
+          solucao: txt(i.solucao, t.solucao, 300),
+          passos: txt(i.passos, t.passos, 700),
+          resultadoEsperado: txt(i.resultadoEsperado, t.resultadoEsperado, 400),
+          responsavel: txt(i.responsavel, t.responsavel, 40),
+        };
+      });
+      // O nome da atividade de área segue o padrão fixo; só os textos dos problemas mudam.
+      const area = a.area || tratados[0]?.area || 'Área';
+      return { ...a, ...textosDaAtividadeDeArea(area, tratados), nome: a.nome, problemasTratados: tratados };
     });
     return { atividades: novas, usouIA: aplicados > 0 };
   } catch (e: any) {
     return { atividades, usouIA: false, erro: e?.message || String(e) };
   }
+}
+
+// ---------------------------------------------------------------------------------------
+// Tarefas do Plano de Ação: UMA POR PROBLEMA nas atividades de área
+// ---------------------------------------------------------------------------------------
+export interface TarefaGerada {
+  problema: string;
+  area?: string;
+  idProblema: string;
+  solucaoSugerida: string;
+  acoes: string;
+  prioridade: 'Alta' | 'Média' | 'Baixa';
+  responsavel: string;
+  cargaHoraria?: string;
+  resultadoEsperado: string;
+  dataInicio?: string;
+  dataFim?: string;
+  /** Atividade do cronograma a que a tarefa pertence. */
+  atividade: string;
+  atividadeOrdem: number;
+  criticidade?: NivelCriticidade;
+}
+
+/** Converte as atividades do cronograma nas tarefas do Plano de Ação. */
+export function tarefasDasAtividades(atividades: AtividadeCronograma[]): TarefaGerada[] {
+  const out: TarefaGerada[] = [];
+  atividades.forEach((atv, atividadeOrdem) => {
+    const itens = atv.problemasTratados || [];
+    if (!itens.length) {
+      out.push({
+        problema: atv.nome,
+        area: atv.area,
+        idProblema: atv.idProblema || '',
+        solucaoSugerida: atv.solucaoProposta || '',
+        acoes: atv.descricao || '',
+        prioridade: (atv.prioridade as any) || 'Média',
+        responsavel: atv.responsavel || 'Consultor',
+        cargaHoraria: atv.cargaHoraria,
+        resultadoEsperado: atv.resultadoEsperado || '',
+        dataInicio: atv.dataInicio,
+        dataFim: atv.dataFim,
+        atividade: atv.nome,
+        atividadeOrdem,
+      });
+      return;
+    }
+    // Horas da atividade repartidas entre os problemas pelo peso da criticidade, em blocos de
+    // meia hora, somando EXATAMENTE as horas da atividade.
+    const horas = horasDe(atv);
+    const soma = itens.reduce((s, p) => s + PESO_NIVEL[p.nivel], 0) || 1;
+    const blocos = horas * 2;
+    const ideais = itens.map((p) => (blocos * PESO_NIVEL[p.nivel]) / soma);
+    const partes = ideais.map(Math.floor);
+    let faltam = blocos - partes.reduce((a, b) => a + b, 0);
+    ideais
+      .map((v, k) => [v - partes[k], k] as const)
+      .sort((x, y) => y[0] - x[0])
+      .forEach(([, k]) => { if (faltam > 0) { partes[k]++; faltam--; } });
+    itens.forEach((p, k) => {
+      const h = partes[k] / 2;
+      out.push({
+        problema: p.problema,
+        area: p.area,
+        idProblema: p.idProblema,
+        solucaoSugerida: `${p.acao} — ${p.solucao}`,
+        acoes: p.passos,
+        prioridade: p.nivel === 'Moderado' ? 'Média' : 'Alta',
+        responsavel: p.responsavel,
+        cargaHoraria: horas ? `${String(h).replace('.', ',')}h` : undefined,
+        resultadoEsperado: p.resultadoEsperado,
+        dataInicio: atv.dataInicio,
+        dataFim: atv.dataFim,
+        atividade: atv.nome,
+        atividadeOrdem,
+        criticidade: p.nivel,
+      });
+    });
+  });
+  return out;
 }
 
 // ---------------------------------------------------------------------------------------
@@ -667,39 +860,47 @@ export function montarTextosRelatorio(
   contexto: { nomeEmpresa?: string; tipoEmpresa?: string } = {}
 ): { objetivo: string; solucoesIndicadas: string; resultadosEsperados: string } {
   const criticos = analise.problemas.filter((p) => p.nivel === 'Crítico');
-  const areas = Array.from(new Set(analise.problemas.map((p) => p.area))).slice(0, 5);
+  const grupos = agruparPorArea(analise);
+  const areas = grupos.map((g) => g.area);
   const empresa = contexto.nomeEmpresa ? ` da empresa ${contexto.nomeEmpresa}` : '';
   const totalHoras = atividades.reduce((s, a) => s + horasDe(a), 0);
+  const tratados = new Map(atividades.flatMap((a) => (a.problemasTratados || []).map((t) => [t.idProblema, t] as const)));
 
   const objetivo =
     analise.problemas.length === 0
       ? `Consolidar as boas práticas de gestão identificadas no diagnóstico${empresa} e estruturar controles e indicadores que garantam a continuidade dos resultados.`
-      : `Solucionar ${
-          criticos.length === 1 ? 'o problema crítico' : criticos.length > 1 ? `os ${criticos.length} problemas críticos` : 'os problemas prioritários'
-        } ${criticos.length === 1 ? 'identificado' : 'identificados'} no diagnóstico${empresa}${areas.length ? `, com foco em ${listaTexto(areas)}` : ''}, por meio de ${
-          atividades.length
-        } atividades (${totalHoras}h), com implantação de ferramentas de gestão e acompanhamento de indicadores. ` +
+      : `Solucionar os ${analise.problemas.length} problema${analise.problemas.length > 1 ? 's' : ''} identificado${analise.problemas.length > 1 ? 's' : ''} no diagnóstico${empresa}` +
+        `${criticos.length ? ` (${criticos.length} crítico${criticos.length > 1 ? 's' : ''})` : ''}` +
+        `${areas.length ? `, distribuídos em ${areas.length} área${areas.length > 1 ? 's' : ''} (${listaTexto(areas.slice(0, 6))})` : ''}, ` +
+        `por meio de ${atividades.length} atividades (${totalHoras}h), com implantação de ferramentas de gestão e acompanhamento de indicadores. ` +
         `Índice de conformidade no diagnóstico: ${analise.scoreGeral}%.`;
 
-  const problemasTxt = analise.problemas.map((p) => `• [${p.nivel}] ${p.problema} (${p.area})`).join('\n');
+  const porArea = grupos
+    .map((g) => {
+      const linhas = g.problemas.map((p) => {
+        const t = tratados.get(p.idProblema);
+        return `• [${p.nivel}] ${p.problema}${t ? ` → ${t.acao}` : ''}`;
+      });
+      return `${g.area.toUpperCase()} (${resumoNiveis(g.problemas)}):\n${linhas.join('\n')}`;
+    })
+    .join('\n\n');
   const acoesTxt = atividades
-    .map((a, i) => `${i + 1}. ${a.nome} (${a.cargaHoraria})${a.solucaoProposta && a.solucaoProposta !== a.nome ? ` — ${a.solucaoProposta}` : ''}`)
+    .map((a, i) => `${i + 1}. ${a.nome} (${a.cargaHoraria})${!a.problemasTratados?.length && a.solucaoProposta && a.solucaoProposta !== a.nome ? ` — ${a.solucaoProposta}` : ''}`)
     .join('\n');
-  const fortesTxt = analise.pontosFortes.slice(0, 8).map((p) => `• ${p.problema}`).join('\n');
+  const fortesTxt = analise.pontosFortes.slice(0, 10).map((p) => `• ${p.problema} (${p.area})`).join('\n');
 
   const solucoesIndicadas = [
-    `PROBLEMAS IDENTIFICADOS:\n${problemasTxt || '• Nenhuma lacuna relevante identificada.'}`,
+    `PROBLEMAS IDENTIFICADOS:\n${porArea || '• Nenhuma lacuna relevante identificada.'}`,
     `SOLUÇÕES / AÇÕES PROPOSTAS:\n${acoesTxt}`,
     fortesTxt ? `PONTOS FORTES:\n${fortesTxt}` : '',
   ]
     .filter(Boolean)
     .join('\n\n');
 
-  const resultadosEsperados = atividades
-    .map((a) => a.resultadoEsperado)
-    .filter((r): r is string => !!r && !!r.trim())
-    .map((r) => `• ${r}`)
-    .join('\n');
-
-  return { objetivo, solucoesIndicadas, resultadosEsperados };
+  const resultados: string[] = [];
+  for (const a of atividades) {
+    if (a.problemasTratados?.length) a.problemasTratados.forEach((t) => resultados.push(`• [${t.nivel}] ${t.problema}: ${t.resultadoEsperado}`));
+    else if (a.resultadoEsperado?.trim()) resultados.push(`• ${a.resultadoEsperado}`);
+  }
+  return { objetivo, solucoesIndicadas, resultadosEsperados: resultados.join('\n') };
 }
