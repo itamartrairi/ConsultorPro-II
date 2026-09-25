@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   analisarDiagnostico, montarAtividades, estruturarPlano, enriquecerComIA, montarTextosRelatorio,
-  isPerguntaNegativa, papelDaAtividade, horasDe, MAX_ATIVIDADES,
+  isPerguntaNegativa, papelDaAtividade, horasDe, MAX_ATIVIDADES, tarefasDasAtividades, agruparPorArea,
   ATIVIDADE_DIAGNOSTICO, ATIVIDADE_DEVOLUTIVA, ATIVIDADE_FERRAMENTAS, ATIVIDADE_ANALISE_FINAL, ATIVIDADE_RELATORIO_FINAL,
 } from '../src/lib/domain/planoAcao';
 
@@ -52,20 +52,45 @@ console.log('  OK: classificação dos problemas críticos');
 // Plano padrão 34h
 const plano = montarAtividades(an, '34h');
 verificaEstrutura(plano, 34, '34h');
-assert.deepEqual(plano.slice(3, -2).map((a) => a.idProblema), ['A', 'B', 'E', 'C'], 'problemas no meio, em ordem');
-assert.match(plano[3].nome, /fluxo de caixa/i, 'usa a solução cadastrada');
+// Uma atividade por ÁREA, das mais críticas para as menos críticas
+assert.deepEqual(plano.slice(3, -2).map((a) => a.area), ['Finanças', 'Crédito', 'Custos', 'Estoque'], 'áreas em ordem de criticidade');
+assert.deepEqual(plano.slice(3, -2).map((a) => a.problemasTratados!.map((t) => t.idProblema)), [['A'], ['B'], ['E'], ['C']]);
+assert.match(plano[3].descricao, /Registrar entradas e saídas/i, 'usa a solução cadastrada');
+assert.match(plano[3].nome, /^Finanças: solução de 1 problema \(1 crítico\)$/);
 assert.match(plano[2].descricao, /fluxo de caixa|custos/i, 'ferramentas conforme as áreas');
+// Áreas com críticos recebem mais horas que as moderadas
+assert.ok(horasDe(plano[3]) > horasDe(plano[6]), 'área crítica com mais horas que a moderada');
+// Tarefas: uma por problema nas atividades de área
+const tarefas = tarefasDasAtividades(plano);
+assert.equal(tarefas.length, 5 + 4, '5 atividades fixas + 1 tarefa por problema');
+assert.deepEqual(tarefas.filter((t) => t.criticidade).map((t) => t.idProblema), ['A', 'B', 'E', 'C']);
+assert.equal(tarefas.find((t) => t.idProblema === 'A')!.prioridade, 'Alta');
+// Horas das tarefas somam exatamente as horas de cada atividade
+for (const [i, atv] of plano.entries()) {
+  const soma = tarefas.filter((t) => t.atividadeOrdem === i).reduce((s, t) => s + parseFloat(String(t.cargaHoraria).replace(',', '.')), 0);
+  assert.equal(soma, horasDe(atv), `horas das tarefas da atividade ${i + 1}`);
+}
 console.log('  OK: plano 34h —', plano.map((a) => `${a.cargaHoraria}`).join(' + '));
 
-// Muitos problemas → no máximo 10 atividades
-const muitos = Array.from({ length: 12 }, (_, i) => r(`P${i}`, `Possui controle ${i}?`, 'Não', 1));
-const anMuitos = analisarDiagnostico(muitos, [], []);
+// Muitos problemas em muitas áreas → no máximo 10 atividades e NENHUM problema de fora
+const AREAS = ['Finanças', 'Custos', 'Comercial', 'Estoque', 'Produção', 'Pessoas', 'Legal', 'Marketing'];
+const muitos = Array.from({ length: 24 }, (_, i) => r(`P${i}`, `Possui controle ${i}?`, i % 3 === 0 ? 'Parcial' : 'Não', 1 + (i % 3), AREAS[i % AREAS.length]));
+const probsMuitos = muitos.map((x, i) => prob(x.idProblema, x.area, ['Alto', 'Médio', 'Baixo'][i % 3]));
+const anMuitos = analisarDiagnostico(muitos, probsMuitos, []);
+assert.equal(agruparPorArea(anMuitos).length, 8);
 for (const carga of [34, 40, 60, 16, 14]) {
   const p = montarAtividades(anMuitos, carga);
-  verificaEstrutura(p, carga, `${carga}h/12 problemas`);
-  assert.ok(p.some((a) => /complementares/.test(a.nome)), `${carga}h: excedentes agrupados`);
+  verificaEstrutura(p, carga, `${carga}h/24 problemas`);
+  const cobertos = new Set(p.flatMap((a) => (a.problemasTratados || []).map((t) => t.idProblema)));
+  assert.equal(cobertos.size, 24, `${carga}h: todos os 24 problemas no plano`);
+  const criticos = anMuitos.problemas.filter((x) => x.nivel === 'Crítico').map((x) => x.idProblema);
+  assert.ok(criticos.every((id) => cobertos.has(id)), `${carga}h: todos os críticos no plano`);
+  const tt = tarefasDasAtividades(p);
+  assert.equal(tt.filter((t) => t.criticidade).length, 24, `${carga}h: uma tarefa por problema`);
+  const somaT = tt.reduce((s, t) => s + (t.cargaHoraria ? parseFloat(t.cargaHoraria.replace(',', '.')) : 0), 0);
+  assert.equal(somaT, carga, `${carga}h: horas das tarefas = carga total`);
 }
-console.log('  OK: até 10 atividades com agrupamento (14, 16, 34, 40 e 60h)');
+console.log('  OK: 24 problemas em 8 áreas — todos no plano e nas tarefas (14, 16, 34, 40 e 60h)');
 
 // Sem lacunas
 const semLacuna = montarAtividades(analisarDiagnostico([r('X', 'Possui controle?', 'Sim')], [], []), 20);
@@ -84,21 +109,24 @@ const antigo = [
 const conv = estruturarPlano(antigo, 30);
 verificaEstrutura(conv, 30, 'conversão');
 assert.deepEqual(conv.slice(3, -2).map((a) => a.nome), ['Controle de custos', 'Precificação']);
+assert.equal(tarefasDasAtividades(conv).length, conv.length, 'plano antigo: uma tarefa por atividade');
 assert.equal(conv.filter((a) => a.nome === ATIVIDADE_ANALISE_FINAL).length, 1, 'mantém uma única análise final');
 assert.equal(papelDaAtividade('Relatório final e encerramento'), 'relatorio');
 console.log('  OK: conversão de planos/modelos antigos');
 
 // IA: melhora textos, mas não quebra a estrutura
 const fakeAI = { models: { generateContent: async () => ({ text: JSON.stringify([
-  { idProblema: 'A', nome: 'Implantar fluxo de caixa diário', descricao: 'd', solucaoProposta: 's', resultadoEsperado: '100% dos lançamentos em 30 dias' },
-  { idProblema: 'B', nome: 'Relatório final e encerramento', descricao: 'tentativa de virar atividade fixa', solucaoProposta: 's', resultadoEsperado: 'r' },
-  { idProblema: '__ferramentas__', nome: 'x', descricao: 'Planilha de fluxo de caixa e controle de dívidas', solucaoProposta: 's', resultadoEsperado: '2 planilhas' },
-  { idProblema: 'NAO_EXISTE', nome: 'Inventada', descricao: 'd', solucaoProposta: 's', resultadoEsperado: 'r' },
+  { idProblema: 'A', acao: 'Implantar fluxo de caixa diário', solucao: 's', passos: 'passo 1; passo 2', resultadoEsperado: '100% dos lançamentos em 30 dias' },
+  { idProblema: 'B', acao: 'Relatório final e encerramento', solucao: 's', passos: 'p', resultadoEsperado: 'r' },
+  { idProblema: '__ferramentas__', acao: 'x', solucao: 's', passos: 'Planilha de fluxo de caixa e controle de dívidas', resultadoEsperado: '2 planilhas' },
+  { idProblema: 'NAO_EXISTE', acao: 'Inventada', solucao: 's', passos: 'p', resultadoEsperado: 'r' },
 ]) }) } };
 const ia = await enriquecerComIA(fakeAI, plano, an);
 assert.equal(ia.usouIA, true);
 verificaEstrutura(ia.atividades, 34, 'após IA');
-assert.equal(ia.atividades[3].nome, 'Implantar fluxo de caixa diário');
+assert.equal(ia.atividades[3].problemasTratados![0].acao, 'Implantar fluxo de caixa diário');
+assert.match(ia.atividades[3].descricao, /Implantar fluxo de caixa diário: passo 1; passo 2/);
+assert.equal(ia.atividades[3].nome, plano[3].nome, 'nome da atividade de área não muda');
 assert.equal(ia.atividades[4].nome, plano[4].nome, 'IA não pode renomear para atividade fixa');
 assert.equal(ia.atividades[2].descricao, 'Planilha de fluxo de caixa e controle de dívidas');
 assert.equal(ia.atividades.length, plano.length, 'IA não adiciona atividades');
@@ -108,8 +136,9 @@ console.log('  OK: IA só altera textos; falha da IA mantém o plano');
 
 // Relatório
 const rel = montarTextosRelatorio(an, plano, { nomeEmpresa: 'Empresa X' });
-assert.match(rel.objetivo, /^Solucionar os 3 problemas críticos identificados no diagnóstico da empresa Empresa X/);
+assert.match(rel.objetivo, /^Solucionar os 4 problemas identificados no diagnóstico da empresa Empresa X \(3 críticos\), distribuídos em 4 áreas/);
 console.log('   Objetivo:', rel.objetivo);
-assert.match(rel.solucoesIndicadas, /PROBLEMAS IDENTIFICADOS:[\s\S]*\[Crítico\] Problema A[\s\S]*SOLUÇÕES \/ AÇÕES PROPOSTAS:[\s\S]*PONTOS FORTES:/);
+assert.match(rel.solucoesIndicadas, /PROBLEMAS IDENTIFICADOS:\nFINANÇAS \(1 crítico\):\n• \[Crítico\] Problema A → Implantar fluxo de caixa[\s\S]*SOLUÇÕES \/ AÇÕES PROPOSTAS:[\s\S]*PONTOS FORTES:/);
+assert.match(rel.resultadosEsperados, /\[Crítico\] Problema A: Fluxo de caixa em uso/);
 console.log('  OK: textos do relatório');
 console.log('Todos os testes de planoAcao passaram.');
