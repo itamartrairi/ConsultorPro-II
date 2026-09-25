@@ -62,6 +62,7 @@ import {
 } from 'lucide-react';
 import { getAI, extractAndParseJSON, Type } from '../App';
 import { SyncSummary } from './SmartSyncModal';
+import { tiposDeNegocio } from '../lib/domain/relatorioSegmentos';
 
 // --- Custom Interfaces ---
 interface Empresa {
@@ -188,7 +189,9 @@ export const MacroDashboardView = ({
   onOpenSmartSync,
   onStartSync,
   userEmail,
-  storageMode = 'cloud'
+  storageMode = 'cloud',
+  onGerarRelatorioSegmentos,
+  gerandoRelatorioSegmentos = false
 }: {
   empresas: Empresa[];
   diagnosticos: Diagnostico[];
@@ -201,6 +204,9 @@ export const MacroDashboardView = ({
   onStartSync?: () => Promise<void>;
   userEmail?: string | null;
   storageMode?: 'cloud' | 'local';
+  /** Gera o PDF "Resumo dos Diagnósticos por Tipo de Negócio" com todos os clientes. */
+  onGerarRelatorioSegmentos?: (tipoDeNegocio?: string) => void;
+  gerandoRelatorioSegmentos?: boolean;
 }) => {
   const [loadingMacro, setLoadingMacro] = useState(false);
   const [macroHistory, setMacroHistory] = useState<MacroItem[]>([]);
@@ -209,6 +215,8 @@ export const MacroDashboardView = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [sectorFilter, setSectorFilter] = useState('Todos');
   const [isSyncLogExpanded, setIsSyncLogExpanded] = useState(false);
+  const [segmentoRelatorio, setSegmentoRelatorio] = useState('Todos');
+  const tiposRelatorio = useMemo(() => tiposDeNegocio(empresas as any, diagnosticos as any), [empresas, diagnosticos]);
 
   // Task state and filters for Action Plan summary
   const [internalTasks, setInternalTasks] = useState<TarefaPlanoAcao[]>([]);
@@ -897,7 +905,30 @@ export const MacroDashboardView = ({
         </div>
         
         {/* Navigation & Export Action Header */}
-        <div className="flex items-center gap-3 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          {onGerarRelatorioSegmentos && (
+            <select
+              value={segmentoRelatorio}
+              onChange={(e) => setSegmentoRelatorio(e.target.value)}
+              disabled={gerandoRelatorioSegmentos}
+              title="Tipo de negócio do relatório"
+              className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-200"
+            >
+              <option value="Todos">Todos os tipos de negócio</option>
+              {tiposRelatorio.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          )}
+          {onGerarRelatorioSegmentos && (
+            <button
+              onClick={() => { if (!gerandoRelatorioSegmentos) onGerarRelatorioSegmentos(segmentoRelatorio); }}
+              disabled={gerandoRelatorioSegmentos}
+              title="Resumo do diagnóstico de todos os clientes, agrupado por tipo de negócio (PDF)"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+            >
+              {gerandoRelatorioSegmentos ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
+              <span>{gerandoRelatorioSegmentos ? 'Gerando relatório...' : 'Relatório por Tipo de Negócio'}</span>
+            </button>
+          )}
           <button
             onClick={exportPortfolioData}
             disabled={clientSummary.length === 0}
