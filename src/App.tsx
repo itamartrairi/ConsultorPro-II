@@ -454,6 +454,62 @@ const PLANO_DE_ACAO_PADRAO_BASE: AtividadeCronograma[] = [
   }
 ];
 
+/**
+ * Tarefas do Plano de Ação a partir do cronograma: nas atividades de ÁREA, uma tarefa por
+ * problema tratado (todos os críticos ficam rastreáveis individualmente); nas demais, uma
+ * tarefa por atividade. O status, os comentários e as evidências de tarefas já existentes
+ * são preservados (antes, salvar o cronograma sobrescrevia o progresso de cada tarefa).
+ */
+function montarTarefasDoPlano(
+  atividades: AtividadeCronograma[],
+  diag: Diagnostico,
+  empresaId: string,
+  ownerId: string,
+  existentes: TarefaPlanoAcao[] = []
+): Omit<TarefaPlanoAcao, 'id'>[] {
+  const norm = (v?: string) => (v || '').trim().toLowerCase();
+  const porChave = new Map<string, TarefaPlanoAcao>();
+  existentes.forEach(t => {
+    porChave.set(`${norm(t.idProblema)}|${norm(t.problema)}`, t);
+    if (t.atividade) porChave.set(`atv|${norm(t.atividade)}|${norm(t.problema)}`, t);
+  });
+  const validas = atividades.filter(a => a?.nome?.trim());
+  return tarefasDasAtividades(validas).map((t, i) => {
+    const atv = validas[t.atividadeOrdem];
+    const inicio = t.dataInicio || getActivityDateStr(diag.dataDiagnostico, t.atividadeOrdem);
+    const fim = t.dataFim || inicio;
+    const anterior = porChave.get(`atv|${norm(t.atividade)}|${norm(t.problema)}`) || porChave.get(`${norm(t.idProblema)}|${norm(t.problema)}`);
+    const statusAtv = atv?.status === 'Concluído' || atv?.status === 'Em Andamento' ? atv.status : 'Pendente';
+    const status: TarefaPlanoAcao['status'] = statusAtv === 'Concluído' ? 'Concluído' : (anterior?.status || statusAtv);
+    const extras: Partial<TarefaPlanoAcao> = {};
+    (['comentarios', 'evidencias', 'evidenciaUrl', 'evidenciaNome', 'anexoUrl', 'lembreteEmail', 'lembreteWhatsapp', 'lembretePush', 'lembreteDiasAntes', 'lembreteContato'] as const)
+      .forEach(k => { if (anterior && (anterior as any)[k] !== undefined) (extras as any)[k] = (anterior as any)[k]; });
+    return {
+      diagnosticoId: diag.id,
+      empresaId,
+      idProblema: t.idProblema || '',
+      problema: t.problema,
+      area: t.area || diag.tipoEmpresa || 'Consultoria',
+      solucaoSugerida: t.solucaoSugerida,
+      acoes: t.acoes,
+      status,
+      prioridade: t.prioridade,
+      responsavel: t.responsavel || 'Consultor',
+      cargaHoraria: t.cargaHoraria,
+      resultadoEsperado: t.resultadoEsperado,
+      dataInicio: inicio,
+      dataFim: fim,
+      dataVencimento: fim,
+      ownerId,
+      ordem: i,
+      atividade: t.atividade,
+      atividadeOrdem: t.atividadeOrdem,
+      ...(t.criticidade ? { criticidade: t.criticidade } : {}),
+      ...extras
+    };
+  });
+}
+
 /** Plano genérico (sem diagnóstico respondido), já na estrutura padrão de 34h. */
 const PLANO_DE_ACAO_PADRAO: AtividadeCronograma[] = estruturarPlano(PLANO_DE_ACAO_PADRAO_BASE, 34);
 
@@ -2308,12 +2364,9 @@ const CronogramaView = ({
    * A IA só melhora a redação; sem IA o plano é gerado do mesmo jeito.
    */
   const generateSuggestionsAI = async () => {
+    // Todas as respostas do diagnóstico (antes, respostas fora das áreas marcadas ficavam de fora do plano).
     const doDiagnostico = (respostas || []).filter(r => !r.diagnosticoId || r.diagnosticoId === selectedDiagnostico.id);
-    const areasSel = selectedDiagnostico.areasDiagnostico || [];
-    const relevantes = areasSel.length === 0
-      ? doDiagnostico
-      : doDiagnostico.filter(r => areasSel.some(a => normalizeAndFormatArea(a).toLowerCase() === normalizeAndFormatArea(r.area).toLowerCase()));
-    const analise = analisarDiagnostico(deduplicateRespostas(relevantes), problemas, solucoes);
+    const analise = analisarDiagnostico(deduplicateRespostas(doDiagnostico), problemas, solucoes);
 
     if (analise.totalRespondidas === 0) {
       alert("Responda o diagnóstico primeiro: o plano de ação e o relatório são gerados a partir das respostas.");
@@ -2496,29 +2549,18 @@ const CronogramaView = ({
 
       // 3. Sync local tarefasPlano state and localStorage
       const validAtividades = (sanitizedAtividades || []).filter((atv: any) => atv.nome?.trim());
-      const newTarefasFromAtividades: TarefaPlanoAcao[] = validAtividades.map((atv: any, index: number) => {
-        const defaultDate = getActivityDateStr(selectedDiagnostico.dataDiagnostico, index);
-        const startStr = atv.dataInicio || defaultDate;
-        const endStr = atv.dataFim || startStr;
-        return {
-          id: atv.id || `tarefa_${selectedDiagnostico.id}_${index}`,
-          diagnosticoId: selectedDiagnostico.id,
-          empresaId: selectedEmpresa?.id || selectedDiagnostico.empresaId || '',
-          idProblema: atv.idProblema || '',
-          problema: atv.nome,
-          area: atv.area || selectedDiagnostico.tipoEmpresa || 'Consultoria',
-          solucaoSugerida: atv.solucaoProposta || '',
-          acoes: atv.descricao || '',
-          status: (atv.status === 'Concluído' || atv.status === 'Em Andamento' || atv.status === 'Pendente') ? atv.status : 'Pendente',
-          prioridade: (atv.prioridade === 'Alta' || atv.prioridade === 'Baixa' || atv.prioridade === 'Média') ? atv.prioridade : 'Média',
-          responsavel: atv.responsavel || 'Consultor',
-          dataInicio: startStr,
-          dataFim: endStr,
-          dataVencimento: endStr,
-          ownerId: auth.currentUser?.uid || 'local',
-          ordem: index
-        } as TarefaPlanoAcao;
-      });
+      const tarefasAtuais = (tarefasPlano || []).filter(t => t.diagnosticoId === selectedDiagnostico.id);
+      const tarefasExpandidas = montarTarefasDoPlano(
+        validAtividades,
+        selectedDiagnostico,
+        selectedEmpresa?.id || selectedDiagnostico.empresaId || '',
+        auth.currentUser?.uid || 'local',
+        tarefasAtuais
+      );
+      const newTarefasFromAtividades: TarefaPlanoAcao[] = tarefasExpandidas.map((t, index) => ({
+        ...t,
+        id: tarefasAtuais[index]?.id || `tarefa_${selectedDiagnostico.id}_${index}`
+      }));
 
       if (setTarefasPlano) {
         setTarefasPlano(prev => {
@@ -2553,27 +2595,10 @@ const CronogramaView = ({
               const existingDocs = snapCurrentTasks?.docs || [];
 
               const batch = writeBatch(db);
-              validAtividades.forEach((atv: any, index: number) => {
-                const defaultDate = getActivityDateStr(selectedDiagnostico.dataDiagnostico, index);
-                const startStr = atv.dataInicio || defaultDate;
-                const endStr = atv.dataFim || startStr;
-
+              tarefasExpandidas.forEach((tarefa, index) => {
                 const taskData = sanitizeForFirestore({
-                  diagnosticoId: selectedDiagnostico.id,
-                  empresaId: selectedEmpresa?.id || selectedDiagnostico.empresaId || '',
-                  idProblema: atv.idProblema || '',
-                  problema: atv.nome,
-                  solucaoSugerida: atv.solucaoProposta || '',
-                  acoes: atv.descricao || '',
-                  status: atv.status || 'Pendente',
-                  prioridade: atv.prioridade || 'Média',
-                  responsavel: atv.responsavel || 'Consultor',
-                  cargaHoraria: atv.cargaHoraria || '',
-                  dataInicio: startStr,
-                  dataFim: endStr,
-                  dataVencimento: endStr,
+                  ...tarefa,
                   ownerId: currentUser.uid,
-                  ordem: index,
                   dataCadastro: new Date().toISOString()
                 });
 
@@ -2585,7 +2610,7 @@ const CronogramaView = ({
                 }
               });
 
-              for (let i = validAtividades.length; i < existingDocs.length; i++) {
+              for (let i = tarefasExpandidas.length; i < existingDocs.length; i++) {
                 batch.delete(existingDocs[i].ref);
               }
 
@@ -2646,7 +2671,10 @@ const CronogramaView = ({
         const batch = writeBatch(db);
         snap.docs.forEach(docSnap => {
           const tData = docSnap.data();
-          if (tData.ordem === index || tData.problema === newAtividades[index].nome) {
+          const daAtividade = typeof tData.atividadeOrdem === 'number'
+            ? tData.atividadeOrdem === index
+            : (tData.ordem === index || tData.problema === newAtividades[index].nome);
+          if (daAtividade) {
             batch.update(docSnap.ref, { status: value });
           }
         });
@@ -4787,7 +4815,32 @@ const RelatorioView = ({
     }, {});
   }, [uniqueRespostas]);
 
-  // Pure Diagnostic Analysis based on questions evaluated in the diagnostic:
+  // Classificação de criticidade (mesma regra do plano de ação): lacunas × peso × impacto.
+  const analiseCriticidade = useMemo(
+    () => analisarDiagnostico(uniqueRespostas, problemas, solucoes),
+    [uniqueRespostas, problemas, solucoes]
+  );
+  const nivelPorProblema = useMemo(() => {
+    const m = new Map<string, NivelCriticidade>();
+    analiseCriticidade.problemas.forEach(p => {
+      m.set(p.idProblema, p.nivel);
+      m.set(p.problema, p.nivel);
+    });
+    return m;
+  }, [analiseCriticidade]);
+
+  // Soluções redigidas no plano de ação (quando a biblioteca não tem solução cadastrada).
+  const solucoesDoPlano = useMemo(() => {
+    const m = new Map<string, ProblemaTratado>();
+    (selectedDiagnostico?.cronograma || []).forEach(a => (a.problemasTratados || []).forEach(t => {
+      m.set(t.idProblema, t);
+      m.set(t.problema, t);
+    }));
+    return m;
+  }, [selectedDiagnostico?.cronograma]);
+
+  // Análise de cada problema. "Sim" em pergunta que investiga a ocorrência de um problema
+  // (ex.: "Possui dívidas em atraso?") é LACUNA, não ponto forte.
   const analyzedProblems = useMemo(() => {
     return Object.entries(responsesByProblem).map(([probId, resps], idx) => {
       const seenQ = new Set<string>();
@@ -4799,53 +4852,86 @@ const RelatorioView = ({
         uniqueResps.push(r);
       });
 
-      const noResponses = uniqueResps.filter(r => r.resposta === 'Não' || r.resposta === 'Parcial');
-      const yesResponses = uniqueResps.filter(r => r.resposta === 'Sim');
-      const solution = solucoes.find(s => s.idProblema === probId || s.problema === probId);
+      const noResponses = uniqueResps.filter(r => (grauLacuna(r) ?? 0) > 0);
+      const yesResponses = uniqueResps.filter(r => grauLacuna(r) === 0);
+      const libSolution = solucoes.find(s => s.idProblema === probId || s.problema === probId);
       const probObj = problemas.find(p => p.id === probId || p.descricao_problemas === probId);
-      const resolvedArea = solution?.area || probObj?.area || resps[0]?.area || 'Geral';
+      const resolvedArea = libSolution?.area || probObj?.area || resps[0]?.area || 'Geral';
+      const nomeProblema = libSolution?.problema || probObj?.descricao_problemas || resps[0]?.problema || probId;
+      const doPlano = solucoesDoPlano.get(probId) || solucoesDoPlano.get(nomeProblema);
+      const nivel: NivelCriticidade | undefined = noResponses.length > 0
+        ? (nivelPorProblema.get(probId) || nivelPorProblema.get(nomeProblema) || 'Moderado')
+        : undefined;
+
+      const solution: Solucao | undefined = libSolution?.solucao_recomendada
+        ? libSolution
+        : (doPlano || probObj || libSolution)
+          ? {
+              ...(libSolution || {}),
+              id: libSolution?.id || `sol-${probId}`,
+              idProblema: probId,
+              problema: nomeProblema,
+              solucao_recomendada: doPlano ? `${doPlano.acao} — ${doPlano.solucao}` : (libSolution?.solucao_recomendada || ''),
+              responsavel_sugerido: doPlano?.responsavel || libSolution?.responsavel_sugerido || 'Consultor',
+              prazo_sugerido: libSolution?.prazo_sugerido || '',
+              kpis_sugeridos: libSolution?.kpis_sugeridos || '',
+              resultado_esperado: doPlano?.resultadoEsperado || libSolution?.resultado_esperado || '',
+              acoes_sugeridas: doPlano?.passos || libSolution?.acoes_sugeridas || '',
+              area: resolvedArea
+            } as Solucao
+          : undefined;
 
       return {
         probId,
         ordem: idx,
         area: resolvedArea,
+        nivel,
+        nomeProblema,
         noResponses,
         yesResponses,
-        solution: solution || (probObj ? {
-          id: `sol-${probId}`,
-          idProblema: probId,
-          problema: probObj.descricao_problemas,
-          solucao_recomendada: '',
-          responsavel_sugerido: 'Consultor',
-          prazo_sugerido: '',
-          kpis_sugeridos: '',
-          resultado_esperado: '',
-          acoes_sugeridas: '',
-          area: resolvedArea
-        } : undefined)
+        solution
       };
     }).filter(p => p.noResponses.length > 0 || p.yesResponses.length > 0);
-  }, [responsesByProblem, solucoes, problemas]);
+  }, [responsesByProblem, solucoes, problemas, nivelPorProblema, solucoesDoPlano]);
 
+  // Ordem: problemas críticos primeiro, depois altos, moderados e, por último, os sem lacunas.
+  const ORDEM_NIVEL_REL: Record<string, number> = { Crítico: 3, Alto: 2, Moderado: 1 };
   const sortedAnalyzedProblems = useMemo(() => {
     const list = [...analyzedProblems];
-    list.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+    list.sort((a, b) =>
+      (ORDEM_NIVEL_REL[b.nivel || ''] || 0) - (ORDEM_NIVEL_REL[a.nivel || ''] || 0) ||
+      b.noResponses.length - a.noResponses.length ||
+      (a.ordem || 0) - (b.ordem || 0)
+    );
     return list;
   }, [analyzedProblems]);
 
+  // Áreas ordenadas pela gravidade: mais críticos primeiro.
   const problemsByArea = useMemo(() => {
     const groups: Record<string, typeof sortedAnalyzedProblems> = {};
     sortedAnalyzedProblems.forEach(p => {
-      let area = p.area || p.solution?.area;
-      if (!area) {
-        const prob = problemas.find(pr => pr.id === p.probId || pr.descricao_problemas === p.probId);
-        area = prob?.area || 'Geral';
-      }
+      const area = p.area || p.solution?.area || 'Geral';
       if (!groups[area]) groups[area] = [];
       groups[area].push(p);
     });
-    return groups;
-  }, [sortedAnalyzedProblems, problemas]);
+    const conta = (lista: typeof sortedAnalyzedProblems, n: string) => lista.filter(p => p.nivel === n).length;
+    const ordenadas = Object.entries(groups).sort(([aNome, a], [bNome, b]) =>
+      conta(b, 'Crítico') - conta(a, 'Crítico') ||
+      conta(b, 'Alto') - conta(a, 'Alto') ||
+      conta(b, 'Moderado') - conta(a, 'Moderado') ||
+      aNome.localeCompare(bNome)
+    );
+    return Object.fromEntries(ordenadas) as Record<string, typeof sortedAnalyzedProblems>;
+  }, [sortedAnalyzedProblems]);
+
+  // Resumo por área para o topo da análise detalhada (tela e PDF).
+  const resumoCriticidadePorArea = useMemo(() => (Object.entries(problemsByArea) as [string, typeof sortedAnalyzedProblems][]).map(([area, lista]) => ({
+    area,
+    criticos: lista.filter(p => p.nivel === 'Crítico').length,
+    altos: lista.filter(p => p.nivel === 'Alto').length,
+    moderados: lista.filter(p => p.nivel === 'Moderado').length,
+    semLacuna: lista.filter(p => !p.nivel).length
+  })), [problemsByArea]);
 
   const barChartData = useMemo(() => {
     return Object.values(uniqueRespostas.reduce((acc: any, r) => {
@@ -5293,6 +5379,24 @@ const RelatorioView = ({
         doc.setFontSize(12);
         doc.text('Nenhum dado identificado no diagnóstico.', 20, currentY);
       } else {
+        // Quadro-resumo: problemas por área e criticidade
+        doc.setFontSize(14);
+        doc.setTextColor(0, 90, 160);
+        doc.setFont("helvetica", "bold");
+        doc.text('Resumo de Criticidade por Área', 20, currentY);
+        currentY += 4;
+        autoTable(doc, {
+          startY: currentY,
+          theme: 'grid',
+          head: [['Área', 'Críticos', 'Altos', 'Moderados', 'Sem lacunas']],
+          body: resumoCriticidadePorArea.map(r => [r.area, String(r.criticos || '-'), String(r.altos || '-'), String(r.moderados || '-'), String(r.semLacuna || '-')]),
+          styles: { fontSize: 9, cellPadding: 2 },
+          headStyles: { fillColor: [0, 90, 160] },
+          columnStyles: { 1: { halign: 'center', textColor: [190, 18, 60], fontStyle: 'bold' }, 2: { halign: 'center', textColor: [180, 83, 9], fontStyle: 'bold' }, 3: { halign: 'center' }, 4: { halign: 'center' } },
+          margin: { left: 20, right: 20 }
+        });
+        currentY = ((doc as any).lastAutoTable?.finalY || currentY) + 10;
+
         Object.entries(problemsByArea).forEach(([areaName, areaProblems]) => {
           // Add Area Header in PDF
           if (currentY > 230) {
@@ -5306,7 +5410,7 @@ const RelatorioView = ({
           currentY += 8;
 
           const problems = areaProblems as typeof analyzedProblems;
-          problems.forEach(({ probId, sequenciaPlano, noResponses, yesResponses, solution }, idx) => {
+          problems.forEach(({ probId, sequenciaPlano, noResponses, yesResponses, solution, nivel, nomeProblema }: any, idx: number) => {
             // Check page break
             if (currentY > 240) {
               doc.addPage();
@@ -5317,9 +5421,17 @@ const RelatorioView = ({
             doc.setTextColor(51, 65, 85); // Slate 700
             doc.setFont("helvetica", "bold");
             const itemSeq = sequenciaPlano || (idx + 1);
-            const splitTitle = doc.splitTextToSize(`${itemSeq}º - ${solution?.problema || probId}`, 170);
+            const splitTitle = doc.splitTextToSize(`${itemSeq}º - ${nomeProblema || solution?.problema || probId}`, 170);
             doc.text(splitTitle, 20, currentY);
-            currentY += splitTitle.length * 5 + 2;
+            currentY += splitTitle.length * 5;
+            doc.setFontSize(9);
+            if (nivel === 'Crítico') doc.setTextColor(190, 18, 60);
+            else if (nivel === 'Alto') doc.setTextColor(180, 83, 9);
+            else if (nivel === 'Moderado') doc.setTextColor(3, 105, 161);
+            else doc.setTextColor(5, 150, 105);
+            doc.text(nivel ? `CRITICIDADE: ${String(nivel).toUpperCase()}` : 'SEM LACUNAS', 20, currentY);
+            doc.setFont("helvetica", "normal");
+            currentY += 6;
 
             // --- SUCCESSES SECTION ---
             if (yesResponses.length > 0) {
@@ -5726,19 +5838,55 @@ const RelatorioView = ({
               <p className="text-slate-500 italic">Nenhum dado identificado no diagnóstico.</p>
             ) : (
               <div className="space-y-8">
+                {/* Quadro-resumo: problemas por área e criticidade */}
+                <div className="overflow-x-auto rounded-xl border border-slate-200 break-inside-avoid">
+                  <table className="w-full text-sm">
+                    <thead className="bg-slate-50 text-[11px] uppercase text-slate-500">
+                      <tr>
+                        <th className="text-left px-3 py-2">Área</th>
+                        <th className="px-3 py-2 text-rose-700">Críticos</th>
+                        <th className="px-3 py-2 text-amber-700">Altos</th>
+                        <th className="px-3 py-2 text-sky-700">Moderados</th>
+                        <th className="px-3 py-2 text-emerald-700">Sem lacunas</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {resumoCriticidadePorArea.map(r => (
+                        <tr key={r.area}>
+                          <td className="px-3 py-2 font-semibold text-slate-800">{r.area}</td>
+                          <td className="px-3 py-2 text-center font-bold text-rose-700">{r.criticos || '—'}</td>
+                          <td className="px-3 py-2 text-center font-bold text-amber-700">{r.altos || '—'}</td>
+                          <td className="px-3 py-2 text-center font-bold text-sky-700">{r.moderados || '—'}</td>
+                          <td className="px-3 py-2 text-center text-emerald-700">{r.semLacuna || '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
                 {Object.entries(problemsByArea).map(([areaName, areaProblems]) => {
                   const problems = areaProblems as typeof analyzedProblems;
+                  const resumoArea = resumoCriticidadePorArea.find(r => r.area === areaName);
                   return (
                     <div key={areaName} className="space-y-6">
-                      <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-100 p-4 rounded-xl print:bg-transparent print:border-none print:p-0">
+                      <div className="flex flex-wrap items-center gap-3 bg-emerald-50 border border-emerald-100 p-4 rounded-xl print:bg-transparent print:border-none print:p-0">
                         <div className="w-3 h-3 rounded-full bg-emerald-600 shrink-0" />
                         <h3 className="text-xl font-bold text-slate-800 tracking-tight uppercase">
                           Área: {areaName}
                         </h3>
+                        {resumoArea && (
+                          <span className="text-xs font-semibold text-slate-500">
+                            {[
+                              resumoArea.criticos && `${resumoArea.criticos} crítico(s)`,
+                              resumoArea.altos && `${resumoArea.altos} alto(s)`,
+                              resumoArea.moderados && `${resumoArea.moderados} moderado(s)`
+                            ].filter(Boolean).join(' · ') || 'sem lacunas'}
+                          </span>
+                        )}
                       </div>
 
                       <div className="space-y-3 pl-2 md:pl-6 border-l border-slate-100 print:border-none print:pl-0">
-                        {problems.map(({ probId, noResponses, yesResponses, solution }, idx) => (
+                        {problems.map(({ probId, noResponses, yesResponses, solution, nivel, nomeProblema }, idx) => (
                         <div key={probId + idx} className="bg-white rounded-xl p-4 border border-slate-150 print:bg-transparent print:border-b print:rounded-none print:p-0 print:pb-3 print:mb-3 break-inside-avoid shadow-sm print:shadow-none">
                           <div className="flex items-start justify-between gap-4 mb-3">
                             <div className="flex items-start gap-4">
@@ -5746,7 +5894,18 @@ const RelatorioView = ({
                                 {idx + 1}º
                               </div>
                               <div>
-                                <h4 className="text-base font-black text-slate-800 tracking-tight leading-snug">{solution?.problema || probId}</h4>
+                                <h4 className="text-base font-black text-slate-800 tracking-tight leading-snug">{nomeProblema || solution?.problema || probId}</h4>
+                                {nivel ? (
+                                  <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
+                                    nivel === 'Crítico' ? 'bg-rose-100 text-rose-700' : nivel === 'Alto' ? 'bg-amber-100 text-amber-700' : 'bg-sky-100 text-sky-700'
+                                  }`}>
+                                    Criticidade: {nivel}
+                                  </span>
+                                ) : (
+                                  <span className="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-700">
+                                    Sem lacunas
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -6736,6 +6895,13 @@ const GestaoPlanoView = ({
                         </div>
                       </div>
                       
+                      {tarefa.criticidade && (
+                        <span className={`inline-block mb-1 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
+                          tarefa.criticidade === 'Crítico' ? 'bg-rose-100 text-rose-700' : tarefa.criticidade === 'Alto' ? 'bg-amber-100 text-amber-700' : 'bg-sky-100 text-sky-700'
+                        }`}>
+                          {tarefa.criticidade}
+                        </span>
+                      )}
                       <h4 className="font-bold text-slate-800 text-sm mb-1 leading-tight group-hover:text-sky-600 transition-colors uppercase tracking-tight">{tarefa.problema}</h4>
                       <p className="text-[11px] text-slate-500 font-medium mb-3 line-clamp-2">{tarefa.solucaoSugerida}</p>
                       
@@ -6941,8 +7107,18 @@ const GestaoPlanoView = ({
                               </div>
 
                               <h4 className="font-bold text-slate-800 text-base leading-snug group-hover:text-sky-600 transition-colors uppercase tracking-tight">
+                                {tarefa.criticidade && (
+                                  <span className={`mr-2 align-middle inline-block px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${
+                                    tarefa.criticidade === 'Crítico' ? 'bg-rose-100 text-rose-700' : tarefa.criticidade === 'Alto' ? 'bg-amber-100 text-amber-700' : 'bg-sky-100 text-sky-700'
+                                  }`}>
+                                    {tarefa.criticidade}
+                                  </span>
+                                )}
                                 {tarefa.problema}
                               </h4>
+                              {tarefa.atividade && tarefa.atividade !== tarefa.problema && (
+                                <p className="text-[11px] text-slate-400 font-semibold">Atividade do cronograma: {tarefa.atividade}</p>
+                              )}
                               
                               {tarefa.solucaoSugerida && (
                                 <p className="text-xs text-slate-600 font-medium leading-relaxed max-w-3xl">
@@ -8786,6 +8962,7 @@ import type {
   TarefaPlanoAcao,
   DadosConsultoria,
   AtividadeCronograma,
+  ProblemaTratado,
 } from './types/domain';
 
 export type {
@@ -8835,14 +9012,19 @@ import {
 import { addDaysIso, licensePeriodDays } from './lib/licenseDays';
 import {
   analisarDiagnostico,
+  grauLacuna,
+  type NivelCriticidade,
   montarAtividades,
   estruturarPlano,
   enriquecerComIA,
   montarTextosRelatorio,
   parseCargaHoraria,
+  tarefasDasAtividades,
   type AnaliseDiagnostico,
 } from './lib/domain/planoAcao';
 import { carregarModelos, garantirModeloPadrao, encontrarModeloDoSegmento, MODELOS_EVENTO } from './lib/domain/modelosRelatorio';
+import { montarRelatorioSegmentos } from './lib/domain/relatorioSegmentos';
+import { gerarPdfRelatorioSegmentos } from './lib/relatorios/pdfSegmentos';
 import {
   deduplicateRespostas,
   loadAllLocalRespostas,
@@ -9271,6 +9453,7 @@ export default function App() {
   });
   const activeLogo = logoChoice === 'sebrae' ? customLogo : logoChoice === 'consultora' ? customConsultoraLogo : null;
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [gerandoRelatorioSegmentos, setGerandoRelatorioSegmentos] = useState(false);
   const [libraryTab, setLibraryTab] = useState<'problemas' | 'premissas' | 'solucoes' | 'areas' | 'segmentos'>('problemas');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDeletingDiagnostico, setIsDeletingDiagnostico] = useState(false);
@@ -13600,7 +13783,52 @@ export default function App() {
     }
   };
 
-  /** Respostas do diagnóstico selecionado (estado local + nuvem), filtradas pelas áreas escolhidas. */
+  /**
+   * Relatório "Resumo dos Diagnósticos por Tipo de Negócio": todos os clientes, agrupados por
+   * segmento, com a mesma classificação de criticidade dos relatórios individuais.
+   */
+  const gerarRelatorioSegmentos = async (tipoDeNegocio?: string) => {
+    setGerandoRelatorioSegmentos(true);
+    try {
+      // Respostas de TODOS os diagnósticos: cópia local + nuvem (a nuvem prevalece)
+      const mapa = new Map<string, Resposta>();
+      try { loadAllLocalRespostas().forEach(r => { if (r?.id) mapa.set(r.id, r); }); } catch { /* sem cópia local */ }
+      respostas.forEach(r => { if (r?.id) mapa.set(r.id, r); });
+      if (user) {
+        try {
+          const snap = await getDocs(query(collection(db, 'respostas'), ownerFilter()));
+          snap.docs.forEach(d => mapa.set(d.id, { id: d.id, ...d.data() } as Resposta));
+        } catch (e) {
+          console.warn('[Relatório por segmento] Respostas da nuvem indisponíveis; usando as locais.', e);
+        }
+      }
+      const rel = montarRelatorioSegmentos({
+        empresas,
+        diagnosticos,
+        respostas: Array.from(mapa.values()),
+        problemas,
+        solucoes,
+        segmento: tipoDeNegocio
+      });
+      if (rel.totalClientes === 0) {
+        alert(tipoDeNegocio && tipoDeNegocio !== 'Todos'
+          ? `Não há clientes do tipo de negócio "${tipoDeNegocio}".`
+          : 'Não há clientes cadastrados para gerar o relatório.');
+        return;
+      }
+      const logo = logoChoice === 'consultora' ? customConsultoraLogo : logoChoice === 'sebrae' ? customLogo : null;
+      const doc = gerarPdfRelatorioSegmentos(rel, { consultor: user?.email || undefined, logo });
+      setPdfUrl(doc.output('bloburl').toString());
+      playSuccessSound();
+    } catch (e: any) {
+      console.error('Erro ao gerar o relatório por tipo de negócio:', e);
+      alert('Não foi possível gerar o relatório por tipo de negócio.\n\nDetalhes: ' + (e?.message || e));
+    } finally {
+      setGerandoRelatorioSegmentos(false);
+    }
+  };
+
+  /** Todas as respostas do diagnóstico selecionado (estado local + nuvem). */
   const carregarRespostasDoDiagnostico = async (diag: Diagnostico): Promise<Resposta[]> => {
     const mapa = new Map<string, Resposta>();
     respostas.filter(r => r.diagnosticoId === diag.id).forEach(r => mapa.set(r.id, r));
@@ -13612,11 +13840,7 @@ export default function App() {
         console.warn('[Plano] Não foi possível ler as respostas da nuvem; usando as locais.', e);
       }
     }
-    const areasSel = diag.areasDiagnostico || [];
-    const lista = Array.from(mapa.values());
-    return areasSel.length === 0
-      ? lista
-      : lista.filter(r => areasSel.some(a => normalizeAndFormatArea(a).toLowerCase() === normalizeAndFormatArea(r.area).toLowerCase()));
+    return Array.from(mapa.values());
   };
 
   /**
@@ -13625,26 +13849,9 @@ export default function App() {
    */
   const salvarPlanoGerado = async (diag: Diagnostico, cronograma: AtividadeCronograma[], dados: DadosConsultoria) => {
     const empresaId = selectedEmpresa?.id || diag.empresaId || '';
-    const tarefasNovas: TarefaPlanoAcao[] = cronograma.map((atv, index) => ({
-      id: user ? doc(collection(db, 'tarefas_plano')).id : `tarefa_${diag.id}_${index}_${Date.now()}`,
-      diagnosticoId: diag.id,
-      empresaId,
-      idProblema: atv.idProblema || '',
-      problema: atv.nome,
-      area: (atv as any).area || diag.tipoEmpresa || 'Consultoria',
-      solucaoSugerida: atv.solucaoProposta || '',
-      acoes: atv.descricao || '',
-      status: 'Pendente',
-      prioridade: atv.prioridade || 'Média',
-      responsavel: atv.responsavel || 'Consultor',
-      cargaHoraria: atv.cargaHoraria,
-      resultadoEsperado: atv.resultadoEsperado || '',
-      dataInicio: atv.dataInicio,
-      dataFim: atv.dataFim,
-      dataVencimento: atv.dataFim,
-      ownerId: user?.uid || 'local',
-      ordem: index
-    }));
+    // Plano novo: as tarefas recomeçam do zero (uma por problema nas atividades de área).
+    const tarefasNovas: TarefaPlanoAcao[] = montarTarefasDoPlano(cronograma, diag, empresaId, user?.uid || 'local')
+      .map((t, index) => ({ ...t, id: user ? doc(collection(db, 'tarefas_plano')).id : `tarefa_${diag.id}_${index}_${Date.now()}` }));
 
     const diagAtualizado: Diagnostico = { ...diag, cronograma, dadosConsultoria: dados };
     setTarefasPlano(prev => [...prev.filter(t => t.diagnosticoId !== diag.id), ...tarefasNovas]);
@@ -13703,7 +13910,7 @@ export default function App() {
       const lista = await carregarRespostasDoDiagnostico(diag);
       const analise = analisarDiagnostico(deduplicateRespostas(lista), problemas, solucoes);
       if (analise.totalRespondidas === 0) {
-        alert("Não há respostas neste diagnóstico (nas áreas selecionadas). Responda o diagnóstico para gerar o plano de ação.");
+        alert("Não há respostas neste diagnóstico. Responda o diagnóstico para gerar o plano de ação.");
         return;
       }
 
@@ -13857,32 +14064,10 @@ export default function App() {
       
       currentTasksSnap.docs.forEach(docSnap => ops.push({ type: 'delete', ref: docSnap.ref }));
 
-      // 4. Create new tasks for current diagnostic
-      for (let index = 0; index < adjustedActivities.length; index++) {
-        const atv = adjustedActivities[index];
-        const newTaskRef = doc(collection(db, 'tarefas_plano'));
-        const defaultDate = getActivityDateStr(selectedDiagnostico.dataDiagnostico, index);
-
-        const taskData = sanitizeForFirestore({
-          diagnosticoId: selectedDiagnostico.id,
-          empresaId: selectedEmpresa?.id || '',
-          idProblema: atv.idProblema || '',
-          problema: atv.nome,
-          solucaoSugerida: atv.solucaoProposta || atv.nome,
-          acoes: atv.descricao || '',
-          status: atv.status || 'Pendente',
-          prioridade: atv.prioridade || 'Média',
-          responsavel: atv.responsavel || 'Consultor',
-          cargaHoraria: atv.cargaHoraria || '4h',
-          dataInicio: atv.dataInicio || defaultDate,
-          dataFim: atv.dataFim || defaultDate,
-          dataVencimento: atv.dataFim || defaultDate,
-          ownerId: user.uid,
-          ordem: index,
-          dataCadastro: new Date()
-        });
-        ops.push({ type: 'set', ref: newTaskRef, data: taskData });
-      }
+      // 4. Tarefas do diagnóstico atual: uma por problema nas atividades de área
+      montarTarefasDoPlano(adjustedActivities, selectedDiagnostico, selectedEmpresa?.id || '', user.uid).forEach(t => {
+        ops.push({ type: 'set', ref: doc(collection(db, 'tarefas_plano')), data: sanitizeForFirestore({ ...t, dataCadastro: new Date() }) });
+      });
 
       // 5. Textos do relatório: com a análise deste cliente quando houver respostas
       const updatedDadosConsultoria: DadosConsultoria = analiseAtual
@@ -15439,6 +15624,99 @@ export default function App() {
       return undefined;
     };
 
+    // --- Filtros da Biblioteca (os MESMOS usados nas listas da tela e na planilha "Baixar Dados") ---
+    const passaTipo = (tipo: string | undefined | null) => {
+      if (!selectedTipoEmpresaFilter) return true;
+      const t = tipo || 'Geral';
+      return selectedTipoEmpresaFilter === 'Geral' ? normalizedMatch(t, 'Geral') : normalizedMatch(t, selectedTipoEmpresaFilter);
+    };
+    const filtrarProblemas = () => problemas
+      .filter(p => !selectedAreaFilter || normalizedMatch(p.area, selectedAreaFilter))
+      .filter(p => passaTipo(p.tipoEmpresa))
+      .filter(p => !selectedTagFilter || !!p.tags?.some(t => normalizedMatch(t, selectedTagFilter)));
+    const filtrarPremissas = () => {
+      const vistas = new Set<string>();
+      return premissas
+        .filter(p => !selectedAreaFilter || normalizedMatch(findAssociatedProblem(p.idProblema, p.problema)?.area, selectedAreaFilter))
+        .filter(p => passaTipo(p.tipoEmpresa || findAssociatedProblem(p.idProblema, p.problema)?.tipoEmpresa))
+        .filter(p => !selectedTagFilter || !!findAssociatedProblem(p.idProblema, p.problema)?.tags?.some(t => normalizedMatch(t, selectedTagFilter)))
+        .filter(p => {
+          const q = (p.pergunta || '').trim().toLowerCase();
+          if (q && vistas.has(q)) return false;
+          if (q) vistas.add(q);
+          return true;
+        });
+    };
+    const filtrarSolucoes = () => solucoes
+      .filter(s => !selectedAreaFilter || normalizedMatch(s.area, selectedAreaFilter))
+      .filter(s => passaTipo(s.tipoEmpresa || findAssociatedProblem(s.idProblema, s.problema)?.tipoEmpresa))
+      .filter(s => !selectedTagFilter || !!s.tags?.some(t => normalizedMatch(t, selectedTagFilter)) || !!findAssociatedProblem(s.idProblema, s.problema)?.tags?.some(t => normalizedMatch(t, selectedTagFilter)));
+
+    /** Planilha "Baixar Dados" respeitando os filtros de área, tipo de negócio e tag. */
+    const baixarDadosFiltrados = () => {
+      const probs = filtrarProblemas();
+      const prems = filtrarPremissas();
+      const sols = filtrarSolucoes();
+      if (probs.length + prems.length + sols.length === 0) {
+        alert('Nenhum registro encontrado para os filtros selecionados.');
+        return;
+      }
+      const wb = XLSX.utils.book_new();
+      const filtros = [
+        { 'Filtro': 'Área', 'Valor': selectedAreaFilter || 'Todas' },
+        { 'Filtro': 'Tipo de negócio', 'Valor': selectedTipoEmpresaFilter || 'Todos' },
+        { 'Filtro': 'Tag', 'Valor': selectedTagFilter || 'Todas' },
+        { 'Filtro': 'Gerado em', 'Valor': new Date().toLocaleString('pt-BR') },
+        { 'Filtro': 'Problemas', 'Valor': String(probs.length) },
+        { 'Filtro': 'Premissas (perguntas)', 'Valor': String(prems.length) },
+        { 'Filtro': 'Soluções', 'Valor': String(sols.length) }
+      ];
+      const wsFiltros = XLSX.utils.json_to_sheet(filtros);
+      wsFiltros['!cols'] = [{ wch: 22 }, { wch: 40 }];
+      XLSX.utils.book_append_sheet(wb, wsFiltros, 'Filtros');
+
+      const wsProblemas = XLSX.utils.json_to_sheet(probs.map(p => ({
+        'Descrição': p.descricao_problemas,
+        'Área': p.area,
+        'Impacto': p.impacto,
+        'Tipo de negócio': p.tipoEmpresa || 'Geral',
+        'Tags': (p.tags || []).join(', ')
+      })));
+      wsProblemas['!cols'] = [{ wch: 60 }, { wch: 24 }, { wch: 10 }, { wch: 22 }, { wch: 30 }];
+      XLSX.utils.book_append_sheet(wb, wsProblemas, 'Problemas');
+
+      const wsPremissas = XLSX.utils.json_to_sheet(prems.map(p => {
+        const prob = findAssociatedProblem(p.idProblema, p.problema);
+        return {
+          'Problema': p.problema,
+          'Área': prob?.area || '',
+          'Pergunta': p.pergunta,
+          'Peso': p.peso,
+          'Tipo de negócio': p.tipoEmpresa || prob?.tipoEmpresa || 'Geral'
+        };
+      }));
+      wsPremissas['!cols'] = [{ wch: 50 }, { wch: 24 }, { wch: 70 }, { wch: 6 }, { wch: 22 }];
+      XLSX.utils.book_append_sheet(wb, wsPremissas, 'Premissas');
+
+      const wsSolucoes = XLSX.utils.json_to_sheet(sols.map(s => ({
+        'Problema': s.problema,
+        'Área': s.area,
+        'Solução Recomendada': s.solucao_recomendada,
+        'Ações Sugeridas': s.acoes_sugeridas,
+        'Responsável': s.responsavel_sugerido,
+        'KPIs': s.kpis_sugeridos,
+        'Resultado Esperado': s.resultado_esperado,
+        'Comentário de Sucesso': s.comentario_sucesso,
+        'Tipo de negócio': s.tipoEmpresa || findAssociatedProblem(s.idProblema, s.problema)?.tipoEmpresa || 'Geral'
+      })));
+      wsSolucoes['!cols'] = [{ wch: 45 }, { wch: 22 }, { wch: 50 }, { wch: 60 }, { wch: 16 }, { wch: 30 }, { wch: 40 }, { wch: 40 }, { wch: 22 }];
+      XLSX.utils.book_append_sheet(wb, wsSolucoes, 'Soluções');
+
+      const slug = (v: string) => v.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9]+/g, '_').replace(/^_|_$/g, '').toLowerCase();
+      const sufixo = [selectedAreaFilter, selectedTipoEmpresaFilter, selectedTagFilter].filter(Boolean).map(v => slug(v as string)).join('_');
+      XLSX.writeFile(wb, `dados_registrados${sufixo ? '_' + sufixo : ''}.xlsx`);
+    };
+
     const allCompanyTypes = useMemo(() => {
       const uniqueTypes = new Set<string>();
       
@@ -15560,7 +15838,7 @@ export default function App() {
             <Button variant="outline" onClick={downloadTemplate} title="Baixar modelo Excel">
               <Download size={18} /> Modelo
             </Button>
-            <Button variant="outline" onClick={downloadRegistros} title="Baixar dados registrados">
+            <Button variant="outline" onClick={baixarDadosFiltrados} title="Baixar os dados da biblioteca conforme os filtros de área, tipo de negócio e tag">
               <Download size={18} /> Baixar Dados
             </Button>
             <Button variant="outline" onClick={() => document.getElementById('excel-import')?.click()}>
@@ -16861,6 +17139,8 @@ export default function App() {
                     onStartSync={performSmartCloudSync}
                     userEmail={user?.email}
                     storageMode={storageMode}
+                    onGerarRelatorioSegmentos={gerarRelatorioSegmentos}
+                    gerandoRelatorioSegmentos={gerandoRelatorioSegmentos}
                     onNavigateToDiagnosis={(diag) => {
                       setSelectedDiagnostico(diag);
                       const emp = empresas.find(e => e.id === diag.empresaId);
