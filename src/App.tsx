@@ -11721,33 +11721,86 @@ export default function App() {
 
       addHeader(doc, 'RELATÓRIO: PLANO DE AÇÃO ESTRATÉGICO');
 
-      const tableData = filteredTarefas.map((t, index) => {
-        const defaultDateStr = getActivityDateStr(selectedDiagnostico?.dataDiagnostico, index);
-        const rawInicio = t.dataInicio || defaultDateStr;
-        const rawFim = t.dataFim || rawInicio || defaultDateStr;
-
-        const d_inicio = rawInicio ? (rawInicio.toDate ? rawInicio.toDate() : new Date(typeof rawInicio === 'string' && !rawInicio.includes('T') ? rawInicio + 'T12:00:00' : rawInicio)) : null;
-        const d_fim = rawFim ? (rawFim.toDate ? rawFim.toDate() : new Date(typeof rawFim === 'string' && !rawFim.includes('T') ? rawFim + 'T12:00:00' : rawFim)) : null;
-        
-        let diasStr = '1d';
-        if (d_inicio && d_fim && !isNaN(d_inicio.getTime()) && !isNaN(d_fim.getTime())) {
-          const diffTime = Math.abs(d_fim.getTime() - d_inicio.getTime());
-          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-          diasStr = `${diffDays}d`;
+      // Helper para buscar carga horária da tarefa / cronograma
+      const getTarefaHoras = (t: TarefaPlanoAcao): string => {
+        if (t.cargaHoraria && t.cargaHoraria.trim() !== '') {
+          const ch = t.cargaHoraria.trim();
+          return ch.toLowerCase().endsWith('h') ? ch : `${ch}h`;
         }
+        const cronograma = selectedDiagnostico?.cronograma || [];
+        let act = null;
+        if (t.idProblema) act = cronograma.find(a => a.idProblema === t.idProblema);
+        if (!act && t.atividade) act = cronograma.find(a => a.nome && a.nome.toLowerCase() === t.atividade.toLowerCase());
+        if (!act && t.problema) act = cronograma.find(a => a.nome && a.nome.toLowerCase() === t.problema.toLowerCase());
+        if (!act && t.solucaoSugerida) act = cronograma.find(a => a.solucaoProposta && a.solucaoProposta.toLowerCase() === t.solucaoSugerida.toLowerCase());
+        if (act && act.cargaHoraria) {
+          const ch = act.cargaHoraria.trim();
+          return ch.toLowerCase().endsWith('h') ? ch : `${ch}h`;
+        }
+        return '---';
+      };
 
-        return [
-          index + 1,
-          t.area?.toUpperCase() || '-',
-          t.problema || '-',
-          t.acoes || '-',
-          t.responsavel || '-',
-          d_inicio && !isNaN(d_inicio.getTime()) ? format(d_inicio, 'dd/MM/yy') : '-',
-          d_fim && !isNaN(d_fim.getTime()) ? format(d_fim, 'dd/MM/yy') : '-',
-          diasStr,
-          t.prioridade?.toUpperCase() || '-',
-          t.status?.toUpperCase() || '-'
-        ];
+      // Agrupar tarefas por área para montar blocos organizados
+      const areaGroupsMap = new Map<string, typeof filteredTarefas>();
+      filteredTarefas.forEach((t) => {
+        const areaName = (t.area || 'GERAL').trim().toUpperCase();
+        if (!areaGroupsMap.has(areaName)) {
+          areaGroupsMap.set(areaName, []);
+        }
+        areaGroupsMap.get(areaName)!.push(t);
+      });
+
+      const tableData: any[] = [];
+      let globalIndex = 1;
+
+      areaGroupsMap.forEach((tarefasDaArea, areaName) => {
+        // Linha divisória de bloco para a Área
+        const totalHorasArea = tarefasDaArea.reduce((acc, t) => {
+          const hStr = getTarefaHoras(t);
+          const num = parseInt(hStr.replace(/\D/g, '')) || 0;
+          return acc + num;
+        }, 0);
+
+        tableData.push([
+          {
+            content: `ÁREA: ${areaName} (${tarefasDaArea.length} ${tarefasDaArea.length === 1 ? 'ação' : 'ações'}${totalHorasArea > 0 ? ` • ${totalHorasArea}h` : ''})`,
+            colSpan: 10,
+            styles: {
+              fillColor: [241, 245, 249], // slate-100
+              textColor: [15, 23, 42],     // slate-900
+              fontStyle: 'bold',
+              fontSize: 8,
+              cellPadding: 3,
+              halign: 'left'
+            }
+          }
+        ]);
+
+        tarefasDaArea.forEach((t) => {
+          const defaultDateStr = getActivityDateStr(selectedDiagnostico?.dataDiagnostico, globalIndex - 1);
+          const rawInicio = t.dataInicio || defaultDateStr;
+          const rawFim = t.dataFim || rawInicio || defaultDateStr;
+
+          const d_inicio = rawInicio ? (rawInicio.toDate ? rawInicio.toDate() : new Date(typeof rawInicio === 'string' && !rawInicio.includes('T') ? rawInicio + 'T12:00:00' : rawInicio)) : null;
+          const d_fim = rawFim ? (rawFim.toDate ? rawFim.toDate() : new Date(typeof rawFim === 'string' && !rawFim.includes('T') ? rawFim + 'T12:00:00' : rawFim)) : null;
+          
+          const duracaoHoras = getTarefaHoras(t);
+
+          tableData.push([
+            globalIndex,
+            t.area?.toUpperCase() || '-',
+            t.problema || '-',
+            t.acoes || '-',
+            t.responsavel || '-',
+            d_inicio && !isNaN(d_inicio.getTime()) ? format(d_inicio, 'dd/MM/yy') : '-',
+            d_fim && !isNaN(d_fim.getTime()) ? format(d_fim, 'dd/MM/yy') : '-',
+            duracaoHoras,
+            t.prioridade?.toUpperCase() || '-',
+            t.status?.toUpperCase() || '-'
+          ]);
+
+          globalIndex++;
+        });
       });
 
       autoTable(doc, {
@@ -11774,16 +11827,16 @@ export default function App() {
           textColor: [51, 65, 85] // slate-700
         },
         columnStyles: {
-          0: { cellWidth: 6, halign: 'center' },
-          1: { cellWidth: 22, fontStyle: 'bold', fontSize: 6 },
-          2: { cellWidth: 45 },
-          3: { cellWidth: 85 },
+          0: { cellWidth: 10, halign: 'center' }, // Largura corrigida para não quebrar 10, 11, 12...
+          1: { cellWidth: 21, fontStyle: 'bold', fontSize: 6 },
+          2: { cellWidth: 44 },
+          3: { cellWidth: 83 },
           4: { cellWidth: 32 },
-          5: { cellWidth: 16, halign: 'center' },
-          6: { cellWidth: 16, halign: 'center' },
-          7: { cellWidth: 10, halign: 'center' },
-          8: { cellWidth: 16, halign: 'center' },
-          9: { cellWidth: 21, halign: 'center' },
+          5: { cellWidth: 15, halign: 'center' },
+          6: { cellWidth: 15, halign: 'center' },
+          7: { cellWidth: 12, halign: 'center', fontStyle: 'bold' }, // Duração em horas
+          8: { cellWidth: 15, halign: 'center' },
+          9: { cellWidth: 22, halign: 'center' },
         },
         didParseCell: (data) => {
           if (data.section === 'body' && data.column.index === 8) {
