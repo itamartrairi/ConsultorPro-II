@@ -65,6 +65,9 @@ const tarefas = tarefasDasAtividades(plano);
 assert.equal(tarefas.length, 5 + 4, '5 atividades fixas + 1 tarefa por problema');
 assert.deepEqual(tarefas.filter((t) => t.criticidade).map((t) => t.idProblema), ['A', 'B', 'E', 'C']);
 assert.equal(tarefas.find((t) => t.idProblema === 'A')!.prioridade, 'Alta');
+// Garantir que as ações recomendadas NÃO repetem pergunta ou resposta do diagnóstico
+assert.equal(tarefas.find((t) => t.idProblema === 'A')!.acoes, 'Registrar entradas e saídas diariamente');
+assert.doesNotMatch(tarefas.find((t) => t.idProblema === 'B')!.acoes, /Evidências:/i, 'não deve repetir perguntas e respostas');
 // Horas das tarefas somam exatamente as horas de cada atividade
 for (const [i, atv] of plano.entries()) {
   const soma = tarefas.filter((t) => t.atividadeOrdem === i).reduce((s, t) => s + parseFloat(String(t.cargaHoraria).replace(',', '.')), 0);

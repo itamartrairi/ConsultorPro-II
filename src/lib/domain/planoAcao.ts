@@ -65,6 +65,19 @@ const norm = (s: unknown) =>
     .replace(/[\u0300-\u036f]/g, '')
     .trim();
 
+/**
+ * Remove repetições de perguntas e respostas do diagnóstico que possam estar anexadas
+ * no texto de ações recomendadas (ex.: "... Evidências: \"Pergunta?\" -> Resposta").
+ */
+export function limparEvidenciasAcoes(texto?: string): string {
+  if (!texto) return '';
+  return texto
+    .replace(/\s*\.?\s*Evidências\s*:[\s\S]*$/i, '.')
+    .replace(/\s*\.?\s*Evidencias\s*:[\s\S]*$/i, '.')
+    .trim()
+    .replace(/\.+$/, '.');
+}
+
 /** Identifica o papel de uma atividade pelo nome (aceita os nomes antigos do app). */
 export function papelDaAtividade(nome?: string): PapelAtividade {
   const n = norm(nome);
@@ -351,10 +364,6 @@ const PESO_NIVEL: Record<NivelCriticidade, number> = { Crítico: 3, Alto: 2, Mod
 /** Converte um problema analisado no item que será tratado (e virará tarefa). */
 export function problemaTratado(p: ProblemaAnalisado): ProblemaTratado {
   const s = p.solucao;
-  const evidencias = p.lacunas
-    .slice(0, 3)
-    .map((l) => `"${l.pergunta}" → ${l.resposta}${l.observacao ? ` (${l.observacao})` : ''}`)
-    .join('; ');
   return {
     idProblema: p.idProblema,
     problema: p.problema,
@@ -363,8 +372,8 @@ export function problemaTratado(p: ProblemaAnalisado): ProblemaTratado {
     acao: s?.solucao_recomendada || `Corrigir: ${p.problema}`,
     solucao: s?.solucao_recomendada || `Plano de correção para ${p.problema.toLowerCase()}`,
     passos:
-      s?.acoes_sugeridas ||
-      `Levantar as causas com o empresário, definir as correções e implantar o controle na rotina. Evidências: ${evidencias}.`,
+      limparEvidenciasAcoes(s?.acoes_sugeridas) ||
+      'Levantar as causas com o empresário, definir as correções necessárias e implantar o controle na rotina.',
     resultadoEsperado:
       [s?.resultado_esperado, s?.kpis_sugeridos ? `Indicadores: ${s.kpis_sugeridos}` : ''].filter(Boolean).join(' — ') ||
       `Problema "${p.problema}" solucionado, com controle implantado e acompanhado mensalmente.`,
@@ -698,7 +707,7 @@ export async function enriquecerComIA(
 PARA CADA PROBLEMA (um item por idProblema, mantendo o mesmo idProblema):
 - "acao": título curto e profissional da ação (até 80 caracteres), começando por um verbo no infinitivo.
 - "solucao": a solução em uma frase.
-- "passos": passo a passo resumido (2 a 4 passos), citando as evidências das respostas do diagnóstico.
+- "passos": passo a passo prático de execução e ações recomendadas (2 a 4 passos diretos), SEM repetir a pergunta e a resposta do diagnóstico.
 - "resultadoEsperado": resultado com pelo menos um indicador mensurável (número, % ou prazo).
 - "responsavel": "Consultor", "Cliente" ou "Consultor/Cliente".
 - Problemas CRÍTICOS exigem ações mais completas e prazos mais curtos. Se houver solução cadastrada, use-a como base.

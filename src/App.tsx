@@ -174,6 +174,7 @@ import {
   deleteLocalIndividualEvidence,
   loadLocalIndividualEvidence
 } from './lib/evidenceStorage';
+import { limparEvidenciasAcoes } from './lib/domain/planoAcao';
 
 // --- Safe LocalStorage with AES-256 Encryption at Rest ---
 const safeLocalStorage = encryptedLocalStorage;
@@ -18988,7 +18989,7 @@ export default function App() {
               <GestaoPlanoView 
                 tarefas={tarefasPlano.filter(t => selectedDiagnostico && t.diagnosticoId === selectedDiagnostico.id)}
                 empresas={empresas}
-                onEdit={(t) => { setModalData(t); setModalType('editTarefa'); setTarefaForm(t); setIsModalOpen(true); }}
+                onEdit={(t) => { setModalData(t); setModalType('editTarefa'); setTarefaForm({ ...t, acoes: limparEvidenciasAcoes(t.acoes) }); setIsModalOpen(true); }}
                 onDelete={(t) => { setModalData(t); setModalType('deleteTarefa'); setIsModalOpen(true); }}
                 onUpdateStatus={updateTarefaStatus}
                 onUpdatePrioridade={updateTarefaPrioridade}
@@ -20486,6 +20487,7 @@ export default function App() {
                           solucaoId: solId,
                           problema: sol ? sol.problema : (tarefaForm.problema || ''),
                           solucaoSugerida: sol ? sol.solucao_recomendada : (tarefaForm.solucaoSugerida || ''),
+                          acoes: sol?.acoes_sugeridas ? limparEvidenciasAcoes(sol.acoes_sugeridas) : (tarefaForm.acoes || ''),
                           area: sol ? sol.area : (tarefaForm.area || '')
                         });
                       }}
