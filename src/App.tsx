@@ -20448,7 +20448,7 @@ export default function App() {
           }}
           confirmText={modalType === 'createTarefa' ? "Criar Tarefa" : "Salvar Alterações"}
           disabled={!tarefaForm.problema || !tarefaForm.empresaId}
-          size="4xl"
+          customWidth="1160px"
         >
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-slate-700">
             {/* LADO ESQUERDO: Escopo e Identificação */}
