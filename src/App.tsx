@@ -4154,18 +4154,17 @@ const CronogramaView = ({
                   </p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Solução Proposta</label>
-                    <div className="text-sm text-slate-700 font-medium bg-slate-50 p-2 rounded-lg border border-slate-100">
-                      {atv.solucaoProposta || "---"}
-                    </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Solução Proposta</label>
+                  <div className="text-sm text-slate-700 font-medium bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                    {atv.solucaoProposta || "---"}
                   </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Responsável</label>
-                    <div className="text-sm text-slate-700 font-medium bg-slate-50 p-2 rounded-lg border border-slate-100">
-                      {atv.responsavel || "---"}
-                    </div>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Responsável</label>
+                  <div className="text-sm text-slate-700 font-medium bg-slate-50 p-2 rounded-lg border border-slate-100">
+                    {atv.responsavel || "---"}
                   </div>
                 </div>
               </div>
@@ -6057,11 +6056,54 @@ const GestaoPlanoView = ({
 }) => {
   const [viewMode, setViewMode] = useState<'kanban' | 'timeline'>('kanban');
   const [sortBy, setSortBy] = useState<'ordem' | 'cronograma' | 'dataInicio' | 'prioridade' | 'dataVencimento' | 'problema' | 'area'>('ordem');
-  const [groupBy, setGroupBy] = useState<'status' | 'data' | 'problema' | 'area'>('status');
+  const [groupBy, setGroupBy] = useState<'status' | 'atividade' | 'data' | 'problema' | 'area'>('atividade');
   const [isSavingPlano, setIsSavingPlano] = useState(false);
   const [saveSuccessPlano, setSaveSuccessPlano] = useState(false);
 
   const getEmpresaNome = (id: string) => empresas.find(e => e.id === id)?.nome || 'Empresa desconhecida';
+
+  const getTarefaAtividadeInfo = (t: TarefaPlanoAcao): { index: number; nome: string; cargaHoraria: string; label: string } => {
+    const cronograma = selectedDiagnostico?.cronograma || [];
+    let idx = -1;
+
+    if (t.idProblema) {
+      idx = cronograma.findIndex(act => act.idProblema === t.idProblema);
+    }
+    if (idx === -1 && t.atividade) {
+      idx = cronograma.findIndex(act => act.nome && act.nome.toLowerCase() === t.atividade.toLowerCase());
+    }
+    if (idx === -1 && t.problema) {
+      idx = cronograma.findIndex(act => act.nome && act.nome.toLowerCase() === t.problema.toLowerCase());
+    }
+    if (idx === -1 && t.solucaoSugerida) {
+      idx = cronograma.findIndex(act => act.solucaoProposta && act.solucaoProposta.toLowerCase() === t.solucaoSugerida.toLowerCase());
+    }
+
+    if (idx !== -1) {
+      const act = cronograma[idx];
+      const ch = act.cargaHoraria ? ` (${act.cargaHoraria})` : '';
+      return {
+        index: idx,
+        nome: act.nome || `Atividade #${idx + 1}`,
+        cargaHoraria: act.cargaHoraria || '',
+        label: `#${idx + 1}. ${act.nome || 'Atividade'}${ch}`
+      };
+    }
+
+    const fallbackName = t.atividade || t.area || 'Outras Ações';
+    return {
+      index: 9999,
+      nome: fallbackName,
+      cargaHoraria: t.cargaHoraria || '',
+      label: fallbackName
+    };
+  };
+
+  const getTarefaCargaHoraria = (t: TarefaPlanoAcao): string | null => {
+    if (t.cargaHoraria && t.cargaHoraria.trim() !== '') return t.cargaHoraria;
+    const info = getTarefaAtividadeInfo(t);
+    return info.cargaHoraria || null;
+  };
 
   const handleSavePlanoAcao = async () => {
     if (!selectedDiagnostico || !selectedDiagnostico.id) {
@@ -6326,6 +6368,13 @@ const GestaoPlanoView = ({
       map['Pendente'] = sortedTarefas.filter(t => t.status === 'Pendente');
       map['Em Andamento'] = sortedTarefas.filter(t => t.status === 'Em Andamento');
       map['Concluído'] = sortedTarefas.filter(t => t.status === 'Concluído');
+    } else if (groupBy === 'atividade') {
+      sortedTarefas.forEach(t => {
+        const info = getTarefaAtividadeInfo(t);
+        const key = info.label;
+        if (!map[key]) map[key] = [];
+        map[key].push(t);
+      });
     } else if (groupBy === 'area') {
       sortedTarefas.forEach(t => {
         const key = t.area || 'Geral';
@@ -6356,7 +6405,7 @@ const GestaoPlanoView = ({
       });
     }
     return map;
-  }, [sortedTarefas, groupBy]);
+  }, [sortedTarefas, groupBy, selectedDiagnostico]);
 
   const computedColumns = useMemo(() => {
     if (groupBy === 'status') {
@@ -6369,6 +6418,13 @@ const GestaoPlanoView = ({
 
     const keys = Object.keys(groupedTasksMap);
     keys.sort((a, b) => {
+      if (groupBy === 'atividade') {
+        const taskA = (groupedTasksMap[a] || [])[0];
+        const taskB = (groupedTasksMap[b] || [])[0];
+        const idxA = taskA ? getTarefaAtividadeInfo(taskA).index : 9999;
+        const idxB = taskB ? getTarefaAtividadeInfo(taskB).index : 9999;
+        return idxA - idxB;
+      }
       if (a === 'Sem data de execução' || a === 'Geral' || a === 'Não definido') return -1;
       if (b === 'Sem data de execução' || b === 'Geral' || b === 'Não definido') return 1;
       return a.localeCompare(b);
@@ -6380,7 +6436,8 @@ const GestaoPlanoView = ({
       { color: 'bg-amber-50/50', text: 'text-amber-600', border: 'border-amber-100' },
       { color: 'bg-rose-50/50', text: 'text-rose-600', border: 'border-rose-100' },
       { color: 'bg-purple-50/50', text: 'text-purple-600', border: 'border-purple-100' },
-      { color: 'bg-sky-50/50', text: 'text-sky-600', border: 'border-sky-100' },
+      { color: 'bg-teal-50/50', text: 'text-teal-600', border: 'border-teal-100' },
+      { color: 'bg-indigo-50/50', text: 'text-indigo-600', border: 'border-indigo-100' },
       { color: 'bg-slate-50/50', text: 'text-slate-600', border: 'border-slate-100' },
     ];
 
@@ -6392,7 +6449,7 @@ const GestaoPlanoView = ({
         ...colColor
       };
     });
-  }, [groupedTasksMap, groupBy]);
+  }, [groupedTasksMap, groupBy, selectedDiagnostico]);
 
   const notificationsSent = useRef<Record<string, boolean>>({});
 
@@ -6751,6 +6808,7 @@ const GestaoPlanoView = ({
               onChange={(e) => setGroupBy(e.target.value as any)}
               className="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 cursor-pointer"
             >
+              <option value="atividade">📋 Atividades do Relatório (Idêntico)</option>
               <option value="status">📊 Status de Execução</option>
               <option value="data">📅 Data de Execução (Mês)</option>
               <option value="problema">❓ Problema Associado</option>
@@ -6922,16 +6980,26 @@ const GestaoPlanoView = ({
                           </div>
                           <div className="flex justify-between items-center bg-sky-50/50 px-2.5 py-1.5 rounded-lg border border-sky-100/50">
                              <span className="text-[10px] font-black text-sky-600 uppercase tracking-tighter">Duração</span>
-                             <span className="text-[10px] font-bold text-sky-700 bg-white px-1.5 py-0.5 rounded shadow-sm border border-sky-100">
-                                {(() => {
-                                  const d1 = parseLocalDate(tarefa.dataInicio);
-                                  const d2 = parseLocalDate(tarefa.dataFim);
-                                  if (d1 && d2) {
-                                    return Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-                                  }
-                                  return 1;
-                                })()} dias
-                             </span>
+                             <div className="flex items-center gap-1.5">
+                               {(() => {
+                                 const ch = getTarefaCargaHoraria(tarefa);
+                                 return ch ? (
+                                   <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded shadow-sm border border-emerald-200">
+                                     {ch}
+                                   </span>
+                                 ) : null;
+                               })()}
+                               <span className="text-[10px] font-bold text-sky-700 bg-white px-1.5 py-0.5 rounded shadow-sm border border-sky-100">
+                                 {(() => {
+                                   const d1 = parseLocalDate(tarefa.dataInicio);
+                                   const d2 = parseLocalDate(tarefa.dataFim);
+                                   if (d1 && d2) {
+                                     return Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                                   }
+                                   return 1;
+                                 })()} dias
+                               </span>
+                             </div>
                           </div>
                         </div>
                       )}
@@ -7009,7 +7077,8 @@ const GestaoPlanoView = ({
                   {/* Header do Grupo */}
                   <div className="relative z-10 flex items-center gap-3">
                     <div className={cn("px-4 py-2 rounded-2xl border text-xs font-black uppercase tracking-wider shadow-sm flex items-center gap-2", col.color, col.border)}>
-                      {groupBy === 'status' ? '📊 Status: ' :
+                      {groupBy === 'atividade' ? '📋 Atividade: ' :
+                       groupBy === 'status' ? '📊 Status: ' :
                        groupBy === 'data' ? '📅 Mês: ' :
                        groupBy === 'problema' ? '❓ Problema: ' : '🗂️ Área: '}
                       {col.label}
@@ -7145,6 +7214,14 @@ const GestaoPlanoView = ({
                                     <span>Fim: {dEnd ? format(dEnd, 'dd/MM/yyyy') : '-'}</span>
                                   </div>
                                 )}
+                                {(() => {
+                                  const ch = getTarefaCargaHoraria(tarefa);
+                                  return ch ? (
+                                    <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200">
+                                      {ch}
+                                    </span>
+                                  ) : null;
+                                })()}
                                 {duracaoDias && (
                                   <span className="bg-sky-50 text-sky-700 px-2 py-0.5 rounded-md border border-sky-100">
                                     {duracaoDias} dias
