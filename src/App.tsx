@@ -4145,71 +4145,73 @@ const CronogramaView = ({
               </div>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="md:col-span-2 space-y-4">
-                <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Descrição da Atividade</label>
-                  <p className="text-sm text-slate-600 line-clamp-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
-                    {atv.descricao || "Sem descrição definida."}
-                  </p>
-                </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Descrição da Atividade</label>
+                <p className="text-sm text-slate-700 bg-slate-50 p-3.5 rounded-xl border border-slate-100 whitespace-pre-wrap leading-relaxed min-h-[90px]">
+                  {atv.descricao || "Sem descrição definida."}
+                </p>
+              </div>
 
-                <div>
-                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Solução Proposta</label>
-                  <div className="text-sm text-slate-700 font-medium bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                    {atv.solucaoProposta || "---"}
-                  </div>
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Solução Proposta</label>
+                <div className="text-sm text-slate-700 font-medium bg-slate-50 p-3.5 rounded-xl border border-slate-100 whitespace-pre-wrap leading-relaxed">
+                  {atv.solucaoProposta || "---"}
                 </div>
+              </div>
 
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 pt-2 border-t border-slate-100/80">
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Responsável</label>
-                  <div className="text-sm text-slate-700 font-medium bg-slate-50 p-2 rounded-lg border border-slate-100">
+                  <div className="text-xs text-slate-700 font-semibold bg-slate-50 p-2 rounded-lg border border-slate-100 truncate" title={atv.responsavel || "---"}>
                     {atv.responsavel || "---"}
                   </div>
                 </div>
-              </div>
-              <div className="space-y-4">
+
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Carga Horária</label>
-                  <div className="text-sm text-slate-700 font-bold bg-emerald-50 p-2 rounded-lg border border-emerald-100 flex items-center gap-2">
-                    <Clock size={14} className="text-emerald-600" />
-                    {atv.cargaHoraria || "0h"}
+                  <div className="text-xs text-slate-700 font-bold bg-emerald-50 p-2 rounded-lg border border-emerald-100 flex items-center gap-1.5">
+                    <Clock size={13} className="text-emerald-600" />
+                    <span>{atv.cargaHoraria || "0h"}</span>
                   </div>
                 </div>
+
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Prioridade</label>
                   <div className={cn(
-                    "text-xs font-bold px-2 py-1 rounded inline-block uppercase",
-                    atv.prioridade === 'Alta' ? "bg-rose-100 text-rose-600" :
-                    atv.prioridade === 'Média' ? "bg-amber-100 text-amber-600" :
-                    "bg-emerald-100 text-emerald-600"
+                    "text-xs font-bold px-2 py-2 rounded-lg text-center uppercase border",
+                    atv.prioridade === 'Alta' ? "bg-rose-50 text-rose-600 border-rose-100" :
+                    atv.prioridade === 'Média' ? "bg-amber-50 text-amber-600 border-amber-100" :
+                    "bg-emerald-50 text-emerald-600 border-emerald-100"
                   )}>
                     {atv.prioridade}
                   </div>
                 </div>
-              </div>
-              <div className="space-y-4">
+
                 <div>
                   <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Status</label>
                   <div className={cn(
-                    "text-xs font-bold px-3 py-1 rounded-full inline-flex items-center gap-1.5 uppercase",
+                    "text-xs font-bold px-2 py-2 rounded-lg flex items-center justify-center gap-1.5 uppercase",
                     atv.status === 'Concluído' ? "bg-emerald-500 text-white" :
                     atv.status === 'Em Andamento' ? "bg-sky-500 text-white" :
                     atv.status === 'Atrasado' ? "bg-rose-500 text-white" :
                     "bg-slate-200 text-slate-600"
                   )}>
                     {atv.status === 'Concluído' ? <CheckCircle size={12} /> : null}
-                    {atv.status}
+                    <span>{atv.status}</span>
                   </div>
                 </div>
-                {(atv.dataInicio || atv.dataFim) && (
-                  <div>
-                    <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Prazo</label>
-                    <div className="text-[10px] text-slate-500 font-medium">
-                      {atv.dataInicio ? format(parseLocalDate(atv.dataInicio) || new Date(), 'dd/MM/yy') : '...'} - {atv.dataFim ? format(parseLocalDate(atv.dataFim) || new Date(), 'dd/MM/yy') : '...'}
-                    </div>
+
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Prazo</label>
+                  <div className="text-[11px] text-slate-600 font-medium bg-slate-50 p-2 rounded-lg border border-slate-100 text-center">
+                    {(atv.dataInicio || atv.dataFim) ? (
+                      `${atv.dataInicio ? format(parseLocalDate(atv.dataInicio) || new Date(), 'dd/MM/yy') : '...'} - ${atv.dataFim ? format(parseLocalDate(atv.dataFim) || new Date(), 'dd/MM/yy') : '...'}`
+                    ) : (
+                      "A definir"
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
 
