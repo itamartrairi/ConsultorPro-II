@@ -11821,7 +11821,7 @@ export default function App() {
         // 1º NÍVEL: Bloco de Data / Período de Execução
         tableData.push([
           {
-            content: `📅 ${dataGroup.labelData.toUpperCase()} (${totalAcoesData} ${totalAcoesData === 1 ? 'ação' : 'ações'}${totalHorasData > 0 ? ` • ${totalHorasData}h` : ''})`,
+            content: `${dataGroup.labelData.toUpperCase()} (${totalAcoesData} ${totalAcoesData === 1 ? 'ação' : 'ações'}${totalHorasData > 0 ? ` • ${totalHorasData}h` : ''})`,
             colSpan: 7,
             styles: {
               fillColor: [16, 185, 129], // emerald-500
@@ -11843,7 +11843,7 @@ export default function App() {
 
           tableData.push([
             {
-              content: `    🏷️ ÁREA: ${areaName} (${tarefasDaArea.length} ${tarefasDaArea.length === 1 ? 'ação' : 'ações'}${totalHorasArea > 0 ? ` • ${totalHorasArea}h` : ''})`,
+              content: `  ÁREA: ${areaName} (${tarefasDaArea.length} ${tarefasDaArea.length === 1 ? 'ação' : 'ações'}${totalHorasArea > 0 ? ` • ${totalHorasArea}h` : ''})`,
               colSpan: 7,
               styles: {
                 fillColor: [241, 245, 249], // slate-100
@@ -11877,7 +11877,7 @@ export default function App() {
 
       autoTable(doc, {
         startY: 50,
-        head: [['#', 'DIAGNÓSTICO / PROBLEMA', 'AÇÕES E MELHORIAS PROPOSTAS', 'RESPONSÁVEL', 'DUR.', 'PRIOR.', 'SITUAÇÃO']],
+        head: [['#', 'DIAGNÓSTICO / PROBLEMA', 'AÇÕES E MELHORIAS PROPOSTAS', 'RESP.', 'DUR.', 'PRIOR.', 'SITUAÇÃO']],
         body: tableData,
         margin: { left: margin, right: margin, top: 48, bottom: 20 },
         didDrawPage: (data) => {
@@ -11900,12 +11900,12 @@ export default function App() {
         },
         columnStyles: {
           0: { cellWidth: 10, halign: 'center' }, // #
-          1: { cellWidth: 62 },                   // Diagnóstico / Problema (ampliado)
-          2: { cellWidth: 114 },                  // Ações e Melhorias Propostas (ampliado)
-          3: { cellWidth: 41 },                   // Responsável (ampliado)
+          1: { cellWidth: 62 },                   // Diagnóstico / Problema
+          2: { cellWidth: 114 },                  // Ações e Melhorias Propostas
+          3: { cellWidth: 30 },                   // Responsável (reduzido)
           4: { cellWidth: 14, halign: 'center', fontStyle: 'bold' }, // Duração em horas
           5: { cellWidth: 15, halign: 'center' }, // Prioridade
-          6: { cellWidth: 14, halign: 'center' }, // Situação
+          6: { cellWidth: 25, halign: 'center' }, // Situação (aumentado para caber perfeitamente)
         },
         didParseCell: (data) => {
           if (data.section === 'body' && data.column.index === 5) {
