@@ -11669,19 +11669,56 @@ export default function App() {
       const activeLogoForPdf = logoChoice === 'sebrae' ? customLogo : logoChoice === 'consultora' ? customConsultoraLogo : null;
       const logoValid = isValidLogoSource(activeLogoForPdf);
 
-      const totalHorasPlano = filteredTarefas.reduce((acc, t) => {
-        const h = parseInt(((t as any).cargaHoraria || '').toString().replace(/\D/g, '')) || 0;
-        return acc + h;
+      // Helper para converter string de horas em float numérico real (ex: "1,5h" -> 1.5, "4h" -> 4)
+      const parseHorasDecimal = (str: string): number => {
+        if (!str || str === '---') return 0;
+        const normalized = str.toString().trim().replace(/h$/i, '').trim().replace(',', '.');
+        const num = parseFloat(normalized);
+        return isNaN(num) ? 0 : num;
+      };
+
+      // Helper para formatar horas numéricas em string legível (ex: 3 -> "3h", 1.5 -> "1,5h")
+      const formatHorasDecimal = (num: number): string => {
+        if (!num || num <= 0) return '0h';
+        const rounded = Math.round(num * 100) / 100;
+        return `${rounded.toString().replace('.', ',')}h`;
+      };
+
+      // Helper para buscar carga horária da tarefa / cronograma
+      const getTarefaHoras = (t: TarefaPlanoAcao): string => {
+        if (t.cargaHoraria && t.cargaHoraria.trim() !== '') {
+          const ch = t.cargaHoraria.trim();
+          return ch.toLowerCase().endsWith('h') ? ch : `${ch}h`;
+        }
+        const cronograma = selectedDiagnostico?.cronograma || [];
+        let act = null;
+        if (t.idProblema) act = cronograma.find(a => a.idProblema === t.idProblema);
+        if (!act && t.atividade) act = cronograma.find(a => a.nome && a.nome.toLowerCase() === t.atividade.toLowerCase());
+        if (!act && t.problema) act = cronograma.find(a => a.nome && a.nome.toLowerCase() === t.problema.toLowerCase());
+        if (!act && t.solucaoSugerida) act = cronograma.find(a => a.solucaoProposta && a.solucaoProposta.toLowerCase() === t.solucaoSugerida.toLowerCase());
+        if (act && act.cargaHoraria) {
+          const ch = act.cargaHoraria.trim();
+          return ch.toLowerCase().endsWith('h') ? ch : `${ch}h`;
+        }
+        return '---';
+      };
+
+      const totalHorasPlanoNum = filteredTarefas.reduce((acc, t) => {
+        const hStr = getTarefaHoras(t);
+        return acc + parseHorasDecimal(hStr);
       }, 0);
 
-      const totalHorasConcluidasPlano = filteredTarefas.reduce((acc, t) => {
+      const totalHorasConcluidasPlanoNum = filteredTarefas.reduce((acc, t) => {
         const isConcluida = (t.status || '').toLowerCase().includes('conclu');
         if (isConcluida) {
-          const h = parseInt(((t as any).cargaHoraria || '').toString().replace(/\D/g, '')) || 0;
-          return acc + h;
+          const hStr = getTarefaHoras(t);
+          return acc + parseHorasDecimal(hStr);
         }
         return acc;
       }, 0);
+
+      const totalHorasPlano = formatHorasDecimal(totalHorasPlanoNum);
+      const totalHorasConcluidasPlano = formatHorasDecimal(totalHorasConcluidasPlanoNum);
 
       // Header helper
       const addHeader = (d: jsPDF, title: string) => {
@@ -11712,7 +11749,7 @@ export default function App() {
         d.setFontSize(9.5);
         d.setTextColor(100);
         d.setFont("helvetica", "normal");
-        d.text(`Cliente: ${selectedEmpresa.nomeFantasia || selectedEmpresa.nome} | Horas Concluídas: ${totalHorasConcluidasPlano}h / Total: ${totalHorasPlano}h`, margin, 30);
+        d.text(`Cliente: ${selectedEmpresa.nomeFantasia || selectedEmpresa.nome} | Horas Concluídas: ${totalHorasConcluidasPlano} / Total: ${totalHorasPlano}`, margin, 30);
         d.text(`Emissão: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`, margin, 36);
         
         d.setDrawColor(226, 232, 240); // slate-200
@@ -11720,25 +11757,6 @@ export default function App() {
       };
 
       addHeader(doc, 'RELATÓRIO: PLANO DE AÇÃO ESTRATÉGICO');
-
-      // Helper para buscar carga horária da tarefa / cronograma
-      const getTarefaHoras = (t: TarefaPlanoAcao): string => {
-        if (t.cargaHoraria && t.cargaHoraria.trim() !== '') {
-          const ch = t.cargaHoraria.trim();
-          return ch.toLowerCase().endsWith('h') ? ch : `${ch}h`;
-        }
-        const cronograma = selectedDiagnostico?.cronograma || [];
-        let act = null;
-        if (t.idProblema) act = cronograma.find(a => a.idProblema === t.idProblema);
-        if (!act && t.atividade) act = cronograma.find(a => a.nome && a.nome.toLowerCase() === t.atividade.toLowerCase());
-        if (!act && t.problema) act = cronograma.find(a => a.nome && a.nome.toLowerCase() === t.problema.toLowerCase());
-        if (!act && t.solucaoSugerida) act = cronograma.find(a => a.solucaoProposta && a.solucaoProposta.toLowerCase() === t.solucaoSugerida.toLowerCase());
-        if (act && act.cargaHoraria) {
-          const ch = act.cargaHoraria.trim();
-          return ch.toLowerCase().endsWith('h') ? ch : `${ch}h`;
-        }
-        return '---';
-      };
 
       // Helper para obter datas formatadas e timestamp de início da tarefa
       const getTarefaDatas = (t: TarefaPlanoAcao, originalIndex: number) => {
@@ -11809,19 +11827,21 @@ export default function App() {
 
       dataGroupsMap.forEach((dataGroup) => {
         let totalAcoesData = 0;
-        let totalHorasData = 0;
+        let totalHorasDataNum = 0;
         dataGroup.areasMap.forEach((tarefas) => {
           totalAcoesData += tarefas.length;
-          totalHorasData += tarefas.reduce((acc, t) => {
+          totalHorasDataNum += tarefas.reduce((acc, t) => {
             const hStr = getTarefaHoras(t);
-            return acc + (parseInt(hStr.replace(/\D/g, '')) || 0);
+            return acc + parseHorasDecimal(hStr);
           }, 0);
         });
+
+        const totalHorasDataStr = formatHorasDecimal(totalHorasDataNum);
 
         // 1º NÍVEL: Bloco de Data / Período de Execução
         tableData.push([
           {
-            content: `${dataGroup.labelData.toUpperCase()} (${totalAcoesData} ${totalAcoesData === 1 ? 'ação' : 'ações'}${totalHorasData > 0 ? ` • ${totalHorasData}h` : ''})`,
+            content: `${dataGroup.labelData.toUpperCase()} (${totalAcoesData} ${totalAcoesData === 1 ? 'ação' : 'ações'}${totalHorasDataNum > 0 ? ` • ${totalHorasDataStr}` : ''})`,
             colSpan: 7,
             styles: {
               fillColor: [16, 185, 129], // emerald-500
@@ -11836,14 +11856,16 @@ export default function App() {
 
         // 2º NÍVEL: Bloco de Área dentro da Data
         dataGroup.areasMap.forEach((tarefasDaArea, areaName) => {
-          const totalHorasArea = tarefasDaArea.reduce((acc, t) => {
+          const totalHorasAreaNum = tarefasDaArea.reduce((acc, t) => {
             const hStr = getTarefaHoras(t);
-            return acc + (parseInt(hStr.replace(/\D/g, '')) || 0);
+            return acc + parseHorasDecimal(hStr);
           }, 0);
+
+          const totalHorasAreaStr = formatHorasDecimal(totalHorasAreaNum);
 
           tableData.push([
             {
-              content: `  ÁREA: ${areaName} (${tarefasDaArea.length} ${tarefasDaArea.length === 1 ? 'ação' : 'ações'}${totalHorasArea > 0 ? ` • ${totalHorasArea}h` : ''})`,
+              content: `  ÁREA: ${areaName} (${tarefasDaArea.length} ${tarefasDaArea.length === 1 ? 'ação' : 'ações'}${totalHorasAreaNum > 0 ? ` • ${totalHorasAreaStr}` : ''})`,
               colSpan: 7,
               styles: {
                 fillColor: [241, 245, 249], // slate-100
