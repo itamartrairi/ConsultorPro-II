@@ -11740,72 +11740,144 @@ export default function App() {
         return '---';
       };
 
-      // Agrupar tarefas por área para montar blocos organizados
-      const areaGroupsMap = new Map<string, typeof filteredTarefas>();
-      filteredTarefas.forEach((t) => {
+      // Helper para obter datas formatadas e timestamp de início da tarefa
+      const getTarefaDatas = (t: TarefaPlanoAcao, originalIndex: number) => {
+        const defaultDateStr = getActivityDateStr(selectedDiagnostico?.dataDiagnostico, originalIndex);
+        const rawInicio = t.dataInicio || defaultDateStr;
+        const rawFim = t.dataFim || rawInicio || defaultDateStr;
+
+        const d_inicio = rawInicio ? (rawInicio.toDate ? rawInicio.toDate() : new Date(typeof rawInicio === 'string' && !rawInicio.includes('T') ? rawInicio + 'T12:00:00' : rawInicio)) : null;
+        const d_fim = rawFim ? (rawFim.toDate ? rawFim.toDate() : new Date(typeof rawFim === 'string' && !rawFim.includes('T') ? rawFim + 'T12:00:00' : rawFim)) : null;
+
+        const strInicio = d_inicio && !isNaN(d_inicio.getTime()) ? format(d_inicio, 'dd/MM/yy') : 'A definir';
+        const strFim = d_fim && !isNaN(d_fim.getTime()) ? format(d_fim, 'dd/MM/yy') : strInicio;
+        const timeKey = d_inicio && !isNaN(d_inicio.getTime()) ? d_inicio.getTime() : 9999999999999;
+
+        const labelData = strInicio === strFim ? `DATA: ${strInicio}` : `PERÍODO: ${strInicio} a ${strFim}`;
+
+        return {
+          strInicio,
+          strFim,
+          timeKey,
+          labelData
+        };
+      };
+
+      // Ordenar estritamente pela data de execução (data de início) e depois pela ordem/diagnóstico
+      const sortedTarefas = [...filteredTarefas].sort((a, b) => {
+        const origIdxA = filteredTarefas.indexOf(a);
+        const origIdxB = filteredTarefas.indexOf(b);
+        const dtA = getTarefaDatas(a, origIdxA).timeKey;
+        const dtB = getTarefaDatas(b, origIdxB).timeKey;
+        if (dtA !== dtB) return dtA - dtB;
+        const oA = a.ordem !== undefined && a.ordem !== null ? a.ordem : 999999;
+        const oB = b.ordem !== undefined && b.ordem !== null ? b.ordem : 999999;
+        return oA - oB;
+      });
+
+      // Agrupamento em 2 níveis: 1º Nível = Data/Período, 2º Nível = Área
+      interface GrupoData {
+        labelData: string;
+        timeKey: number;
+        areasMap: Map<string, typeof sortedTarefas>;
+      }
+
+      const dataGroupsMap = new Map<string, GrupoData>();
+
+      sortedTarefas.forEach((t) => {
+        const origIdx = filteredTarefas.indexOf(t);
+        const { labelData, timeKey } = getTarefaDatas(t, origIdx);
         const areaName = (t.area || 'GERAL').trim().toUpperCase();
-        if (!areaGroupsMap.has(areaName)) {
-          areaGroupsMap.set(areaName, []);
+
+        if (!dataGroupsMap.has(labelData)) {
+          dataGroupsMap.set(labelData, {
+            labelData,
+            timeKey,
+            areasMap: new Map()
+          });
         }
-        areaGroupsMap.get(areaName)!.push(t);
+
+        const dataGroup = dataGroupsMap.get(labelData)!;
+        if (!dataGroup.areasMap.has(areaName)) {
+          dataGroup.areasMap.set(areaName, []);
+        }
+        dataGroup.areasMap.get(areaName)!.push(t);
       });
 
       const tableData: any[] = [];
       let globalIndex = 1;
 
-      areaGroupsMap.forEach((tarefasDaArea, areaName) => {
-        // Linha divisória de bloco para a Área
-        const totalHorasArea = tarefasDaArea.reduce((acc, t) => {
-          const hStr = getTarefaHoras(t);
-          const num = parseInt(hStr.replace(/\D/g, '')) || 0;
-          return acc + num;
-        }, 0);
+      dataGroupsMap.forEach((dataGroup) => {
+        let totalAcoesData = 0;
+        let totalHorasData = 0;
+        dataGroup.areasMap.forEach((tarefas) => {
+          totalAcoesData += tarefas.length;
+          totalHorasData += tarefas.reduce((acc, t) => {
+            const hStr = getTarefaHoras(t);
+            return acc + (parseInt(hStr.replace(/\D/g, '')) || 0);
+          }, 0);
+        });
 
+        // 1º NÍVEL: Bloco de Data / Período de Execução
         tableData.push([
           {
-            content: `ÁREA: ${areaName} (${tarefasDaArea.length} ${tarefasDaArea.length === 1 ? 'ação' : 'ações'}${totalHorasArea > 0 ? ` • ${totalHorasArea}h` : ''})`,
-            colSpan: 10,
+            content: `📅 ${dataGroup.labelData.toUpperCase()} (${totalAcoesData} ${totalAcoesData === 1 ? 'ação' : 'ações'}${totalHorasData > 0 ? ` • ${totalHorasData}h` : ''})`,
+            colSpan: 7,
             styles: {
-              fillColor: [241, 245, 249], // slate-100
-              textColor: [15, 23, 42],     // slate-900
+              fillColor: [16, 185, 129], // emerald-500
+              textColor: 255,
               fontStyle: 'bold',
-              fontSize: 8,
+              fontSize: 8.5,
               cellPadding: 3,
               halign: 'left'
             }
           }
         ]);
 
-        tarefasDaArea.forEach((t) => {
-          const defaultDateStr = getActivityDateStr(selectedDiagnostico?.dataDiagnostico, globalIndex - 1);
-          const rawInicio = t.dataInicio || defaultDateStr;
-          const rawFim = t.dataFim || rawInicio || defaultDateStr;
-
-          const d_inicio = rawInicio ? (rawInicio.toDate ? rawInicio.toDate() : new Date(typeof rawInicio === 'string' && !rawInicio.includes('T') ? rawInicio + 'T12:00:00' : rawInicio)) : null;
-          const d_fim = rawFim ? (rawFim.toDate ? rawFim.toDate() : new Date(typeof rawFim === 'string' && !rawFim.includes('T') ? rawFim + 'T12:00:00' : rawFim)) : null;
-          
-          const duracaoHoras = getTarefaHoras(t);
+        // 2º NÍVEL: Bloco de Área dentro da Data
+        dataGroup.areasMap.forEach((tarefasDaArea, areaName) => {
+          const totalHorasArea = tarefasDaArea.reduce((acc, t) => {
+            const hStr = getTarefaHoras(t);
+            return acc + (parseInt(hStr.replace(/\D/g, '')) || 0);
+          }, 0);
 
           tableData.push([
-            globalIndex,
-            t.area?.toUpperCase() || '-',
-            t.problema || '-',
-            t.acoes || '-',
-            t.responsavel || '-',
-            d_inicio && !isNaN(d_inicio.getTime()) ? format(d_inicio, 'dd/MM/yy') : '-',
-            d_fim && !isNaN(d_fim.getTime()) ? format(d_fim, 'dd/MM/yy') : '-',
-            duracaoHoras,
-            t.prioridade?.toUpperCase() || '-',
-            t.status?.toUpperCase() || '-'
+            {
+              content: `    🏷️ ÁREA: ${areaName} (${tarefasDaArea.length} ${tarefasDaArea.length === 1 ? 'ação' : 'ações'}${totalHorasArea > 0 ? ` • ${totalHorasArea}h` : ''})`,
+              colSpan: 7,
+              styles: {
+                fillColor: [241, 245, 249], // slate-100
+                textColor: [30, 41, 59],     // slate-800
+                fontStyle: 'bold',
+                fontSize: 7.5,
+                cellPadding: 2.5,
+                halign: 'left'
+              }
+            }
           ]);
 
-          globalIndex++;
+          // 3º NÍVEL: Tabela de Itens (sem as colunas ÁREA, INÍCIO e PRAZO)
+          tarefasDaArea.forEach((t) => {
+            const duracaoHoras = getTarefaHoras(t);
+
+            tableData.push([
+              globalIndex,
+              t.problema || '-',
+              t.acoes || '-',
+              t.responsavel || '-',
+              duracaoHoras,
+              t.prioridade?.toUpperCase() || '-',
+              t.status?.toUpperCase() || '-'
+            ]);
+
+            globalIndex++;
+          });
         });
       });
 
       autoTable(doc, {
         startY: 50,
-        head: [['#', 'ÁREA', 'DIAGNÓSTICO / PROBLEMA', 'AÇÕES E MELHORIAS PROPOSTAS', 'RESPONSÁVEL', 'INÍCIO', 'PRAZO', 'DUR.', 'PRIOR.', 'SITUAÇÃO']],
+        head: [['#', 'DIAGNÓSTICO / PROBLEMA', 'AÇÕES E MELHORIAS PROPOSTAS', 'RESPONSÁVEL', 'DUR.', 'PRIOR.', 'SITUAÇÃO']],
         body: tableData,
         margin: { left: margin, right: margin, top: 48, bottom: 20 },
         didDrawPage: (data) => {
@@ -11814,12 +11886,12 @@ export default function App() {
           }
         },
         headStyles: { 
-          fillColor: [16, 185, 129], // emerald-500
+          fillColor: [5, 150, 105], // emerald-600
           textColor: 255, 
-          fontSize: 7, 
+          fontSize: 7.5, 
           fontStyle: 'bold',
           halign: 'center',
-          cellPadding: 2
+          cellPadding: 2.5
         },
         bodyStyles: { 
           fontSize: 7.5, 
@@ -11827,24 +11899,21 @@ export default function App() {
           textColor: [51, 65, 85] // slate-700
         },
         columnStyles: {
-          0: { cellWidth: 10, halign: 'center' }, // Largura corrigida para não quebrar 10, 11, 12...
-          1: { cellWidth: 21, fontStyle: 'bold', fontSize: 6 },
-          2: { cellWidth: 44 },
-          3: { cellWidth: 83 },
-          4: { cellWidth: 32 },
-          5: { cellWidth: 15, halign: 'center' },
-          6: { cellWidth: 15, halign: 'center' },
-          7: { cellWidth: 12, halign: 'center', fontStyle: 'bold' }, // Duração em horas
-          8: { cellWidth: 15, halign: 'center' },
-          9: { cellWidth: 22, halign: 'center' },
+          0: { cellWidth: 10, halign: 'center' }, // #
+          1: { cellWidth: 62 },                   // Diagnóstico / Problema (ampliado)
+          2: { cellWidth: 114 },                  // Ações e Melhorias Propostas (ampliado)
+          3: { cellWidth: 41 },                   // Responsável (ampliado)
+          4: { cellWidth: 14, halign: 'center', fontStyle: 'bold' }, // Duração em horas
+          5: { cellWidth: 15, halign: 'center' }, // Prioridade
+          6: { cellWidth: 14, halign: 'center' }, // Situação
         },
         didParseCell: (data) => {
-          if (data.section === 'body' && data.column.index === 8) {
+          if (data.section === 'body' && data.column.index === 5) {
             const val = data.cell.text[0];
             if (val === 'ALTA') data.cell.styles.textColor = [225, 29, 72]; // rose-600
             if (val === 'MÉDIA') data.cell.styles.textColor = [217, 119, 6]; // amber-600
           }
-          if (data.section === 'body' && data.column.index === 9) {
+          if (data.section === 'body' && data.column.index === 6) {
             const val = data.cell.text[0];
             if (val === 'CONCLUÍDO') data.cell.styles.textColor = [5, 150, 105]; // emerald-600
             if (val === 'PENDENTE') data.cell.styles.textColor = [225, 29, 72]; // rose-600
