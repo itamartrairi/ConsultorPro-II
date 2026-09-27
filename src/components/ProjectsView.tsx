@@ -2234,7 +2234,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl border border-slate-100"
+              className="bg-white rounded-3xl p-6 w-full max-w-2xl shadow-2xl border border-slate-100"
             >
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
@@ -2370,7 +2370,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl border border-slate-100"
+              className="bg-white rounded-3xl p-6 w-full max-w-2xl shadow-2xl border border-slate-100"
             >
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">

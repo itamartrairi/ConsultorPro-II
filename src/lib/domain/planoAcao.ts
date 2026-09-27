@@ -430,7 +430,9 @@ export function textosDaAtividadeDeArea(area: string, itens: ProblemaTratado[]):
   const plural = itens.length > 1;
   return {
     nome: `${area}: solução de ${itens.length} problema${plural ? 's' : ''} (${resumoNiveis(itens)})`,
-    descricao: itens.map((p, i) => `${i + 1}. [${p.nivel}] ${p.problema} — ${p.acao}: ${p.passos}`).join('\n'),
+    descricao: itens.length === 1 
+      ? itens[0].passos 
+      : itens.map((p, i) => `${i + 1}. ${p.passos}`).join('\n\n'),
     solucaoProposta: itens.map((p) => `[${p.nivel}] ${p.solucao}`).join('; '),
     resultadoEsperado: itens.map((p) => p.resultadoEsperado).join(' | '),
     responsavel: itens.every((p) => p.responsavel === itens[0].responsavel) ? itens[0].responsavel : 'Consultor/Cliente',

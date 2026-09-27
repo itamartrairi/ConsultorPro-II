@@ -1939,7 +1939,7 @@ const DadosConsultoriaView = ({
       {/* Modal para Adicionar Nova Área da Consultoria */}
       {isNewAreaModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 border border-slate-100 animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full p-6 border border-slate-100 animate-in fade-in">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
               <h3 className="font-bold text-slate-800 text-base">Nova Área da Consultoria</h3>
               <button 
@@ -4296,6 +4296,7 @@ const CronogramaView = ({
 
       {editingActivityIndex !== null && editingActivity && (
         <Modal
+          size="4xl"
           title={`Editar Atividade ${editingActivityIndex + 1}`}
           onClose={() => {
             setEditingActivityIndex(null);
@@ -21062,61 +21063,54 @@ export default function App() {
               </div>
             </div>
 
-            {/* Comentário de Sucesso e Tipo de Empresa */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Comentário de Sucesso (Reconhecimento)</label>
-                <textarea 
-                  rows={2}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 text-sm font-medium text-slate-800 shadow-sm"
-                  placeholder="Mensagem motivacional de reconhecimento para o produtor..."
-                  value={solucaoForm.comentario_sucesso}
-                  onChange={(e) => setSolucaoForm({ ...solucaoForm, comentario_sucesso: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Tipo de Empresa (Segmentação)</label>
-                <select 
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-sm font-medium text-slate-800 shadow-sm"
-                  value={availableSegments.includes(solucaoForm.tipoEmpresa || '') ? (solucaoForm.tipoEmpresa || '') : (solucaoForm.tipoEmpresa ? 'Outro' : '')}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === 'Outro') {
-                      setSolucaoForm({ ...solucaoForm, tipoEmpresa: customSolucaoEmpresaType || '' });
-                    } else {
-                      setSolucaoForm({ ...solucaoForm, tipoEmpresa: val });
-                    }
-                  }}
-                >
-                  <option value="">Herdar do problema associado (Recomendado)</option>
-                  <option value="Geral">Geral (Comum a todas)</option>
-                  {availableSegments.filter(tipo => tipo !== 'Geral').map((tipo) => (
-                    <option key={tipo} value={tipo}>{tipo}</option>
-                  ))}
-                  <option value="Outro">Outro...</option>
-                </select>
-                {(solucaoForm.tipoEmpresa === 'Outro' || (solucaoForm.tipoEmpresa && !availableSegments.includes(solucaoForm.tipoEmpresa) && solucaoForm.tipoEmpresa !== 'Geral')) && (
-                  <input 
-                    type="text" 
-                    className="w-full mt-2 px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm font-medium text-slate-800 shadow-sm"
-                    placeholder="Especifique o tipo de empresa"
-                    value={customSolucaoEmpresaType}
-                    onChange={(e) => {
-                      const cVal = e.target.value;
-                      setCustomSolucaoEmpresaType(cVal);
-                      setSolucaoForm({ ...solucaoForm, tipoEmpresa: cVal });
-                    }}
-                  />
-                )}
-              </div>
+            {/* Comentário de Sucesso (Largura Total) */}
+            <div className="pt-1">
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">Comentário de Sucesso (Reconhecimento)</label>
+              <textarea 
+                rows={2}
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 text-sm font-medium text-slate-800 shadow-sm"
+                placeholder="Mensagem motivacional de reconhecimento para o produtor..."
+                value={solucaoForm.comentario_sucesso}
+                onChange={(e) => setSolucaoForm({ ...solucaoForm, comentario_sucesso: e.target.value })}
+              />
             </div>
 
-            <TagInputManager 
-              tags={solucaoForm.tags || []} 
-              onChange={(newTags) => setSolucaoForm({ ...solucaoForm, tags: newTags })} 
-              allAvailableTags={allAvailableTags}
-            />
+            {/* Tipo de Empresa (Abaixo do Comentário de Sucesso, Largura Total) */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5">Tipo de Empresa (Segmentação)</label>
+              <select 
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-sm font-medium text-slate-800 shadow-sm"
+                value={availableSegments.includes(solucaoForm.tipoEmpresa || '') ? (solucaoForm.tipoEmpresa || '') : (solucaoForm.tipoEmpresa ? 'Outro' : '')}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === 'Outro') {
+                    setSolucaoForm({ ...solucaoForm, tipoEmpresa: customSolucaoEmpresaType || '' });
+                  } else {
+                    setSolucaoForm({ ...solucaoForm, tipoEmpresa: val });
+                  }
+                }}
+              >
+                <option value="">Herdar do problema associado (Recomendado)</option>
+                <option value="Geral">Geral (Comum a todas)</option>
+                {availableSegments.filter(tipo => tipo !== 'Geral').map((tipo) => (
+                  <option key={tipo} value={tipo}>{tipo}</option>
+                ))}
+                <option value="Outro">Outro...</option>
+              </select>
+              {(solucaoForm.tipoEmpresa === 'Outro' || (solucaoForm.tipoEmpresa && !availableSegments.includes(solucaoForm.tipoEmpresa) && solucaoForm.tipoEmpresa !== 'Geral')) && (
+                <input 
+                  type="text" 
+                  className="w-full mt-2 px-3.5 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-sm font-medium text-slate-800 shadow-sm"
+                  placeholder="Especifique o tipo de empresa"
+                  value={customSolucaoEmpresaType}
+                  onChange={(e) => {
+                    const cVal = e.target.value;
+                    setCustomSolucaoEmpresaType(cVal);
+                    setSolucaoForm({ ...solucaoForm, tipoEmpresa: cVal });
+                  }}
+                />
+              )}
+            </div>
           </div>
         </Modal>
       )}

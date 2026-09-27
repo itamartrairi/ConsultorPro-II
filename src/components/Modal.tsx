@@ -16,15 +16,15 @@ interface ModalProps {
 }
 
 const sizeClasses = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
-  lg: 'max-w-lg',
-  xl: 'max-w-xl',
-  '2xl': 'max-w-2xl',
-  '3xl': 'max-w-3xl',
-  '4xl': 'max-w-4xl',
-  '5xl': 'max-w-5xl',
-  '6xl': 'max-w-6xl'
+  sm: 'max-w-md',
+  md: 'max-w-2xl',
+  lg: 'max-w-3xl',
+  xl: 'max-w-4xl',
+  '2xl': 'max-w-4xl',
+  '3xl': 'max-w-5xl',
+  '4xl': 'max-w-5xl',
+  '5xl': 'max-w-6xl',
+  '6xl': 'max-w-7xl'
 };
 
 export const Modal = ({ 
@@ -35,7 +35,7 @@ export const Modal = ({
   confirmText = "Confirmar", 
   variant = "primary", 
   disabled = false,
-  size = 'md',
+  size = '3xl',
   customWidth
 }: ModalProps) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-150">
