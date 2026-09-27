@@ -78,6 +78,22 @@ export function limparEvidenciasAcoes(texto?: string): string {
     .replace(/\.+$/, '.');
 }
 
+/** Limpa e formata descrições de atividades para serem objetivas, limpas e sem numeração repetitiva */
+export function formatarDescricaoObjetiva(texto?: string): string {
+  if (!texto) return '';
+  const linhas = texto
+    .split('\n')
+    .map(l => l.trim())
+    .filter(Boolean);
+
+  const linhasLimpas = linhas.map(l => {
+    // Remove numerações repetidas como "1. 1.", "2. 1.", "1.", "1 -", etc. no início
+    return l.replace(/^(\d+[\.\-\)]\s*)+/g, '').trim();
+  }).filter(Boolean);
+
+  return linhasLimpas.join('\n');
+}
+
 /** Identifica o papel de uma atividade pelo nome (aceita os nomes antigos do app). */
 export function papelDaAtividade(nome?: string): PapelAtividade {
   const n = norm(nome);
@@ -428,11 +444,13 @@ function resumoNiveis(itens: { nivel: NivelCriticidade }[]): string {
 /** (Re)monta os textos de uma atividade de área a partir dos problemas tratados. */
 export function textosDaAtividadeDeArea(area: string, itens: ProblemaTratado[]): Pick<AtividadeCronograma, 'nome' | 'descricao' | 'solucaoProposta' | 'resultadoEsperado' | 'responsavel'> {
   const plural = itens.length > 1;
+  const descLinhas = itens
+    .map(p => formatarDescricaoObjetiva(p.passos))
+    .filter(Boolean);
+
   return {
     nome: `${area}: solução de ${itens.length} problema${plural ? 's' : ''} (${resumoNiveis(itens)})`,
-    descricao: itens.length === 1 
-      ? itens[0].passos 
-      : itens.map((p, i) => `${i + 1}. ${p.passos}`).join('\n\n'),
+    descricao: descLinhas.join('\n'),
     solucaoProposta: itens.map((p) => `[${p.nivel}] ${p.solucao}`).join('; '),
     resultadoEsperado: itens.map((p) => p.resultadoEsperado).join(' | '),
     responsavel: itens.every((p) => p.responsavel === itens[0].responsavel) ? itens[0].responsavel : 'Consultor/Cliente',

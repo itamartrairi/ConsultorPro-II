@@ -174,7 +174,7 @@ import {
   deleteLocalIndividualEvidence,
   loadLocalIndividualEvidence
 } from './lib/evidenceStorage';
-import { limparEvidenciasAcoes } from './lib/domain/planoAcao';
+import { limparEvidenciasAcoes, formatarDescricaoObjetiva } from './lib/domain/planoAcao';
 
 // --- Safe LocalStorage with AES-256 Encryption at Rest ---
 const safeLocalStorage = encryptedLocalStorage;
@@ -3029,7 +3029,9 @@ const CronogramaView = ({
     } else {
       atividadesSelecionadas.forEach((item, idx) => {
         const atv = item.atv;
-        const cleanedDesc = (atv.descricao || '').split('\n\n').filter(p => !p.startsWith('Diagnóstico:')).join('\n\n');
+        const cleanedDesc = formatarDescricaoObjetiva(
+          (atv.descricao || '').split('\n\n').filter(p => !p.startsWith('Diagnóstico:')).join('\n\n')
+        );
 
         atividadesBody.push([
           { content: `Atividade ${idx + 1} (Ref. #${item.activityNumber}) –`, styles: { fontStyle: 'bold', cellWidth: 38 } },
@@ -4040,7 +4042,7 @@ const CronogramaView = ({
             )}
             onClick={() => {
               setEditingActivityIndex(idx);
-              setEditingActivity({ ...atv });
+              setEditingActivity({ ...atv, descricao: formatarDescricaoObjetiva(atv.descricao) });
             }}
           >
             <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -4125,7 +4127,7 @@ const CronogramaView = ({
                   onClick={(e) => {
                     e.stopPropagation();
                     setEditingActivityIndex(idx);
-                    setEditingActivity({ ...atv });
+                    setEditingActivity({ ...atv, descricao: formatarDescricaoObjetiva(atv.descricao) });
                   }}
                 >
                   <Plus size={16} className="rotate-45" /> Editar
@@ -4150,7 +4152,7 @@ const CronogramaView = ({
               <div>
                 <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Descrição da Atividade</label>
                 <p className="text-sm text-slate-700 bg-slate-50 p-3.5 rounded-xl border border-slate-100 whitespace-pre-wrap leading-relaxed min-h-[90px]">
-                  {atv.descricao || "Sem descrição definida."}
+                  {formatarDescricaoObjetiva(atv.descricao) || "Sem descrição definida."}
                 </p>
               </div>
 
@@ -15803,7 +15805,7 @@ export default function App() {
         .filter(atv => atv.nome || atv.descricao)
         .map(atv => [
           atv.nome || '',
-          atv.descricao || '',
+          formatarDescricaoObjetiva(atv.descricao) || '',
           atv.solucaoProposta || '',
           atv.responsavel || '',
           atv.cargaHoraria || ''
