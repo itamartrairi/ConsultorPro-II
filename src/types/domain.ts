@@ -161,6 +161,8 @@ export interface Diagnostico {
   nivelMaturidadeAI?: string;
   justificativaMaturidadeAI?: string;
   resumoExecutivoAI?: string;
+  /** IDs de premissas/perguntas desmarcadas pelo consultor neste diagnóstico */
+  excludedPremissaIds?: string[];
 }
 
 export interface Solucao {

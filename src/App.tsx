@@ -18095,17 +18095,46 @@ export default function App() {
                     );
                   }
 
-                  const totalOverall = uniqueRespostas.length;
-                  const answeredOverall = uniqueRespostas.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'Não').length;
+                  const excludedIds = selectedDiagnostico.excludedPremissaIds || [];
+                  const isQExcluded = (r: Resposta) => {
+                    const qKey = r.premissaId || r.id;
+                    return excludedIds.includes(qKey) || (r.premissaId ? excludedIds.includes(r.premissaId) : false) || excludedIds.includes(r.id);
+                  };
+
+                  const handleToggleQuestionExcluded = async (qKey: string) => {
+                    if (!selectedDiagnostico) return;
+                    const curExcluded = selectedDiagnostico.excludedPremissaIds || [];
+                    const isCurrentlyExcluded = curExcluded.includes(qKey);
+                    const updatedExcluded = isCurrentlyExcluded 
+                      ? curExcluded.filter(id => id !== qKey)
+                      : [...curExcluded, qKey];
+
+                    const updatedDiag = { ...selectedDiagnostico, excludedPremissaIds: updatedExcluded };
+                    setSelectedDiagnostico(updatedDiag);
+                    setDiagnosticos(prev => prev.map(d => d.id === selectedDiagnostico.id ? updatedDiag : d));
+
+                    try {
+                      await updateDoc(doc(db, 'diagnosticos', selectedDiagnostico.id), {
+                        excludedPremissaIds: updatedExcluded
+                      });
+                    } catch (e) {
+                      console.warn("Erro ao salvar pergunta desmarcada no diagnóstico:", e);
+                    }
+                  };
+
+                  const activeQuestionsOverall = uniqueRespostas.filter(r => !isQExcluded(r));
+                  const totalOverall = activeQuestionsOverall.length;
+                  const answeredOverall = activeQuestionsOverall.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'Não').length;
                   const isAllPremissasAnswered = totalOverall > 0 && answeredOverall === totalOverall;
                   const pctOverall = totalOverall > 0 ? (isAllPremissasAnswered ? 100 : Math.min(99, Math.floor((answeredOverall / totalOverall) * 100))) : 0;
 
                   const getAreaProgress = (resps: Resposta[]) => {
-                    const total = resps.length;
-                    const answered = resps.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'Não').length;
+                    const activeResps = resps.filter(r => !isQExcluded(r));
+                    const total = activeResps.length;
+                    const answered = activeResps.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'Não').length;
                     const isComplete = total > 0 && answered === total;
                     const pct = total > 0 ? (isComplete ? 100 : Math.min(99, Math.floor((answered / total) * 100))) : 0;
-                    return { answered, total, pct, isComplete };
+                    return { answered, total, totalRaw: resps.length, pct, isComplete };
                   };
 
                   // 3. Select active area
@@ -18264,12 +18293,77 @@ export default function App() {
                                   </div>
                                 </div>
                                 
-                                <div className="grid grid-cols-1 gap-6">
-                                  {probRespostas.map(resp => (
-                                    <Card key={resp.id} className="p-6 hover:border-emerald-100 transition-colors">
+                                  <div className="grid grid-cols-1 gap-6">
+                                  {probRespostas.map(resp => {
+                                    const qKey = resp.premissaId || resp.id;
+                                    const isExcluded = isQExcluded(resp);
+
+                                    return (
+                                    <Card 
+                                      key={resp.id} 
+                                      className={cn(
+                                        "p-6 transition-all",
+                                        isExcluded 
+                                          ? "bg-slate-50/80 border-dashed border-slate-300 opacity-60 hover:opacity-100" 
+                                          : "hover:border-emerald-100 bg-white"
+                                      )}
+                                    >
+                                      {/* Bar to select/deselect question from diagnosis */}
+                                      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+                                        <div className="flex items-center gap-2">
+                                          <span className={cn(
+                                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold",
+                                            isExcluded 
+                                              ? "bg-rose-50 text-rose-700 border border-rose-200" 
+                                              : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                          )}>
+                                            {isExcluded ? (
+                                              <>
+                                                <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                                                Pergunta Excluída
+                                              </>
+                                            ) : (
+                                              <>
+                                                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                Ativa no Diagnóstico
+                                              </>
+                                            )}
+                                          </span>
+                                          {isExcluded && (
+                                            <span className="text-[11px] text-slate-400 italic">
+                                              (Não computa na pontuação nem no plano de ação)
+                                            </span>
+                                          )}
+                                        </div>
+
+                                        <button
+                                          type="button"
+                                          onClick={() => handleToggleQuestionExcluded(qKey)}
+                                          className={cn(
+                                            "inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border transition-all cursor-pointer",
+                                            isExcluded
+                                              ? "bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100 shadow-xs"
+                                              : "bg-white border-slate-200 text-slate-600 hover:border-rose-200 hover:text-rose-600 hover:bg-rose-50"
+                                          )}
+                                          title={isExcluded ? "Clique para reativar esta pergunta no diagnóstico" : "Clique para desmarcar e ignorar esta pergunta no diagnóstico"}
+                                        >
+                                          {isExcluded ? (
+                                            <>
+                                              <CheckCircle2 size={14} className="text-emerald-600" />
+                                              Reativar Pergunta
+                                            </>
+                                          ) : (
+                                            <>
+                                              <Trash2 size={13} className="text-rose-400" />
+                                              Desmarcar / Ignorar Pergunta
+                                            </>
+                                          )}
+                                        </button>
+                                      </div>
+
                                       <div className="flex flex-col md:flex-row md:items-start gap-6">
                                         <div className="flex-1">
-                                          <h4 className="text-lg font-medium text-slate-800 mb-4">{resp.pergunta}</h4>
+                                          <h4 className={cn("text-lg font-medium mb-4", isExcluded ? "text-slate-400 line-through" : "text-slate-800")}>{resp.pergunta}</h4>
                                           
                                           <div className="flex flex-wrap gap-2">
                                             <button 
@@ -18466,7 +18560,8 @@ export default function App() {
                                         </div>
                                       </div>
                                     </Card>
-                                  ))}
+                                  );
+                                  })}
                                 </div>
                               </div>
                             );
