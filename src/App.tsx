@@ -4427,12 +4427,57 @@ const CronogramaView = ({
               </select>
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Nome da Atividade</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[10px] font-bold text-slate-400 uppercase">Nome da Atividade</label>
+                {((editingActivity.problemasTratados && editingActivity.problemasTratados.length > 0) || editingActivity.idProblema) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (editingActivity.problemasTratados && editingActivity.problemasTratados.length > 0) {
+                        const nomes = editingActivity.problemasTratados.map(p => p.problema.trim()).filter(Boolean);
+                        let desc = '';
+                        if (nomes.length === 1) desc = nomes[0];
+                        else if (nomes.length === 2) desc = `${nomes[0]} e ${nomes[1]}`;
+                        else desc = `${nomes.slice(0, 2).join(', ')} e outros (+${nomes.length - 2})`;
+                        const prefixo = editingActivity.area && editingActivity.area !== 'Geral' ? `${editingActivity.area}: ` : '';
+                        setEditingActivity({ ...editingActivity, nome: `${prefixo}Resolução de ${desc}` });
+                      } else if (editingActivity.idProblema) {
+                        const prob = problemas.find(p => p.id === editingActivity.idProblema || p.descricao_problemas === editingActivity.idProblema);
+                        const desc = prob?.descricao_problemas || editingActivity.idProblema;
+                        const prefixo = editingActivity.area && editingActivity.area !== 'Geral' ? `${editingActivity.area}: ` : '';
+                        setEditingActivity({ ...editingActivity, nome: `${prefixo}Solução: ${desc}` });
+                      }
+                    }}
+                    className="text-[10px] text-emerald-600 hover:text-emerald-700 font-semibold underline cursor-pointer"
+                    title="Atualizar título considerando o nome dos problemas diagnosticados"
+                  >
+                    Gerar título com base nos problemas
+                  </button>
+                )}
+              </div>
               <input 
                 className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
                 value={editingActivity.nome}
                 onChange={(e) => setEditingActivity({...editingActivity, nome: e.target.value})}
               />
+              {editingActivity.problemasTratados && editingActivity.problemasTratados.length > 0 && (
+                <div className="mt-1.5 flex flex-wrap gap-1 items-center">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase mr-1">Problemas contemplados:</span>
+                  {editingActivity.problemasTratados.map((pt, ptIdx) => (
+                    <span 
+                      key={ptIdx}
+                      className={cn(
+                        "text-[10px] px-2 py-0.5 rounded font-medium border",
+                        pt.nivel === 'Crítico' ? "bg-rose-50 text-rose-700 border-rose-200" :
+                        pt.nivel === 'Alto' ? "bg-amber-50 text-amber-700 border-amber-200" :
+                        "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      )}
+                    >
+                      {pt.problema}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Carga Horária</label>
@@ -4503,24 +4548,25 @@ const CronogramaView = ({
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Solução Proposta</label>
-                <input 
-                  className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
-                  value={editingActivity.solucaoProposta}
-                  onChange={(e) => setEditingActivity({...editingActivity, solucaoProposta: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Resultado Esperado (KPI)</label>
-                <input 
-                  className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
-                  value={editingActivity.resultadoEsperado || ''}
-                  onChange={(e) => setEditingActivity({...editingActivity, resultadoEsperado: e.target.value})}
-                  placeholder="Ex: Aumento de 15% nas vendas"
-                />
-              </div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Solução Proposta</label>
+              <textarea 
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none resize-y min-h-[70px]"
+                rows={3}
+                value={editingActivity.solucaoProposta}
+                onChange={(e) => setEditingActivity({...editingActivity, solucaoProposta: e.target.value})}
+                placeholder="Descreva a solução proposta detalhada..."
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Resultado Esperado (KPI)</label>
+              <textarea 
+                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none resize-y min-h-[70px]"
+                rows={3}
+                value={editingActivity.resultadoEsperado || ''}
+                onChange={(e) => setEditingActivity({...editingActivity, resultadoEsperado: e.target.value})}
+                placeholder="Ex: Aumento de 15% nas vendas, ferramentas implantadas e em uso..."
+              />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>

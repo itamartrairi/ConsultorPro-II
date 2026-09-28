@@ -448,8 +448,25 @@ export function textosDaAtividadeDeArea(area: string, itens: ProblemaTratado[]):
     .map(p => formatarDescricaoObjetiva(p.passos))
     .filter(Boolean);
 
+  // Considera os problemas reais a serem solucionados no título da atividade
+  const nomesProblemas = itens.map(p => p.problema.trim()).filter(Boolean);
+  let tituloProblemas = '';
+  if (nomesProblemas.length === 1) {
+    tituloProblemas = nomesProblemas[0];
+  } else if (nomesProblemas.length === 2) {
+    tituloProblemas = `${nomesProblemas[0]} e ${nomesProblemas[1]}`;
+  } else if (nomesProblemas.length > 2) {
+    tituloProblemas = `${nomesProblemas.slice(0, 2).join(', ')} e outros (+${nomesProblemas.length - 2})`;
+  } else {
+    tituloProblemas = `${itens.length} problema${plural ? 's' : ''}`;
+  }
+
+  const tituloFinal = area && area !== 'Geral' && area !== 'Demais áreas'
+    ? `${area}: Resolução de ${tituloProblemas} (${resumoNiveis(itens)})`
+    : `Resolução de ${tituloProblemas} (${resumoNiveis(itens)})`;
+
   return {
-    nome: `${area}: solução de ${itens.length} problema${plural ? 's' : ''} (${resumoNiveis(itens)})`,
+    nome: tituloFinal,
     descricao: descLinhas.join('\n'),
     solucaoProposta: itens.map((p) => `[${p.nivel}] ${p.solucao}`).join('; '),
     resultadoEsperado: itens.map((p) => p.resultadoEsperado).join(' | '),
