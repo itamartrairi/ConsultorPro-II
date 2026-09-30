@@ -2365,8 +2365,15 @@ const CronogramaView = ({
    * A IA só melhora a redação; sem IA o plano é gerado do mesmo jeito.
    */
   const generateSuggestionsAI = async () => {
-    // Todas as respostas do diagnóstico (antes, respostas fora das áreas marcadas ficavam de fora do plano).
-    const doDiagnostico = (respostas || []).filter(r => !r.diagnosticoId || r.diagnosticoId === selectedDiagnostico.id);
+    // Todas as respostas do diagnóstico (desconsiderando perguntas excluídas).
+    const excludedIds = selectedDiagnostico?.excludedPremissaIds || [];
+    const isQExcluded = (r: Resposta) => {
+      const qKey = r.premissaId || r.id;
+      return excludedIds.includes(qKey) || (r.premissaId ? excludedIds.includes(r.premissaId) : false) || excludedIds.includes(r.id);
+    };
+    const doDiagnostico = (respostas || [])
+      .filter(r => !r.diagnosticoId || r.diagnosticoId === selectedDiagnostico.id)
+      .filter(r => !isQExcluded(r));
     const analise = analisarDiagnostico(deduplicateRespostas(doDiagnostico), problemas, solucoes);
 
     if (analise.totalRespondidas === 0) {
@@ -9681,6 +9688,8 @@ export default function App() {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 9;
+  const [empresaSearchTerm, setEmpresaSearchTerm] = useState('');
+  const [empresaTipoFilter, setEmpresaTipoFilter] = useState('');
   const [empresasCredenciadas, setEmpresasCredenciadas] = useState<EmpresaCredenciada[]>(() => {
     try {
       const saved = localStorage.getItem('local_empresas_credenciadas');
@@ -14101,7 +14110,7 @@ export default function App() {
     }
   };
 
-  /** Todas as respostas do diagnóstico selecionado (estado local + nuvem). */
+  /** Todas as respostas ativas do diagnóstico selecionado (estado local + nuvem, desconsiderando perguntas excluídas). */
   const carregarRespostasDoDiagnostico = async (diag: Diagnostico): Promise<Resposta[]> => {
     const mapa = new Map<string, Resposta>();
     respostas.filter(r => r.diagnosticoId === diag.id).forEach(r => mapa.set(r.id, r));
@@ -14113,7 +14122,12 @@ export default function App() {
         console.warn('[Plano] Não foi possível ler as respostas da nuvem; usando as locais.', e);
       }
     }
-    return Array.from(mapa.values());
+    const excludedIds = diag.excludedPremissaIds || [];
+    const isQExcluded = (r: Resposta) => {
+      const qKey = r.premissaId || r.id;
+      return excludedIds.includes(qKey) || (r.premissaId ? excludedIds.includes(r.premissaId) : false) || excludedIds.includes(r.id);
+    };
+    return Array.from(mapa.values()).filter(r => !isQExcluded(r));
   };
 
   /**
@@ -17630,177 +17644,296 @@ export default function App() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-                    <div>
-                      <h2 className="text-2xl font-bold">Empresas</h2>
-                      <p className="text-slate-500">Gerencie sua carteira de clientes</p>
-                    </div>
-                    <Button onClick={() => {
-                      setInputValue('');
-                      setModalType('create');
-                      setCustomEmpresaType('');
-                      setEmpresaForm({ tipoEmpresa: 'Geral' });
-                      setIsModalOpen(true);
-                    }}>
-                      <Plus size={18} /> Nova Empresa
-                    </Button>
-                  </div>
+                  {(() => {
+                    const filteredEmpresas = empresas.filter(emp => {
+                      if (empresaTipoFilter) {
+                        const empType = (emp.tipoEmpresa || 'Geral').trim().toLowerCase();
+                        if (empType !== empresaTipoFilter.trim().toLowerCase()) {
+                          return false;
+                        }
+                      }
+                      if (empresaSearchTerm.trim()) {
+                        const term = empresaSearchTerm.trim().toLowerCase();
+                        const matchNome = (emp.nome || '').toLowerCase().includes(term);
+                        const matchRazao = (emp.razaoSocial || '').toLowerCase().includes(term);
+                        const matchFantasia = (emp.nomeFantasia || '').toLowerCase().includes(term);
+                        const matchCnpj = (emp.cnpj || '').toLowerCase().includes(term);
+                        if (!matchNome && !matchRazao && !matchFantasia && !matchCnpj) {
+                          return false;
+                        }
+                      }
+                      return true;
+                    });
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {empresas.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map(emp => (
-                      <motion.div
-                        key={emp.id}
-                        whileHover={{ y: -4, boxShadow: "0 12px 24px -6px rgba(0, 0, 0, 0.08), 0 4px 8px -4px rgba(0, 0, 0, 0.04)" }}
-                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                        className="rounded-2xl h-full flex flex-col"
-                      >
-                        <Card className="hover:border-emerald-200 transition-colors cursor-pointer group h-full flex flex-col justify-between" onClick={() => { setSelectedEmpresa(emp); }}>
-                          <div className="p-5">
-                            <div className="flex items-start justify-between mb-4">
-                              <div className="w-10 h-10 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
-                                <Building2 size={20} />
-                              </div>
-                              <div className="flex gap-1">
-                                <Button variant="ghost" className="p-1 text-slate-400 hover:text-emerald-500" onClick={(e: any) => {
-                                  e.stopPropagation();
-                                  setModalType('edit');
-                                  setModalData(emp);
-                                  setEmpresaForm({ ...emp, razaoSocial: emp.razaoSocial || emp.nome, tipoEmpresa: emp.tipoEmpresa || 'Geral', cafNumero: emp.cafNumero || '' });
-                                  if (emp.tipoEmpresa && !TIPOS_EMPRESA.includes(emp.tipoEmpresa)) {
-                                    setCustomEmpresaType(emp.tipoEmpresa);
-                                  } else {
-                                    setCustomEmpresaType('');
-                                  }
-                                  setIsModalOpen(true);
-                                }}>
-                                  <FileText size={16} />
-                                </Button>
-                                <Button variant="ghost" className="p-1 text-slate-400 hover:text-rose-500" onClick={(e: any) => {
-                                  e.stopPropagation();
-                                  setModalType('delete');
-                                  setModalData(emp);
-                                  setIsModalOpen(true);
-                                }}>
-                                  <Trash2 size={16} />
-                                </Button>
-                              </div>
+                    const totalPages = Math.max(1, Math.ceil(filteredEmpresas.length / itemsPerPage));
+                    const paginatedEmpresas = filteredEmpresas.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+                    return (
+                      <>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                          <div>
+                            <h2 className="text-2xl font-bold">Empresas</h2>
+                            <p className="text-slate-500">Gerencie sua carteira de clientes ({filteredEmpresas.length} {filteredEmpresas.length === 1 ? 'encontrada' : 'encontradas'})</p>
+                          </div>
+                          <Button onClick={() => {
+                            setInputValue('');
+                            setModalType('create');
+                            setCustomEmpresaType('');
+                            setEmpresaForm({ tipoEmpresa: 'Geral' });
+                            setIsModalOpen(true);
+                          }}>
+                            <Plus size={18} /> Nova Empresa
+                          </Button>
+                        </div>
+
+                        {/* Filtros: Tipo de Empresa e Nome da Empresa */}
+                        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm mb-6 space-y-3">
+                          <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b border-slate-100">
+                            <div className="flex items-center gap-2">
+                              <ListFilter size={16} className="text-emerald-600" />
+                              <span className="text-xs font-bold uppercase tracking-wider text-slate-700">Filtros de Pesquisa</span>
                             </div>
-                            <h3 className="font-bold text-lg mb-1">{emp.nome}</h3>
-                            <div className="flex items-center gap-2 mb-4 flex-wrap">
-                              <p className="text-xs text-slate-400">
-                                Cadastrada em {formatFirestoreDate(emp.dataCadastro)}
-                              </p>
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-50 text-slate-500 rounded text-[10px] font-bold uppercase tracking-wider border border-slate-150">
-                                {emp.tipoEmpresa || 'Geral'}
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setModalData(emp);
-                                    setSelectedEmpresa(emp);
-                                    const seg = emp.tipoEmpresa || 'Geral';
-                                    setSelectedSegmentForEdit(seg);
-                                    setCustomSegmentForEdit(!TIPOS_EMPRESA.includes(seg) ? seg : '');
-                                    setEditSegmentTarget('empresa');
-                                    setIsEditSegmentModalOpen(true);
+                            {(empresaTipoFilter || empresaSearchTerm) && (
+                              <button
+                                onClick={() => {
+                                  setEmpresaTipoFilter('');
+                                  setEmpresaSearchTerm('');
+                                  setCurrentPage(1);
+                                }}
+                                className="text-xs text-rose-600 hover:text-rose-700 font-semibold cursor-pointer border-none bg-transparent hover:underline flex items-center gap-1"
+                              >
+                                <X size={13} /> Limpar Filtros
+                              </button>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">
+                                Filtrar por Tipo de Empresa
+                              </label>
+                              <select
+                                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-slate-800 transition-colors"
+                                value={empresaTipoFilter}
+                                onChange={(e) => {
+                                  setEmpresaTipoFilter(e.target.value);
+                                  setCurrentPage(1);
+                                }}
+                              >
+                                <option value="">Todos os Tipos de Empresa</option>
+                                <option value="Geral">Geral</option>
+                                {availableSegments.filter(s => s !== 'Geral').map((tipo) => (
+                                  <option key={tipo} value={tipo}>{tipo}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">
+                                Filtrar por Nome da Empresa
+                              </label>
+                              <div className="relative">
+                                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                <input
+                                  type="text"
+                                  placeholder="Digite o nome, razão social ou fantasia..."
+                                  value={empresaSearchTerm}
+                                  onChange={(e) => {
+                                    setEmpresaSearchTerm(e.target.value);
+                                    setCurrentPage(1);
                                   }}
-                                  className="hover:text-emerald-600 hover:bg-slate-250/30 p-0.5 rounded cursor-pointer border-none flex items-center justify-center transition-all"
-                                  title="Editar Tipo de Negócio"
-                                >
-                                  <Edit2 size={10} />
-                                </button>
-                              </span>
-                            </div>
-
-                            <div className="space-y-1 mb-2">
-                              {emp.cnpj && (
-                                <p className="text-xs font-medium text-slate-500 flex items-center gap-1 flex-wrap">
-                                  <span className="font-bold text-slate-400 uppercase text-[9px]">CNPJ:</span> {emp.cnpj}
-                                  {emp.situacaoCadastral && (
-                                    <span className={cn(
-                                      "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
-                                      emp.situacaoCadastral.toUpperCase().includes('ATIVA')
-                                        ? "bg-emerald-100 text-emerald-700"
-                                        : "bg-rose-100 text-rose-700"
-                                    )}>
-                                      {emp.situacaoCadastral}
-                                    </span>
-                                  )}
-                                </p>
-                              )}
-                              {(emp.porteEmpresa || emp.naturezaJuridica) && (
-                                <p className="text-xs font-medium text-slate-500 flex items-center gap-1">
-                                  <span className="font-bold text-slate-400 uppercase text-[9px]">Tipo:</span> {[emp.porteEmpresa, emp.naturezaJuridica].filter(Boolean).join(' — ')}
-                                </p>
-                              )}
-                              {emp.cafNumero && (
-                                <p className="text-xs font-medium text-slate-500 flex items-center gap-1">
-                                  <span className="font-bold text-slate-400 uppercase text-[9px]">CAF:</span> {emp.cafNumero}
-                                </p>
-                              )}
-                              {emp.mdaDataValidade && (() => {
-                                const mdaStatus = getMdaExpirationStatus(emp.mdaDataValidade);
-                                if (!mdaStatus || mdaStatus.status === 'valido') return null;
-                                return (
-                                  <span className={cn(
-                                    "inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5",
-                                    mdaStatus.status === 'vencido' ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"
-                                  )}>
-                                    <AlertTriangle size={10} /> MDA: {mdaStatus.label}
-                                  </span>
-                                );
-                              })()}
-                            </div>
-                            
-                            <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                              <Button variant="secondary" size="sm" onClick={(e: any) => {
-                                e.stopPropagation();
-                                setSelectedEmpresa(emp);
-                                setModalType('selectAreas');
-                                setModalData(emp);
-                                setDiagnosisCompanyType(emp.tipoEmpresa || 'Geral');
-                                setDiagnosisProjectName(`Projeto - ${emp.nome || ''}`);
-                                setSelectedAreasForDiagnosis([]); // Reset selection
-                                setIsModalOpen(true);
-                              }}>
-                                Novo Diagnóstico
-                              </Button>
-                              <ChevronRight size={18} className="text-slate-300 group-hover:text-emerald-500 transition-colors" />
+                                  className="w-full pl-10 pr-9 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-slate-800 placeholder:text-slate-400 transition-colors"
+                                />
+                                {empresaSearchTerm && (
+                                  <button
+                                    onClick={() => {
+                                      setEmpresaSearchTerm('');
+                                      setCurrentPage(1);
+                                    }}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer border-none bg-transparent"
+                                    title="Limpar busca"
+                                  >
+                                    <X size={14} />
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </Card>
-                      </motion.div>
-                    ))}
-                    {empresas.length === 0 && (
-                      <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 rounded-xl">
-                        <Building2 size={48} className="mx-auto text-slate-200 mb-4" />
-                        <p className="text-slate-400">Nenhuma empresa cadastrada ainda.</p>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {empresas.length > itemsPerPage && (
-                    <div className="flex items-center justify-center gap-2 mt-8">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        disabled={currentPage === 1}
-                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                      >
-                        Anterior
-                      </Button>
-                      <span className="text-sm font-medium text-slate-500 mx-4">
-                        Página {currentPage} de {Math.ceil(empresas.length / itemsPerPage)}
-                      </span>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        disabled={currentPage === Math.ceil(empresas.length / itemsPerPage)}
-                        onClick={() => setCurrentPage(prev => Math.min(Math.ceil(empresas.length / itemsPerPage), prev + 1))}
-                      >
-                        Próxima
-                      </Button>
-                    </div>
-                  )}
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {paginatedEmpresas.map(emp => (
+                            <motion.div
+                              key={emp.id}
+                              whileHover={{ y: -4, boxShadow: "0 12px 24px -6px rgba(0, 0, 0, 0.08), 0 4px 8px -4px rgba(0, 0, 0, 0.04)" }}
+                              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                              className="rounded-2xl h-full flex flex-col"
+                            >
+                              <Card className="hover:border-emerald-200 transition-colors cursor-pointer group h-full flex flex-col justify-between" onClick={() => { setSelectedEmpresa(emp); }}>
+                                <div className="p-5">
+                                  <div className="flex items-start justify-between mb-4">
+                                    <div className="w-10 h-10 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
+                                      <Building2 size={20} />
+                                    </div>
+                                    <div className="flex gap-1">
+                                      <Button variant="ghost" className="p-1 text-slate-400 hover:text-emerald-500" onClick={(e: any) => {
+                                        e.stopPropagation();
+                                        setModalType('edit');
+                                        setModalData(emp);
+                                        setEmpresaForm({ ...emp, razaoSocial: emp.razaoSocial || emp.nome, tipoEmpresa: emp.tipoEmpresa || 'Geral', cafNumero: emp.cafNumero || '' });
+                                        if (emp.tipoEmpresa && !TIPOS_EMPRESA.includes(emp.tipoEmpresa)) {
+                                          setCustomEmpresaType(emp.tipoEmpresa);
+                                        } else {
+                                          setCustomEmpresaType('');
+                                        }
+                                        setIsModalOpen(true);
+                                      }}>
+                                        <FileText size={16} />
+                                      </Button>
+                                      <Button variant="ghost" className="p-1 text-slate-400 hover:text-rose-500" onClick={(e: any) => {
+                                        e.stopPropagation();
+                                        setModalType('delete');
+                                        setModalData(emp);
+                                        setIsModalOpen(true);
+                                      }}>
+                                        <Trash2 size={16} />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                  <h3 className="font-bold text-lg mb-1">{emp.nome}</h3>
+                                  <div className="flex items-center gap-2 mb-4 flex-wrap">
+                                    <p className="text-xs text-slate-400">
+                                      Cadastrada em {formatFirestoreDate(emp.dataCadastro)}
+                                    </p>
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-50 text-slate-500 rounded text-[10px] font-bold uppercase tracking-wider border border-slate-150">
+                                      {emp.tipoEmpresa || 'Geral'}
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setModalData(emp);
+                                          setSelectedEmpresa(emp);
+                                          const seg = emp.tipoEmpresa || 'Geral';
+                                          setSelectedSegmentForEdit(seg);
+                                          setCustomSegmentForEdit(!TIPOS_EMPRESA.includes(seg) ? seg : '');
+                                          setEditSegmentTarget('empresa');
+                                          setIsEditSegmentModalOpen(true);
+                                        }}
+                                        className="hover:text-emerald-600 hover:bg-slate-250/30 p-0.5 rounded cursor-pointer border-none flex items-center justify-center transition-all"
+                                        title="Editar Tipo de Negócio"
+                                      >
+                                        <Edit2 size={10} />
+                                      </button>
+                                    </span>
+                                  </div>
+
+                                  <div className="space-y-1 mb-2">
+                                    {emp.cnpj && (
+                                      <p className="text-xs font-medium text-slate-500 flex items-center gap-1 flex-wrap">
+                                        <span className="font-bold text-slate-400 uppercase text-[9px]">CNPJ:</span> {emp.cnpj}
+                                        {emp.situacaoCadastral && (
+                                          <span className={cn(
+                                            "text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase",
+                                            emp.situacaoCadastral.toUpperCase().includes('ATIVA')
+                                              ? "bg-emerald-100 text-emerald-700"
+                                              : "bg-rose-100 text-rose-700"
+                                          )}>
+                                            {emp.situacaoCadastral}
+                                          </span>
+                                        )}
+                                      </p>
+                                    )}
+                                    {(emp.porteEmpresa || emp.naturezaJuridica) && (
+                                      <p className="text-xs font-medium text-slate-500 flex items-center gap-1">
+                                        <span className="font-bold text-slate-400 uppercase text-[9px]">Tipo:</span> {[emp.porteEmpresa, emp.naturezaJuridica].filter(Boolean).join(' — ')}
+                                      </p>
+                                    )}
+                                    {emp.cafNumero && (
+                                      <p className="text-xs font-medium text-slate-500 flex items-center gap-1">
+                                        <span className="font-bold text-slate-400 uppercase text-[9px]">CAF:</span> {emp.cafNumero}
+                                      </p>
+                                    )}
+                                    {emp.mdaDataValidade && (() => {
+                                      const mdaStatus = getMdaExpirationStatus(emp.mdaDataValidade);
+                                      if (!mdaStatus || mdaStatus.status === 'valido') return null;
+                                      return (
+                                        <span className={cn(
+                                          "inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5",
+                                          mdaStatus.status === 'vencido' ? "bg-rose-100 text-rose-700" : "bg-amber-100 text-amber-700"
+                                        )}>
+                                          <AlertTriangle size={10} /> MDA: {mdaStatus.label}
+                                        </span>
+                                      );
+                                    })()}
+                                  </div>
+                                  
+                                  <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                                    <Button variant="secondary" size="sm" onClick={(e: any) => {
+                                      e.stopPropagation();
+                                      setSelectedEmpresa(emp);
+                                      setModalType('selectAreas');
+                                      setModalData(emp);
+                                      setDiagnosisCompanyType(emp.tipoEmpresa || 'Geral');
+                                      setDiagnosisProjectName(`Projeto - ${emp.nome || ''}`);
+                                      setSelectedAreasForDiagnosis([]); // Reset selection
+                                      setIsModalOpen(true);
+                                    }}>
+                                      Novo Diagnóstico
+                                    </Button>
+                                    <ChevronRight size={18} className="text-slate-300 group-hover:text-emerald-500 transition-colors" />
+                                  </div>
+                                </div>
+                              </Card>
+                            </motion.div>
+                          ))}
+                          {filteredEmpresas.length === 0 && (
+                            <div className="col-span-full py-20 text-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                              <Building2 size={48} className="mx-auto text-slate-200 mb-4" />
+                              {empresas.length === 0 ? (
+                                <p className="text-slate-400">Nenhuma empresa cadastrada ainda.</p>
+                              ) : (
+                                <div className="space-y-2">
+                                  <p className="text-slate-600 font-medium">Nenhuma empresa encontrada com os filtros selecionados.</p>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      setEmpresaTipoFilter('');
+                                      setEmpresaSearchTerm('');
+                                      setCurrentPage(1);
+                                    }}
+                                  >
+                                    Limpar Filtros
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        
+                        {filteredEmpresas.length > itemsPerPage && (
+                          <div className="flex items-center justify-center gap-2 mt-8">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              disabled={currentPage === 1}
+                              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                            >
+                              Anterior
+                            </Button>
+                            <span className="text-sm font-medium text-slate-500 mx-4">
+                              Página {currentPage} de {totalPages}
+                            </span>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              disabled={currentPage === totalPages}
+                              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                            >
+                              Próxima
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
 
                   {selectedEmpresa && (
                     <div className="mt-12">
@@ -18160,6 +18293,13 @@ export default function App() {
                     const updatedDiag = { ...selectedDiagnostico, excludedPremissaIds: updatedExcluded };
                     setSelectedDiagnostico(updatedDiag);
                     setDiagnosticos(prev => prev.map(d => d.id === selectedDiagnostico.id ? updatedDiag : d));
+
+                    try {
+                      const saved = JSON.parse(localStorage.getItem('local_diagnosticos') || '[]');
+                      if (Array.isArray(saved)) {
+                        localStorage.setItem('local_diagnosticos', JSON.stringify(saved.map((d: any) => d.id === selectedDiagnostico.id ? updatedDiag : d)));
+                      }
+                    } catch { /* cópia local é opcional */ }
 
                     try {
                       await updateDoc(doc(db, 'diagnosticos', selectedDiagnostico.id), {
@@ -18705,9 +18845,16 @@ export default function App() {
 
               {/* Stats Grid */}
               {(() => {
+                const excludedIds = selectedDiagnostico?.excludedPremissaIds || [];
+                const isQExcluded = (r: Resposta) => {
+                  const qKey = r.premissaId || r.id;
+                  return excludedIds.includes(qKey) || (r.premissaId ? excludedIds.includes(r.premissaId) : false) || excludedIds.includes(r.id);
+                };
+
                 const seenQ = new Set<string>();
                 const uniqueRespsDash: Resposta[] = [];
                 respostas.forEach(resp => {
+                  if (isQExcluded(resp)) return;
                   const normQ = (resp.pergunta || '').trim().toLowerCase();
                   if (normQ && seenQ.has(normQ)) return;
                   if (normQ) seenQ.add(normQ);
@@ -18944,7 +19091,13 @@ export default function App() {
                 <h4 className="font-bold mb-4">Problemas Identificados no Diagnóstico</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {(() => {
-                    const cleanResps = deduplicateRespostas(respostas);
+                    const excludedIds = selectedDiagnostico?.excludedPremissaIds || [];
+                    const isQExcluded = (r: Resposta) => {
+                      const qKey = r.premissaId || r.id;
+                      return excludedIds.includes(qKey) || (r.premissaId ? excludedIds.includes(r.premissaId) : false) || excludedIds.includes(r.id);
+                    };
+
+                    const cleanResps = deduplicateRespostas(respostas).filter(r => !isQExcluded(r));
                     const sortedGroups = (Object.entries(cleanResps.reduce((acc: Record<string, Resposta[]>, resp) => {
                       if (resp.resposta === 'Sim') return acc;
                       const probName = resp.problema || 'Geral';
