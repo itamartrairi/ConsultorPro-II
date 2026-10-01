@@ -719,7 +719,7 @@ export async function enriquecerComIA(
   ai: GeradorIA | null | undefined,
   atividades: AtividadeCronograma[],
   analise: AnaliseDiagnostico,
-  contexto: { tipoEmpresa?: string; nomeEmpresa?: string } = {}
+  contexto: { tipoEmpresa?: string; nomeEmpresa?: string; tipoProdutoServico?: string } = {}
 ): Promise<{ atividades: AtividadeCronograma[]; usouIA: boolean; erro?: string }> {
   const tratadosNoPlano = new Set(atividades.flatMap((a) => (a.problemasTratados || []).map((t) => t.idProblema)));
   const alvo = analise.problemas.filter((p) => tratadosNoPlano.has(p.idProblema));
@@ -739,7 +739,9 @@ export async function enriquecerComIA(
 
   const prompt = `Você é um consultor empresarial sênior (padrão SEBRAE). Com base no diagnóstico${
     contexto.nomeEmpresa ? ` da empresa "${contexto.nomeEmpresa}"` : ''
-  }${contexto.tipoEmpresa ? ` (segmento: ${contexto.tipoEmpresa})` : ''}, escreva a solução de CADA problema abaixo.
+  }${contexto.tipoEmpresa ? ` (segmento: ${contexto.tipoEmpresa})` : ''}${
+    contexto.tipoProdutoServico ? ` e considerando especificamente seu produto/serviço: "${contexto.tipoProdutoServico}"` : ''
+  }, escreva a solução de CADA problema abaixo com total aplicabilidade prática ao seu produto/serviço e modelo operacional.
 
 PARA CADA PROBLEMA (um item por idProblema, mantendo o mesmo idProblema):
 - "acao": título curto e profissional da ação (até 80 caracteres), começando por um verbo no infinitivo.
@@ -903,19 +905,20 @@ export function tarefasDasAtividades(atividades: AtividadeCronograma[]): TarefaG
 export function montarTextosRelatorio(
   analise: AnaliseDiagnostico,
   atividades: AtividadeCronograma[],
-  contexto: { nomeEmpresa?: string; tipoEmpresa?: string } = {}
+  contexto: { nomeEmpresa?: string; tipoEmpresa?: string; tipoProdutoServico?: string } = {}
 ): { objetivo: string; solucoesIndicadas: string; resultadosEsperados: string } {
   const criticos = analise.problemas.filter((p) => p.nivel === 'Crítico');
   const grupos = agruparPorArea(analise);
   const areas = grupos.map((g) => g.area);
   const empresa = contexto.nomeEmpresa ? ` da empresa ${contexto.nomeEmpresa}` : '';
+  const prodServ = contexto.tipoProdutoServico ? ` no segmento de ${contexto.tipoEmpresa || 'atuação'}, com foco em ${contexto.tipoProdutoServico}` : '';
   const totalHoras = atividades.reduce((s, a) => s + horasDe(a), 0);
   const tratados = new Map(atividades.flatMap((a) => (a.problemasTratados || []).map((t) => [t.idProblema, t] as const)));
 
   const objetivo =
     analise.problemas.length === 0
-      ? `Consolidar as boas práticas de gestão identificadas no diagnóstico${empresa} e estruturar controles e indicadores que garantam a continuidade dos resultados.`
-      : `Solucionar os ${analise.problemas.length} problema${analise.problemas.length > 1 ? 's' : ''} identificado${analise.problemas.length > 1 ? 's' : ''} no diagnóstico${empresa}` +
+      ? `Consolidar as boas práticas de gestão identificadas no diagnóstico${empresa}${prodServ} e estruturar controles e indicadores que garantam a continuidade dos resultados.`
+      : `Solucionar os ${analise.problemas.length} problema${analise.problemas.length > 1 ? 's' : ''} identificado${analise.problemas.length > 1 ? 's' : ''} no diagnóstico${empresa}${prodServ}` +
         `${criticos.length ? ` (${criticos.length} crítico${criticos.length > 1 ? 's' : ''})` : ''}` +
         `${areas.length ? `, distribuídos em ${areas.length} área${areas.length > 1 ? 's' : ''} (${listaTexto(areas.slice(0, 6))})` : ''}, ` +
         `por meio de ${atividades.length} atividades (${totalHoras}h), com implantação de ferramentas de gestão e acompanhamento de indicadores. ` +

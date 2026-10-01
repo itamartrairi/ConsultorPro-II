@@ -151,6 +151,7 @@ import { cn } from './lib/utils';
 import { Button } from './components/Button';
 import { Modal } from './components/Modal';
 import { ToastContainer, type ToastItem } from './components/Toast';
+import { VideoTutorialCard } from './components/VideoTutorialCard';
 import { playClickSound, playSuccessSound } from './lib/sound';
 
 declare global {
@@ -1785,6 +1786,16 @@ const DadosConsultoriaView = ({
           </div>
 
           <div>
+            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tipo de Produto ou Serviço</label>
+            <input 
+              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all font-semibold text-slate-700"
+              value={dadosConsultoria.tipoProdutoServico || ''}
+              placeholder="Ex: Camarão / Pescados, Confecções, Restaurante..."
+              onChange={(e) => setDadosConsultoria({...dadosConsultoria, tipoProdutoServico: e.target.value})}
+            />
+          </div>
+
+          <div>
             <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Período da Consultoria</label>
             <input 
               className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
@@ -2024,6 +2035,7 @@ const CronogramaView = ({
   problemas,
   historicalData = [],
   onGenerateActionPlan,
+  generatingPlan = false,
   onReplicateActionPlan,
   tarefasPlano,
   setTarefasPlano,
@@ -2048,6 +2060,7 @@ const CronogramaView = ({
   problemas: Problema[],
   historicalData?: any[],
   onGenerateActionPlan?: () => void,
+  generatingPlan?: boolean,
   onReplicateActionPlan?: () => void,
   tarefasPlano?: TarefaPlanoAcao[],
   setTarefasPlano?: React.Dispatch<React.SetStateAction<TarefaPlanoAcao[]>>,
@@ -2390,7 +2403,8 @@ const CronogramaView = ({
       const carga = dadosConsultoria.cargaHoraria || selectedDiagnostico.dadosConsultoria?.cargaHoraria || selectedDiagnostico.cargaHoraria || (selectedEmpresa as any)?.cargaHoraria || '34h';
       const contexto = {
         nomeEmpresa: selectedEmpresa?.nomeFantasia || selectedEmpresa?.nome || selectedDiagnostico.nomeEmpresa,
-        tipoEmpresa: selectedDiagnostico.tipoEmpresa || selectedEmpresa?.tipoEmpresa
+        tipoEmpresa: selectedDiagnostico.tipoEmpresa || selectedEmpresa?.tipoEmpresa,
+        tipoProdutoServico: selectedDiagnostico.tipoProdutoServico || dadosConsultoria.tipoProdutoServico || (selectedEmpresa as any)?.tipoProdutoServico || ''
       };
 
       const base = montarAtividades(analise, carga);
@@ -3300,12 +3314,20 @@ const CronogramaView = ({
           </Button>
           <Button 
             variant="outline" 
-            onClick={generateSuggestionsAI} 
-            disabled={isGeneratingAI}
-            className="px-6 text-sky-600 border-sky-100 hover:bg-sky-50"
+            onClick={() => {
+              if (generatingPlan || isGeneratingAI) return;
+              if (onGenerateActionPlan) {
+                onGenerateActionPlan();
+              } else {
+                generateSuggestionsAI();
+              }
+            }} 
+            disabled={generatingPlan || isGeneratingAI}
+            title="Gera o plano e relatório a partir do diagnóstico: diagnóstico, devolutiva, ferramentas de gestão, solução dos problemas críticos, análise final e relatórios"
+            className="px-6 text-indigo-600 border-indigo-200 hover:bg-indigo-50"
           >
-            {isGeneratingAI ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />} 
-            {isGeneratingAI ? "Gerando Relatório & Plano..." : "Gerar Relatório e Plano com IA"}
+            {(generatingPlan || isGeneratingAI) ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />} 
+            {(generatingPlan || isGeneratingAI) ? "Gerando plano..." : "Gerar pelo Diagnóstico"}
           </Button>
           <Button 
             onClick={handleSave} 
@@ -8982,6 +9004,9 @@ const HomeView = ({
         </motion.div>
       )}
 
+      {/* Vídeo Tutorial Interativo com Áudio e Voz Feminina */}
+      <VideoTutorialCard setView={setView} />
+
       <div className="bg-gradient-to-br from-sky-700 via-sky-600 to-blue-500 rounded-[2.5rem] p-12 text-white shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
         <div className="relative z-10">
@@ -14204,7 +14229,8 @@ export default function App() {
       const carga = diag.dadosConsultoria?.cargaHoraria || diag.cargaHoraria || (selectedEmpresa as any)?.cargaHoraria || '34h';
       const contexto = {
         nomeEmpresa: selectedEmpresa?.nomeFantasia || selectedEmpresa?.nome || diag.nomeEmpresa,
-        tipoEmpresa: diag.tipoEmpresa || selectedEmpresa?.tipoEmpresa
+        tipoEmpresa: diag.tipoEmpresa || selectedEmpresa?.tipoEmpresa,
+        tipoProdutoServico: diag.tipoProdutoServico || diag.dadosConsultoria?.tipoProdutoServico || (selectedEmpresa as any)?.tipoProdutoServico || ''
       };
       const base = montarAtividades(analise, carga);
       const { atividades, usouIA, erro } = await enriquecerComIA(getAI() as any, base, analise, contexto);
@@ -14363,7 +14389,8 @@ export default function App() {
             cargaHoraria: `${parseCargaHoraria(totalCargaHoraria)}h`,
             ...montarTextosRelatorio(analiseAtual, adjustedActivities, {
               nomeEmpresa: selectedEmpresa?.nomeFantasia || selectedEmpresa?.nome || selectedDiagnostico.nomeEmpresa,
-              tipoEmpresa: currentType
+              tipoEmpresa: currentType,
+              tipoProdutoServico: selectedDiagnostico.tipoProdutoServico || selectedDiagnostico.dadosConsultoria?.tipoProdutoServico || (selectedEmpresa as any)?.tipoProdutoServico || ''
             })
           }
         : {
@@ -18351,8 +18378,112 @@ export default function App() {
                     return impB - impA;
                   });
 
+                  const handleUpdateTipoProdutoServico = async (novoValor: string) => {
+                    if (!selectedDiagnostico) return;
+                    const updatedDiag = { 
+                      ...selectedDiagnostico, 
+                      tipoProdutoServico: novoValor,
+                      dadosConsultoria: {
+                        ...(selectedDiagnostico.dadosConsultoria || {}),
+                        tipoProdutoServico: novoValor
+                      }
+                    };
+                    setSelectedDiagnostico(updatedDiag);
+                    setDiagnosticos(prev => prev.map(d => d.id === selectedDiagnostico.id ? updatedDiag : d));
+
+                    try {
+                      const saved = JSON.parse(localStorage.getItem('local_diagnosticos') || '[]');
+                      if (Array.isArray(saved)) {
+                        localStorage.setItem('local_diagnosticos', JSON.stringify(saved.map((d: any) => d.id === selectedDiagnostico.id ? updatedDiag : d)));
+                      }
+                    } catch { /* cópia local é opcional */ }
+
+                    try {
+                      await updateDoc(doc(db, 'diagnosticos', selectedDiagnostico.id), {
+                        tipoProdutoServico: novoValor,
+                        'dadosConsultoria.tipoProdutoServico': novoValor
+                      });
+                    } catch (e) {
+                      console.warn("Erro ao salvar tipo de produto/serviço no diagnóstico:", e);
+                    }
+                  };
+
+                  const sugestoesProdutosServicos = [
+                    'Camarão / Pescados / Frutos do Mar',
+                    'Alimentos e Bebidas / Refeições / Gastronomia',
+                    'Comércio Varejista / Loja de Mercadorias',
+                    'Prestação de Serviços Especializados',
+                    'Confecção / Têxtil / Moda',
+                    'Artesanato / Produtos Regionais',
+                    'Beleza e Estética',
+                    'Oficina / Manutenção Mecânica',
+                    'Hotelaria / Pousada / Turismo'
+                  ];
+
                   return (
                     <div className="space-y-6">
+                      {/* Card: Tipo de Produto ou Serviço */}
+                      <div className="bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-white p-5 rounded-2xl border border-blue-200/80 shadow-xs">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="p-1.5 bg-blue-600 text-white rounded-lg shadow-xs">
+                              <Tag size={16} />
+                            </span>
+                            <div>
+                              <h3 className="text-sm font-extrabold text-slate-800 tracking-tight">
+                                Tipo de Produto ou Serviço da Empresa
+                              </h3>
+                              <p className="text-xs text-slate-500">
+                                Usado pela IA para personalizar o plano de ação, atividades e relatório final
+                              </p>
+                            </div>
+                          </div>
+                          {selectedDiagnostico.tipoProdutoServico && (
+                            <span className="self-start md:self-auto px-2.5 py-1 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-full border border-emerald-200 flex items-center gap-1.5">
+                              <CheckCircle2 size={13} /> Definido
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Input de texto livre */}
+                        <div className="mb-3">
+                          <input
+                            type="text"
+                            value={selectedDiagnostico.tipoProdutoServico || ''}
+                            onChange={(e) => handleUpdateTipoProdutoServico(e.target.value)}
+                            placeholder="Ex: Camarão e Pescados, Marmitex e Refeições, Moda Praia, Consultoria..."
+                            className="w-full px-3.5 py-2.5 bg-white border border-blue-200 rounded-xl text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-2xs transition-all"
+                          />
+                        </div>
+
+                        {/* Sugestões rápidas (Pills) */}
+                        <div>
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+                            Sugestões rápidas (clique para aplicar):
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {sugestoesProdutosServicos.map((sug) => {
+                              const isSelected = (selectedDiagnostico.tipoProdutoServico || '').toLowerCase() === sug.toLowerCase();
+                              return (
+                                <button
+                                  key={sug}
+                                  type="button"
+                                  onClick={() => handleUpdateTipoProdutoServico(sug)}
+                                  className={cn(
+                                    "px-2.5 py-1 text-xs rounded-lg font-medium transition-all cursor-pointer border",
+                                    isSelected
+                                      ? "bg-blue-600 text-white border-blue-600 shadow-xs font-bold"
+                                      : "bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:bg-blue-50/50"
+                                  )}
+                                >
+                                  {sug}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+
                       {/* Overall Progress Banner */}
                       <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex-1">
@@ -19216,6 +19347,7 @@ export default function App() {
                 problemas={problemas}
                 historicalData={historicalData}
                 onGenerateActionPlan={generateActionPlan}
+                generatingPlan={generatingPlan}
                 onReplicateActionPlan={replicateActionPlanFromSameActivity}
                 tarefasPlano={tarefasPlano}
                 setTarefasPlano={setTarefasPlano}

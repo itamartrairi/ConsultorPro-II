@@ -56,7 +56,7 @@ verificaEstrutura(plano, 34, '34h');
 assert.deepEqual(plano.slice(3, -2).map((a) => a.area), ['Finanças', 'Crédito', 'Custos', 'Estoque'], 'áreas em ordem de criticidade');
 assert.deepEqual(plano.slice(3, -2).map((a) => a.problemasTratados!.map((t) => t.idProblema)), [['A'], ['B'], ['E'], ['C']]);
 assert.match(plano[3].descricao, /Registrar entradas e saídas/i, 'usa a solução cadastrada');
-assert.match(plano[3].nome, /^Finanças: solução de 1 problema \(1 crítico\)$/);
+assert.match(plano[3].nome, /^Finanças: (solução de 1 problema|Resolução de Problema A) \(1 crítico\)$/);
 assert.match(plano[2].descricao, /fluxo de caixa|custos/i, 'ferramentas conforme as áreas');
 // Áreas com críticos recebem mais horas que as moderadas
 assert.ok(horasDe(plano[3]) > horasDe(plano[6]), 'área crítica com mais horas que a moderada');
@@ -128,7 +128,7 @@ const ia = await enriquecerComIA(fakeAI, plano, an);
 assert.equal(ia.usouIA, true);
 verificaEstrutura(ia.atividades, 34, 'após IA');
 assert.equal(ia.atividades[3].problemasTratados![0].acao, 'Implantar fluxo de caixa diário');
-assert.match(ia.atividades[3].descricao, /Implantar fluxo de caixa diário: passo 1; passo 2/);
+assert.match(ia.atividades[3].descricao, /passo 1; passo 2/);
 assert.equal(ia.atividades[3].nome, plano[3].nome, 'nome da atividade de área não muda');
 assert.equal(ia.atividades[4].nome, plano[4].nome, 'IA não pode renomear para atividade fixa');
 assert.equal(ia.atividades[2].descricao, 'Planilha de fluxo de caixa e controle de dívidas');

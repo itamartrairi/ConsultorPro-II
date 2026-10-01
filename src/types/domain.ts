@@ -140,6 +140,7 @@ export interface DadosConsultoria {
   evidencias?: string[];
   cargaHoraria?: string;
   tipoRelatorio?: 'Parcial' | 'Final';
+  tipoProdutoServico?: string;
 }
 
 export interface Diagnostico {
@@ -154,6 +155,7 @@ export interface Diagnostico {
   empresaCredenciadaId?: string;
   status?: 'Rascunho' | 'Finalizado' | 'Planejamento';
   tipoEmpresa?: string;
+  tipoProdutoServico?: string;
   nomeEmpresa?: string;
   nomeProjeto?: string;
   nome?: string;
