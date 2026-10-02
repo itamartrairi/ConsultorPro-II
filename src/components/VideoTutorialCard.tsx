@@ -46,7 +46,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     title: 'Bem-vindo ao ConsultorPro II',
     narration: 'Olá! Seja muito bem-vindo ao ConsultorPro dois. Este é o seu assistente inteligente e completo para consultoria gerencial e estratégica. Aqui você gerencia empresas, realiza diagnósticos precisos, gera planos de ação estruturados e emite relatórios profissionais de alto padrão com apoio de inteligência artificial.',
     subtext: 'A plataforma definitiva para consultores gerenciais e credenciados Sebrae.',
-    duration: 16,
+    duration: 21,
     highlights: [
       'Ambiente unificado para gestão de clientes e consultorias',
       'Diagnóstico ágil baseado em premissas e análise de maturidade',
@@ -74,7 +74,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     title: 'Cadastro e Gestão de Clientes',
     narration: 'O primeiro passo é cadastrar a empresa cliente na aba Clientes. Você pode buscar automaticamente os dados da empresa pelo CNPJ com autopreenchimento de razão social, endereço e atividade econômica. Você também define o consultor responsável, as metas e o segmento de mercado.',
     subtext: 'Localize e organize empresas com busca em tempo real e consulta de CNPJ.',
-    duration: 16,
+    duration: 20,
     highlights: [
       'Preenchimento automático via consulta pública de CNPJ',
       'Histórico de atendimentos e diagnósticos por cliente',
@@ -102,7 +102,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     title: 'Diagnóstico & Tipo de Produto ou Serviço',
     narration: 'No Diagnóstico, você avalia as áreas da empresa respondendo as premissas como Sim, Parcial ou Não. Agora, você conta com o campo exclusivo Tipo de Produto ou Serviço, permitindo escolher segmentos como Pescados, Gastronomia ou Moda, ou digitar o produto específico do cliente.',
     subtext: 'Personalização profunda: a IA agora conhece com precisão o que o cliente vende.',
-    duration: 17,
+    duration: 21,
     highlights: [
       'Novo seletor de "Tipo de Produto ou Serviço" com sugestões rápidas',
       'Cálculo em tempo real de maturidade por área de gestão',
@@ -130,7 +130,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     title: 'Geração do Plano de Ação Unificado',
     narration: 'Com o diagnóstico respondido, basta clicar no botão Gerar pelo Diagnóstico. O sistema processa as lacunas encontradas e distribui as atividades da consultoria de forma inteligente, integrando soluções recomendadas e adaptando o conteúdo ao tipo de produto ou serviço informado.',
     subtext: 'Quadro Kanban com status, prioridades, datas automáticas e evidências.',
-    duration: 17,
+    duration: 21,
     highlights: [
       'Botão unificado "Gerar pelo Diagnóstico" em Gestão do Plano e Relatório',
       'Cronograma calibrado para a carga horária da consultoria',
@@ -158,7 +158,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     title: 'Relatório Executivo e Exportação em PDF',
     narration: 'Na aba Relatório de Consultoria, você revisa os objetivos, as soluções propostas e os resultados esperados redigidos com Inteligência Artificial. Com apenas um clique, você exporta o relatório oficial completo em PDF, pronto para entrega ao cliente ou homologação institucional. Aproveite todo o poder do ConsultorPro dois!',
     subtext: 'Emissão profissional com brasões, assinaturas, dados técnicos e sumário executivo.',
-    duration: 18,
+    duration: 22,
     highlights: [
       'Textos redigidos e enriquecidos com Inteligência Artificial Gemini',
       'Objetivos e resultados alinhados ao tipo de produto ou serviço',
@@ -192,23 +192,39 @@ export const VideoTutorialCard: React.FC<{ setView?: (view: any) => void }> = ({
 
   const step = TUTORIAL_STEPS[currentStepIndex];
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const keepAliveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const speechFinishedRef = useRef(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   // Inicializa suporte a voz e cancela ao desmontar
   useEffect(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       setHasVoiceSupport(true);
+      // Pré-carrega vozes caso o navegador use carregamento assíncrono (ex: Chrome/Edge)
+      window.speechSynthesis.getVoices();
+      const onVoicesChanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+      window.speechSynthesis.onvoiceschanged = onVoicesChanged;
+      return () => {
+        if (window.speechSynthesis) {
+          window.speechSynthesis.onvoiceschanged = null;
+        }
+      };
     } else {
       setHasVoiceSupport(false);
     }
-
-    return () => {
-      stopSpeech();
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
   }, []);
 
+  const clearKeepAlive = () => {
+    if (keepAliveTimerRef.current) {
+      clearInterval(keepAliveTimerRef.current);
+      keepAliveTimerRef.current = null;
+    }
+  };
+
   const stopSpeech = () => {
+    clearKeepAlive();
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       setSpeechActive(false);
@@ -217,13 +233,18 @@ export const VideoTutorialCard: React.FC<{ setView?: (view: any) => void }> = ({
 
   const playVoiceForStep = (stepItem: TutorialStep) => {
     stopSpeech();
-    if (isMuted || !hasVoiceSupport || typeof window === 'undefined') return;
+    speechFinishedRef.current = false;
+
+    if (isMuted || !hasVoiceSupport || typeof window === 'undefined') {
+      speechFinishedRef.current = true;
+      return;
+    }
 
     try {
       const utter = new SpeechSynthesisUtterance(stepItem.narration);
       utter.lang = 'pt-BR';
-      utter.rate = 1.02; // cadência natural e fluida
-      utter.pitch = 1.12; // tom levemente mais agudo para realçar voz feminina natural
+      utter.rate = 1.0; // ritmo claro e articulado
+      utter.pitch = 1.08; // tom amigável e natural
 
       // Procura voz feminina brasileira em pt-BR (ex: Maria, Francisca, Leticia, Luciana ou Google português)
       const voices = window.speechSynthesis.getVoices();
@@ -243,19 +264,50 @@ export const VideoTutorialCard: React.FC<{ setView?: (view: any) => void }> = ({
         utter.voice = femalePtVoice;
       }
 
-      utter.onstart = () => setSpeechActive(true);
+      utter.onstart = () => {
+        setSpeechActive(true);
+        speechFinishedRef.current = false;
+      };
+
       utter.onend = () => {
         setSpeechActive(false);
+        speechFinishedRef.current = true;
+        clearKeepAlive();
       };
-      utter.onerror = () => setSpeechActive(false);
+
+      utter.onerror = () => {
+        setSpeechActive(false);
+        speechFinishedRef.current = true;
+        clearKeepAlive();
+      };
 
       utteranceRef.current = utter;
       window.speechSynthesis.speak(utter);
+
+      // Keepalive para contornar bug do Chromium que silencia ou congela após ~14s
+      clearKeepAlive();
+      keepAliveTimerRef.current = setInterval(() => {
+        if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.speaking) {
+          window.speechSynthesis.pause();
+          window.speechSynthesis.resume();
+        } else {
+          clearKeepAlive();
+        }
+      }, 10000);
     } catch (e) {
       console.warn("TTS não iniciado:", e);
       setSpeechActive(false);
+      speechFinishedRef.current = true;
     }
   };
+
+  // Efeito ao desmontar o componente
+  useEffect(() => {
+    return () => {
+      stopSpeech();
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
 
   // Efeito quando altera o passo durante a reprodução
   useEffect(() => {
@@ -271,12 +323,13 @@ export const VideoTutorialCard: React.FC<{ setView?: (view: any) => void }> = ({
   useEffect(() => {
     if (isMuted) {
       stopSpeech();
+      speechFinishedRef.current = true;
     } else if (isPlaying) {
       playVoiceForStep(step);
     }
   }, [isMuted]);
 
-  // Controlador de progresso e transição de cenas
+  // Controlador de progresso e transição de cenas sincronizado com voz e leitura
   useEffect(() => {
     if (!isPlaying) {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -284,12 +337,25 @@ export const VideoTutorialCard: React.FC<{ setView?: (view: any) => void }> = ({
     }
 
     const intervalTime = 100; // atualiza a cada 100ms
-    const totalDurationMs = step.duration * 1000;
+    const totalDurationMs = Math.max(step.duration * 1000, 20000);
     const stepIncrement = (intervalTime / totalDurationMs) * 100;
 
     timerRef.current = setInterval(() => {
       setProgress(prev => {
+        // Se ainda estiver falando no navegador e atingiu ~96%, segura a transição até concluir
+        const isSpeaking = typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.speaking;
+        const voiceStillBusy = !isMuted && hasVoiceSupport && (isSpeaking || !speechFinishedRef.current);
+
+        if (prev >= 98 && voiceStillBusy) {
+          return 98; // aguarda o áudio terminar sem cortar a fala
+        }
+
         if (prev >= 100) {
+          // Só avança para a próxima cena quando a narração estiver concluída
+          if (voiceStillBusy) {
+            return 99;
+          }
+
           // Avança para o próximo passo ou para no final
           if (currentStepIndex < TUTORIAL_STEPS.length - 1) {
             setCurrentStepIndex(currentStepIndex + 1);
@@ -307,7 +373,7 @@ export const VideoTutorialCard: React.FC<{ setView?: (view: any) => void }> = ({
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isPlaying, currentStepIndex, step.duration]);
+  }, [isPlaying, currentStepIndex, step.duration, isMuted, hasVoiceSupport]);
 
   const handleTogglePlay = () => {
     if (isPlaying) {
@@ -457,15 +523,23 @@ export const VideoTutorialCard: React.FC<{ setView?: (view: any) => void }> = ({
             </div>
 
             {/* Legenda Dinâmica na Base do Vídeo (Subtitles com Voz) */}
-            <div className="relative z-10 bg-slate-950/90 border border-slate-800/80 rounded-2xl p-3.5 backdrop-blur-md flex items-start gap-3">
-              <div className="p-1.5 bg-blue-600/30 text-sky-400 rounded-lg shrink-0 mt-0.5">
-                <Bot size={16} className={speechActive ? "animate-bounce" : ""} />
+            <div className="relative z-10 bg-slate-950/95 border border-sky-500/20 rounded-2xl p-4 backdrop-blur-md flex items-start gap-3 shadow-lg">
+              <div className="p-2 bg-blue-600/30 text-sky-400 rounded-xl shrink-0 mt-0.5 border border-blue-500/30">
+                <Bot size={18} className={speechActive ? "animate-bounce text-sky-300" : "text-slate-400"} />
               </div>
-              <div className="flex-1">
-                <span className="text-[10px] font-black uppercase text-sky-400 block tracking-wider">
-                  Locução Feminina Natural • Transcrição:
-                </span>
-                <p className="text-xs sm:text-sm text-slate-200 font-semibold leading-relaxed mt-0.5">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <span className="text-[10px] font-black uppercase text-sky-400 tracking-wider">
+                    {speechActive ? "Locução Ativa • Orientações da Cena:" : "Orientações da Cena • Transcrição Completa:"}
+                  </span>
+                  {speechActive && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-emerald-400 bg-emerald-950/70 border border-emerald-800/60 px-2 py-0.5 rounded-full">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      narrando
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs sm:text-sm text-slate-100 font-semibold leading-relaxed tracking-normal select-text break-words">
                   "{step.narration}"
                 </p>
               </div>
