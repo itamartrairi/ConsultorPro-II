@@ -4,6 +4,7 @@
  */
 
 import type { Resposta } from '../../types/domain';
+import { normalizeAndFormatArea } from './areas';
 
 export function deduplicateRespostas(respostasList: Resposta[]): Resposta[] {
   if (!respostasList || !Array.isArray(respostasList)) return [];
@@ -12,14 +13,15 @@ export function deduplicateRespostas(respostasList: Resposta[]): Resposta[] {
   for (const resp of respostasList) {
     if (!resp) continue;
     const diagScope = resp.diagnosticoId ? `${resp.diagnosticoId}::` : '';
+    const normArea = resp.area ? `${normalizeAndFormatArea(resp.area).toLowerCase()}::` : '';
     const normQ = (resp.pergunta || '').trim().toLowerCase();
     
-    // Prioritize premissaId when available to keep questions with identical/similar texts separate.
-    // Always prefix with diagnosticoId to prevent collisions across different diagnoses.
+    // Always include normArea in key to prevent responses from different areas (e.g. Financeiro vs Operacional)
+    // from colliding or overwriting each other, even if question text or generic IDs match.
     const key = resp.premissaId
-      ? `${diagScope}prem:${resp.premissaId}`
+      ? `${diagScope}${normArea}prem:${resp.premissaId}`
       : normQ
-      ? `${diagScope}q:${normQ}`
+      ? `${diagScope}${normArea}q:${normQ}`
       : `${diagScope}id:${resp.id}`;
     if (!key) continue;
 

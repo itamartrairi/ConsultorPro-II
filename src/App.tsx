@@ -15745,14 +15745,28 @@ export default function App() {
 
     const targetDiagId = extraData?.diagnosticoId || selectedDiagnostico?.id || '';
     const targetPremissaId = extraData?.premissaId || '';
+    const targetArea = extraData?.area ? normalizeAndFormatArea(extraData.area).toLowerCase() : '';
     const normTargetPergunta = (extraData?.pergunta || '').trim().toLowerCase();
 
-    // Matching predicate: strictly scoped to the same diagnosis to prevent wiping out answers in other diagnostics or unrelated questions
+    // Matching predicate: strictly scoped to the same diagnosis AND area to prevent wiping out answers in other areas or diagnostics
     const isMatch = (r: Resposta) => {
       if (r.id === id) return true;
       if (targetDiagId && r.diagnosticoId === targetDiagId) {
-        if (targetPremissaId && r.premissaId === targetPremissaId) return true;
-        if (normTargetPergunta && r.pergunta && r.pergunta.trim().toLowerCase() === normTargetPergunta) return true;
+        const rArea = r.area ? normalizeAndFormatArea(r.area).toLowerCase() : '';
+        // If both have area defined, they must belong to the same area
+        if (targetArea && rArea && rArea !== targetArea) {
+          return false;
+        }
+        if (targetPremissaId && r.premissaId) {
+          return r.premissaId === targetPremissaId;
+        }
+        if (normTargetPergunta && r.pergunta && r.pergunta.trim().toLowerCase() === normTargetPergunta) {
+          // Extra safety: check idProblema if available
+          if (extraData?.idProblema && r.idProblema && r.idProblema !== extraData.idProblema) {
+            return false;
+          }
+          return true;
+        }
       }
       return false;
     };
@@ -15767,7 +15781,7 @@ export default function App() {
       idProblema: targetItem?.idProblema || extraData?.idProblema || '',
       problema: targetItem?.problema || extraData?.problema || '',
       pergunta: targetItem?.pergunta || extraData?.pergunta || '',
-      area: targetItem?.area || extraData?.area || 'Geral',
+      area: extraData?.area || targetItem?.area || 'Geral',
       peso: targetItem?.peso !== undefined ? targetItem.peso : (extraData?.peso !== undefined ? extraData.peso : peso),
       resposta: val,
       observacao: obs,
@@ -18273,10 +18287,14 @@ export default function App() {
 
                   const existingMap = new Map<string, Resposta>();
                   currentDiagRespostas.forEach(r => {
+                    const rArea = normalizeAndFormatArea(r.area || 'Geral').toLowerCase();
                     if (r.id) existingMap.set(`raw:${r.id}`, r);
-                    if (r.premissaId) existingMap.set(`prem:${r.premissaId}`, r);
+                    if (r.premissaId) {
+                      existingMap.set(`prem:${r.premissaId}`, r);
+                      existingMap.set(`${rArea}::prem:${r.premissaId}`, r);
+                    }
                     if (r.pergunta) {
-                      const qKey = `q:${r.pergunta.trim().toLowerCase()}`;
+                      const qKey = `${rArea}::q:${r.pergunta.trim().toLowerCase()}`;
                       // Only set qKey if not already set by an answered response
                       if (!existingMap.has(qKey) || (r.resposta && !existingMap.get(qKey)?.resposta)) {
                         existingMap.set(qKey, r);
@@ -18304,7 +18322,7 @@ export default function App() {
                       if (!isAreaSelected) return;
                     }
 
-                    const hasMatch = (p.id && existingMap.has(`prem:${p.id}`)) || (normQ && existingMap.has(`q:${normQ}`));
+                    const hasMatch = (p.id && existingMap.has(`${normArea}::prem:${p.id}`)) || (normQ && existingMap.has(`${normArea}::q:${normQ}`));
                     if (!hasMatch) {
                       const unasked: Resposta = {
                         id: `q_${selectedDiagnostico.id}_${p.id}`,
@@ -18321,8 +18339,13 @@ export default function App() {
                         ownerId: user?.uid || 'local'
                       };
                       fullQuestionsList.push(unasked);
-                      if (p.id) existingMap.set(`prem:${p.id}`, unasked);
-                      if (normQ && !existingMap.has(`q:${normQ}`)) existingMap.set(`q:${normQ}`, unasked);
+                      if (p.id) {
+                        existingMap.set(`prem:${p.id}`, unasked);
+                        existingMap.set(`${normArea}::prem:${p.id}`, unasked);
+                      }
+                      if (normQ && !existingMap.has(`${normArea}::q:${normQ}`)) {
+                        existingMap.set(`${normArea}::q:${normQ}`, unasked);
+                      }
                     }
                   });
 
