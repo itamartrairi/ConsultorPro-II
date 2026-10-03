@@ -11,8 +11,16 @@ export function deduplicateRespostas(respostasList: Resposta[]): Resposta[] {
 
   for (const resp of respostasList) {
     if (!resp) continue;
+    const diagScope = resp.diagnosticoId ? `${resp.diagnosticoId}::` : '';
     const normQ = (resp.pergunta || '').trim().toLowerCase();
-    const key = normQ ? `q:${normQ}` : resp.premissaId ? `id:${resp.premissaId}` : resp.id;
+    
+    // Prioritize premissaId when available to keep questions with identical/similar texts separate.
+    // Always prefix with diagnosticoId to prevent collisions across different diagnoses.
+    const key = resp.premissaId
+      ? `${diagScope}prem:${resp.premissaId}`
+      : normQ
+      ? `${diagScope}q:${normQ}`
+      : `${diagScope}id:${resp.id}`;
     if (!key) continue;
 
     if (!map.has(key)) {

@@ -15743,13 +15743,27 @@ export default function App() {
     const points = val === 'Sim' ? 2 : val === 'Parcial' ? 1 : 0;
     const score = points * peso;
 
-    const targetItem = respostas.find(r => r.id === id || (extraData?.premissaId && r.premissaId === extraData.premissaId));
+    const targetDiagId = extraData?.diagnosticoId || selectedDiagnostico?.id || '';
+    const targetPremissaId = extraData?.premissaId || '';
+    const normTargetPergunta = (extraData?.pergunta || '').trim().toLowerCase();
+
+    // Matching predicate: strictly scoped to the same diagnosis to prevent wiping out answers in other diagnostics or unrelated questions
+    const isMatch = (r: Resposta) => {
+      if (r.id === id) return true;
+      if (targetDiagId && r.diagnosticoId === targetDiagId) {
+        if (targetPremissaId && r.premissaId === targetPremissaId) return true;
+        if (normTargetPergunta && r.pergunta && r.pergunta.trim().toLowerCase() === normTargetPergunta) return true;
+      }
+      return false;
+    };
+
+    const targetItem = respostas.find(isMatch);
     const finalId = targetItem?.id || extraData?.id || id;
 
     const updatedResp: Resposta = {
       id: finalId,
-      diagnosticoId: targetItem?.diagnosticoId || extraData?.diagnosticoId || selectedDiagnostico?.id || '',
-      premissaId: targetItem?.premissaId || extraData?.premissaId || id,
+      diagnosticoId: targetItem?.diagnosticoId || targetDiagId,
+      premissaId: targetItem?.premissaId || targetPremissaId || id,
       idProblema: targetItem?.idProblema || extraData?.idProblema || '',
       problema: targetItem?.problema || extraData?.problema || '',
       pergunta: targetItem?.pergunta || extraData?.pergunta || '',
@@ -15763,9 +15777,9 @@ export default function App() {
 
     // 1. Immediate in-memory React state update (0ms UI latency, instantaneous feedback)
     setRespostas(prev => {
-      const exists = prev.some(r => r.id === finalId || (updatedResp.premissaId && r.premissaId === updatedResp.premissaId));
+      const exists = prev.some(r => r.id === finalId || isMatch(r));
       if (exists) {
-        return prev.map(r => (r.id === finalId || (updatedResp.premissaId && r.premissaId === updatedResp.premissaId)) ? updatedResp : r);
+        return prev.map(r => (r.id === finalId || isMatch(r)) ? updatedResp : r);
       } else {
         return [...prev, updatedResp];
       }
@@ -18259,8 +18273,15 @@ export default function App() {
 
                   const existingMap = new Map<string, Resposta>();
                   currentDiagRespostas.forEach(r => {
-                    if (r.premissaId) existingMap.set(`id:${r.premissaId}`, r);
-                    if (r.pergunta) existingMap.set(`q:${r.pergunta.trim().toLowerCase()}`, r);
+                    if (r.id) existingMap.set(`raw:${r.id}`, r);
+                    if (r.premissaId) existingMap.set(`prem:${r.premissaId}`, r);
+                    if (r.pergunta) {
+                      const qKey = `q:${r.pergunta.trim().toLowerCase()}`;
+                      // Only set qKey if not already set by an answered response
+                      if (!existingMap.has(qKey) || (r.resposta && !existingMap.get(qKey)?.resposta)) {
+                        existingMap.set(qKey, r);
+                      }
+                    }
                   });
 
                   const fullQuestionsList: Resposta[] = [...currentDiagRespostas];
@@ -18283,7 +18304,7 @@ export default function App() {
                       if (!isAreaSelected) return;
                     }
 
-                    const hasMatch = (p.id && existingMap.has(`id:${p.id}`)) || (normQ && existingMap.has(`q:${normQ}`));
+                    const hasMatch = (p.id && existingMap.has(`prem:${p.id}`)) || (normQ && existingMap.has(`q:${normQ}`));
                     if (!hasMatch) {
                       const unasked: Resposta = {
                         id: `q_${selectedDiagnostico.id}_${p.id}`,
@@ -18300,8 +18321,8 @@ export default function App() {
                         ownerId: user?.uid || 'local'
                       };
                       fullQuestionsList.push(unasked);
-                      if (p.id) existingMap.set(`id:${p.id}`, unasked);
-                      if (normQ) existingMap.set(`q:${normQ}`, unasked);
+                      if (p.id) existingMap.set(`prem:${p.id}`, unasked);
+                      if (normQ && !existingMap.has(`q:${normQ}`)) existingMap.set(`q:${normQ}`, unasked);
                     }
                   });
 
