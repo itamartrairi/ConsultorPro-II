@@ -16316,85 +16316,88 @@ export default function App() {
           </div>
         </div>
 
-        <div className="flex border-b border-slate-200 mb-6 overflow-x-auto">
-          <button 
-            onClick={() => setLibraryTab('problemas')}
-            className={cn(
-              "px-6 py-3 font-bold text-sm transition-all border-b-2 whitespace-nowrap",
-              libraryTab === 'problemas' ? "border-emerald-600 text-emerald-600" : "border-transparent text-slate-400 hover:text-slate-600"
-            )}
-          >
-            Problemas
-          </button>
-          <button 
-            onClick={() => setLibraryTab('premissas')}
-            className={cn(
-              "px-6 py-3 font-bold text-sm transition-all border-b-2 whitespace-nowrap",
-              libraryTab === 'premissas' ? "border-emerald-600 text-emerald-600" : "border-transparent text-slate-400 hover:text-slate-600"
-            )}
-          >
-            Perguntas
-          </button>
-          <button 
-            onClick={() => setLibraryTab('solucoes')}
-            className={cn(
-              "px-6 py-3 font-bold text-sm transition-all border-b-2 whitespace-nowrap",
-              libraryTab === 'solucoes' ? "border-emerald-600 text-emerald-600" : "border-transparent text-slate-400 hover:text-slate-600"
-            )}
-          >
-            Soluções
-          </button>
-          <button 
-            onClick={() => setLibraryTab('areas')}
-            className={cn(
-              "px-6 py-3 font-bold text-sm transition-all border-b-2 whitespace-nowrap",
-              libraryTab === 'areas' ? "border-emerald-600 text-emerald-600" : "border-transparent text-slate-400 hover:text-slate-600"
-            )}
-          >
-            Áreas
-          </button>
-          <button 
-            onClick={() => setLibraryTab('segmentos')}
-            className={cn(
-              "px-6 py-3 font-bold text-sm transition-all border-b-2 whitespace-nowrap",
-              libraryTab === 'segmentos' ? "border-emerald-600 text-emerald-600" : "border-transparent text-slate-400 hover:text-slate-600"
-            )}
-          >
-            Tipos de Negócio
-          </button>
-        </div>
+        {/* Abas e Painel de Filtros Fixados (Sticky) */}
+        <div className="sticky top-[72px] z-20 bg-slate-50/95 backdrop-blur-md pt-2 pb-1 mb-6 -mx-2 px-2 rounded-2xl transition-all">
+          <div className="flex border-b border-slate-200 mb-4 overflow-x-auto bg-white/60 p-1 rounded-xl">
+            <button 
+              onClick={() => setLibraryTab('problemas')}
+              className={cn(
+                "px-6 py-2.5 font-bold text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer",
+                libraryTab === 'problemas' ? "border-emerald-600 text-emerald-600 bg-emerald-50/40 rounded-t-lg" : "border-transparent text-slate-400 hover:text-slate-600"
+              )}
+            >
+              Problemas
+            </button>
+            <button 
+              onClick={() => setLibraryTab('premissas')}
+              className={cn(
+                "px-6 py-2.5 font-bold text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer",
+                libraryTab === 'premissas' ? "border-emerald-600 text-emerald-600 bg-emerald-50/40 rounded-t-lg" : "border-transparent text-slate-400 hover:text-slate-600"
+              )}
+            >
+              Perguntas
+            </button>
+            <button 
+              onClick={() => setLibraryTab('solucoes')}
+              className={cn(
+                "px-6 py-2.5 font-bold text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer",
+                libraryTab === 'solucoes' ? "border-emerald-600 text-emerald-600 bg-emerald-50/40 rounded-t-lg" : "border-transparent text-slate-400 hover:text-slate-600"
+              )}
+            >
+              Soluções
+            </button>
+            <button 
+              onClick={() => setLibraryTab('areas')}
+              className={cn(
+                "px-6 py-2.5 font-bold text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer",
+                libraryTab === 'areas' ? "border-emerald-600 text-emerald-600 bg-emerald-50/40 rounded-t-lg" : "border-transparent text-slate-400 hover:text-slate-600"
+              )}
+            >
+              Áreas
+            </button>
+            <button 
+              onClick={() => setLibraryTab('segmentos')}
+              className={cn(
+                "px-6 py-2.5 font-bold text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer",
+                libraryTab === 'segmentos' ? "border-emerald-600 text-emerald-600 bg-emerald-50/40 rounded-t-lg" : "border-transparent text-slate-400 hover:text-slate-600"
+              )}
+            >
+              Tipos de Negócio
+            </button>
+          </div>
 
-        {libraryTab !== 'areas' && libraryTab !== 'segmentos' && (
-          <div id="library-filter-panel" className="space-y-3 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Filtrar por Área</label>
-                <select 
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-white"
-                  value={selectedAreaFilter}
-                  onChange={(e) => setSelectedAreaFilter(e.target.value)}
-                >
-                  <option value="">Todas as Áreas</option>
-                  {uniqueLibraryAreas.map(nome => <option key={nome} value={nome}>{nome}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Filtrar por Tipo de Empresa</label>
-                <select 
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 bg-white"
-                  value={selectedTipoEmpresaFilter}
-                  onChange={(e) => setSelectedTipoEmpresaFilter(e.target.value)}
-                >
-                  <option value="">Todos os Tipos</option>
-                  <option value="Geral">Geral (Comum a todas)</option>
-                  {allCompanyTypes.map(tipo => (
-                    <option key={tipo} value={tipo}>{tipo}</option>
-                  ))}
-                </select>
+          {libraryTab !== 'areas' && libraryTab !== 'segmentos' && (
+            <div id="library-filter-panel" className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm space-y-3 mb-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Filtrar por Área</label>
+                  <select 
+                    className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-slate-800 transition-colors"
+                    value={selectedAreaFilter}
+                    onChange={(e) => setSelectedAreaFilter(e.target.value)}
+                  >
+                    <option value="">Todas as Áreas</option>
+                    {uniqueLibraryAreas.map(nome => <option key={nome} value={nome}>{nome}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Filtrar por Tipo de Empresa</label>
+                  <select 
+                    className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-slate-800 transition-colors"
+                    value={selectedTipoEmpresaFilter}
+                    onChange={(e) => setSelectedTipoEmpresaFilter(e.target.value)}
+                  >
+                    <option value="">Todos os Tipos</option>
+                    <option value="Geral">Geral (Comum a todas)</option>
+                    {allCompanyTypes.map(tipo => (
+                      <option key={tipo} value={tipo}>{tipo}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {libraryTab === 'problemas' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -17261,8 +17264,8 @@ export default function App() {
           </header>
 
           <div className="max-w-7xl mx-auto p-6 lg:p-10 print:p-0 print:max-w-none">
-            {/* Top Bar - Modo de Salvamento (Nuvem vs. Local) */}
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-200/60 print:hidden">
+            {/* Top Bar - Modo de Salvamento (Nuvem vs. Local) - Fixada no Topo (Sticky) */}
+            <div className="sticky top-0 z-30 bg-slate-50/95 backdrop-blur-md -mt-6 lg:-mt-10 pt-6 lg:pt-8 mb-6 pb-4 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-4 print:hidden transition-all shadow-xs">
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-1.5 bg-slate-200/70 p-1 rounded-xl text-xs font-bold">
                   <button
@@ -17772,90 +17775,93 @@ export default function App() {
 
                     return (
                       <>
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                          <div>
-                            <h2 className="text-2xl font-bold">Empresas</h2>
-                            <p className="text-slate-500">Gerencie sua carteira de clientes ({filteredEmpresas.length} {filteredEmpresas.length === 1 ? 'encontrada' : 'encontradas'})</p>
+                        {/* Cabeçalho e Painel de Filtros Fixados (Sticky) */}
+                        <div className="sticky top-[72px] z-20 bg-slate-50/95 backdrop-blur-md pt-2 pb-1 mb-6 -mx-2 px-2 rounded-2xl transition-all">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                            <div>
+                              <h2 className="text-2xl font-bold">Empresas</h2>
+                              <p className="text-slate-500">Gerencie sua carteira de clientes ({filteredEmpresas.length} {filteredEmpresas.length === 1 ? 'encontrada' : 'encontradas'})</p>
+                            </div>
+                            <Button onClick={() => {
+                              setInputValue('');
+                              setModalType('create');
+                              setCustomEmpresaType('');
+                              setEmpresaForm({ tipoEmpresa: 'Geral' });
+                              setIsModalOpen(true);
+                            }}>
+                              <Plus size={18} /> Nova Empresa
+                            </Button>
                           </div>
-                          <Button onClick={() => {
-                            setInputValue('');
-                            setModalType('create');
-                            setCustomEmpresaType('');
-                            setEmpresaForm({ tipoEmpresa: 'Geral' });
-                            setIsModalOpen(true);
-                          }}>
-                            <Plus size={18} /> Nova Empresa
-                          </Button>
-                        </div>
 
-                        {/* Filtros: Tipo de Empresa e Nome da Empresa */}
-                        <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm mb-6 space-y-3">
-                          <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b border-slate-100">
-                            <div className="flex items-center gap-2">
-                              <ListFilter size={16} className="text-emerald-600" />
-                              <span className="text-xs font-bold uppercase tracking-wider text-slate-700">Filtros de Pesquisa</span>
-                            </div>
-                            {(empresaTipoFilter || empresaSearchTerm) && (
-                              <button
-                                onClick={() => {
-                                  setEmpresaTipoFilter('');
-                                  setEmpresaSearchTerm('');
-                                  setCurrentPage(1);
-                                }}
-                                className="text-xs text-rose-600 hover:text-rose-700 font-semibold cursor-pointer border-none bg-transparent hover:underline flex items-center gap-1"
-                              >
-                                <X size={13} /> Limpar Filtros
-                              </button>
-                            )}
-                          </div>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">
-                                Filtrar por Tipo de Empresa
-                              </label>
-                              <select
-                                className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-slate-800 transition-colors"
-                                value={empresaTipoFilter}
-                                onChange={(e) => {
-                                  setEmpresaTipoFilter(e.target.value);
-                                  setCurrentPage(1);
-                                }}
-                              >
-                                <option value="">Todos os Tipos de Empresa</option>
-                                <option value="Geral">Geral</option>
-                                {availableSegments.filter(s => s !== 'Geral').map((tipo) => (
-                                  <option key={tipo} value={tipo}>{tipo}</option>
-                                ))}
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">
-                                Filtrar por Nome da Empresa
-                              </label>
-                              <div className="relative">
-                                <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                <input
-                                  type="text"
-                                  placeholder="Digite o nome, razão social ou fantasia..."
-                                  value={empresaSearchTerm}
-                                  onChange={(e) => {
-                                    setEmpresaSearchTerm(e.target.value);
+                          {/* Filtros: Tipo de Empresa e Nome da Empresa */}
+                          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm space-y-3">
+                            <div className="flex items-center justify-between gap-2 flex-wrap pb-2 border-b border-slate-100">
+                              <div className="flex items-center gap-2">
+                                <ListFilter size={16} className="text-emerald-600" />
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-700">Filtros de Pesquisa</span>
+                              </div>
+                              {(empresaTipoFilter || empresaSearchTerm) && (
+                                <button
+                                  onClick={() => {
+                                    setEmpresaTipoFilter('');
+                                    setEmpresaSearchTerm('');
                                     setCurrentPage(1);
                                   }}
-                                  className="w-full pl-10 pr-9 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-slate-800 placeholder:text-slate-400 transition-colors"
-                                />
-                                {empresaSearchTerm && (
-                                  <button
-                                    onClick={() => {
-                                      setEmpresaSearchTerm('');
+                                  className="text-xs text-rose-600 hover:text-rose-700 font-semibold cursor-pointer border-none bg-transparent hover:underline flex items-center gap-1"
+                                >
+                                  <X size={13} /> Limpar Filtros
+                                </button>
+                              )}
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">
+                                  Filtrar por Tipo de Empresa
+                                </label>
+                                <select
+                                  className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-slate-800 transition-colors"
+                                  value={empresaTipoFilter}
+                                  onChange={(e) => {
+                                    setEmpresaTipoFilter(e.target.value);
+                                    setCurrentPage(1);
+                                  }}
+                                >
+                                  <option value="">Todos os Tipos de Empresa</option>
+                                  <option value="Geral">Geral</option>
+                                  {availableSegments.filter(s => s !== 'Geral').map((tipo) => (
+                                    <option key={tipo} value={tipo}>{tipo}</option>
+                                  ))}
+                                </select>
+                              </div>
+                              <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">
+                                  Filtrar por Nome da Empresa
+                                </label>
+                                <div className="relative">
+                                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                  <input
+                                    type="text"
+                                    placeholder="Digite o nome, razão social ou fantasia..."
+                                    value={empresaSearchTerm}
+                                    onChange={(e) => {
+                                      setEmpresaSearchTerm(e.target.value);
                                       setCurrentPage(1);
                                     }}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer border-none bg-transparent"
-                                    title="Limpar busca"
-                                  >
-                                    <X size={14} />
-                                  </button>
-                                )}
+                                    className="w-full pl-10 pr-9 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-slate-800 placeholder:text-slate-400 transition-colors"
+                                  />
+                                  {empresaSearchTerm && (
+                                    <button
+                                      onClick={() => {
+                                        setEmpresaSearchTerm('');
+                                        setCurrentPage(1);
+                                      }}
+                                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer border-none bg-transparent"
+                                      title="Limpar busca"
+                                    >
+                                      <X size={14} />
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>

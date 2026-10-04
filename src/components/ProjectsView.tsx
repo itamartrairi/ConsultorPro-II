@@ -947,8 +947,8 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
 
   return (
     <div className="space-y-8" id="projects-view-root">
-      {/* Header and Tab Menu */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+      {/* Header and Tab Menu - Fixado no Topo (Sticky) */}
+      <div className="sticky top-[72px] z-20 flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white/95 backdrop-blur-md p-5 rounded-3xl border border-slate-200/80 shadow-sm transition-all">
         <div>
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
