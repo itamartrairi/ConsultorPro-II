@@ -1049,8 +1049,8 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
       {/* Gantt View Tab */}
       {activeTab === 'gantt' && (
         <div className="space-y-6">
-          {/* Dynamic Filter Panel */}
-          <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-4">
+          {/* Dynamic Filter Panel - Fixado no Topo (Sticky) */}
+          <div className="sticky top-[148px] z-10 bg-white/95 backdrop-blur-md p-4 rounded-3xl border border-slate-200/80 shadow-xs space-y-4 transition-all">
             <div className="flex items-center justify-between pb-2 border-b border-slate-50">
               <div className="flex items-center gap-2">
                 <Sliders className="text-emerald-600 animate-pulse" size={16} />
@@ -1600,8 +1600,8 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
       {/* Grid Card List Tab */}
       {activeTab === 'list' && (
         <div className="space-y-6">
-          {/* Dynamic Filter Panel */}
-          <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm space-y-4">
+          {/* Dynamic Filter Panel - Fixado no Topo (Sticky) */}
+          <div className="sticky top-[148px] z-10 bg-white/95 backdrop-blur-md p-4 rounded-3xl border border-slate-200/80 shadow-xs space-y-4 transition-all">
             <div className="flex items-center justify-between pb-2 border-b border-slate-50">
               <div className="flex items-center gap-2">
                 <Sliders className="text-emerald-600 animate-pulse" size={16} />

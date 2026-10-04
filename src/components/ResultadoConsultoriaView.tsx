@@ -698,214 +698,217 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-200 pb-5 gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
-              <Award size={13} className="text-sky-600" />
-              Módulo de Avaliação & Impacto
-            </span>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
-              Escala 0 a 10 Pontos
-            </span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-            <BarChart3 className="h-7 w-7 text-sky-600" />
-            Análise do Resultado da Consultoria
-          </h1>
-          <p className="mt-1 text-sm text-slate-500 max-w-3xl">
-            Avalie os problemas diagnosticados, a efetividade das soluções implementadas, o impacto real na gestão e a satisfação do cliente e com o consultor.
-          </p>
-        </div>
-
-        {/* Action Buttons & SubTabs */}
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
-            <button
-              onClick={() => setActiveSubTab('form')}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 ${
-                activeSubTab === 'form'
-                  ? 'bg-white text-sky-700 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Sliders size={14} />
-              Avaliação (Formulário)
-            </button>
-            <button
-              onClick={() => setActiveSubTab('relatorio')}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 ${
-                activeSubTab === 'relatorio'
-                  ? 'bg-white text-sky-700 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <FileText size={14} />
-              Laudo / Relatório PDF
-            </button>
-            <button
-              onClick={() => setActiveSubTab('historico')}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 ${
-                activeSubTab === 'historico'
-                  ? 'bg-white text-sky-700 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <Clock size={14} />
-              Histórico ({savedAnalyses.length})
-            </button>
-          </div>
-
-          <Button
-            onClick={handleExportPDF}
-            disabled={isExportingPdf || !selectedDiagId}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2 rounded-xl shadow-sm flex items-center gap-2"
-          >
-            {isExportingPdf ? (
-              <RefreshCw className="h-4 w-4 animate-spin" />
-            ) : (
-              <Printer className="h-4 w-4" />
-            )}
-            Visualizar e Imprimir PDF
-          </Button>
-        </div>
-      </div>
-
-      {/* Success Notification */}
-      {saveSuccessMessage && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0 }}
-          className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-emerald-800 text-sm font-medium shadow-sm"
-        >
-          <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0" />
-            <span>{saveSuccessMessage}</span>
-          </div>
-          <button
-            onClick={() => setSaveSuccessMessage(null)}
-            className="text-emerald-600 hover:text-emerald-800 text-xs font-bold"
-          >
-            Fechar
-          </button>
-        </motion.div>
-      )}
-
-      {/* Selectors Bar: Empresa & Diagnóstico */}
-      <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Select Empresa */}
+      {/* Top Header & Selectors Bar - Fixados no Topo (Sticky) */}
+      <div className="sticky top-[72px] z-20 bg-slate-50/95 backdrop-blur-md pt-2 pb-1 space-y-4 -mx-2 px-2 rounded-2xl border-b border-slate-200/80 shadow-xs transition-all">
+        {/* Top Header */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-200/60 pb-3 gap-4">
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <Building2 size={14} className="text-sky-600" />
-              1. Selecionar Cliente
-            </label>
-            <select
-              value={selectedEmpresaId}
-              onChange={(e) => {
-                setSelectedEmpresaId(e.target.value);
-              }}
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-none"
-            >
-              {empresas.length === 0 ? (
-                <option value="">Nenhum cliente cadastrado</option>
-              ) : (
-                empresas.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.nome} {emp.cnpj ? `(${emp.cnpj})` : ''}
-                  </option>
-                ))
-              )}
-            </select>
-          </div>
-
-          {/* Select Diagnóstico */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <Briefcase size={14} className="text-sky-600" />
-              2. Projeto / Diagnóstico
-            </label>
-            <select
-              value={selectedDiagId}
-              onChange={(e) => setSelectedDiagId(e.target.value)}
-              disabled={availableDiagnosticos.length === 0}
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-none disabled:opacity-50"
-            >
-              {availableDiagnosticos.length === 0 ? (
-                <option value="">Nenhum diagnóstico para este cliente</option>
-              ) : (
-                availableDiagnosticos.map((diag) => (
-                  <option key={diag.id} value={diag.id}>
-                    {diag.nomeProjeto || diag.nome || `Diagnóstico (${diag.dataDiagnostico ? (typeof diag.dataDiagnostico === 'string' ? diag.dataDiagnostico : 'Data') : 'Recente'})`}
-                  </option>
-                ))
-              )}
-            </select>
-          </div>
-
-          {/* Data da Análise */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <Calendar size={14} className="text-sky-600" />
-              Data da Avaliação
-            </label>
-            <input
-              type="date"
-              value={dataAnalise}
-              onChange={(e) => setDataAnalise(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-none"
-            />
-          </div>
-
-          {/* Carga Horária */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <Clock size={14} className="text-sky-600" />
-              Carga Horária
-            </label>
-            <input
-              type="text"
-              placeholder="Ex: 20h, 30 horas"
-              value={cargaHoraria}
-              onChange={(e) => setCargaHoraria(e.target.value)}
-              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-none"
-            />
-          </div>
-        </div>
-
-        {/* Quick Diagnostic Metadata Banner */}
-        {currentEmpresa && (
-          <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
-            <div className="flex items-center gap-4 flex-wrap">
-              <span className="font-semibold text-slate-900">
-                Razão Social: <span className="font-normal text-slate-600">{currentEmpresa.razaoSocial || currentEmpresa.nome}</span>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+                <Award size={13} className="text-sky-600" />
+                Módulo de Avaliação & Impacto
               </span>
-              {currentEmpresa.cnpj && (
-                <span>CNPJ: <strong className="text-slate-800">{currentEmpresa.cnpj}</strong></span>
-              )}
-              {currentEmpresa.representante && (
-                <span>Responsável: <strong className="text-slate-800">{currentEmpresa.representante}</strong></span>
-              )}
-              {codigoSgf && (
-                <span className="px-2 py-0.5 bg-sky-50 text-sky-700 rounded-md font-mono font-semibold">
-                  SGF: {codigoSgf}
-                </span>
-              )}
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
+                Escala 0 a 10 Pontos
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+              <BarChart3 className="h-7 w-7 text-sky-600" />
+              Análise do Resultado da Consultoria
+            </h1>
+            <p className="mt-0.5 text-xs sm:text-sm text-slate-500 max-w-3xl">
+              Avalie os problemas diagnosticados, a efetividade das soluções implementadas, o impacto real na gestão e a satisfação do cliente e com o consultor.
+            </p>
+          </div>
+
+          {/* Action Buttons & SubTabs */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
+              <button
+                onClick={() => setActiveSubTab('form')}
+                className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+                  activeSubTab === 'form'
+                    ? 'bg-white text-sky-700 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Sliders size={14} />
+                Avaliação (Formulário)
+              </button>
+              <button
+                onClick={() => setActiveSubTab('relatorio')}
+                className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+                  activeSubTab === 'relatorio'
+                    ? 'bg-white text-sky-700 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <FileText size={14} />
+                Laudo / Relatório PDF
+              </button>
+              <button
+                onClick={() => setActiveSubTab('historico')}
+                className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all flex items-center gap-2 cursor-pointer ${
+                  activeSubTab === 'historico'
+                    ? 'bg-white text-sky-700 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Clock size={14} />
+                Histórico ({savedAnalyses.length})
+              </button>
             </div>
 
-            <button
-              type="button"
-              onClick={autoPopulateFromDiagnosis}
-              className="text-xs font-bold text-sky-600 hover:text-sky-800 flex items-center gap-1 transition-colors"
-              title="Recarrega os problemas e tarefas do plano de ação"
+            <Button
+              onClick={handleExportPDF}
+              disabled={isExportingPdf || !selectedDiagId}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2 rounded-xl shadow-sm flex items-center gap-2 cursor-pointer"
             >
-              <RefreshCw size={12} />
-              Recarregar Dados do Diagnóstico
-            </button>
+              {isExportingPdf ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Printer className="h-4 w-4" />
+              )}
+              Visualizar e Imprimir PDF
+            </Button>
           </div>
+        </div>
+
+        {/* Success Notification */}
+        {saveSuccessMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-emerald-800 text-sm font-medium shadow-sm"
+          >
+            <div className="flex items-center gap-2.5">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0" />
+              <span>{saveSuccessMessage}</span>
+            </div>
+            <button
+              onClick={() => setSaveSuccessMessage(null)}
+              className="text-emerald-600 hover:text-emerald-800 text-xs font-bold cursor-pointer"
+            >
+              Fechar
+            </button>
+          </motion.div>
         )}
+
+        {/* Selectors Bar: Empresa & Diagnóstico */}
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Select Empresa */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                <Building2 size={14} className="text-sky-600" />
+                1. Selecionar Cliente
+              </label>
+              <select
+                value={selectedEmpresaId}
+                onChange={(e) => {
+                  setSelectedEmpresaId(e.target.value);
+                }}
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-none cursor-pointer"
+              >
+                {empresas.length === 0 ? (
+                  <option value="">Nenhum cliente cadastrado</option>
+                ) : (
+                  empresas.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      {emp.nome} {emp.cnpj ? `(${emp.cnpj})` : ''}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+
+            {/* Select Diagnóstico */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                <Briefcase size={14} className="text-sky-600" />
+                2. Projeto / Diagnóstico
+              </label>
+              <select
+                value={selectedDiagId}
+                onChange={(e) => setSelectedDiagId(e.target.value)}
+                disabled={availableDiagnosticos.length === 0}
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-none disabled:opacity-50 cursor-pointer"
+              >
+                {availableDiagnosticos.length === 0 ? (
+                  <option value="">Nenhum diagnóstico para este cliente</option>
+                ) : (
+                  availableDiagnosticos.map((diag) => (
+                    <option key={diag.id} value={diag.id}>
+                      {diag.nomeProjeto || diag.nome || `Diagnóstico (${diag.dataDiagnostico ? (typeof diag.dataDiagnostico === 'string' ? diag.dataDiagnostico : 'Data') : 'Recente'})`}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+
+            {/* Data da Análise */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                <Calendar size={14} className="text-sky-600" />
+                Data da Avaliação
+              </label>
+              <input
+                type="date"
+                value={dataAnalise}
+                onChange={(e) => setDataAnalise(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+              />
+            </div>
+
+            {/* Carga Horária */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                <Clock size={14} className="text-sky-600" />
+                Carga Horária
+              </label>
+              <input
+                type="text"
+                placeholder="Ex: 20h, 30 horas"
+                value={cargaHoraria}
+                onChange={(e) => setCargaHoraria(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2 text-sm font-medium text-slate-800 focus:ring-2 focus:ring-sky-500 focus:outline-none"
+              />
+            </div>
+          </div>
+
+          {/* Quick Diagnostic Metadata Banner */}
+          {currentEmpresa && (
+            <div className="pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
+              <div className="flex items-center gap-4 flex-wrap">
+                <span className="font-semibold text-slate-900">
+                  Razão Social: <span className="font-normal text-slate-600">{currentEmpresa.razaoSocial || currentEmpresa.nome}</span>
+                </span>
+                {currentEmpresa.cnpj && (
+                  <span>CNPJ: <strong className="text-slate-800">{currentEmpresa.cnpj}</strong></span>
+                )}
+                {currentEmpresa.representante && (
+                  <span>Responsável: <strong className="text-slate-800">{currentEmpresa.representante}</strong></span>
+                )}
+                {codigoSgf && (
+                  <span className="px-2 py-0.5 bg-sky-50 text-sky-700 rounded-md font-mono font-semibold">
+                    SGF: {codigoSgf}
+                  </span>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={autoPopulateFromDiagnosis}
+                className="text-xs font-bold text-sky-600 hover:text-sky-800 flex items-center gap-1 transition-colors cursor-pointer"
+                title="Recarrega os problemas e tarefas do plano de ação"
+              >
+                <RefreshCw size={12} />
+                Recarregar Dados do Diagnóstico
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Main View Mode Selector */}
