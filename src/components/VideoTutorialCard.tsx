@@ -1,4 +1,3 @@
-import React, { useState, useEffect, useRef } from 'react';
 import { 
   Play, 
   Pause, 
@@ -12,20 +11,21 @@ import {
   FileSpreadsheet, 
   Bot, 
   ChevronRight, 
-  ChevronLeft,
-  Tv,
-  ListOrdered,
-  Lightbulb,
-  Building2,
-  Calendar,
-  Settings,
-  CalendarDays,
-  TrendingUp,
-  CheckSquare,
-  FileText,
-  ShieldCheck,
-  Layout,
-  X
+  ChevronLeft, 
+  Tv, 
+  ListOrdered, 
+  Lightbulb, 
+  Building2, 
+  Calendar, 
+  Settings, 
+  CalendarDays, 
+  TrendingUp, 
+  CheckSquare, 
+  FileText, 
+  ShieldCheck, 
+  Layout, 
+  Home,
+  X 
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
@@ -39,7 +39,7 @@ export interface TutorialStep {
   subtext: string;
   duration: number; // segundos estimados
   highlights: string[];
-  icon: 'welcome' | 'company' | 'diagnosis' | 'actionPlan' | 'report' | 'ai' | 'agenda' | 'credenciadas' | 'maturity' | 'resultado' | 'macro' | 'premises' | 'settings' | 'licenses';
+  icon: 'home' | 'welcome' | 'company' | 'diagnosis' | 'actionPlan' | 'report' | 'ai' | 'agenda' | 'credenciadas' | 'maturity' | 'resultado' | 'macro' | 'premises' | 'settings' | 'licenses';
   targetView?: string;
   sceneVisual: {
     tag: string;
@@ -51,350 +51,350 @@ export interface TutorialStep {
 
 export const TUTORIAL_STEPS: TutorialStep[] = [
   {
-    id: 'intro',
-    badge: 'Visão Geral • Início',
-    title: 'Visão Geral & Boas-Vindas',
-    narration: 'Olá! Seja muito bem-vindo ao ConsultorPro dois. Este é o seu assistente inteligente completo para consultoria gerencial e estratégica. Agora estruturado em abas dinâmicas, o sistema permite acompanhar clientes, aplicar diagnósticos ágeis, gerar cronogramas Kanban de 34 horas e emitir relatórios executivos em PDF com Inteligência Artificial.',
-    subtext: 'A plataforma definitiva para consultores gerenciais e credenciados Sebrae.',
-    duration: 22,
+    id: 'tab_home',
+    badge: 'Aba 1 • Início',
+    title: 'Aba Início: Visão Geral e Painel de Controle',
+    narration: 'A primeira aba do sistema é a aba Início. Nela você tem a visão geral do seu ambiente de consultoria, o status dos atendimentos e atalhos rápidos para cadastrar clientes, abrir diagnósticos e acessar o macro dashboard. É o seu ponto de partida para navegar com facilidade em todos os recursos do ConsultorPro.',
+    subtext: 'Painel inicial com status do sistema, atalhos de navegação rápida e resumo executivo.',
+    duration: 20,
     highlights: [
-      'Ambiente unificado para gestão de clientes e consultorias',
-      'Diagnóstico ágil baseado em premissas e análise de maturidade',
-      'Automação de cronograma, planos de ação e relatórios com IA'
+      'Painel de acesso rápido para todos os módulos e ferramentas do sistema',
+      'Identificação da Credenciada Sebrae e consultor titular responsável',
+      'Atalhos instantâneos para novo cliente, novo diagnóstico ou agenda'
     ],
-    icon: 'welcome',
+    icon: 'home',
     targetView: 'home',
     sceneVisual: {
-      tag: 'ABA INÍCIO & VISÃO GERAL',
-      headline: 'Plataforma Estratégica para Consultores',
+      tag: 'ABA 1 • INÍCIO',
+      headline: 'Painel Geral & Ponto de Partida',
       metrics: [
-        { label: 'Produtividade', value: '+300%', color: 'text-emerald-400' },
-        { label: 'Tempo de Relatório', value: '< 2 min', color: 'text-sky-400' },
-        { label: 'Conformidade', value: '100%', color: 'text-indigo-400' }
+        { label: 'Navegação', value: '12 Abas', color: 'text-amber-400' },
+        { label: 'Acesso', value: 'Instantâneo', color: 'text-sky-400' },
+        { label: 'Ambiente', value: 'Integrado', color: 'text-emerald-400' }
       ],
       mockDetails: [
-        'Painel inicial limpo com acesso instantâneo a todos os módulos',
-        'Atalhos rápidos para Clientes, Plano de Ação, Diagnósticos e Macro',
-        'Identificação da Credenciada e consultor responsável em destaque'
+        'Visão geral das empresas atendidas e atalhos de acesso rápido',
+        'Carimbo com dados da credenciada e consultor titular ativo',
+        'Acesso direto para Clientes, Projetos, Macro Dashboard e Agenda'
       ]
     }
   },
   {
-    id: 'companies',
-    badge: 'Aba Clientes',
-    title: 'Cadastro e Gestão de Clientes',
-    narration: 'Na aba Clientes, você cadastra e gerencia todas as empresas atendidas. Com a busca automática por CNPJ via Receita Federal, você preenche a Razão Social, CNAE, porte e endereço em um segundo. Você também define metas de faturamento, faturamento atual, contatos e o consultor responsável.',
-    subtext: 'Localize e organize empresas com busca em tempo real e consulta pública de CNPJ.',
+    id: 'tab_companies',
+    badge: 'Aba 2 • Clientes',
+    title: 'Aba Clientes: Cadastro e Busca por CNPJ',
+    narration: 'A segunda aba é a aba Clientes, onde você gerencia todas as empresas atendidas. O sistema conta com busca automática de CNPJ pela Receita Federal, preenchendo Razão Social, CNAE, porte e endereço num instante. Nela você também cadastra contatos, faturamento atual e metas de crescimento financeiro.',
+    subtext: 'Gestão da carteira de empresas, consulta pública de CNPJ e dados cadastrais.',
     duration: 21,
     highlights: [
-      'Preenchimento automático via consulta pública de CNPJ',
-      'Histórico de atendimentos e diagnósticos por cliente',
-      'Definição de metas de faturamento e segmentos de atuação'
+      'Preenchimento automático instantâneo com busca de CNPJ na Receita Federal',
+      'Histórico centralizado de diagnósticos e ciclos de atendimento por cliente',
+      'Registro de contatos estratégicos, porte e metas de faturamento anual'
     ],
     icon: 'company',
     targetView: 'companies',
     sceneVisual: {
-      tag: 'MÓDULO CLIENTES',
-      headline: 'Dossiê Corporativo e Dados Contratuais',
+      tag: 'ABA 2 • CLIENTES',
+      headline: 'Carteira de Empresas & Dados Cadastrais',
       metrics: [
-        { label: 'Busca CNPJ', value: 'Instantânea', color: 'text-sky-400' },
+        { label: 'Busca CNPJ', value: 'Receita Federal', color: 'text-sky-400' },
         { label: 'Histórico', value: 'Centralizado', color: 'text-emerald-400' },
-        { label: 'Segurança', value: 'Criptografia', color: 'text-amber-400' }
+        { label: 'Faturamento', value: 'Metas & Real', color: 'text-amber-400' }
       ],
       mockDetails: [
-        'Autopreenchimento de Razão Social, CNAE e Endereço comercial',
-        'Vínculo direto com a Empresa Credenciada e Consultor',
-        'Controle de contatos, porte e faturamento planejado'
+        'Preenchimento automático de Razão Social, CNAE e Endereço comercial',
+        'Vínculo direto com a consultoria credenciada e consultor titular',
+        'Controle de contatos, porte da empresa e faturamento planejado'
       ]
     }
   },
   {
-    id: 'projects',
-    badge: 'Aba Projetos',
-    title: 'Diagnósticos e Histórico de Consultorias',
-    narration: 'A aba Projetos é o coração dos diagnósticos da empresa. Aqui você visualiza todos os diagnósticos abertos e finalizados, cria um novo diagnóstico em segundos ou replica diagnósticos anteriores para acompanhar a evolução do cliente ao longo do tempo.',
+    id: 'tab_projects',
+    badge: 'Aba 3 • Projetos',
+    title: 'Aba Projetos: Ciclos e Replicação de Diagnósticos',
+    narration: 'A terceira aba é a aba Projetos, o núcleo dos diagnósticos do cliente. Nela você cria novos ciclos de consultoria, acessa o questionário detalhado de premissas com cálculo automático de notas e problemas críticos, ou replica diagnósticos anteriores em um clique para comparar com exatidão a evolução da empresa.',
     subtext: 'Controle de ciclos de atendimento, criação e replicação de diagnósticos.',
-    duration: 20,
+    duration: 21,
     highlights: [
-      'Criação de novos ciclos de consultoria para o cliente selecionado',
-      'Replicação ágil de diagnósticos para comparativo evolutivo',
-      'Histórico completo de pontuações e status de finalização'
+      'Criação e acompanhamento de ciclos de consultoria por empresa',
+      'Replicação ágil de diagnósticos para análise evolutiva periódica',
+      'Cálculo de conformidade de premissas e identificação de problemas prioritários'
     ],
     icon: 'diagnosis',
     targetView: 'projects',
     sceneVisual: {
-      tag: 'MÓDULO PROJETOS',
-      headline: 'Gestão de Ciclos de Diagnóstico',
+      tag: 'ABA 3 • PROJETOS',
+      headline: 'Ciclos de Diagnóstico & Evolução Contínua',
       metrics: [
-        { label: 'Ciclos', value: 'Ilimitados', color: 'text-sky-400' },
+        { label: 'Ciclos', value: 'Multiperíodo', color: 'text-sky-400' },
         { label: 'Replicação', value: '1 Clique', color: 'text-emerald-400' },
-        { label: 'Status', value: 'Em Andamento', color: 'text-purple-400' }
+        { label: 'Avaliação', value: 'Premissas', color: 'text-indigo-400' }
       ],
       mockDetails: [
-        'Listagem de diagnósticos por empresa com data e consultor',
-        'Atalho direto para preencher premissas e questionário',
-        'Histórico organizado com opção de arquivamento seguro'
+        'Listagem de diagnósticos com data, status e consultor responsável',
+        'Atalho direto para preencher premissas e notas de cada pilar',
+        'Replicação de diagnóstico para ciclos de acompanhamento sem retrabalho'
       ]
     }
   },
   {
-    id: 'agenda',
-    badge: 'Aba Agenda',
-    title: 'Agenda do Consultor & Compromissos',
-    narration: 'Na aba Agenda do Consultor, você planeja todas as visitas técnicas, reuniões de alinhamento e sessões de devolutiva. Organize seus compromissos com data, horário, empresa cliente e lembretes para nunca perder um prazo ou entrega contratual.',
+    id: 'tab_agenda',
+    badge: 'Aba 4 • Agenda',
+    title: 'Aba Agenda: Visitas Técnicas e Reuniões',
+    narration: 'A quarta aba é a Agenda do Consultor. Nela você planeja todas as visitas técnicas na empresa do cliente, reuniões virtuais e sessões de devolutiva. Os compromissos ficam associados ao cliente, assegurando pontualidade, controle da carga horária e cumprimento dos prazos contratuais.',
     subtext: 'Calendário e programação de visitas técnicas e reuniões estratégicas.',
-    duration: 19,
+    duration: 20,
     highlights: [
-      'Visão diária, semanal e mensal de compromissos de consultoria',
-      'Vínculo direto entre compromisso e a empresa atendida',
-      'Registro de reuniões presenciais, online e entregas de relatórios'
+      'Visão organizada de compromissos por dia, semana e mês',
+      'Associação de cada agendamento à empresa atendida',
+      'Controle de visitas presenciais, reuniões remotas e prazos de entrega'
     ],
     icon: 'agenda',
     targetView: 'agenda',
     sceneVisual: {
-      tag: 'MÓDULO AGENDA',
+      tag: 'ABA 4 • AGENDA',
       headline: 'Programação de Visitas e Reuniões',
       metrics: [
-        { label: 'Visitas', value: 'Agendadas', color: 'text-amber-400' },
-        { label: 'Visão', value: 'Semanal / Mês', color: 'text-emerald-400' },
-        { label: 'Controle', value: 'Total', color: 'text-sky-400' }
+        { label: 'Visitas', value: 'Presenciais', color: 'text-amber-400' },
+        { label: 'Sessões', value: 'Remotas', color: 'text-emerald-400' },
+        { label: 'Controle', value: 'Por Cliente', color: 'text-sky-400' }
       ],
       mockDetails: [
-        'Planejamento de visitas presenciais e sessões remotas',
-        'Lembretes de entregas intermediárias e encerramento',
-        'Sincronização com dados do cliente e consultor'
+        'Planejamento de visitas com data, horário e pauta definida',
+        'Lembretes de entregas intermediárias e sessões finais',
+        'Sincronização com dados do cliente e consultor responsável'
       ]
     }
   },
   {
-    id: 'credenciadas',
-    badge: 'Aba Credenciadas',
-    title: 'Gestão de Credenciadas & Consultores',
-    narration: 'Na aba Credenciadas, você cadastra as empresas de consultoria credenciadas ao Sebrae, seus dados jurídicos, CNPJ e o consultor responsável com CPF. Todos esses dados são automaticamente carimbados no cabeçalho e rodapé dos relatórios oficiais.',
-    subtext: 'Configuração dos dados da consultoria credenciada e corpo técnico.',
+    id: 'tab_credenciadas',
+    badge: 'Aba 5 • Credenciadas',
+    title: 'Aba Credenciadas: Consultoria e Consultor Titular',
+    narration: 'A quinta aba é a aba Credenciadas. Nela você cadastra as empresas de consultoria credenciadas ao Sebrae e os consultores responsáveis. Esses dados oficiais, com Razão Social, CNPJ e CPF do consultor titular, são carimbados de forma automática nos relatórios em PDF gerados pelo sistema.',
+    subtext: 'Configuração dos dados da consultoria credenciada e corpo técnico oficial.',
     duration: 20,
     highlights: [
-      'Cadastro de Razão Social, CNPJ e endereço da Credenciada',
-      'Vínculo do Consultor titular, CPF e contatos oficiais',
-      'Carimbo e assinatura automática nos relatórios em PDF'
+      'Cadastro de Razão Social, CNPJ e dados de contato da credenciada',
+      'Vínculo do consultor titular, CPF e registro profissional',
+      'Carimbo e assinatura automática no cabeçalho e rodapé dos PDFs'
     ],
     icon: 'credenciadas',
     targetView: 'credenciadas',
     sceneVisual: {
-      tag: 'MÓDULO CREDENCIADAS',
-      headline: 'Dados Institucionais da Consultora',
+      tag: 'ABA 5 • CREDENCIADAS',
+      headline: 'Dados Oficiais da Consultoria & Carimbo',
       metrics: [
-        { label: 'Credenciadas', value: 'Cadastradas', color: 'text-indigo-400' },
+        { label: 'Empresas', value: 'Credenciadas', color: 'text-indigo-400' },
         { label: 'Carimbo PDF', value: 'Automático', color: 'text-emerald-400' },
-        { label: 'Conformidade', value: 'Sebrae', color: 'text-sky-400' }
+        { label: 'Padrão', value: 'Sebrae', color: 'text-sky-400' }
       ],
       mockDetails: [
-        'Armazenamento de dados cadastrais e consultores responsáveis',
+        'Armazenamento dos dados cadastrais da empresa prestadora',
         'Seleção da credenciada ativa para o atendimento corrente',
         'Integração transparente com cabeçalhos de relatórios executivos'
       ]
     }
   },
   {
-    id: 'maturity',
-    badge: 'Aba Maturidade',
-    title: 'Maturidade Empresarial & Radares',
-    narration: 'A aba Maturidade Empresarial calcula o nível de maturidade da empresa em cada dimensão de gestão: Financeira, Processos, Mercado, Pessoas e Estratégia. Gráficos de radar dinâmicos e scores percentuais mostram de forma visual os pontos fortes e as prioridades imediatas de melhoria.',
-    subtext: 'Indicadores gráficos de radar, pontuação percentual e análise por pilares.',
+    id: 'tab_maturity',
+    badge: 'Aba 6 • Maturidade',
+    title: 'Aba Maturidade: Radares e Competências de Gestão',
+    narration: 'A sexta aba é a de Maturidade Empresarial. Ela avalia as dez competências vitais da empresa em áreas como Finanças, Mercado, Processos e Pessoas. Os gráficos de radar dinâmicos e scores percentuais mostram de forma visual e intuitiva os pontos fortes e as prioridades imediatas de melhoria para o empresário.',
+    subtext: 'Indicadores gráficos de radar, pontuação percentual e análise por competências.',
     duration: 21,
     highlights: [
-      'Gráfico de radar comparativo com benchmark de maturidade',
-      'Cálculo automático de porcentagem de conformidade por pilar',
-      'Diagnóstico visual ideal para apresentar ao empresário na primeira sessão'
+      'Gráfico de radar interativo com benchmark de maturidade',
+      'Cálculo automático de porcentagem de conformidade por dimensão',
+      'Diagnóstico visual de alto impacto para apresentar ao empresário'
     ],
     icon: 'maturity',
     targetView: 'maturity-assessment',
     sceneVisual: {
-      tag: 'AVALIAÇÃO DE MATURIDADE',
-      headline: 'Radar de Gestão e Nível de Eficiência',
+      tag: 'ABA 6 • MATURIDADE',
+      headline: 'Radar de Gestão & Competências Vitais',
       metrics: [
-        { label: 'Pilares', value: '5 a 10 Áreas', color: 'text-violet-400' },
-        { label: 'Gráfico', value: 'Radar Interativo', color: 'text-emerald-400' },
-        { label: 'Score Geral', value: 'Automático', color: 'text-sky-400' }
+        { label: 'Dimensões', value: '10 Áreas', color: 'text-violet-400' },
+        { label: 'Gráfico', value: 'Radar Dinâmico', color: 'text-emerald-400' },
+        { label: 'Score Geral', value: 'Percentual', color: 'text-sky-400' }
       ],
       mockDetails: [
-        'Pontuação calculada a partir das respostas do questionário',
-        'Identificação de gargalos em Finanças, Marketing, Operações e RH',
-        'Exportação gráfica para apresentação ao empresário'
+        'Pontuação calculada a partir das respostas do diagnóstico',
+        'Identificação visual de gargalos em Finanças, Marketing, Operações e RH',
+        'Exportação gráfica para apresentação estratégica ao cliente'
       ]
     }
   },
   {
-    id: 'resultado',
-    badge: 'Aba Resultado',
-    title: 'Resultado da Consultoria & Evolução',
-    narration: 'Na aba Resultado da Consultoria, você compara o diagnóstico inicial com a situação final após a implantação das melhorias. Comprove numericamente o ganho de maturidade, o aumento de faturamento e a redução de desperdícios conquistados pelo cliente.',
-    subtext: 'Demonstrativo antes versus depois para comprovação de valor da consultoria.',
+    id: 'tab_resultado',
+    badge: 'Aba 7 • Resultado',
+    title: 'Aba Resultado: Comparativo Antes vs Depois',
+    narration: 'A sétima aba é o Resultado da Consultoria. Nela você compara o diagnóstico inicial com a situação alcançada após as ações de melhoria. O sistema calcula a evolução com notas de zero a dez, aumento de maturidade e metas atingidas, gerando um laudo claro que comprova o valor da consultoria entregue.',
+    subtext: 'Demonstrativo antes versus depois para comprovação de valor com laudo executivo.',
     duration: 21,
     highlights: [
-      'Comparativo claro do status inicial versus final da empresa',
-      'Evidência quantitativa do impacto da consultoria no negócio',
-      'Validação de metas contratuais e satisfação do cliente'
+      'Comparativo direto entre o status inicial e a situação após a consultoria',
+      'Evidência quantitativa e qualitativa do impacto no negócio do cliente',
+      'Notas de 0 a 10 e emissão de laudo executivo de comprovação'
     ],
     icon: 'resultado',
     targetView: 'resultado-consultoria',
     sceneVisual: {
-      tag: 'RESULTADO & IMPACTO',
+      tag: 'ABA 7 • RESULTADO',
       headline: 'Evolução Antes vs. Depois da Consultoria',
       metrics: [
-        { label: 'Evolução Média', value: '+45% Ganho', color: 'text-emerald-400' },
-        { label: 'Metas Batidas', value: '100%', color: 'text-sky-400' },
-        { label: 'Satisfação', value: 'NPS 98', color: 'text-amber-400' }
+        { label: 'Evolução', value: 'Notas 0 a 10', color: 'text-emerald-400' },
+        { label: 'Metas', value: 'Comprovadas', color: 'text-sky-400' },
+        { label: 'Laudo', value: 'Executivo', color: 'text-amber-400' }
       ],
       mockDetails: [
-        'Gráficos comparativos de evolução entre o primeiro e último ciclo',
-        'Registro de lições aprendidas e recomendações futuras',
-        'Relatório resumido de impacto gerencial para a diretoria'
+        'Gráficos comparativos de evolução entre o primeiro e o último ciclo',
+        'Registro de ganhos operacionais, financeiros e mercadológicos',
+        'Documento de conclusão com laudo pronto para o cliente'
       ]
     }
   },
   {
-    id: 'macro',
-    badge: 'Aba Dashboard Macro',
-    title: 'Dashboard Macro & Análise Global',
-    narration: 'O Dashboard Macro consolida os dados de todas as empresas e consultorias em uma visão executiva única. Analise a média de maturidade de toda a sua carteira de clientes, os setores mais atendidos e os problemas mais recorrentes em um só painel.',
+    id: 'tab_premises',
+    badge: 'Aba 8 • Biblioteca',
+    title: 'Aba Biblioteca: Perguntas, Problemas e Soluções',
+    narration: 'A oitava aba é a Biblioteca de Perguntas, onde você gerencia toda a base metodológica do sistema. É possível editar perguntas e premissas por área, configurar a árvore de problemas e causas, e cadastrar soluções recomendadas para diferentes ramos de atividade e modelos de negócio.',
+    subtext: 'Base de conhecimento customizável com premissas, problemas, soluções e nichos.',
+    duration: 21,
+    highlights: [
+      'Edição de perguntas e premissas por área de gestão',
+      'Configuração de problemas típicos e causas estruturais',
+      'Cadastro de soluções sugeridas personalizadas por segmento'
+    ],
+    icon: 'premises',
+    targetView: 'premises',
+    sceneVisual: {
+      tag: 'ABA 8 • BIBLIOTECA',
+      headline: 'Base de Premissas, Problemas e Soluções',
+      metrics: [
+        { label: 'Premissas', value: 'Por Área', color: 'text-indigo-400' },
+        { label: 'Problemas', value: 'Árvore de Causas', color: 'text-amber-400' },
+        { label: 'Soluções', value: 'Por Segmento', color: 'text-emerald-400' }
+      ],
+      mockDetails: [
+        'Seções organizadas: Problemas, Premissas, Soluções e Segmentos',
+        'Inclusão de novos setores econômicos e perguntas específicas',
+        'Importação, exportação e restauração dos padrões de fábrica'
+      ]
+    }
+  },
+  {
+    id: 'tab_macro',
+    badge: 'Aba 9 • Dashboard Macro',
+    title: 'Aba Dashboard Macro: Inteligência da Carteira',
+    narration: 'A nona aba é o Dashboard Macro, que consolida todas as empresas e consultorias em uma visão executiva única. Nela você analisa a média de maturidade de toda a carteira de clientes, a distribuição por setores e os problemas mais frequentes, ideal para relatórios gerenciais e prestação de contas.',
     subtext: 'Visão executiva em tempo real de toda a carteira de empresas atendidas.',
     duration: 20,
     highlights: [
-      'Métricas consolidadas de todas as consultorias ativas',
-      'Distribuição por segmento, porte e região geográfica',
-      'Identificação de padrões e gargalos comuns no mercado'
+      'Métricas consolidadas de todas as empresas e atendimentos ativos',
+      'Distribuição por segmentos de mercado, porte e maturidade média',
+      'Identificação de gargalos coletivos para planejamento estratégico'
     ],
     icon: 'macro',
     targetView: 'macro-dashboard',
     sceneVisual: {
-      tag: 'DASHBOARD MACRO',
+      tag: 'ABA 9 • DASHBOARD MACRO',
       headline: 'Inteligência Global da Carteira de Clientes',
       metrics: [
-        { label: 'Empresas Ativas', value: 'Consolidado', color: 'text-emerald-400' },
+        { label: 'Carteira', value: 'Consolidada', color: 'text-emerald-400' },
         { label: 'Maturidade Média', value: 'Tempo Real', color: 'text-sky-400' },
         { label: 'Setores', value: 'Multissegmento', color: 'text-purple-400' }
       ],
       mockDetails: [
         'Gráficos de barras e pizza com distribuição setorial',
-        'Filtro por período, credenciada e consultor responsável',
-        'Exportação rápida para prestação de contas institucional'
+        'Filtros por período, credenciada e consultor responsável',
+        'Exportação de indicadores executivos para prestação de contas'
       ]
     }
   },
   {
-    id: 'premises',
-    badge: 'Aba Biblioteca',
-    title: 'Biblioteca de Perguntas, Problemas & Soluções',
-    narration: 'Na Biblioteca de Perguntas, você personaliza todo o conhecimento do sistema. Edite as perguntas e premissas do diagnóstico, configure a árvore de problemas e causas-raiz, e defina soluções recomendadas para cada segmento de mercado.',
-    subtext: 'Base de conhecimento customizável com premissas, problemas, soluções e áreas.',
+    id: 'tab_action_plan',
+    badge: 'Aba 10 • Plano de Ação',
+    title: 'Aba Plano de Ação: Kanban e Cronograma de 34h',
+    narration: 'A décima aba é o Plano de Ação. Nela o sistema distribui automaticamente as 8 atividades do cronograma padrão de 34 horas ao clicar em Gerar pelo Diagnóstico. Você controla as tarefas em formato Kanban, define responsáveis e prazos, e anexa fotos e documentos comprobatórios de cada etapa concluída.',
+    subtext: 'Quadro Kanban com 8 atividades padrão, 34 horas e fotos de comprovação.',
     duration: 21,
     highlights: [
-      'Edição completa de perguntas por área de gestão',
-      'Configuração de problemas padrão e suas causas estruturais',
-      'Criação de soluções sugeridas personalizadas por segmento'
-    ],
-    icon: 'premises',
-    targetView: 'premises',
-    sceneVisual: {
-      tag: 'BIBLIOTECA DE CONHECIMENTO',
-      headline: 'Repositório Estratégico de Premissas e Soluções',
-      metrics: [
-        { label: 'Premissas', value: 'Personalizáveis', color: 'text-indigo-400' },
-        { label: 'Problemas', value: 'Mapeados', color: 'text-amber-400' },
-        { label: 'Soluções', value: 'Inteligentes', color: 'text-emerald-400' }
-      ],
-      mockDetails: [
-        'Abas organizadas: Problemas, Premissas, Soluções, Áreas e Segmentos',
-        'Inclusão de novos setores econômicos e perguntas específicas',
-        'Restauração de biblioteca padrão e importação em lote'
-      ]
-    }
-  },
-  {
-    id: 'action_plan',
-    badge: 'Aba Plano de Ação',
-    title: 'Plano de Ação Kanban & Cronograma 34h',
-    narration: 'Na aba Plano de Ação, o sistema distribui automaticamente as 8 atividades do cronograma padrão de 34 horas através do botão Gerar pelo Diagnóstico. Você controla tarefas em estilo Kanban, atribui responsáveis, datas, status e anexa fotos e evidências comprobatórias de cada etapa.',
-    subtext: 'Quadro Kanban com status, prioridades, datas automáticas e evidências.',
-    duration: 22,
-    highlights: [
-      'Geração automática calibrada para 8 atividades e 34 horas',
-      'Atividades contextualizadas para o Tipo de Produto ou Serviço do cliente',
-      'Quadro Kanban com upload de fotos e comprovações de consultoria'
+      'Geração automática das 8 atividades calibradas para 34 horas',
+      'Atividades contextualizadas para o produto ou serviço do cliente',
+      'Quadro Kanban com status, prazos e anexo de fotos comprobatórias'
     ],
     icon: 'actionPlan',
     targetView: 'kanban',
     sceneVisual: {
-      tag: 'PLANO DE AÇÃO & KANBAN',
-      headline: 'Cronograma Kanban e Atividades Estratégicas',
+      tag: 'ABA 10 • PLANO DE AÇÃO',
+      headline: 'Cronograma Kanban de 34h & Evidências',
       metrics: [
         { label: 'Carga Horária', value: '34 Horas', color: 'text-emerald-400' },
         { label: 'Atividades', value: '8 Etapas', color: 'text-sky-400' },
-        { label: 'Origem', value: 'Diagnóstico', color: 'text-indigo-400' }
+        { label: 'Evidências', value: 'Fotos e Anexos', color: 'text-indigo-400' }
       ],
       mockDetails: [
-        'Distribuição automática de datas conforme a consultoria',
-        'Controle de status: Pendente, Em Andamento e Concluído',
-        'Registro de evidências fotográficas e anexos comprobatórios'
+        'Distribuição automática de datas conforme o período da consultoria',
+        'Controle de status: A Fazer, Em Andamento e Concluído',
+        'Registro de evidências fotográficas para comprovação ao Sebrae'
       ]
     }
   },
   {
-    id: 'report_ai',
-    badge: 'Aba Relatório',
-    title: 'Relatório de Consultoria & Exportação PDF',
-    narration: 'Na aba Relatório de Consultoria, a Inteligência Artificial Gemini redige e aprimora os objetivos, soluções e resultados esperados. Com apenas um clique, você exporta o relatório formal oficial completo em PDF com layout executivo, pronto para assinatura e entrega ao Sebrae ou cliente.',
-    subtext: 'Emissão profissional com brasões, assinaturas, dados técnicos e sumário executivo.',
-    duration: 22,
+    id: 'tab_report',
+    badge: 'Aba 11 • Relatório',
+    title: 'Aba Relatório: Redação com IA e Exportação PDF',
+    narration: 'A décima primeira aba é o Relatório de Consultoria. Nela a inteligência artificial Gemini auxilia na redação dos objetivos, justificativas e soluções recomendadas. Com apenas um clique você exporta o relatório formal completo em PDF oficial, com tabelas de horas, gráficos de maturidade e campos de assinatura prontos para entrega.',
+    subtext: 'Emissão executiva com IA, tabelas de horas, evidências e layout oficial em PDF.',
+    duration: 21,
     highlights: [
-      'Redação inteligente com IA adaptada ao nicho e produto do cliente',
-      'Objetivos, justificativas e planos consolidados em alta qualidade',
-      'Exportação para PDF oficial com fotos, tabelas de horas e assinaturas'
+      'Redação assistida por IA Gemini adaptada ao segmento do cliente',
+      'Consolidação de dados do cliente, credenciada e consultor titular',
+      'Exportação para PDF oficial completo pronto para assinatura'
     ],
     icon: 'report',
     targetView: 'cronograma',
     sceneVisual: {
-      tag: 'RELATÓRIO & EXPORTAÇÃO',
-      headline: 'Relatório Executivo Oficial & Exportação PDF',
+      tag: 'ABA 11 • RELATÓRIO',
+      headline: 'Relatório Oficial em PDF & Redação IA',
       metrics: [
         { label: 'Formato', value: 'PDF Oficial', color: 'text-rose-400' },
         { label: 'Redação IA', value: 'Gemini Integrado', color: 'text-amber-400' },
-        { label: 'Pronto p/ Entrega', value: 'Sim', color: 'text-emerald-400' }
+        { label: 'Assinaturas', value: 'Formatadas', color: 'text-emerald-400' }
       ],
       mockDetails: [
-        'Identificação completa de cliente, consultor e credenciada',
-        'Resumo dos problemas identificados e soluções implantadas',
-        'Relatório de 8 atividades com detalhamento de horas e resultados'
+        'Identificação oficial do cliente, credenciada e consultor',
+        'Tabela das 8 atividades com horas e detalhamento de resultados',
+        'Sumário executivo e gráficos de maturidade formatados para impressão'
       ]
     }
   },
   {
-    id: 'settings',
-    badge: 'Aba Configurações',
-    title: 'Configurações, Backup & Nuvem',
-    narration: 'Na aba Configurações, você gerencia a sua Chave da API do Google Gemini, alterna entre salvamento na Nuvem ou Local com criptografia AES-256, e realiza o download de backups de segurança dos seus dados a qualquer momento. Tudo rápido, seguro e sob seu controle!',
-    subtext: 'Chave de IA Gemini, gestão de backup em JSON e segurança de dados.',
-    duration: 21,
+    id: 'tab_settings',
+    badge: 'Aba 12 • Configurações',
+    title: 'Aba Configurações: IA, Nuvem e Backups',
+    narration: 'A décima segunda aba é a de Configurações. Nela você gerencia sua chave de API do Gemini, alterna entre armazenamento na nuvem com Firestore e salvamento local com criptografia, e pode baixar backups completos dos seus dados em arquivo JSON a qualquer momento, garantindo total segurança e controle.',
+    subtext: 'Chave do Gemini, alternância Nuvem/Local e download de backups de segurança.',
+    duration: 20,
     highlights: [
-      'Configuração da Chave da API do Gemini para uso exclusivo ou compartilhado',
-      'Exportação e importação de backups completos em arquivo JSON',
-      'Alternância imediata entre Modo Nuvem (Firestore) e Modo Local'
+      'Configuração da chave de API do Google Gemini para recursos com IA',
+      'Exportação e restauração de backups completos em arquivo JSON',
+      'Alternância imediata entre Modo Nuvem e Modo Local criptografado'
     ],
     icon: 'settings',
     targetView: 'settings',
     sceneVisual: {
-      tag: 'CONFIGURAÇÕES & SEGURANÇA',
-      headline: 'Gestão de Inteligência Artificial e Dados',
+      tag: 'ABA 12 • CONFIGURAÇÕES',
+      headline: 'Gestão de IA, Nuvem e Segurança',
       metrics: [
         { label: 'Backup', value: 'JSON Local', color: 'text-emerald-400' },
         { label: 'IA Gemini', value: 'Configurável', color: 'text-sky-400' },
-        { label: 'Criptografia', value: 'AES-256', color: 'text-amber-400' }
+        { label: 'Armazenamento', value: 'Nuvem ou Local', color: 'text-amber-400' }
       ],
       mockDetails: [
-        'Modal de tutorial para gerar Chave de API gratuita do Gemini',
+        'Guia integrado para obter Chave de API gratuita do Gemini',
         'Sincronização em nuvem e histórico de backups locais',
-        'Controle de logo personalizado do Sebrae e da Consultora'
+        'Controle de logos e preferências gerais do sistema'
       ]
     }
   }
@@ -402,7 +402,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
 
 const renderIcon = (type: TutorialStep['icon']) => {
   switch (type) {
-    case 'welcome': return <Sparkles size={16} className="text-amber-400" />;
+    case 'home':
+    case 'welcome': return <Home size={16} className="text-amber-400" />;
     case 'company': return <Building2 size={16} className="text-sky-400" />;
     case 'diagnosis': return <FileSpreadsheet size={16} className="text-indigo-400" />;
     case 'agenda': return <CalendarDays size={16} className="text-amber-400" />;
