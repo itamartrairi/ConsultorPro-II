@@ -153,6 +153,7 @@ import { Button } from './components/Button';
 import { Modal } from './components/Modal';
 import { ToastContainer, type ToastItem } from './components/Toast';
 import { VideoTutorialModal } from './components/VideoTutorialModal';
+import { VideoTutorialCard } from './components/VideoTutorialCard';
 import { playClickSound, playSuccessSound } from './lib/sound';
 
 declare global {
@@ -9629,7 +9630,7 @@ export default function App() {
   const isCreatingDiagRef = useRef(false);
   const [calculatingMaturity, setCalculatingMaturity] = useState(false);
   const [generatingPlan, setGeneratingPlan] = useState(false);
-  const [view, setView] = useState<'home' | 'companies' | 'credenciadas' | 'licenses' | 'diagnosis' | 'dashboard' | 'premises' | 'cronograma' | 'relatorio' | 'kanban' | 'settings' | 'landing' | 'checkout' | 'licensing' | 'dados-consultoria' | 'agenda' | 'macro-dashboard' | 'maturity-assessment' | 'projects' | 'plan' | 'resultado-consultoria'>('landing');
+  const [view, setView] = useState<'home' | 'video-tutorial' | 'companies' | 'credenciadas' | 'licenses' | 'diagnosis' | 'dashboard' | 'premises' | 'cronograma' | 'relatorio' | 'kanban' | 'settings' | 'landing' | 'checkout' | 'licensing' | 'dados-consultoria' | 'agenda' | 'macro-dashboard' | 'maturity-assessment' | 'projects' | 'plan' | 'resultado-consultoria'>('landing');
   const [customLogo, setCustomLogo] = useState<string | null>(() => {
     const v = localStorage.getItem('sebrae_custom_logo');
     return v && v.startsWith('data:') ? v : null;
@@ -12179,8 +12180,14 @@ export default function App() {
           <NavItem 
             icon={Tv} 
             label="Vídeo Tutorial" 
-            active={isVideoTutorialModalOpen} 
-            onClick={() => setIsVideoTutorialModalOpen(true)} 
+            active={view === 'video-tutorial' || isVideoTutorialModalOpen} 
+            onClick={() => { 
+              setView('video-tutorial'); 
+              setSelectedEmpresa(null); 
+              setSelectedDiagnostico(null); 
+              setIsVideoTutorialModalOpen(false);
+              setIsSidebarOpen(false); 
+            }} 
           />
           <NavItem 
             icon={Settings} 
@@ -17319,9 +17326,9 @@ export default function App() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsVideoTutorialModalOpen(true)}
+                  onClick={() => setView('video-tutorial')}
                   className="text-xs font-bold border-sky-200 text-sky-700 bg-sky-50/60 hover:bg-sky-100 flex items-center gap-1.5 h-8 py-1 px-3 shadow-xs"
-                  title="Abrir o Vídeo Tutorial e Apresentação das Abas"
+                  title="Acessar a Aba de Vídeo Tutorial e Apresentação das Abas"
                 >
                   <Tv size={13} className="text-sky-600" />
                   <span>Vídeo Tutorial</span>
@@ -17457,6 +17464,20 @@ export default function App() {
                   />
                 </motion.div>
               )}
+              {view === 'video-tutorial' && (
+                <motion.div 
+                  key="video-tutorial"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="w-full pb-8"
+                >
+                  <VideoTutorialCard 
+                    setView={setView} 
+                    isModal={false} 
+                  />
+                </motion.div>
+              )}
               {view === 'home' && (
                   <motion.div 
                     key="home"
@@ -17473,7 +17494,7 @@ export default function App() {
                       isAdmin={isAdmin}
                       empresasCredenciadas={empresasCredenciadas}
                       user={user}
-                      onOpenVideoTutorial={() => setIsVideoTutorialModalOpen(true)}
+                      onOpenVideoTutorial={() => setView('video-tutorial')}
                     />
                   </motion.div>
                 )}

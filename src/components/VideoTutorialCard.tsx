@@ -661,7 +661,7 @@ export const VideoTutorialCard: React.FC<{
   return (
     <div className={cn(
       "bg-slate-900 text-white rounded-[2.5rem] border border-slate-800 shadow-2xl overflow-hidden relative flex flex-col",
-      isModal ? "max-h-[92vh] w-full" : ""
+      isModal ? "max-h-[92vh] w-full" : "w-full min-h-[640px] my-2"
     )}>
       {/* Luzes de fundo atmosféricas */}
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px] pointer-events-none" />
@@ -730,7 +730,10 @@ export const VideoTutorialCard: React.FC<{
       </div>
 
       {/* Palco do Vídeo / Player Audiovisual */}
-      <div className="p-5 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start overflow-y-auto flex-1">
+      <div className={cn(
+        "p-5 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8 items-start flex-1",
+        isModal ? "overflow-y-auto" : ""
+      )}>
         {/* Lado Esquerdo: Janela Gráfica Simulada do Vídeo */}
         <div className="lg:col-span-7 flex flex-col">
           <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950/70 border border-slate-800 p-6 md:p-8 min-h-[380px] flex flex-col justify-between shadow-2xl">
