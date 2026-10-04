@@ -432,27 +432,40 @@ export const VideoTutorialCard: React.FC<{
   const [hasVoiceSupport, setHasVoiceSupport] = useState(true);
   const [speechActive, setSpeechActive] = useState(false);
 
-  const step = TUTORIAL_STEPS[currentStepIndex];
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const keepAliveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Fallback seguro: garante que step nunca seja undefined
+  const step = (TUTORIAL_STEPS && TUTORIAL_STEPS[currentStepIndex]) ? TUTORIAL_STEPS[currentStepIndex] : (TUTORIAL_STEPS && TUTORIAL_STEPS[0]);
+  const timerRef = useRef<any>(null);
+  const keepAliveTimerRef = useRef<any>(null);
   const speechFinishedRef = useRef(false);
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const utteranceRef = useRef<any>(null);
 
   // Inicializa suporte a voz e cancela ao desmontar
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      setHasVoiceSupport(true);
-      window.speechSynthesis.getVoices();
-      const onVoicesChanged = () => {
-        window.speechSynthesis.getVoices();
-      };
-      window.speechSynthesis.onvoiceschanged = onVoicesChanged;
-      return () => {
-        if (window.speechSynthesis) {
-          window.speechSynthesis.onvoiceschanged = null;
+    try {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis) {
+        setHasVoiceSupport(true);
+        if (typeof window.speechSynthesis.getVoices === 'function') {
+          window.speechSynthesis.getVoices();
         }
-      };
-    } else {
+        const onVoicesChanged = () => {
+          try {
+            if (typeof window !== 'undefined' && window.speechSynthesis) {
+              window.speechSynthesis.getVoices();
+            }
+          } catch {}
+        };
+        window.speechSynthesis.onvoiceschanged = onVoicesChanged;
+        return () => {
+          try {
+            if (typeof window !== 'undefined' && window.speechSynthesis) {
+              window.speechSynthesis.onvoiceschanged = null;
+            }
+          } catch {}
+        };
+      } else {
+        setHasVoiceSupport(false);
+      }
+    } catch {
       setHasVoiceSupport(false);
     }
   }, []);
@@ -466,30 +479,41 @@ export const VideoTutorialCard: React.FC<{
 
   const stopSpeech = () => {
     clearKeepAlive();
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      setSpeechActive(false);
-    }
+    try {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+    } catch {}
+    setSpeechActive(false);
   };
 
-  const playVoiceForStep = (stepItem: TutorialStep) => {
+  const playVoiceForStep = (stepItem: TutorialStep | undefined) => {
     stopSpeech();
     speechFinishedRef.current = false;
 
-    if (isMuted || !hasVoiceSupport || typeof window === 'undefined') {
+    if (!stepItem || !stepItem.narration || isMuted || !hasVoiceSupport || typeof window === 'undefined') {
       speechFinishedRef.current = true;
       return;
     }
 
     try {
+      if (typeof SpeechSynthesisUtterance === 'undefined' || !window.speechSynthesis) {
+        speechFinishedRef.current = true;
+        return;
+      }
+
       const utter = new SpeechSynthesisUtterance(stepItem.narration);
       utter.lang = 'pt-BR';
       utter.rate = 1.0; // ritmo claro e articulado
       utter.pitch = 1.08; // tom amigável e natural
 
-      const voices = window.speechSynthesis.getVoices();
+      let voices: SpeechSynthesisVoice[] = [];
+      try {
+        voices = window.speechSynthesis.getVoices() || [];
+      } catch {}
+
       const femalePtVoice = voices.find(v => 
-        (v.lang.includes('pt') || v.lang.includes('PT')) && 
+        (v.lang && (v.lang.includes('pt') || v.lang.includes('PT'))) && 
         (v.name.toLowerCase().includes('maria') || 
          v.name.toLowerCase().includes('francisca') || 
          v.name.toLowerCase().includes('leticia') || 
@@ -498,7 +522,7 @@ export const VideoTutorialCard: React.FC<{
          v.name.toLowerCase().includes('mulher') ||
          v.name.toLowerCase().includes('zira') ||
          v.name.toLowerCase().includes('google'))
-      ) || voices.find(v => v.lang.includes('pt') || v.lang.includes('PT'));
+      ) || voices.find(v => v.lang && (v.lang.includes('pt') || v.lang.includes('PT')));
 
       if (femalePtVoice) {
         utter.voice = femalePtVoice;
@@ -526,10 +550,14 @@ export const VideoTutorialCard: React.FC<{
 
       clearKeepAlive();
       keepAliveTimerRef.current = setInterval(() => {
-        if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.speaking) {
-          window.speechSynthesis.pause();
-          window.speechSynthesis.resume();
-        } else {
+        try {
+          if (typeof window !== 'undefined' && window.speechSynthesis && window.speechSynthesis.speaking) {
+            window.speechSynthesis.pause();
+            window.speechSynthesis.resume();
+          } else {
+            clearKeepAlive();
+          }
+        } catch {
           clearKeepAlive();
         }
       }, 10000);
@@ -551,7 +579,7 @@ export const VideoTutorialCard: React.FC<{
   // Mudança de passo
   useEffect(() => {
     setProgress(0);
-    if (isPlaying) {
+    if (isPlaying && step) {
       playVoiceForStep(step);
     } else {
       stopSpeech();
@@ -563,25 +591,29 @@ export const VideoTutorialCard: React.FC<{
     if (isMuted) {
       stopSpeech();
       speechFinishedRef.current = true;
-    } else if (isPlaying) {
+    } else if (isPlaying && step) {
       playVoiceForStep(step);
     }
   }, [isMuted]);
 
   // Temporizador de progresso e transição de cena
   useEffect(() => {
-    if (!isPlaying) {
+    if (!isPlaying || !step) {
       if (timerRef.current) clearInterval(timerRef.current);
       return;
     }
 
     const intervalTime = 100;
-    const totalDurationMs = Math.max(step.duration * 1000, 20000);
+    const totalDurationMs = Math.max(((step.duration || 20) * 1000), 20000);
     const stepIncrement = (intervalTime / totalDurationMs) * 100;
 
     timerRef.current = setInterval(() => {
       setProgress(prev => {
-        const isSpeaking = typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.speaking;
+        let isSpeaking = false;
+        try {
+          isSpeaking = typeof window !== 'undefined' && 'speechSynthesis' in window && !!window.speechSynthesis?.speaking;
+        } catch {}
+
         const voiceStillBusy = !isMuted && hasVoiceSupport && (isSpeaking || !speechFinishedRef.current);
 
         if (prev >= 98 && voiceStillBusy) {
@@ -609,7 +641,7 @@ export const VideoTutorialCard: React.FC<{
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isPlaying, currentStepIndex, step.duration, isMuted, hasVoiceSupport]);
+  }, [isPlaying, currentStepIndex, step?.duration, isMuted, hasVoiceSupport]);
 
   const handleTogglePlay = () => {
     if (isPlaying) {
@@ -705,14 +737,14 @@ export const VideoTutorialCard: React.FC<{
             <span>{isMuted ? "Áudio Mudo" : "Voz Ativa"}</span>
           </button>
 
-          {setView && step.targetView && (
+          {setView && step?.targetView && (
             <Button
               size="sm"
               onClick={handleNavigateToTargetView}
               className="bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-black rounded-xl h-8 px-3.5 border-none shadow-md"
-              title={`Acessar diretamente ${step.badge}`}
+              title={`Acessar diretamente ${step?.badge || ''}`}
             >
-              <span>Abrir {step.badge.replace('Passo ', '').replace('Aba ', '')}</span>
+              <span>Abrir {(step?.badge || '').replace('Passo ', '').replace('Aba ', '')}</span>
             </Button>
           )}
 
@@ -743,8 +775,8 @@ export const VideoTutorialCard: React.FC<{
             {/* Cabeçalho da cena */}
             <div className="relative z-10 flex items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
               <span className="text-[11px] font-black tracking-widest uppercase text-sky-400 bg-sky-950/80 border border-sky-800/60 px-3 py-1 rounded-full flex items-center gap-1.5">
-                {renderIcon(step.icon)}
-                {step.sceneVisual.tag}
+                {renderIcon(step?.icon)}
+                {step?.sceneVisual?.tag}
               </span>
               <span className="text-xs font-mono font-bold text-slate-400 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
@@ -755,15 +787,15 @@ export const VideoTutorialCard: React.FC<{
             {/* Conteúdo central da cena */}
             <div className="relative z-10 py-5">
               <h3 className="text-2xl sm:text-3xl font-black text-white tracking-tight mb-2">
-                {step.sceneVisual.headline}
+                {step?.sceneVisual?.headline}
               </h3>
               <p className="text-sm text-slate-300 font-medium mb-5">
-                {step.subtext}
+                {step?.subtext}
               </p>
 
               {/* Cards de Métricas em Destaque */}
               <div className="grid grid-cols-3 gap-3 mb-5">
-                {step.sceneVisual.metrics.map((m, i) => (
+                {(step?.sceneVisual?.metrics || []).map((m, i) => (
                   <div key={i} className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-3 text-center">
                     <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider mb-0.5">
                       {m.label}
@@ -777,7 +809,7 @@ export const VideoTutorialCard: React.FC<{
 
               {/* Detalhes operacionais da tela */}
               <div className="bg-slate-950/80 border border-slate-800 rounded-2xl p-4 space-y-2">
-                {step.sceneVisual.mockDetails.map((det, i) => (
+                {(step?.sceneVisual?.mockDetails || []).map((det, i) => (
                   <div key={i} className="flex items-center gap-2.5 text-xs text-slate-300 font-medium">
                     <CheckCircle2 size={14} className="text-sky-400 shrink-0" />
                     <span>{det}</span>
@@ -804,7 +836,7 @@ export const VideoTutorialCard: React.FC<{
                   )}
                 </div>
                 <p className="text-xs sm:text-sm text-slate-100 font-semibold leading-relaxed tracking-normal select-text break-words">
-                  "{step.narration}"
+                  "{step?.narration}"
                 </p>
               </div>
             </div>
@@ -873,10 +905,10 @@ export const VideoTutorialCard: React.FC<{
           {/* Destaques do Passo Atual */}
           <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-4">
             <span className="text-[11px] font-black uppercase text-amber-400 tracking-wider flex items-center gap-1.5 mb-2">
-              <Lightbulb size={14} /> Destaques da Aba: {step.title}
+              <Lightbulb size={14} /> Destaques da Aba: {step?.title}
             </span>
             <ul className="space-y-1.5">
-              {step.highlights.map((h, i) => (
+              {(step?.highlights || []).map((h, i) => (
                 <li key={i} className="text-xs text-slate-300 flex items-start gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-sky-400 mt-1.5 shrink-0" />
                   <span>{h}</span>
@@ -888,7 +920,7 @@ export const VideoTutorialCard: React.FC<{
           {/* Barra de Progresso do Capítulo */}
           <div>
             <div className="flex justify-between text-[11px] font-mono font-bold text-slate-400 mb-1.5">
-              <span className="truncate pr-2">{step.badge}: {step.title}</span>
+              <span className="truncate pr-2">{step?.badge}: {step?.title}</span>
               <span className="shrink-0">{Math.round(progress)}%</span>
             </div>
             <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-700/60">
