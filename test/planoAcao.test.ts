@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   analisarDiagnostico, montarAtividades, estruturarPlano, enriquecerComIA, montarTextosRelatorio,
-  isPerguntaNegativa, papelDaAtividade, horasDe, MAX_ATIVIDADES, tarefasDasAtividades, agruparPorArea,
+  isPerguntaNegativa, grauLacuna, papelDaAtividade, horasDe, MAX_ATIVIDADES, tarefasDasAtividades, agruparPorArea,
   ATIVIDADE_DIAGNOSTICO, ATIVIDADE_DEVOLUTIVA, ATIVIDADE_FERRAMENTAS, ATIVIDADE_ANALISE_FINAL, ATIVIDADE_RELATORIO_FINAL,
 } from '../src/lib/domain/planoAcao';
 
@@ -26,6 +26,10 @@ assert.equal(isPerguntaNegativa('O produtor já tentou acessar crédito e foi re
 assert.equal(isPerguntaNegativa('Possui dívidas em atraso?'), true);
 assert.equal(isPerguntaNegativa('Possui controle financeiro?'), false);
 assert.equal(isPerguntaNegativa('Tem controle de estoque para evitar perdas?'), false);
+assert.equal(isPerguntaNegativa('O produtor comercializa apenas em feiras/festivais locais?'), true);
+assert.equal(isPerguntaNegativa('Vende apenas para um cliente?'), true);
+assert.equal(grauLacuna({ pergunta: 'O produtor comercializa apenas em feiras/festivais locais?', resposta: 'Não' }), 0);
+assert.equal(grauLacuna({ pergunta: 'O produtor comercializa apenas em feiras/festivais locais?', resposta: 'Sim' }), 2);
 console.log('  OK: semântica das perguntas');
 
 // Classificação

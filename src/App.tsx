@@ -9269,24 +9269,29 @@ export const getAI = () => {
 };
 
 const generateAIFeedback = async (resposta: string, pergunta: string, problema: string) => {
-  const cacheKey = generateAICacheKey('feedback_v2', { resposta, pergunta, problema });
+  const cacheKey = generateAICacheKey('feedback_v3', { resposta, pergunta, problema });
   const cached = await getCachedAI<string>(cacheKey);
   if (cached) return cached;
 
-  const prompt = `Como um consultor empresarial especializado do SEBRAE, analise o significado da pergunta e da resposta fornecida no contexto do diagnóstico empresarial.
+  const prompt = `Como um consultor empresarial especializado do SEBRAE e especialista em Administração e Gestão Comercial, analise o significado da pergunta e da resposta fornecida no contexto do diagnóstico empresarial.
   
   CONTEXTO:
   Problema/Tema: ${problema}
   Premissa/Pergunta: ${pergunta}
   Resposta do Cliente: ${resposta}
   
-  DIRETRIZES DE ANÁLISE SEMÂNTICA DA PERGUNTA E RESPOSTA:
-  1. Avalie o sentido da pergunta/premissa:
-     - Se a pergunta investiga a ocorrência de um problema, falha, prejuízo, inadimplência ou rejeição (ex: "O produtor já tentou acessar crédito rural e foi rejeitado por falta de documentação?", "Possui pendências?"):
+  DIRETRIZES DE ANÁLISE SEMÂNTICA, LÓGICA E ADMINISTRAÇÃO/COMÉRCIO:
+  1. Avalie o sentido lógico da pergunta/premissa conforme as teorias de gestão:
+     - PERGUNTAS SOBRE RISCO, LIMITAÇÃO OU DEPENDÊNCIA COMERCIAL (ex: "O produtor comercializa apenas em feiras/festivais locais?", "Depende de um único cliente?", "Concentra vendas em poucos compradores?"):
+       * Em administração e comércio, atuar em canal único ou concentrado é uma VULNERABILIDADE/RISCO.
+       * Resposta "Sim": Representa DEPENDÊNCIA/RISCO (opera apenas em feiras ou canal único). Aponte diretamente a recomendação de diversificação comercial.
+       * Resposta "Não": Representa NÃO DEPENDÊNCIA / DIVERSIFICAÇÃO / MATURIDADE COMERCIAL (ele já atua além de feiras ou tem mais canais/clientes). Reconheça objetivamente o ponto forte de diversificação.
+       * Resposta "Parcial": Representa diversificação inicial. Aponte a estruturação de novos canais.
+     - PERGUNTAS SOBRE OCORRÊNCIA DE FALHAS, PREJUÍZOS, INADIMPLÊNCIA OU REJEIÇÕES (ex: "O produtor já tentou acessar crédito rural e foi rejeitado por falta de documentação?", "Possui pendências?"):
        * Resposta "Sim": Representa um PROBLEMA / RISCO / GARGALO (prejudicial para a maturidade). Aponte diretamente a ação recomendada.
        * Resposta "Não": Representa uma SITUAÇÃO POSITIVA / CONFORMIDADE (não sofre do problema). Reconheça objetivamente o ponto forte.
        * Resposta "Parcial": Representa risco moderado. Aponte diretamente a ação recomendada.
-     - Se a pergunta investiga a existência de um controle, planejamento ou boa prática (ex: "Possui controle financeiro?"):
+     - PERGUNTAS SOBRE CONTROLES, PLANEJAMENTO E BOAS PRÁTICAS (ex: "Possui controle financeiro?", "Realiza pesquisa de mercado?"):
        * Resposta "Sim": Representa uma SITUAÇÃO POSITIVA / MATURIDADE. Reconheça objetivamente o ponto forte.
        * Resposta "Não" ou "Parcial": Representa um PONTO DE ATENÇÃO / GARGALO. Aponte diretamente a ação recomendada.
   
@@ -9324,21 +9329,24 @@ const generateAIMaturityLevel = async (respostas: Resposta[], scorePercent: numb
     peso: r.peso
   }));
 
-  const cacheKey = generateAICacheKey('maturity_level', { tipoEmpresa, scorePercent, respostas: simplifiedRespostas });
+  const cacheKey = generateAICacheKey('maturity_level_v2', { tipoEmpresa, scorePercent, respostas: simplifiedRespostas });
   const cached = await getCachedAI<{ nivel: string; justificativa: string }>(cacheKey);
   if (cached && cached.nivel) {
     return cached;
   }
 
-  const prompt = `Como um consultor empresarial sênior do SEBRAE, analise estas respostas de um diagnóstico empresarial e determine o Nível de Maturidade da empresa.
+  const prompt = `Como um consultor empresarial sênior do SEBRAE e especialista em Administração e Comércio, analise estas respostas de um diagnóstico empresarial e determine o Nível de Maturidade da empresa.
   
   DADOS DO DIAGNÓSTICO:
   - Tipo de Empresa: ${tipoEmpresa || 'Não especificado'}
   - Score Indicativo: ${scorePercent}%
   - Respostas detalhadas: ${JSON.stringify(simplifiedRespostas)}
   
-  DIRETRIZES FUNDAMENTAIS DE AVALIAÇÃO SEMÂNTICA:
-  - Avalie obrigatoriamente a SEMÂNTICA de cada pergunta juntamente com a resposta dada:
+  DIRETRIZES FUNDAMENTAIS DE AVALIAÇÃO SEMÂNTICA E TEORIAS DE GESTÃO/COMÉRCIO:
+  - Avalie obrigatoriamente a SEMÂNTICA e a LÓGICA de cada pergunta juntamente com a resposta dada:
+    * Perguntas sobre dependência/concentração de canais ou clientes (ex: "O produtor comercializa apenas em feiras/festivais locais?"):
+      - "Sim" indica dependência de canal (gargalo de mercado/vulnerabilidade comercial).
+      - "Não" indica diversificação comercial (ponto forte de gestão/canais múltiplos).
     * Perguntas com sentido negativo ou sobre ocorrência de falhas/problemas/rejeições (ex: "O produtor já tentou acessar crédito rural e foi rejeitado por falta de documentação?"):
       - "Sim" indica um GARGALO/DESVIO CRÍTICO prejudicial à maturidade.
       - "Não" indica ausência de problema (PONTO FORTE/BOA GESTÃO).
@@ -9384,21 +9392,24 @@ const generateAIMaturityLevel = async (respostas: Resposta[], scorePercent: numb
 
 const generateAISuggestions = async (probNome: string, noResponses: Resposta[], yesResponses: Resposta[]) => {
   const allResponses = [...noResponses, ...yesResponses];
-  const cacheKey = generateAICacheKey('suggestions', { probNome, allResponses: allResponses.map(r => ({ p: r.pergunta, res: r.resposta, o: r.observacao })) });
+  const cacheKey = generateAICacheKey('suggestions_v2', { probNome, allResponses: allResponses.map(r => ({ p: r.pergunta, res: r.resposta, o: r.observacao })) });
   const cached = await getCachedAI<any>(cacheKey);
   if (cached && cached.solucao_recomendada) {
     return cached;
   }
 
-  const prompt = `Como um consultor empresarial sênior do SEBRAE, analise as respostas do diagnóstico para o problema abaixo e sugira soluções estruturadas.
+  const prompt = `Como um consultor empresarial sênior do SEBRAE e especialista em Administração e Comércio, analise as respostas do diagnóstico para o problema abaixo e sugira soluções estruturadas.
   
   PROBLEMA PRINCIPAL: ${probNome}
   
   RESPOSTAS REGISTRADAS NAS PREMISSAS DESTE PROBLEMA:
   ${allResponses.map(r => `- Premissa/Pergunta: "${r.pergunta}" | Resposta: "${r.resposta}"${r.observacao ? ` (Observação: ${r.observacao})` : ''}`).join('\n')}
   
-  DIRETRIZES DE ANÁLISE SEMÂNTICA:
-  - Avalie o sentido de cada pergunta:
+  DIRETRIZES DE ANÁLISE SEMÂNTICA E TEORIAS DA ADMINISTRAÇÃO E COMÉRCIO:
+  - Avalie o sentido lógico de cada pergunta:
+    * Perguntas sobre limitação, dependência ou concentração comercial (ex: "O produtor comercializa apenas em feiras/festivais locais?", "Depende de um único cliente?"):
+      - Resposta "Sim": é um PONTO CRÍTICO/GARGALO que exige diversificação de canais de mercado.
+      - Resposta "Não": é um PONTO FORTE (boa maturidade comercial, possuindo múltiplos canais ou clientes).
     * Perguntas sobre falhas, rejeições ou erros (ex: "O produtor já tentou acessar crédito rural e foi rejeitado por falta de documentação?"):
       - Resposta "Sim" é um PONTO CRÍTICO que exige correção.
       - Resposta "Não" é um PONTO FORTE.
@@ -9414,7 +9425,7 @@ const generateAISuggestions = async (probNome: string, noResponses: Resposta[], 
     "prazo_sugerido": "X dias",
     "responsavel_sugerido": "Quem executará...",
     "kpis_sugeridos": "Indicadores para medir sucesso...",
-    "comentario_sucesso": "Se houver pontos fortes reais (como ausência de rejeição de crédito ou presença de boas práticas), faça um comentário reconhecendo o sucesso das ações do produtor/empresa."
+    "comentario_sucesso": "Se houver pontos fortes reais (como ausência de rejeição de crédito, diversificação além de feiras/canal único ou presença de boas práticas), faça um comentário reconhecendo o sucesso das ações do produtor/empresa."
   }`;
 
   try {
@@ -12143,12 +12154,12 @@ export default function App() {
   };
 
   const Sidebar = () => (
-    <div className={cn(
-      "fixed inset-y-0 left-0 z-50 w-80 bg-white border-r border-slate-100 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 print:hidden",
+    <aside className={cn(
+      "fixed inset-y-0 left-0 z-50 w-80 h-screen bg-white border-r border-slate-100 transition-transform duration-300 ease-in-out lg:sticky lg:top-0 lg:left-0 lg:translate-x-0 shrink-0 print:hidden select-none",
       isSidebarOpen ? "translate-x-0" : "-translate-x-full"
     )}>
-      <div className="flex flex-col h-full p-6">
-        <div className="flex items-center gap-3 mb-10 px-2">
+      <div className="flex flex-col h-full p-6 overflow-hidden">
+        <div className="flex items-center gap-3 mb-10 px-2 shrink-0">
           <div className="w-10 h-10 bg-emerald-600 text-white rounded-xl flex items-center justify-center shadow-lg shadow-emerald-200">
             <BarChart3 size={22} />
           </div>
@@ -12283,7 +12294,7 @@ export default function App() {
           )}
         </nav>
 
-        <div className="pt-6 border-t border-slate-100 space-y-4">
+        <div className="pt-6 border-t border-slate-100 space-y-4 shrink-0">
           {!isAdmin && subStatus.plan !== 'Nenhum' && (
             <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mx-2">
               <div className="flex items-center justify-between mb-2">
@@ -12322,7 +12333,7 @@ export default function App() {
           </button>
         </div>
       </div>
-    </div>
+    </aside>
   );
 
   // Consulta os dados públicos do CNPJ na Receita Federal (via BrasilAPI) e
@@ -17218,7 +17229,7 @@ export default function App() {
 
 
   return (
-    <div className="flex min-h-screen bg-slate-50 font-sans text-slate-900 overflow-hidden print:bg-white print:overflow-visible print:block print:h-auto print:min-h-0">
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 font-sans text-slate-900 print:bg-white print:overflow-visible print:block print:h-auto print:min-h-0">
         {/* Sidebar Overlay */}
         {isSidebarOpen && (
           <div 

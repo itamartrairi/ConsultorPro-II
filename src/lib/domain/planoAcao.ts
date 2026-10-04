@@ -140,7 +140,9 @@ const PADRAO_PERGUNTA_NEGATIVA = new RegExp(
     '\\b(ha|existe|existem|ocorre|ocorrem) (atraso|perda|desperdicio|reclama|inadimpl|divida|pendencia|falta|mortalidade|retrabalho|devolu|acidente)',
     '\\b(possui|tem) (dividas?|pendencias?|inadimplencia|restricao|restricoes|multas?|dificuldade|problemas?|nome negativado)',
     '\\besta (endividad|inadimplent|negativad|irregular)',
-    '\\bdepende (apenas|somente|exclusivamente)',
+    '\\b(depende|comercializa|vende|atende|atua|concentra|opera) (apenas|somente|exclusivamente|unicamente)',
+    '\\b(apenas|somente|exclusivamente|unicamente) (em |para |por |)(feiras|festivais|um cliente|poucos clientes|um comprador|poucos compradores|um fornecedor|poucos fornecedores|uma regiao|um canal)',
+    '\\b(concentra|concentracao) (em poucos|em um|as vendas|os clientes|de clientes|de vendas)',
   ].join('|')
 );
 
