@@ -152,8 +152,6 @@ import { cn } from './lib/utils';
 import { Button } from './components/Button';
 import { Modal } from './components/Modal';
 import { ToastContainer, type ToastItem } from './components/Toast';
-import { VideoTutorialModal } from './components/VideoTutorialModal';
-import { VideoTutorialCard } from './components/VideoTutorialCard';
 import { playClickSound, playSuccessSound } from './lib/sound';
 
 declare global {
@@ -8924,8 +8922,7 @@ const HomeView = ({
   setView, 
   isAdmin,
   empresasCredenciadas = [],
-  user,
-  onOpenVideoTutorial
+  user
 }: { 
   empresas: Empresa[], 
   diagnosticos: Diagnostico[], 
@@ -8934,8 +8931,7 @@ const HomeView = ({
   setView: (view: any) => void, 
   isAdmin: boolean,
   empresasCredenciadas?: EmpresaCredenciada[],
-  user?: any,
-  onOpenVideoTutorial?: () => void
+  user?: any
 }) => {
   const pendingTasks = tarefas.filter(t => t.status !== 'Concluído');
   
@@ -9033,15 +9029,6 @@ const HomeView = ({
             <Button onClick={() => setView('companies')} variant="secondary" className="bg-white text-sky-600 hover:bg-sky-50 border-none px-8 py-6 text-sm font-bold uppercase tracking-widest rounded-3xl shadow-lg">
               Começar Agora
             </Button>
-            {onOpenVideoTutorial && (
-              <Button 
-                onClick={onOpenVideoTutorial} 
-                className="bg-white/15 hover:bg-white/25 text-white border border-white/30 backdrop-blur-md px-6 py-6 text-sm font-bold rounded-3xl shadow-lg flex items-center gap-2.5 transition-all cursor-pointer"
-              >
-                <Tv size={18} className="text-sky-300" />
-                <span>Vídeo Tutorial (Apresentação das Abas)</span>
-              </Button>
-            )}
           </div>
         </div>
       </div>
@@ -9541,19 +9528,10 @@ export default function App() {
   const [isGeminiTutorialModalOpen, setIsGeminiTutorialModalOpen] = useState(false);
   const [customGeminiKey, setCustomGeminiKey] = useState<string>(() => readCustomGeminiKey());
 
-  // Video Tutorial Popup Modal State
-  const [isVideoTutorialModalOpen, setIsVideoTutorialModalOpen] = useState(false);
-
   useEffect(() => {
     const handler = () => setIsGeminiTutorialModalOpen(true);
     window.addEventListener('open-gemini-tutorial-modal', handler);
     return () => window.removeEventListener('open-gemini-tutorial-modal', handler);
-  }, []);
-
-  useEffect(() => {
-    const handler = () => setIsVideoTutorialModalOpen(true);
-    window.addEventListener('open-video-tutorial-modal', handler);
-    return () => window.removeEventListener('open-video-tutorial-modal', handler);
   }, []);
 
   // Dedicated Backup Export & Access State
@@ -9630,7 +9608,7 @@ export default function App() {
   const isCreatingDiagRef = useRef(false);
   const [calculatingMaturity, setCalculatingMaturity] = useState(false);
   const [generatingPlan, setGeneratingPlan] = useState(false);
-  const [view, setView] = useState<'home' | 'video-tutorial' | 'companies' | 'credenciadas' | 'licenses' | 'diagnosis' | 'dashboard' | 'premises' | 'cronograma' | 'relatorio' | 'kanban' | 'settings' | 'landing' | 'checkout' | 'licensing' | 'dados-consultoria' | 'agenda' | 'macro-dashboard' | 'maturity-assessment' | 'projects' | 'plan' | 'resultado-consultoria'>('landing');
+  const [view, setView] = useState<'home' | 'companies' | 'credenciadas' | 'licenses' | 'diagnosis' | 'dashboard' | 'premises' | 'cronograma' | 'relatorio' | 'kanban' | 'settings' | 'landing' | 'checkout' | 'licensing' | 'dados-consultoria' | 'agenda' | 'macro-dashboard' | 'maturity-assessment' | 'projects' | 'plan' | 'resultado-consultoria'>('landing');
   const [customLogo, setCustomLogo] = useState<string | null>(() => {
     const v = localStorage.getItem('sebrae_custom_logo');
     return v && v.startsWith('data:') ? v : null;
@@ -12176,18 +12154,6 @@ export default function App() {
             label="Início" 
             active={view === 'home'} 
             onClick={() => { setView('home'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }} 
-          />
-          <NavItem 
-            icon={Tv} 
-            label="Vídeo Tutorial" 
-            active={view === 'video-tutorial' || isVideoTutorialModalOpen} 
-            onClick={() => { 
-              setView('video-tutorial'); 
-              setSelectedEmpresa(null); 
-              setSelectedDiagnostico(null); 
-              setIsVideoTutorialModalOpen(false);
-              setIsSidebarOpen(false); 
-            }} 
           />
           <NavItem 
             icon={Settings} 
@@ -17326,17 +17292,6 @@ export default function App() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setView('video-tutorial')}
-                  className="text-xs font-bold border-sky-200 text-sky-700 bg-sky-50/60 hover:bg-sky-100 flex items-center gap-1.5 h-8 py-1 px-3 shadow-xs"
-                  title="Acessar a Aba de Vídeo Tutorial e Apresentação das Abas"
-                >
-                  <Tv size={13} className="text-sky-600" />
-                  <span>Vídeo Tutorial</span>
-                </Button>
-
-                <Button
-                  variant="outline"
-                  size="sm"
                   onClick={handleExportLocalBackup}
                   className="text-xs font-bold border-slate-200 text-slate-700 hover:bg-slate-100 flex items-center gap-1.5 h-8 py-1 px-3"
                   title="Baixar cópia de segurança local (.JSON)"
@@ -17464,20 +17419,6 @@ export default function App() {
                   />
                 </motion.div>
               )}
-              {view === 'video-tutorial' && (
-                <motion.div 
-                  key="video-tutorial"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="w-full pb-8"
-                >
-                  <VideoTutorialCard 
-                    setView={setView} 
-                    isModal={false} 
-                  />
-                </motion.div>
-              )}
               {view === 'home' && (
                   <motion.div 
                     key="home"
@@ -17494,7 +17435,6 @@ export default function App() {
                       isAdmin={isAdmin}
                       empresasCredenciadas={empresasCredenciadas}
                       user={user}
-                      onOpenVideoTutorial={() => setView('video-tutorial')}
                     />
                   </motion.div>
                 )}
@@ -21728,12 +21668,6 @@ export default function App() {
         }}
       />
 
-      {/* Pop-up do Vídeo Tutorial Oficial e Apresentação de Cada Aba */}
-      <VideoTutorialModal
-        isOpen={isVideoTutorialModalOpen}
-        onClose={() => setIsVideoTutorialModalOpen(false)}
-        setView={setView}
-      />
 
       {pdfUrl && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
