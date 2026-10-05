@@ -2125,6 +2125,95 @@ const CronogramaView = ({
     return () => window.removeEventListener(MODELOS_EVENTO, recarregar);
   }, []);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isUpdatingModelos, setIsUpdatingModelos] = useState(false);
+
+  const handleAtualizarModeloPorRelatorio = (modeloAlvo?: ModeloRelatorio) => {
+    const validAtividades = (atividades || []).filter(a => a && a.nome && a.nome.trim() !== '');
+    if (validAtividades.length === 0) {
+      alert("Não há atividades preenchidas no Relatório de Consultoria para atualizar o modelo.");
+      return;
+    }
+
+    const segmentoAtual = (selectedDiagnostico?.tipoEmpresa || 'Geral').trim() || 'Geral';
+    const totalHorasAtv = validAtividades.reduce((acc, a) => acc + (parseInt(a?.cargaHoraria?.replace(/\D/g, '') || '0', 10) || 0), 0);
+    const cargaFormatada = totalHorasAtv > 0 ? `${totalHorasAtv}hs` : (dadosConsultoria?.cargaHoraria || `${validAtividades.length * 4}hs`);
+
+    const nomeRef = modeloAlvo ? `modelo "${modeloAlvo.nome}"` : `biblioteca de modelos para o segmento "${segmentoAtual}"`;
+    const confirmMsg = `Deseja atualizar ${nomeRef} com base nas ${validAtividades.length} atividades deste relatório (${cargaFormatada})?`;
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsUpdatingModelos(true);
+    try {
+      const listaAtual = Array.isArray(modelosRelatorio) ? modelosRelatorio : [];
+      const nomeEmpresaRef = selectedEmpresa?.nomeFantasia || selectedEmpresa?.nome || selectedDiagnostico?.nomeEmpresa || segmentoAtual;
+
+      let novaLista: ModeloRelatorio[];
+
+      if (modeloAlvo) {
+        // Atualiza especificamente o modelo selecionado
+        const modeloAtualizado = criarModeloPadrao(modeloAlvo.categoria || segmentoAtual, validAtividades, cargaFormatada);
+        novaLista = listaAtual.map(m => m.id === modeloAlvo.id ? {
+          ...m,
+          atividades: modeloAtualizado.atividades,
+          descricao: `Atualizado pelo relatório de ${nomeEmpresaRef} (${validAtividades.length} atividades, ${cargaFormatada}).`,
+          criadoEm: new Date().toISOString()
+        } : m);
+      } else {
+        // Atualiza ou cria modelo para o segmento atual
+        const novoOuAtualizado = criarModeloPadrao(segmentoAtual, validAtividades, cargaFormatada);
+        const idxExistente = listaAtual.findIndex(m => 
+          (m?.categoria && m.categoria.toLowerCase().trim() === segmentoAtual.toLowerCase().trim()) ||
+          (m?.nome && m.nome.toLowerCase().includes(segmentoAtual.toLowerCase().trim()))
+        );
+
+        if (idxExistente >= 0) {
+          novaLista = [...listaAtual];
+          novaLista[idxExistente] = {
+            ...novaLista[idxExistente],
+            atividades: novoOuAtualizado.atividades,
+            descricao: `Atualizado com base no relatório de ${nomeEmpresaRef} (${validAtividades.length} atividades, ${cargaFormatada}).`,
+            criadoEm: new Date().toISOString()
+          };
+        } else {
+          novaLista = [novoOuAtualizado, ...listaAtual];
+        }
+      }
+
+      setModelosRelatorio(novaLista);
+      salvarModelos(novaLista);
+      if (typeof playSuccessSound === 'function') {
+        playSuccessSound();
+      }
+      alert(`Modelo atualizado com sucesso com base nas atividades do Relatório de Consultoria!`);
+    } catch (err: any) {
+      console.error("Erro ao atualizar modelo:", err);
+      alert(`Ocorreu um erro ao atualizar o modelo: ${err?.message || 'Erro desconhecido'}`);
+    } finally {
+      setIsUpdatingModelos(false);
+    }
+  };
+
+  const handleExcluirModelo = (modeloId: string, modeloNome: string) => {
+    if (!window.confirm(`Tem certeza que deseja excluir o modelo "${modeloNome}"? Esta ação não pode ser desfeita.`)) {
+      return;
+    }
+    try {
+      const listaAtual = Array.isArray(modelosRelatorio) ? modelosRelatorio : [];
+      const novaLista = listaAtual.filter(m => m.id !== modeloId);
+      setModelosRelatorio(novaLista);
+      salvarModelos(novaLista);
+      if (selectedModeloId === modeloId) {
+        setSelectedModeloId(novaLista[0]?.id || '');
+      }
+      if (editingModelo?.id === modeloId) {
+        setEditingModelo(null);
+      }
+      alert(`Modelo "${modeloNome}" excluído com sucesso!`);
+    } catch (err: any) {
+      console.error("Erro ao excluir modelo:", err);
+      alert(`Ocorreu um erro ao excluir o modelo: ${err?.message || 'Erro desconhecido'}`);
+    }
+  };
 
   // Hydrate missing or offline-cached evidence and consulting report data from IndexedDB on component mount
   useEffect(() => {
@@ -3485,8 +3574,21 @@ const CronogramaView = ({
               </div>
               <div>
                 <h3 className="font-bold text-white uppercase tracking-tight text-base">Modelos de Relatório de Consultoria</h3>
-                <p className="text-xs text-slate-400 font-medium">Selecione, aplique ou duplique o modelo de relatório ideal para o seu cliente</p>
+                <p className="text-xs text-slate-400 font-medium">Selecione, aplique, edite ou sincronize os modelos com o seu relatório</p>
               </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                onClick={() => handleAtualizarModeloPorRelatorio()}
+                disabled={isUpdatingModelos}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm flex items-center gap-1.5"
+                title="Salva as atividades e carga horária deste Relatório de Consultoria no modelo do segmento atual"
+              >
+                <RefreshCw size={14} className={isUpdatingModelos ? "animate-spin" : ""} />
+                Atualizar Modelo Conforme Relatório
+              </Button>
             </div>
           </div>
 
@@ -3588,6 +3690,31 @@ const CronogramaView = ({
                     >
                       <Edit2 size={14} className="mr-1" /> Editar
                     </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAtualizarModeloPorRelatorio(modelo);
+                      }}
+                      disabled={isUpdatingModelos}
+                      className="border-emerald-700/60 bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-300 text-xs px-2 font-medium"
+                      title="Atualizar este modelo com as atividades e dados do Relatório de Consultoria atual"
+                    >
+                      <RefreshCw size={13} className={isUpdatingModelos ? "animate-spin" : ""} />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleExcluirModelo(modelo.id, modelo.nome);
+                      }}
+                      className="border-red-900/40 bg-red-950/30 hover:bg-red-900/60 text-red-400 hover:text-red-300 text-xs px-2 font-medium"
+                      title="Excluir este modelo"
+                    >
+                      <Trash2 size={13} />
+                    </Button>
                   </div>
                 </div>
               );
@@ -3624,6 +3751,20 @@ const CronogramaView = ({
             }}
           >
             <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+              {modelosRelatorio.some(m => m.id === editingModelo.id) && (
+                <div className="flex justify-end pb-2 border-b border-slate-100">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleExcluirModelo(editingModelo.id, editingModelo.nome)}
+                    className="border-red-200 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold"
+                  >
+                    <Trash2 size={14} className="mr-1 text-red-500" /> Excluir Este Modelo
+                  </Button>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-bold text-slate-700 block mb-1">Nome do Modelo</label>
@@ -3668,30 +3809,58 @@ const CronogramaView = ({
                       </span>
                     </p>
                   </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="text-emerald-700 border-emerald-300 hover:bg-emerald-50 text-xs font-semibold"
-                    onClick={() => {
-                      const newAtv: AtividadeCronograma = {
-                        nome: `Nova Atividade ${editingModelo.atividades.length + 1}`,
-                        descricao: "Descrição detalhada dos objetivos desta atividade...",
-                        cargaHoraria: "4h",
-                        solucaoProposta: "Ação prática recomendada",
-                        responsavel: "Consultor / Cliente",
-                        status: "Pendente",
-                        prioridade: "Alta",
-                        resultadoEsperado: "Resultado esperado ao final da atividade"
-                      };
-                      setEditingModelo({
-                        ...editingModelo,
-                        atividades: [...editingModelo.atividades, newAtv]
-                      });
-                    }}
-                  >
-                    <Plus size={14} className="mr-1" /> Adicionar Atividade
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="text-blue-700 border-blue-300 hover:bg-blue-50 text-xs font-semibold"
+                      onClick={() => {
+                        const validAtvs = (atividades || []).filter(a => a && a.nome && a.nome.trim() !== '');
+                        if (validAtvs.length === 0) {
+                          alert("Não há atividades cadastradas no Relatório de Consultoria.");
+                          return;
+                        }
+                        if (window.confirm(`Substituir as atividades deste modelo pelas ${validAtvs.length} atividades do Relatório de Consultoria atual?`)) {
+                          const novasAtividades: AtividadeCronograma[] = validAtvs.map((a, i) => {
+                            const { dataInicio, dataFim, evidencias, progressoKPI, metaKPI, ...resto } = a as any;
+                            return { ...resto, status: 'Pendente', ordem: i } as AtividadeCronograma;
+                          });
+                          setEditingModelo({
+                            ...editingModelo,
+                            atividades: novasAtividades
+                          });
+                        }
+                      }}
+                      title="Importa as atividades do Relatório de Consultoria atual para este modelo"
+                    >
+                      <RefreshCw size={14} className="mr-1" /> Importar do Relatório
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="text-emerald-700 border-emerald-300 hover:bg-emerald-50 text-xs font-semibold"
+                      onClick={() => {
+                        const newAtv: AtividadeCronograma = {
+                          nome: `Nova Atividade ${editingModelo.atividades.length + 1}`,
+                          descricao: "Descrição detalhada dos objetivos desta atividade...",
+                          cargaHoraria: "4h",
+                          solucaoProposta: "Ação prática recomendada",
+                          responsavel: "Consultor / Cliente",
+                          status: "Pendente",
+                          prioridade: "Alta",
+                          resultadoEsperado: "Resultado esperado ao final da atividade"
+                        };
+                        setEditingModelo({
+                          ...editingModelo,
+                          atividades: [...editingModelo.atividades, newAtv]
+                        });
+                      }}
+                    >
+                      <Plus size={14} className="mr-1" /> Adicionar Atividade
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="space-y-4">
@@ -9180,7 +9349,7 @@ import {
   tarefasDasAtividades,
   type AnaliseDiagnostico,
 } from './lib/domain/planoAcao';
-import { carregarModelos, garantirModeloPadrao, encontrarModeloDoSegmento, MODELOS_EVENTO } from './lib/domain/modelosRelatorio';
+import { carregarModelos, salvarModelos, criarModeloPadrao, garantirModeloPadrao, encontrarModeloDoSegmento, MODELOS_EVENTO } from './lib/domain/modelosRelatorio';
 import { montarRelatorioSegmentos } from './lib/domain/relatorioSegmentos';
 import { gerarPdfRelatorioSegmentos } from './lib/relatorios/pdfSegmentos';
 import {
@@ -12051,7 +12220,26 @@ export default function App() {
         );
       }
 
-      window.open(doc.output('bloburl').toString(), '_blank');
+      // Define o título do documento nos metadados para a janela de impressão
+      const clientName = (selectedEmpresa?.nomeFantasia || selectedEmpresa?.nome || selectedDiagnostico?.nomeEmpresa || 'Cliente').trim();
+      const sanitizedClientName = clientName.replace(/[\\/:*?"<>|]/g, '_');
+      const filenamePlano = `Plano de Ação - ${sanitizedClientName}.pdf`;
+
+      doc.setDocumentProperties({
+        title: `Plano de Ação - ${clientName}`
+      });
+
+      // Abre para impressão/visualização com nome de arquivo amigável
+      const blob = doc.output('blob');
+      const blobWithTitle = new File([blob], filenamePlano, { type: 'application/pdf' });
+      const blobUrl = URL.createObjectURL(blobWithTitle);
+
+      const printWindow = window.open(blobUrl, '_blank');
+      if (printWindow) {
+        try {
+          printWindow.document.title = `Plano de Ação - ${clientName}`;
+        } catch (_) {}
+      }
     } catch (error) {
       console.error("Error generating Plano de Ação PDF:", error);
       alert("Erro ao gerar o plano de ação PDF.");
