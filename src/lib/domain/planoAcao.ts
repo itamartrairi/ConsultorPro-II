@@ -1058,13 +1058,16 @@ export function montarTextosRelatorio(
     .map((g) => {
       const linhas = g.problemas.map((p) => {
         const t = tratados.get(p.idProblema);
-        return `• [${p.nivel}] ${p.problema}${t ? ` → ${t.acao}` : ''}`;
+        if (t?.acao) {
+          return `• [${p.nivel}] ${p.problema}\n  Ação Proposta: ${t.acao}`;
+        }
+        return `• [${p.nivel}] ${p.problema}`;
       });
-      return `${g.area.toUpperCase()} (${resumoNiveis(g.problemas)}):\n${linhas.join('\n')}`;
+      return `${g.area.toUpperCase()} (${resumoNiveis(g.problemas)}):\n${linhas.join('\n\n')}`;
     })
     .join('\n\n');
   const acoesTxt = atividades
-    .map((a, i) => `${i + 1}. ${a.nome} (${a.cargaHoraria})${!a.problemasTratados?.length && a.solucaoProposta && a.solucaoProposta !== a.nome ? ` — ${a.solucaoProposta}` : ''}`)
+    .map((a, i) => `${i + 1}. ${a.nome} (${a.cargaHoraria})${!a.problemasTratados?.length && a.solucaoProposta && a.solucaoProposta !== a.nome ? ` - ${a.solucaoProposta}` : ''}`)
     .join('\n');
   const fortesTxt = analise.pontosFortes.slice(0, 10).map((p) => `• ${p.problema} (${p.area})`).join('\n');
 

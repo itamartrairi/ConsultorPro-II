@@ -145,7 +145,7 @@ console.log('  OK: IA só altera textos; falha da IA mantém o plano');
 const rel = montarTextosRelatorio(an, plano, { nomeEmpresa: 'Empresa X' });
 assert.match(rel.objetivo, /^Solucionar os 4 problemas identificados no diagnóstico da empresa Empresa X \(3 críticos\), distribuídos em 4 áreas/);
 console.log('   Objetivo:', rel.objetivo);
-assert.match(rel.solucoesIndicadas, /PROBLEMAS IDENTIFICADOS:\nFINANÇAS \(1 crítico\):\n• \[Crítico\] Problema A → Implantar fluxo de caixa[\s\S]*SOLUÇÕES \/ AÇÕES PROPOSTAS:[\s\S]*PONTOS FORTES:/);
+assert.match(rel.solucoesIndicadas, /PROBLEMAS IDENTIFICADOS:\nFINANÇAS \(1 crítico\):\n• \[Crítico\] Problema A\n  Ação Proposta: Implantar fluxo de caixa[\s\S]*SOLUÇÕES \/ AÇÕES PROPOSTAS:[\s\S]*PONTOS FORTES:/);
 assert.match(rel.resultadosEsperados, /\[Crítico\] Problema A: Fluxo de caixa em uso/);
 console.log('  OK: textos do relatório');
 console.log('Todos os testes de planoAcao passaram.');

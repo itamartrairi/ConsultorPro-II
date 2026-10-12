@@ -2906,6 +2906,30 @@ const CronogramaView = ({
       finalContent = finalContent.replace("SOLUÇÕES INDICADAS:", "SOLUÇÕES / AÇÕES PROPOSTAS:");
     }
 
+    const sanitizarTextoParaPdf = (texto: string): string => {
+      if (!texto) return '';
+      return texto
+        .replace(/[\u2190-\u2199\u27A1\u2794\u25BA]/g, ' -> ')
+        .replace(/\s*!['’]\s*/g, ' -> ')
+        .replace(/[^\x00-\xFF\u2022\u2013\u2014\u2018\u2019\u201C\u201D]/g, '');
+    };
+
+    const formatarSecaoProblemasESolucoesPdf = (conteudo: string): string => {
+      if (!conteudo) return '';
+      let limpo = conteudo.replace(/\r\n/g, '\n');
+
+      // Se houver "Problema → Ação" ou "Problema !' Ação" ou "Problema -> Ação" colados na mesma linha
+      limpo = limpo.replace(
+        /(•\s*\[[^\]]+\]\s*[^\n→!]+?)\s*(?:→|!['’]|->)\s*([^\n]+)/g,
+        '$1\n  Ação Proposta: $2'
+      );
+
+      // Espaçamento limpo entre itens distintos para visual profissional e organizado
+      limpo = limpo.replace(/(\n  Ação Proposta:[^\n]+)(\n•\s*\[)/g, '$1\n\n$2');
+
+      return sanitizarTextoParaPdf(limpo);
+    };
+
     const activeLogoForPdf = logoChoice === 'sebrae' ? customLogo : logoChoice === 'consultora' ? customConsultoraLogo : null;
     const logoValid = isValidLogoSource(activeLogoForPdf);
 
@@ -3118,7 +3142,7 @@ const CronogramaView = ({
       },
       body: [
         [{ content: '1. OBJETIVO DA CONSULTORIA:', styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }],
-        [{ content: dadosConsultoria.objetivo || `Implementar melhorias nas áreas de ${areasIdentificadas || 'gestão empresarial'}.`, styles: { minCellHeight: 10 } }]
+        [{ content: sanitizarTextoParaPdf(dadosConsultoria.objetivo || `Implementar melhorias nas áreas de ${areasIdentificadas || 'gestão empresarial'}.`), styles: { minCellHeight: 10 } }]
       ]
     });
 
@@ -3128,7 +3152,7 @@ const CronogramaView = ({
     autoTable(doc, {
       startY: currentY,
       theme: 'plain',
-      styles: { lineWidth: 0.1, lineColor: 0, fontSize: 8, cellPadding: 2 },
+      styles: { lineWidth: 0.1, lineColor: 0, fontSize: 8, cellPadding: 2.5, overflow: 'linebreak' },
       margin: { top: 38, bottom: 20, left: 15, right: 15 },
       didDrawPage: (data) => {
         if (data.pageNumber > 1) {
@@ -3137,7 +3161,7 @@ const CronogramaView = ({
       },
       body: [
         [{ content: '2. PROBLEMAS IDENTIFICADOS / SOLUÇÕES / AÇÕES PROPOSTAS:', styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }],
-        [{ content: finalContent, styles: { minCellHeight: 25 } }]
+        [{ content: formatarSecaoProblemasESolucoesPdf(finalContent), styles: { minCellHeight: 25, cellPadding: 3 } }]
       ]
     });
 
@@ -3154,13 +3178,13 @@ const CronogramaView = ({
     } else {
       atividadesSelecionadas.forEach((item, idx) => {
         const atv = item.atv;
-        const cleanedDesc = formatarDescricaoObjetiva(
+        const cleanedDesc = sanitizarTextoParaPdf(formatarDescricaoObjetiva(
           (atv.descricao || '').split('\n\n').filter(p => !p.startsWith('Diagnóstico:')).join('\n\n')
-        );
+        ));
 
         atividadesBody.push([
-          { content: `Atividade ${idx + 1} (Ref. #${item.activityNumber}) –`, styles: { fontStyle: 'bold', cellWidth: 38 } },
-          { content: atv.nome || '', styles: { fontStyle: 'bold' } }
+          { content: `Atividade ${idx + 1} (Ref. #${item.activityNumber}) -`, styles: { fontStyle: 'bold', cellWidth: 38 } },
+          { content: sanitizarTextoParaPdf(atv.nome || ''), styles: { fontStyle: 'bold' } }
         ]);
         atividadesBody.push([
           { content: 'Descrição', styles: { fontStyle: 'bold' } },
@@ -3186,7 +3210,7 @@ const CronogramaView = ({
     autoTable(doc, {
       startY: currentY,
       theme: 'plain',
-      styles: { lineWidth: 0.1, lineColor: 0, fontSize: 8, cellPadding: 1.5 },
+      styles: { lineWidth: 0.1, lineColor: 0, fontSize: 8, cellPadding: 1.5, overflow: 'linebreak' },
       margin: { top: 38, bottom: 20, left: 15, right: 15 },
       didDrawPage: (data) => {
         if (data.pageNumber > 1) {
@@ -3204,7 +3228,7 @@ const CronogramaView = ({
       autoTable(doc, {
         startY: currentY,
         theme: 'plain',
-        styles: { lineWidth: 0.1, lineColor: 0, fontSize: 8, cellPadding: 2 },
+        styles: { lineWidth: 0.1, lineColor: 0, fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
         margin: { top: 38, bottom: 20, left: 15, right: 15 },
         didDrawPage: (data) => {
           if (data.pageNumber > 1) {
@@ -3213,7 +3237,7 @@ const CronogramaView = ({
         },
         body: [
           [{ content: '3. RESULTADOS ESPERADOS:', styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }],
-          [{ content: dadosConsultoria.resultadosEsperados, styles: { minCellHeight: 15 } }]
+          [{ content: sanitizarTextoParaPdf(dadosConsultoria.resultadosEsperados), styles: { minCellHeight: 15, cellPadding: 2.5 } }]
         ]
       });
       currentY = ((doc as any).lastAutoTable?.finalY || currentY) + 3;
