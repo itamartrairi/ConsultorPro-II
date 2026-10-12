@@ -3661,40 +3661,77 @@ const CronogramaView = ({
                   <div className="flex items-center gap-2 mt-2">
                     <Button
                       size="sm"
-                      onClick={(e) => {
+                      onClick={async (e) => {
                         e.stopPropagation();
-                        if (window.confirm(`Deseja aplicar o modelo "${modelo.nome}" (${modelo.atividades.length} atividades, ${totalHoras}hs) a este relatório?`)) {
-                          const finalized = estruturarPlano(modelo.atividades, totalHoras || dadosConsultoria.cargaHoraria).map((s, idx): AtividadeCronograma => ({
-                            ...s,
-                            status: 'Pendente',
-                            dataInicio: s.dataInicio || getActivityDateStr(selectedDiagnostico.dataDiagnostico, idx),
-                            dataFim: s.dataFim || s.dataInicio || getActivityDateStr(selectedDiagnostico.dataDiagnostico, idx)
-                          }));
-                          setAtividades(finalized);
+                        setSelectedModeloId(modelo.id);
 
-                          const solucoesLista = finalized.map((s, i) => `• Atividade ${i + 1} (${s.nome}): ${s.solucaoProposta || s.descricao}`).join('\n');
-                          const resultadosLista = finalized.map((s) => `• ${s.resultadoEsperado || s.solucaoProposta || s.nome}`).filter(Boolean).join('\n');
+                        const atvsModelo = Array.isArray(modelo.atividades) && modelo.atividades.length > 0
+                          ? modelo.atividades
+                          : [];
 
-                          let probsHeader = "PROBLEMAS IDENTIFICADOS:\n• Necessidade de organização das rotinas financeiras, controle por ciclo e apuração de resultados\n\n";
-                          if (dadosConsultoria.solucoesIndicadas?.includes("PROBLEMAS IDENTIFICADOS:")) {
-                            probsHeader = dadosConsultoria.solucoesIndicadas.split("SOLUÇÕES / AÇÕES PROPOSTAS:")[0];
-                          }
-
-                          const updatedDados = {
-                            ...dadosConsultoria,
-                            cargaHoraria: totalHoras > 0 ? `${totalHoras}hs` : dadosConsultoria.cargaHoraria,
-                            solucoesIndicadas: `${probsHeader}SOLUÇÕES / AÇÕES PROPOSTAS:\n${solucoesLista}`,
-                            resultadosEsperados: resultadosLista
-                          };
-
-                          setDadosConsultoria(updatedDados);
-                          if (selectedDiagnostico) {
-                            setSelectedDiagnostico({ ...selectedDiagnostico, cronograma: finalized, dadosConsultoria: updatedDados });
-                          }
-
-                          playSuccessSound();
-                          alert(`Modelo "${modelo.nome}" aplicado com sucesso! As soluções, ações e resultados esperados foram sincronizados com os Dados da Consultoria.`);
+                        if (atvsModelo.length === 0) {
+                          alert(`O modelo "${modelo.nome}" não possui atividades cadastradas.`);
+                          return;
                         }
+
+                        const totalHorasCalculado = totalHoras > 0 
+                          ? totalHoras 
+                          : atvsModelo.reduce((acc, a) => acc + (parseInt(a?.cargaHoraria?.replace(/\D/g, '') || '0', 10) || 0), 0);
+                        const cargaFormatada = totalHorasCalculado > 0 
+                          ? `${totalHorasCalculado}hs` 
+                          : (dadosConsultoria?.cargaHoraria || `${atvsModelo.length * 4}hs`);
+
+                        if (!window.confirm(`Deseja aplicar o modelo "${modelo.nome}" (${atvsModelo.length} atividades, ${cargaFormatada}) a este relatório?`)) {
+                          return;
+                        }
+
+                        // Preserva integralmente todas as atividades cadastradas no modelo selecionado
+                        const finalized: AtividadeCronograma[] = atvsModelo.map((s, idx) => {
+                          const defaultDate = getActivityDateStr(selectedDiagnostico?.dataDiagnostico, idx);
+                          return {
+                            ...s,
+                            ordem: idx,
+                            status: 'Pendente',
+                            dataInicio: s.dataInicio || defaultDate,
+                            dataFim: s.dataFim || s.dataInicio || defaultDate,
+                            evidencias: []
+                          };
+                        });
+
+                        setAtividades(finalized);
+                        setEditingActivityIndex(null);
+                        setEditingActivity(null);
+
+                        const solucoesLista = finalized
+                          .filter(s => s && (s.nome || s.solucaoProposta))
+                          .map((s, i) => `• Atividade ${i + 1} (${s.nome}): ${s.solucaoProposta || s.descricao || s.nome}`)
+                          .join('\n');
+
+                        const resultadosLista = finalized
+                          .map((s) => (s.resultadoEsperado || s.solucaoProposta || s.nome || '').trim())
+                          .filter(Boolean)
+                          .map(r => r.startsWith('•') ? r : `• ${r}`)
+                          .join('\n');
+
+                        let probsHeader = "PROBLEMAS IDENTIFICADOS:\n• Necessidade de organização das rotinas financeiras, controle por ciclo e apuração de resultados\n\n";
+                        if (dadosConsultoria?.solucoesIndicadas?.includes("PROBLEMAS IDENTIFICADOS:")) {
+                          probsHeader = dadosConsultoria.solucoesIndicadas.split("SOLUÇÕES / AÇÕES PROPOSTAS:")[0];
+                        }
+
+                        const updatedDados: DadosConsultoria = {
+                          ...dadosConsultoria,
+                          cargaHoraria: cargaFormatada,
+                          solucoesIndicadas: `${probsHeader}SOLUÇÕES / AÇÕES PROPOSTAS:\n${solucoesLista}`,
+                          resultadosEsperados: resultadosLista
+                        };
+
+                        setDadosConsultoria(updatedDados);
+
+                        // Persiste e sincroniza imediatamente no estado pai, localStorage, IndexedDB e Firebase
+                        await handleSave({ atividades: finalized, dadosConsultoria: updatedDados });
+
+                        playSuccessSound();
+                        alert(`Modelo "${modelo.nome}" aplicado com sucesso! As ${finalized.length} atividades (${cargaFormatada}) e soluções foram integradas ao Relatório de Consultoria.`);
                       }}
                       className={isSelected ? "bg-emerald-600 hover:bg-emerald-500 text-white flex-1 text-xs font-bold" : "bg-slate-700 hover:bg-slate-600 text-slate-200 flex-1 text-xs font-medium"}
                     >

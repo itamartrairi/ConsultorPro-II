@@ -63,8 +63,8 @@ export function encontrarModeloDoSegmento(lista: ModeloRelatorio[], segmento?: s
 }
 
 /** Remove dados específicos do cliente (datas, status, evidências, KPIs) para servir de modelo. */
-function paraModelo(atividades: AtividadeCronograma[]): AtividadeCronograma[] {
-  return atividades.map((a, i) => {
+export function paraModelo(atividades: AtividadeCronograma[]): AtividadeCronograma[] {
+  return (atividades || []).map((a, i) => {
     const { dataInicio, dataFim, evidencias, progressoKPI, metaKPI, ...resto } = a as any;
     return { ...resto, status: 'Pendente', ordem: i } as AtividadeCronograma;
   });
@@ -72,7 +72,10 @@ function paraModelo(atividades: AtividadeCronograma[]): AtividadeCronograma[] {
 
 export function criarModeloPadrao(segmento: string, atividades: AtividadeCronograma[], cargaHoraria?: string | number): ModeloRelatorio {
   const nomeSegmento = String(segmento || 'Geral').trim() || 'Geral';
-  const estrutura = estruturarPlano(atividades, cargaHoraria ?? atividades.reduce((s, a) => s + horasDe(a), 0));
+  const validas = (atividades || []).filter((a) => a && (a.nome || a.solucaoProposta));
+  const estrutura = validas.length > 0
+    ? validas
+    : estruturarPlano(atividades, cargaHoraria ?? atividades.reduce((s, a) => s + horasDe(a), 0));
   const horas = estrutura.reduce((s, a) => s + horasDe(a), 0);
   return {
     id: `padrao_${norm(nomeSegmento).replace(/[^a-z0-9]+/g, '_')}_${Date.now()}`,
