@@ -2416,7 +2416,7 @@ const CronogramaView = ({
       const probId = solution.idProblema;
       const relatedResps = responsesByProblem[probId] || [];
       if (relatedResps.length > 0) {
-        const criticalCount = relatedResps.filter(r => r.resposta === 'Não' || r.resposta === 'Parcial').length;
+        const criticalCount = relatedResps.filter(r => (grauLacuna(r) ?? 0) > 0).length;
         return criticalCount > 0;
       }
       return false;
@@ -2476,9 +2476,9 @@ const CronogramaView = ({
     const doDiagnostico = (respostas || [])
       .filter(r => !r.diagnosticoId || r.diagnosticoId === selectedDiagnostico.id)
       .filter(r => !isQExcluded(r));
-    const analise = analisarDiagnostico(deduplicateRespostas(doDiagnostico), problemas, solucoes);
+    const cleanDoDiagnostico = deduplicateRespostas(doDiagnostico);
 
-    if (analise.totalRespondidas === 0) {
+    if (cleanDoDiagnostico.length === 0) {
       alert("Responda o diagnóstico primeiro: o plano de ação e o relatório são gerados a partir das respostas.");
       return;
     }
@@ -2489,6 +2489,21 @@ const CronogramaView = ({
 
     setIsGeneratingAI(true);
     try {
+      const ai = getAI();
+      let overrideIA: Map<string, boolean> | undefined;
+      if (ai) {
+        try {
+          overrideIA = await avaliarRespostasComIA(ai as any, cleanDoDiagnostico);
+        } catch (err) {
+          console.warn("Avaliação semântica por IA falhou, usando regras locais:", err);
+        }
+      }
+      const analise = analisarDiagnostico(cleanDoDiagnostico, problemas, solucoes, overrideIA);
+
+      if (analise.totalRespondidas === 0) {
+        alert("Responda o diagnóstico primeiro: o plano de ação e o relatório são gerados a partir das respostas.");
+        return;
+      }
       const carga = dadosConsultoria.cargaHoraria || selectedDiagnostico.dadosConsultoria?.cargaHoraria || selectedDiagnostico.cargaHoraria || (selectedEmpresa as any)?.cargaHoraria || '34h';
       const contexto = {
         nomeEmpresa: selectedEmpresa?.nomeFantasia || selectedEmpresa?.nome || selectedDiagnostico.nomeEmpresa,
@@ -2854,7 +2869,7 @@ const CronogramaView = ({
       const probId = solution.idProblema;
       const relatedResps = responsesByProblem[probId] || [];
       if (relatedResps.length > 0) {
-        const criticalCount = relatedResps.filter(r => r.resposta === 'Não' || r.resposta === 'Parcial').length;
+        const criticalCount = relatedResps.filter(r => (grauLacuna(r) ?? 0) > 0).length;
         return criticalCount > 0;
       }
       return false;
@@ -9344,6 +9359,7 @@ import {
   montarAtividades,
   estruturarPlano,
   enriquecerComIA,
+  avaliarRespostasComIA,
   montarTextosRelatorio,
   parseCargaHoraria,
   tarefasDasAtividades,
@@ -14416,7 +14432,18 @@ export default function App() {
     setGeneratingPlan(true);
     try {
       const lista = await carregarRespostasDoDiagnostico(diag);
-      const analise = analisarDiagnostico(deduplicateRespostas(lista), problemas, solucoes);
+      const cleanLista = deduplicateRespostas(lista);
+
+      const ai = getAI();
+      let overrideIA: Map<string, boolean> | undefined;
+      if (ai) {
+        try {
+          overrideIA = await avaliarRespostasComIA(ai as any, cleanLista);
+        } catch (err) {
+          console.warn("Avaliação semântica por IA falhou, usando regras locais:", err);
+        }
+      }
+      const analise = analisarDiagnostico(cleanLista, problemas, solucoes, overrideIA);
       if (analise.totalRespondidas === 0) {
         alert("Não há respostas neste diagnóstico. Responda o diagnóstico para gerar o plano de ação.");
         return;
@@ -15911,8 +15938,11 @@ export default function App() {
     peso: number = 1,
     extraData?: Partial<Resposta>
   ) => {
-    // Score calculation: Sim=2, Parcial=1, Não=0
-    const points = val === 'Sim' ? 2 : val === 'Parcial' ? 1 : 0;
+    // Score calculation: respeita a semântica da pergunta (grau de lacuna)
+    const qText = extraData?.pergunta || '';
+    const probText = extraData?.problema || '';
+    const lac = grauLacuna({ resposta: val, pergunta: qText, problema: probText });
+    const points = lac === 0 ? 2 : lac === 1 ? 1 : 0;
     const score = points * peso;
 
     const targetDiagId = extraData?.diagnosticoId || selectedDiagnostico?.id || '';
@@ -21177,7 +21207,7 @@ export default function App() {
                           return respostas.some(resp => 
                             resp.diagnosticoId === diag.id && 
                             (resp.idProblema === sol.idProblema || resp.problema === sol.problema) && 
-                            (resp.resposta === 'Não' || resp.resposta === 'Parcial')
+                            ((grauLacuna(resp) ?? 0) > 0)
                           );
                         });
                         return hasNegativeResponse;

@@ -51,6 +51,7 @@ import {
 import { db } from '../firebase';
 import { Button } from './Button';
 import { sebraeLogoBase64 } from '../sebraeLogo';
+import { grauLacuna } from '../lib/domain/planoAcao';
 
 export interface ItemProblemaSolucao {
   id: string;
@@ -373,9 +374,9 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
   const autoPopulateFromDiagnosis = () => {
     if (!selectedDiagId) return;
 
-    // 1. Get negative/critical answers from diagnostic
+    // 1. Get negative/critical answers from diagnostic (apenas lacunas reais)
     const diagRespostas = respostas.filter(
-      r => r.diagnosticoId === selectedDiagId && (r.resposta === 'Não' || r.resposta === 'Parcial' || (r.score !== undefined && r.score < 100))
+      r => r.diagnosticoId === selectedDiagId && (grauLacuna(r) ?? 0) > 0
     );
 
     // 2. Get tasks from action plan

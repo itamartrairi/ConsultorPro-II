@@ -128,35 +128,91 @@ export const isAtividadeRelatorioFinal = (nome?: string) => papelDaAtividade(nom
 // Semântica das perguntas
 // ---------------------------------------------------------------------------------------
 /**
- * Pergunta que investiga a OCORRÊNCIA de um problema ("Já foi rejeitado…?", "Possui
- * dívidas…?"). Nelas, "Sim" é o problema. Nas demais (controles e boas práticas), o
- * problema é o "Não".
+ * Expressões regulares que identificam quando uma pergunta ou o próprio tema do problema
+ * investiga uma LIMITAÇÃO, RISCO, DEPENDÊNCIA, FALHA ou GARGALO.
+ * Nesses casos:
+ *  - "Sim" = O problema/risco ocorre -> É LACUNA / GARGALO (gera ação corretiva).
+ *  - "Parcial" = O problema/risco ocorre parcialmente -> É LACUNA MODERADA (gera ação corretiva).
+ *  - "Não" = O problema/risco NÃO ocorre (o cliente diversifica, não tem dívida, não tem rejeição, etc.)
+ *            -> É PONTO FORTE / CONFORMIDADE (NÃO gera ação corretiva).
  */
 const PADRAO_PERGUNTA_NEGATIVA = new RegExp(
   [
+    '\\b(depende|dependencia|comercializa|vende|atende|atua|concentra|opera|limita|limitad|restrito) (apenas|somente|exclusivamente|unicamente|em poucos|em um|de um|de poucos)',
+    '\\b(apenas|somente|exclusivamente|unicamente) (em |para |por |no |na |)(feiras|festivais|eventos|feira|um cliente|poucos clientes|um comprador|poucos compradores|um fornecedor|poucos fornecedores|uma regiao|um canal|balcao|intermediario|atravessador)',
+    '\\b(concentra|concentracao) (em poucos|em um|as vendas|os clientes|de clientes|de vendas|em feiras|em festivais|em canais)',
+    '\\b(canal unico|comprador unico|cliente unico|depende de atravessador|depende de intermediario)',
+    '\\bcomercializa (em |apenas em |somente em |)(feiras|festivais)',
+    '\\bvende (em |apenas em |somente em |)(feiras|festivais)',
     '\\bja (sofreu|teve|foi|tentou|perdeu|atrasou)',
-    '\\bfoi (rejeitad|negad|recusad|autuad|multad|notificad|embargad)',
-    '\\b(sofre|enfrenta|apresenta) (com |)(perda|prejuizo|atraso|dificuldade|problema|queda|falta|reclama|mortalidade|inadimpl)',
-    '\\b(ha|existe|existem|ocorre|ocorrem) (atraso|perda|desperdicio|reclama|inadimpl|divida|pendencia|falta|mortalidade|retrabalho|devolu|acidente)',
-    '\\b(possui|tem) (dividas?|pendencias?|inadimplencia|restricao|restricoes|multas?|dificuldade|problemas?|nome negativado)',
+    '\\bfoi (rejeitad|negad|recusad|autuad|multad|notificad|embargad|protestad|negativad)',
+    '\\b(tentou|tenta) (acessar|obter) (credito|financiamento|emprestimo) (e foi|sendo) (rejeitad|negad|recusad)',
+    '\\b(sofre|enfrenta|apresenta) (com |)(perda|prejuizo|atraso|dificuldade|problema|queda|falta|reclama|mortalidade|inadimpl|gargalo|retrabalho)',
+    '\\b(ha|existe|existem|ocorre|ocorrem) (atraso|perda|desperdicio|reclama|inadimpl|divida|pendencia|falta|mortalidade|retrabalho|devolu|acidente|gargalo|conflito)',
+    '\\b(possui|tem) (dividas?|pendencias?|inadimplencia|restricao|restricoes|multas?|dificuldade|problemas?|nome negativado|gargalo|prejuizo)',
     '\\besta (endividad|inadimplent|negativad|irregular)',
-    '\\b(depende|comercializa|vende|atende|atua|concentra|opera) (apenas|somente|exclusivamente|unicamente)',
-    '\\b(apenas|somente|exclusivamente|unicamente) (em |para |por |)(feiras|festivais|um cliente|poucos clientes|um comprador|poucos compradores|um fornecedor|poucos fornecedores|uma regiao|um canal)',
-    '\\b(concentra|concentracao) (em poucos|em um|as vendas|os clientes|de clientes|de vendas)',
-  ].join('|')
+    '\\b(mistura|misturam|utiliza|usa) (contas?|financas?|despesas?|gastos?) (pessoais|da familia|de casa)',
+    '\\b(retiradas?|saques?) (descontrolad|sem controle|sem criterio|livres?)',
+    '\\bpaga (despesas?|contas?) (pessoais|de casa) com (o |)(caixa|dinheiro|recursos) (da empresa|do negocio)',
+    '\\b(vende|opera|trabalha) (sem nota|sem emissao|na informalidade|sem alvara|sem licenca|sem registro)',
+    '\\bnao (possui|tem|realiza|faz|utiliza|adota|separa|calcula|controla|emite|registra|acompanha)',
+    '\\b(falta|ausencia|inexistencia|sem) (de |)(controle|planejamento|registro|separacao|fluxo de caixa|precificacao)',
+  ].join('|'),
+  'i'
 );
 
-export function isPerguntaNegativa(pergunta?: string): boolean {
-  return PADRAO_PERGUNTA_NEGATIVA.test(norm(pergunta));
+/**
+ * Títulos ou descrições de temas/problemas que representam uma vulnerabilidade, limitação ou gargalo cadastrado.
+ */
+const PADRAO_PROBLEMA_NEGATIVO = new RegExp(
+  [
+    '\\b(limitad|dependencia|concentracao|ausencia|falta|inexistencia|perda|desperdicio|rejeicao|endividamento|inadimplencia|gargalo|atraso|conflito|reclamac|desordem|mistura|vulnerab)',
+    'feiras e festivais',
+    'cliente unico',
+    'canal unico',
+  ].join('|'),
+  'i'
+);
+
+export function isPerguntaNegativa(pergunta?: string, problema?: string): boolean {
+  const pNorm = norm(pergunta);
+  const probNorm = norm(problema);
+  return PADRAO_PERGUNTA_NEGATIVA.test(pNorm) || (Boolean(probNorm) && PADRAO_PROBLEMA_NEGATIVO.test(probNorm));
 }
 
 /** 2 = lacuna total, 1 = parcial, 0 = sem lacuna, null = não respondida. */
-export function grauLacuna(r: Pick<Resposta, 'resposta' | 'pergunta'>): number | null {
+export function grauLacuna(
+  r: Pick<Resposta, 'resposta' | 'pergunta'> & { problema?: string; id?: string },
+  overrideIA?: Map<string, boolean>
+): number | null {
   const v = r.resposta;
   if (v !== 'Sim' && v !== 'Não' && v !== 'Parcial') return null;
+
+  // 1. Respeita o veredito da IA se houver
+  if (overrideIA) {
+    if (r.id && overrideIA.has(r.id)) {
+      const temProb = overrideIA.get(r.id)!;
+      if (!temProb) return 0;
+      return v === 'Parcial' ? 1 : 2;
+    }
+    const chaveQ = norm(r.pergunta);
+    if (chaveQ && overrideIA.has(chaveQ)) {
+      const temProb = overrideIA.get(chaveQ)!;
+      if (!temProb) return 0;
+      return v === 'Parcial' ? 1 : 2;
+    }
+  }
+
+  // 2. Parcial sempre indica oportunidade de melhoria/lacuna parcial
   if (v === 'Parcial') return 1;
-  const negativa = isPerguntaNegativa(r.pergunta);
-  if (negativa) return v === 'Sim' ? 2 : 0;
+
+  // 3. Avaliação semântica por regras (pergunta + problema)
+  const negativa = isPerguntaNegativa(r.pergunta, r.problema);
+  if (negativa) {
+    // Pergunta de risco/falha/limitação: "Sim" é o problema. "Não" significa que NÃO há problema (ponto forte).
+    return v === 'Sim' ? 2 : 0;
+  }
+  // Pergunta de controle/boa prática: "Não" é a falta de controle (problema). "Sim" significa que tem (ponto forte).
   return v === 'Não' ? 2 : 0;
 }
 
@@ -175,7 +231,8 @@ const ORDEM_NIVEL: Record<NivelCriticidade, number> = { Crítico: 3, Alto: 2, Mo
 export function analisarDiagnostico(
   respostas: Resposta[],
   problemas: Problema[] = [],
-  solucoes: Solucao[] = []
+  solucoes: Solucao[] = [],
+  overrideIA?: Map<string, boolean>
 ): AnaliseDiagnostico {
   const grupos = new Map<string, Resposta[]>();
   let totalRespondidas = 0;
@@ -184,7 +241,7 @@ export function analisarDiagnostico(
 
   for (const r of respostas || []) {
     if (!r) continue;
-    const g = grauLacuna(r);
+    const g = grauLacuna(r, overrideIA);
     if (g === null) continue;
     totalRespondidas++;
     const peso = Number(r.peso) > 0 ? Number(r.peso) : 1;
@@ -211,7 +268,7 @@ export function analisarDiagnostico(
     let max = 0;
     const lacunas: Lacuna[] = [];
     for (const r of lista) {
-      const g = grauLacuna(r)!;
+      const g = grauLacuna(r, overrideIA)!;
       const peso = Number(r.peso) > 0 ? Number(r.peso) : 1;
       lac += g * peso;
       max += 2 * peso;
@@ -225,7 +282,7 @@ export function analisarDiagnostico(
     }
 
     const imp = pesoImpacto(impacto);
-    const temLacunaTotal = lista.some((r) => grauLacuna(r) === 2);
+    const temLacunaTotal = lista.some((r) => grauLacuna(r, overrideIA) === 2);
     let nivel: NivelCriticidade = 'Moderado';
     if ((imp >= 3 && temLacunaTotal) || (intensidade >= 0.75 && imp >= 2)) nivel = 'Crítico';
     else if ((intensidade >= 0.5 && imp >= 2) || imp >= 3) nivel = 'Alto';
@@ -713,6 +770,77 @@ export function garantirPrimeiraEUltima(lista: AtividadeCronograma[], analise?: 
 // ---------------------------------------------------------------------------------------
 export interface GeradorIA {
   models: { generateContent: (args: { model: string; contents: any; config?: any }) => Promise<{ text?: string }> };
+}
+
+/**
+ * Avalia as respostas do diagnóstico com IA (Gemini) para determinar com precisão semântica
+ * se cada resposta dada representa um PROBLEMA/GARGALO REAL que exige ação corretiva (true)
+ * ou se é uma SITUAÇÃO POSITIVA/DIVERSIFICAÇÃO/BOA PRÁTICA onde NÃO se deve gerar ação corretiva (false).
+ */
+export async function avaliarRespostasComIA(
+  ai: GeradorIA | null | undefined,
+  respostas: Resposta[]
+): Promise<Map<string, boolean>> {
+  const mapa = new Map<string, boolean>();
+  if (!ai || !Array.isArray(respostas) || respostas.length === 0) return mapa;
+
+  const validas = respostas.filter(r => r && (r.resposta === 'Sim' || r.resposta === 'Não' || r.resposta === 'Parcial'));
+  if (validas.length === 0) return mapa;
+
+  const itens = validas.map((r, idx) => ({
+    id: r.id || `item_${idx}`,
+    pergunta: r.pergunta || '',
+    problema: r.problema || '',
+    resposta: r.resposta,
+    observacao: r.observacao || ''
+  }));
+
+  const prompt = `Como consultor empresarial sênior do SEBRAE especialista em diagnósticos de gestão e comércio:
+Analise cada par de pergunta, problema e resposta dada pelo empresário. Para CADA item, determine se a resposta indica a EXISTÊNCIA DE UM PROBLEMA OU GARGALO REAL que necessita de ação corretiva ("temProblema": true) ou se representa AUSÊNCIA DE PROBLEMA (situação positiva, conformidade ou diversificação) onde NÃO deve ser gerada ação corretiva ("temProblema": false).
+
+DIRETRIZES SEMÂNTICAS OBRIGATÓRIAS DE GESTÃO E COMÉRCIO:
+1. PERGUNTAS SOBRE RISCO, LIMITAÇÃO, DEPENDÊNCIA OU OCORRÊNCIA DE FALHAS:
+   Exemplos: "O produtor comercializa apenas em feiras/festivais locais?", "Depende de poucos compradores?", "Já teve crédito rejeitado?", "Possui dívidas em atraso?", "Mistura finanças pessoais?", "Sofre perdas na produção?":
+   - Resposta "Não": NÃO HÁ PROBLEMA (o produtor NÃO opera apenas em feiras, não possui dívidas, etc. Ele diversifica e tem maturidade). -> "temProblema": false. NÃO gerar ação corretiva!
+   - Resposta "Sim": HÁ PROBLEMA REAL (dependência comercial, inadimplência, perdas, etc.). -> "temProblema": true.
+   - Resposta "Parcial": HÁ GARGALO PARCIAL. -> "temProblema": true.
+
+2. PERGUNTAS SOBRE CONTROLES, PLANEJAMENTO E BOAS PRÁTICAS:
+   Exemplos: "Possui controle financeiro?", "Realiza precificação?", "Possui alvará sanitário?", "A maior parte da produção é vendida beneficiada?":
+   - Resposta "Sim": NÃO HÁ PROBLEMA (aplica a boa prática). -> "temProblema": false. NÃO gerar ação corretiva!
+   - Resposta "Não": HÁ PROBLEMA (falta de controle essencial). -> "temProblema": true.
+   - Resposta "Parcial": HÁ GARGALO PARCIAL (oportunidade de ampliação/melhoria). -> "temProblema": true.
+
+ITENS A AVALIAR:
+${JSON.stringify(itens)}
+
+Retorne APENAS um array JSON:
+[
+  { "id": "id_do_item", "temProblema": false, "motivo": "Não vende apenas em feiras; diversifica canais." }
+]`;
+
+  try {
+    const resp = await ai.models.generateContent({
+      model: 'gemini-3.6-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: 'application/json',
+      }
+    });
+
+    const bruto = String(resp?.text || '').replace(/```json|```/g, '').trim();
+    const parsed: any[] = JSON.parse(bruto.slice(bruto.indexOf('['), bruto.lastIndexOf(']') + 1));
+    if (Array.isArray(parsed)) {
+      for (const item of parsed) {
+        if (item && item.id !== undefined && item.temProblema !== undefined) {
+          mapa.set(String(item.id), Boolean(item.temProblema));
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[planoAcao] Avaliação semântica por IA falhou; usando regras semânticas locais:', err);
+  }
+  return mapa;
 }
 
 const ID_FERRAMENTAS = '__ferramentas__';
