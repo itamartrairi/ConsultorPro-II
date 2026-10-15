@@ -148,4 +148,27 @@ console.log('   Objetivo:', rel.objetivo);
 assert.match(rel.solucoesIndicadas, /PROBLEMAS IDENTIFICADOS:\nFINANÇAS \(1 crítico\):\n• \[Crítico\] Problema A\n  Ação Proposta: Implantar fluxo de caixa[\s\S]*SOLUÇÕES \/ AÇÕES PROPOSTAS:[\s\S]*PONTOS FORTES:/);
 assert.match(rel.resultadosEsperados, /\[Crítico\] Problema A: Fluxo de caixa em uso/);
 console.log('  OK: textos do relatório');
+
+// Observações / contexto: "Não" nem sempre é deficiência
+{
+  const base = { pergunta: 'Possui controle de estoque?', problema: 'Estoque' };
+  assert.equal(grauLacuna({ ...base, resposta: 'Não', observacao: '' }), 2, 'Não sem observação = lacuna');
+  assert.equal(grauLacuna({ ...base, resposta: 'Não', observacao: 'Não se aplica ao negócio (prestação de serviço)' }), 0);
+  assert.equal(grauLacuna({ ...base, resposta: 'Não', observacao: 'O contador faz esse controle' }), 0);
+  assert.equal(grauLacuna({ ...base, resposta: 'Não', observacao: 'MEI dispensado dessa obrigação' }), 0);
+  assert.equal(grauLacuna({ ...base, resposta: 'Parcial', observacao: 'Já resolvido na última visita' }), 0);
+  assert.equal(grauLacuna({ ...base, resposta: 'Não', observacao: 'Cliente não controla nada e perde mercadoria' }), 2, 'observação sem indício de "ok" mantém lacuna');
+  // pergunta de risco: "já possui" na observação não pode apagar um problema real
+  assert.equal(grauLacuna({ pergunta: 'Possui dívidas em atraso?', problema: 'Crédito', resposta: 'Sim', observacao: 'Já possui duas dívidas em atraso' }), 2);
+  // Veredito da IA (por id) vale para todos os consumidores e cai se a observação mudar
+  const resp = r('X', 'Possui alvará sanitário?', 'Não');
+  resp.observacao = 'Atividade exercida fora de estabelecimento';
+  const ia = await (await import('../src/lib/domain/planoAcao')).avaliarRespostasComIA(
+    { models: { generateContent: async () => ({ text: JSON.stringify([{ id: resp.id, temProblema: false }]) }) } }, [resp]);
+  assert.equal(ia.get(resp.id), false);
+  assert.equal(grauLacuna(resp), 0, 'veredito da IA usado sem passar o mapa');
+  resp.observacao = 'Mudou o contexto';
+  assert.equal(grauLacuna(resp), 2, 'veredito antigo descartado quando a observação muda');
+  console.log('  OK: observações e contexto não geram lacuna indevida');
+}
 console.log('Todos os testes de planoAcao passaram.');
