@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import {
   analisarDiagnostico, montarAtividades, estruturarPlano, enriquecerComIA, montarTextosRelatorio,
-  isPerguntaNegativa, grauLacuna, papelDaAtividade, horasDe, MAX_ATIVIDADES, tarefasDasAtividades, agruparPorArea,
+  isPerguntaNegativa, grauLacuna, classificarStatusResposta, papelDaAtividade, horasDe, MAX_ATIVIDADES, tarefasDasAtividades, agruparPorArea,
   ATIVIDADE_DIAGNOSTICO, ATIVIDADE_DEVOLUTIVA, ATIVIDADE_FERRAMENTAS, ATIVIDADE_ANALISE_FINAL, ATIVIDADE_RELATORIO_FINAL,
+  aplicarTarefaNoCronograma, removerTarefaDoCronograma, adicionarTarefaAoCronograma, sincronizarRelatorioComCronograma,
 } from '../src/lib/domain/planoAcao';
 
 const r = (idProblema: string, pergunta: string, resposta: any, peso = 1, area = 'Finanças') =>
@@ -160,6 +161,29 @@ console.log('  OK: textos do relatório');
   assert.equal(grauLacuna({ ...base, resposta: 'Não', observacao: 'Cliente não controla nada e perde mercadoria' }), 2, 'observação sem indício de "ok" mantém lacuna');
   // pergunta de risco: "já possui" na observação não pode apagar um problema real
   assert.equal(grauLacuna({ pergunta: 'Possui dívidas em atraso?', problema: 'Crédito', resposta: 'Sim', observacao: 'Já possui duas dívidas em atraso' }), 2);
+  // Novas expressões de observações e contexto
+  assert.equal(grauLacuna({ ...base, resposta: 'Não', observacao: 'Não tem necessidade no momento' }), 0);
+  assert.equal(grauLacuna({ ...base, resposta: 'Não', observacao: 'Inaplicável para o modelo da empresa' }), 0);
+  assert.equal(grauLacuna({ ...base, resposta: 'Não', observacao: 'O próprio dono faz todo o acompanhamento diário' }), 0);
+  assert.equal(grauLacuna({ ...base, resposta: 'Não', observacao: 'Gestão familiar direta' }), 0);
+  assert.equal(grauLacuna({ ...base, resposta: 'Não', observacao: 'Vendas direto pelo WhatsApp' }), 0);
+  assert.equal(grauLacuna({ ...base, resposta: 'Não', observacao: 'Trabalha apenas a vista' }), 0);
+  assert.equal(grauLacuna({ pergunta: 'Possui dívidas em atraso?', problema: 'Crédito', resposta: 'Não', observacao: 'Sem dívidas, situação regular' }), 0);
+  assert.equal(grauLacuna({ pergunta: 'Possui dívidas em atraso?', problema: 'Crédito', resposta: 'Sim', observacao: 'Sem dívidas, já quitou todas' }), 0);
+
+  // Testes de classificarStatusResposta
+  const st1 = classificarStatusResposta({ ...base, resposta: 'Não', observacao: 'O contador faz esse controle' });
+  assert.equal(st1.tipo, 'conforme_obs');
+  assert.equal(st1.isConforme, true);
+
+  const st2 = classificarStatusResposta({ pergunta: 'O produtor comercializa apenas em feiras/festivais locais?', resposta: 'Não' });
+  assert.equal(st2.tipo, 'conforme_contexto');
+  assert.equal(st2.isConforme, true);
+
+  const st3 = classificarStatusResposta({ ...base, resposta: 'Não', observacao: '' });
+  assert.equal(st3.tipo, 'lacuna');
+  assert.equal(st3.isConforme, false);
+
   // Veredito da IA (por id) vale para todos os consumidores e cai se a observação mudar
   const resp = r('X', 'Possui alvará sanitário?', 'Não');
   resp.observacao = 'Atividade exercida fora de estabelecimento';
@@ -171,4 +195,74 @@ console.log('  OK: textos do relatório');
   assert.equal(grauLacuna(resp), 2, 'veredito antigo descartado quando a observação muda');
   console.log('  OK: observações e contexto não geram lacuna indevida');
 }
+
+// Sincronização bidirecional entre Plano de Ação e Relatório
+{
+  const atvsIniciais: any[] = [
+    { nome: '1. Diagnóstico', cargaHoraria: '4h', solucaoProposta: 'Diagnóstico', status: 'Pendente' },
+    { nome: '2. Devolutiva', cargaHoraria: '2h', solucaoProposta: 'Devolutiva', status: 'Pendente' },
+    {
+      nome: '4. Gestão Financeira',
+      cargaHoraria: '4h',
+      solucaoProposta: 'Implantar fluxo de caixa',
+      problemasTratados: [
+        { idProblema: 'p1', problema: 'Falta de controle', solucao: 'Planilha diária', acao: 'Fluxo de caixa', passos: 'Criar planilha', resultadoEsperado: 'Caixa diário em dia', responsavel: 'Consultor' }
+      ],
+      status: 'Pendente'
+    },
+    { nome: '8. Relatório Final', cargaHoraria: '4h', solucaoProposta: 'Entrega final', status: 'Pendente' }
+  ];
+
+  // 1. Edição de tarefa do plano reflete no cronograma
+  const editada = aplicarTarefaNoCronograma(atvsIniciais, {
+    idProblema: 'p1',
+    problema: 'Falta de controle financeiro diário',
+    solucaoSugerida: 'Fluxo de caixa — Planilha automatizada',
+    acoes: 'Passo A; Passo B',
+    resultadoEsperado: 'Fluxo 100% conciliado',
+    responsavel: 'Gestor Financeiro',
+    prioridade: 'Alta'
+  });
+  assert.equal(editada[2].problemasTratados[0].problema, 'Falta de controle financeiro diário');
+  assert.equal(editada[2].problemasTratados[0].solucao, 'Planilha automatizada');
+  assert.equal(editada[2].problemasTratados[0].passos, 'Passo A; Passo B');
+  assert.equal(editada[2].problemasTratados[0].resultadoEsperado, 'Fluxo 100% conciliado');
+  assert.equal(editada[2].problemasTratados[0].responsavel, 'Gestor Financeiro');
+  assert.equal(editada[2].prioridade, 'Alta');
+
+  // 2. Sincronizar relatório a partir do cronograma atualizado
+  const relSinc = sincronizarRelatorioComCronograma({
+    objetivo: 'Realizar consultoria por meio de 4 atividades (14h) para melhoria contínua',
+    solucoesIndicadas: 'PROBLEMAS IDENTIFICADOS:\n• Falta de controle\n\nSOLUÇÕES / AÇÕES PROPOSTAS:\n1. ...\n\nPONTOS FORTES:\n...',
+    resultadosEsperados: 'Antigo resultado'
+  }, editada);
+
+  assert.match(relSinc.solucoesIndicadas!, /SOLUÇÕES \/ AÇÕES PROPOSTAS:[\s\S]*Gestão Financeira/);
+  assert.match(relSinc.resultadosEsperados!, /Fluxo 100% conciliado/);
+  assert.match(relSinc.objetivo!, /por meio de 4 atividades \(14h\)/);
+
+  // 3. Adição de nova tarefa ao plano cria atividade antes do relatório
+  const comNova = adicionarTarefaAoCronograma(editada, {
+    problema: 'Nova Atividade de Vendas',
+    solucaoSugerida: 'Treinamento comercial',
+    acoes: 'Capacitar vendedores',
+    cargaHoraria: '4h',
+    resultadoEsperado: 'Vendas aumentadas',
+    responsavel: 'Consultor de Vendas',
+    prioridade: 'Alta'
+  });
+  assert.equal(comNova.length, 5);
+  assert.equal(comNova[3].nome, 'Nova Atividade de Vendas');
+  assert.equal(comNova[4].nome, '8. Relatório Final');
+
+  // 4. Remoção de tarefa do plano remove do cronograma
+  const comRemovida = removerTarefaDoCronograma(comNova, {
+    problema: 'Nova Atividade de Vendas'
+  });
+  assert.equal(comRemovida.length, 4);
+  assert.ok(!comRemovida.some(a => a.nome === 'Nova Atividade de Vendas'));
+
+  console.log('  OK: sincronização bidirecional entre Plano de Ação e Relatório');
+}
 console.log('Todos os testes de planoAcao passaram.');
+

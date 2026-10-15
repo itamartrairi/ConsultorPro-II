@@ -175,7 +175,14 @@ import {
   deleteLocalIndividualEvidence,
   loadLocalIndividualEvidence
 } from './lib/evidenceStorage';
-import { limparEvidenciasAcoes, formatarDescricaoObjetiva } from './lib/domain/planoAcao';
+import {
+  limparEvidenciasAcoes,
+  formatarDescricaoObjetiva,
+  aplicarTarefaNoCronograma,
+  removerTarefaDoCronograma,
+  adicionarTarefaAoCronograma,
+  sincronizarRelatorioComCronograma,
+} from './lib/domain/planoAcao';
 
 // --- Safe LocalStorage with AES-256 Encryption at Rest ---
 const safeLocalStorage = encryptedLocalStorage;
@@ -4690,7 +4697,7 @@ const CronogramaView = ({
                 onChange={(e) => setEditingActivity({...editingActivity, idProblema: e.target.value})}
               >
                 <option value="">Geral / Não vinculado</option>
-                {respostas.filter(r => r.resposta !== 'Sim').map(r => {
+                {respostas.filter(r => (grauLacuna(r) ?? 0) > 0).map(r => {
                   const prob = problemas.find(p => p.id === r.idProblema || p.descricao_problemas === r.problema);
                   return (
                     <option key={r.idProblema} value={r.idProblema}>
@@ -6459,8 +6466,20 @@ const GestaoPlanoView = ({
         dataFim: t.dataFim || t.dataInicio || ''
       }));
 
+      const synchronizedDados = sincronizarRelatorioComCronograma(selectedDiagnostico.dadosConsultoria, synchronizedCronograma);
       const isAllCompleted = sortedTarefas.length > 0 && sortedTarefas.every(t => t.status === 'Concluído');
       const newStatus = isAllCompleted ? 'Concluído' : selectedDiagnostico.status || 'Em Andamento';
+
+      const updatedDiag = {
+        ...selectedDiagnostico,
+        cronograma: synchronizedCronograma,
+        dadosConsultoria: synchronizedDados,
+        status: newStatus
+      };
+      setSelectedDiagnostico(updatedDiag);
+      if (setDiagnosticos) {
+        setDiagnosticos(prev => prev.map(d => d.id === selectedDiagnostico.id ? updatedDiag : d));
+      }
 
       // 2. Local storage persistence immediately
       try {
@@ -6472,12 +6491,15 @@ const GestaoPlanoView = ({
         const savedDiags = localStorage.getItem('local_diagnosticos');
         const parsedDiags = savedDiags ? JSON.parse(savedDiags) : [];
         const nextDiags = Array.isArray(parsedDiags) 
-          ? parsedDiags.map((d: any) => d.id === selectedDiagnostico.id ? { ...d, cronograma: synchronizedCronograma, status: newStatus } : d)
-          : [];
+          ? parsedDiags.map((d: any) => d.id === selectedDiagnostico.id ? updatedDiag : d)
+          : [updatedDiag];
         localStorage.setItem('local_diagnosticos', JSON.stringify(nextDiags));
       } catch (e) {
         console.warn("Could not save to localStorage in handleSavePlanoAcao", e);
       }
+
+      // IndexedDB persistence
+      saveLocalDiagnosticoReport(selectedDiagnostico.id, sanitizeForFirestore(synchronizedCronograma), sanitizeForFirestore(synchronizedDados)).catch(() => {});
 
       // 3. Background cloud sync without blocking
       const currentUser = auth.currentUser;
@@ -6507,6 +6529,7 @@ const GestaoPlanoView = ({
             const diagRef = doc(db, 'diagnosticos', diagId);
             batch.update(diagRef, {
               cronograma: sanitizeForFirestore(synchronizedCronograma),
+              dadosConsultoria: sanitizeForFirestore(synchronizedDados),
               status: newStatus
             });
 
@@ -9416,6 +9439,7 @@ import { addDaysIso, licensePeriodDays } from './lib/licenseDays';
 import {
   analisarDiagnostico,
   grauLacuna,
+  classificarStatusResposta,
   type NivelCriticidade,
   montarAtividades,
   estruturarPlano,
@@ -14246,7 +14270,8 @@ export default function App() {
         const val = options.includeAnswers && sourceMatch ? sourceMatch.resposta : '';
         const obs = options.includeAnswers && sourceMatch ? sourceMatch.observacao : '';
         const peso = p?.peso !== undefined ? p.peso : 1;
-        const pts = val === 'Sim' ? 2 : val === 'Parcial' ? 1 : 0;
+        const lac = grauLacuna({ resposta: val, pergunta: p.pergunta, problema: p.problema, observacao: obs });
+        const pts = lac === 0 ? 2 : lac === 1 ? 1 : 0;
 
         const respId = user ? doc(collection(db, 'respostas')).id : 'resp_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7);
         const respItem: Resposta = {
@@ -14763,6 +14788,33 @@ export default function App() {
 
       setTarefasPlano(prev => [newTarefa, ...prev]);
 
+      // Sincroniza bidirecionalmente com o cronograma e os textos do relatório
+      const diagId = data.diagnosticoId || selectedDiagnostico?.id;
+      if (diagId) {
+        const diag = diagnosticos.find(d => d.id === diagId) || (selectedDiagnostico?.id === diagId ? selectedDiagnostico : null);
+        if (diag) {
+          const novoCronograma = adicionarTarefaAoCronograma(diag.cronograma || [], newTarefa);
+          const novosDados = sincronizarRelatorioComCronograma(diag.dadosConsultoria, novoCronograma);
+          const updatedDiag = { ...diag, cronograma: novoCronograma, dadosConsultoria: novosDados };
+          setDiagnosticos(prev => prev.map(d => d.id === diagId ? updatedDiag : d));
+          if (selectedDiagnostico?.id === diagId) {
+            setSelectedDiagnostico(updatedDiag);
+          }
+          saveLocalDiagnosticoReport(diagId, sanitizeForFirestore(novoCronograma), sanitizeForFirestore(novosDados)).catch(() => {});
+          try {
+            const saved = JSON.parse(localStorage.getItem('local_diagnosticos') || '[]');
+            if (Array.isArray(saved)) localStorage.setItem('local_diagnosticos', JSON.stringify(saved.map((d: any) => d.id === diagId ? updatedDiag : d)));
+          } catch {}
+          if (user) {
+            updateDoc(doc(db, 'diagnosticos', diagId), {
+              cronograma: sanitizeForFirestore(novoCronograma),
+              dadosConsultoria: sanitizeForFirestore(novosDados),
+              updatedAt: new Date().toISOString()
+            }).catch(console.warn);
+          }
+        }
+      }
+
       if (user) {
         try {
           const sanitized = sanitizeForFirestore({
@@ -14786,7 +14838,7 @@ export default function App() {
       setModalData(null);
       setTarefaForm({});
       playSuccessSound();
-      showToast("Tarefa do Plano de Ação salva com sucesso!", "success");
+      showToast("Tarefa do Plano de Ação salva e relatório atualizado!", "success");
     } catch (error) {
       console.error("Error creating tarefa:", error);
       setIsModalOpen(false);
@@ -14799,12 +14851,41 @@ export default function App() {
 
   const updateTarefa = async (id: string, data: Partial<TarefaPlanoAcao>) => {
     try {
+      const originalTask = modalData || tarefasPlano.find(t => t.id === id);
+      const updatedTask = { ...(originalTask || {}), ...data, id } as TarefaPlanoAcao;
+
       setTarefasPlano(prev => prev.map(t => t.id === id ? { ...t, ...data } : t));
+
+      // Sincroniza bidirecionalmente com o cronograma e os textos do relatório
+      const diagId = data.diagnosticoId || originalTask?.diagnosticoId || selectedDiagnostico?.id;
+      if (diagId) {
+        const diag = diagnosticos.find(d => d.id === diagId) || (selectedDiagnostico?.id === diagId ? selectedDiagnostico : null);
+        if (diag) {
+          const novoCronograma = aplicarTarefaNoCronograma(diag.cronograma || [], updatedTask, originalTask);
+          const novosDados = sincronizarRelatorioComCronograma(diag.dadosConsultoria, novoCronograma);
+          const updatedDiag = { ...diag, cronograma: novoCronograma, dadosConsultoria: novosDados };
+          setDiagnosticos(prev => prev.map(d => d.id === diagId ? updatedDiag : d));
+          if (selectedDiagnostico?.id === diagId) {
+            setSelectedDiagnostico(updatedDiag);
+          }
+          saveLocalDiagnosticoReport(diagId, sanitizeForFirestore(novoCronograma), sanitizeForFirestore(novosDados)).catch(() => {});
+          try {
+            const saved = JSON.parse(localStorage.getItem('local_diagnosticos') || '[]');
+            if (Array.isArray(saved)) localStorage.setItem('local_diagnosticos', JSON.stringify(saved.map((d: any) => d.id === diagId ? updatedDiag : d)));
+          } catch {}
+          if (user) {
+            updateDoc(doc(db, 'diagnosticos', diagId), {
+              cronograma: sanitizeForFirestore(novoCronograma),
+              dadosConsultoria: sanitizeForFirestore(novosDados),
+              updatedAt: new Date().toISOString()
+            }).catch(console.warn);
+          }
+        }
+      }
 
       if (user) {
         try {
           if (data.ordem !== undefined && data.ordem !== null) {
-            const diagId = data.diagnosticoId || modalData?.diagnosticoId;
             const diagTasks = tarefasPlano.filter(t => t.diagnosticoId === diagId);
 
             diagTasks.sort((a, b) => {
@@ -14839,7 +14920,7 @@ export default function App() {
       setModalData(null);
       setTarefaForm({});
       playSuccessSound();
-      showToast("Tarefa do Plano de Ação alterada e salva com sucesso!", "success");
+      showToast("Tarefa do Plano de Ação alterada e relatório atualizado!", "success");
     } catch (error) {
       console.error("Error updating tarefa:", error);
       setIsModalOpen(false);
@@ -14877,15 +14958,23 @@ export default function App() {
             return atv;
           });
 
+          const novosDados = sincronizarRelatorioComCronograma(diag.dadosConsultoria, updatedCronograma);
           const sanitizedCronograma = sanitizeForFirestore(updatedCronograma);
-          setDiagnosticos(prev => prev.map(d => d.id === diagId ? { ...d, cronograma: sanitizedCronograma } : d));
+          const sanitizedDados = sanitizeForFirestore(novosDados);
+          const updatedDiag = { ...diag, cronograma: sanitizedCronograma, dadosConsultoria: sanitizedDados };
+          setDiagnosticos(prev => prev.map(d => d.id === diagId ? updatedDiag : d));
           if (selectedDiagnostico && selectedDiagnostico.id === diagId) {
-            setSelectedDiagnostico({ ...selectedDiagnostico, cronograma: sanitizedCronograma });
+            setSelectedDiagnostico(updatedDiag);
           }
+          saveLocalDiagnosticoReport(diagId, sanitizedCronograma, sanitizedDados).catch(() => {});
 
           if (user) {
             try {
-              await updateDoc(doc(db, 'diagnosticos', diagId), { cronograma: sanitizedCronograma });
+              await updateDoc(doc(db, 'diagnosticos', diagId), {
+                cronograma: sanitizedCronograma,
+                dadosConsultoria: sanitizedDados,
+                updatedAt: new Date().toISOString()
+              });
             } catch (cloudErr) {
               console.error("Error updating cronograma in cloud:", cloudErr);
             }
@@ -14901,7 +14990,32 @@ export default function App() {
 
   const updateTarefaPrioridade = async (id: string, newPrioridade: string) => {
     try {
+      const targetTask = tarefasPlano.find(t => t.id === id);
       setTarefasPlano(prev => prev.map(t => t.id === id ? { ...t, prioridade: newPrioridade as any } : t));
+
+      const diagId = targetTask?.diagnosticoId || selectedDiagnostico?.id;
+      if (diagId && targetTask) {
+        const diag = diagnosticos.find(d => d.id === diagId) || (selectedDiagnostico?.id === diagId ? selectedDiagnostico : null);
+        if (diag && diag.cronograma) {
+          const updatedTask = { ...targetTask, prioridade: newPrioridade as any };
+          const novoCronograma = aplicarTarefaNoCronograma(diag.cronograma, updatedTask, targetTask);
+          const novosDados = sincronizarRelatorioComCronograma(diag.dadosConsultoria, novoCronograma);
+          const updatedDiag = { ...diag, cronograma: novoCronograma, dadosConsultoria: novosDados };
+          setDiagnosticos(prev => prev.map(d => d.id === diagId ? updatedDiag : d));
+          if (selectedDiagnostico?.id === diagId) {
+            setSelectedDiagnostico(updatedDiag);
+          }
+          saveLocalDiagnosticoReport(diagId, sanitizeForFirestore(novoCronograma), sanitizeForFirestore(novosDados)).catch(() => {});
+          if (user) {
+            updateDoc(doc(db, 'diagnosticos', diagId), {
+              cronograma: sanitizeForFirestore(novoCronograma),
+              dadosConsultoria: sanitizeForFirestore(novosDados),
+              updatedAt: new Date().toISOString()
+            }).catch(console.warn);
+          }
+        }
+      }
+
       if (user) {
         try {
           await updateDoc(doc(db, 'tarefas_plano', id), { prioridade: newPrioridade });
@@ -14917,7 +15031,36 @@ export default function App() {
 
   const deleteTarefa = async (id: string) => {
     try {
+      const targetTask = modalData || tarefasPlano.find(t => t.id === id);
       setTarefasPlano(prev => prev.filter(t => t.id !== id));
+
+      // Sincroniza bidirecionalmente com o cronograma e os textos do relatório
+      const diagId = targetTask?.diagnosticoId || selectedDiagnostico?.id;
+      if (diagId && targetTask) {
+        const diag = diagnosticos.find(d => d.id === diagId) || (selectedDiagnostico?.id === diagId ? selectedDiagnostico : null);
+        if (diag) {
+          const novoCronograma = removerTarefaDoCronograma(diag.cronograma || [], targetTask);
+          const novosDados = sincronizarRelatorioComCronograma(diag.dadosConsultoria, novoCronograma);
+          const updatedDiag = { ...diag, cronograma: novoCronograma, dadosConsultoria: novosDados };
+          setDiagnosticos(prev => prev.map(d => d.id === diagId ? updatedDiag : d));
+          if (selectedDiagnostico?.id === diagId) {
+            setSelectedDiagnostico(updatedDiag);
+          }
+          saveLocalDiagnosticoReport(diagId, sanitizeForFirestore(novoCronograma), sanitizeForFirestore(novosDados)).catch(() => {});
+          try {
+            const saved = JSON.parse(localStorage.getItem('local_diagnosticos') || '[]');
+            if (Array.isArray(saved)) localStorage.setItem('local_diagnosticos', JSON.stringify(saved.map((d: any) => d.id === diagId ? updatedDiag : d)));
+          } catch {}
+          if (user) {
+            updateDoc(doc(db, 'diagnosticos', diagId), {
+              cronograma: sanitizeForFirestore(novoCronograma),
+              dadosConsultoria: sanitizeForFirestore(novosDados),
+              updatedAt: new Date().toISOString()
+            }).catch(console.warn);
+          }
+        }
+      }
+
       if (user) {
         try {
           await deleteDoc(doc(db, 'tarefas_plano', id));
@@ -14929,7 +15072,7 @@ export default function App() {
       setModalType(null);
       setModalData(null);
       playSuccessSound();
-      showToast("Tarefa excluída com sucesso!", "success");
+      showToast("Tarefa excluída do Plano e relatório atualizado!", "success");
     } catch (error) {
       console.error("Error deleting tarefa:", error);
       setIsModalOpen(false);
@@ -15995,17 +16138,10 @@ export default function App() {
   const updateResposta = (
     id: string, 
     val: 'Sim' | 'Não' | 'Parcial' | '' = '', 
-    obs: string = '', 
+    obs?: string, 
     peso: number = 1,
     extraData?: Partial<Resposta>
   ) => {
-    // Score calculation: respeita a semântica da pergunta (grau de lacuna)
-    const qText = extraData?.pergunta || '';
-    const probText = extraData?.problema || '';
-    const lac = grauLacuna({ resposta: val, pergunta: qText, problema: probText });
-    const points = lac === 0 ? 2 : lac === 1 ? 1 : 0;
-    const score = points * peso;
-
     const targetDiagId = extraData?.diagnosticoId || selectedDiagnostico?.id || '';
     const targetPremissaId = extraData?.premissaId || '';
     const targetArea = extraData?.area ? normalizeAndFormatArea(extraData.area).toLowerCase() : '';
@@ -16036,6 +16172,18 @@ export default function App() {
 
     const targetItem = respostas.find(isMatch);
     const finalId = targetItem?.id || extraData?.id || id;
+    const qText = extraData?.pergunta || targetItem?.pergunta || '';
+    const probText = extraData?.problema || targetItem?.problema || '';
+    const obsText = (obs !== undefined && obs !== null)
+      ? obs
+      : (extraData?.observacao !== undefined && extraData.observacao !== null)
+        ? extraData.observacao
+        : (targetItem?.observacao || '');
+
+    // Score calculation: respeita a semântica da pergunta e observações (grau de lacuna real)
+    const lac = grauLacuna({ resposta: val, pergunta: qText, problema: probText, observacao: obsText, id: finalId });
+    const points = lac === 0 ? 2 : lac === 1 ? 1 : 0;
+    const score = points * peso;
 
     const updatedResp: Resposta = {
       id: finalId,
@@ -16047,7 +16195,7 @@ export default function App() {
       area: extraData?.area || targetItem?.area || 'Geral',
       peso: targetItem?.peso !== undefined ? targetItem.peso : (extraData?.peso !== undefined ? extraData.peso : peso),
       resposta: val,
-      observacao: obs,
+      observacao: obsText,
       score,
       ownerId: user?.uid || targetItem?.ownerId || extraData?.ownerId || 'local'
     };
@@ -16170,7 +16318,7 @@ export default function App() {
 
     // Identified Problems
     const problems = [...cleanResps]
-      .filter(r => r.resposta !== 'Sim')
+      .filter(r => (grauLacuna(r) ?? 0) > 0)
       .map(r => {
         if (r.area) return r;
         const prob = problemas.find(p => p.id === r.idProblema || p.descricao_problemas === r.problema);
@@ -18715,112 +18863,8 @@ export default function App() {
                     return impB - impA;
                   });
 
-                  const handleUpdateTipoProdutoServico = async (novoValor: string) => {
-                    if (!selectedDiagnostico) return;
-                    const updatedDiag = { 
-                      ...selectedDiagnostico, 
-                      tipoProdutoServico: novoValor,
-                      dadosConsultoria: {
-                        ...(selectedDiagnostico.dadosConsultoria || {}),
-                        tipoProdutoServico: novoValor
-                      }
-                    };
-                    setSelectedDiagnostico(updatedDiag);
-                    setDiagnosticos(prev => prev.map(d => d.id === selectedDiagnostico.id ? updatedDiag : d));
-
-                    try {
-                      const saved = JSON.parse(localStorage.getItem('local_diagnosticos') || '[]');
-                      if (Array.isArray(saved)) {
-                        localStorage.setItem('local_diagnosticos', JSON.stringify(saved.map((d: any) => d.id === selectedDiagnostico.id ? updatedDiag : d)));
-                      }
-                    } catch { /* cópia local é opcional */ }
-
-                    try {
-                      await updateDoc(doc(db, 'diagnosticos', selectedDiagnostico.id), {
-                        tipoProdutoServico: novoValor,
-                        'dadosConsultoria.tipoProdutoServico': novoValor
-                      });
-                    } catch (e) {
-                      console.warn("Erro ao salvar tipo de produto/serviço no diagnóstico:", e);
-                    }
-                  };
-
-                  const sugestoesProdutosServicos = [
-                    'Camarão / Pescados / Frutos do Mar',
-                    'Alimentos e Bebidas / Refeições / Gastronomia',
-                    'Comércio Varejista / Loja de Mercadorias',
-                    'Prestação de Serviços Especializados',
-                    'Confecção / Têxtil / Moda',
-                    'Artesanato / Produtos Regionais',
-                    'Beleza e Estética',
-                    'Oficina / Manutenção Mecânica',
-                    'Hotelaria / Pousada / Turismo'
-                  ];
-
                   return (
                     <div className="space-y-6">
-                      {/* Card: Tipo de Produto ou Serviço */}
-                      <div className="bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-white p-5 rounded-2xl border border-blue-200/80 shadow-xs">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
-                          <div className="flex items-center gap-2">
-                            <span className="p-1.5 bg-blue-600 text-white rounded-lg shadow-xs">
-                              <Tag size={16} />
-                            </span>
-                            <div>
-                              <h3 className="text-sm font-extrabold text-slate-800 tracking-tight">
-                                Tipo de Produto ou Serviço da Empresa
-                              </h3>
-                              <p className="text-xs text-slate-500">
-                                Usado pela IA para personalizar o plano de ação, atividades e relatório final
-                              </p>
-                            </div>
-                          </div>
-                          {selectedDiagnostico.tipoProdutoServico && (
-                            <span className="self-start md:self-auto px-2.5 py-1 bg-emerald-100 text-emerald-800 font-bold text-xs rounded-full border border-emerald-200 flex items-center gap-1.5">
-                              <CheckCircle2 size={13} /> Definido
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Input de texto livre */}
-                        <div className="mb-3">
-                          <input
-                            type="text"
-                            value={selectedDiagnostico.tipoProdutoServico || ''}
-                            onChange={(e) => handleUpdateTipoProdutoServico(e.target.value)}
-                            placeholder="Ex: Camarão e Pescados, Marmitex e Refeições, Moda Praia, Consultoria..."
-                            className="w-full px-3.5 py-2.5 bg-white border border-blue-200 rounded-xl text-sm font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-2xs transition-all"
-                          />
-                        </div>
-
-                        {/* Sugestões rápidas (Pills) */}
-                        <div>
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
-                            Sugestões rápidas (clique para aplicar):
-                          </span>
-                          <div className="flex flex-wrap gap-1.5">
-                            {sugestoesProdutosServicos.map((sug) => {
-                              const isSelected = (selectedDiagnostico.tipoProdutoServico || '').toLowerCase() === sug.toLowerCase();
-                              return (
-                                <button
-                                  key={sug}
-                                  type="button"
-                                  onClick={() => handleUpdateTipoProdutoServico(sug)}
-                                  className={cn(
-                                    "px-2.5 py-1 text-xs rounded-lg font-medium transition-all cursor-pointer border",
-                                    isSelected
-                                      ? "bg-blue-600 text-white border-blue-600 shadow-xs font-bold"
-                                      : "bg-white text-slate-700 border-slate-200 hover:border-blue-300 hover:bg-blue-50/50"
-                                  )}
-                                >
-                                  {sug}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-
                       {/* Overall Progress Banner */}
                       <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex-1">
@@ -18953,6 +18997,7 @@ export default function App() {
                                   {probRespostas.map(resp => {
                                     const qKey = resp.premissaId || resp.id;
                                     const isExcluded = isQExcluded(resp);
+                                    const statusInfo = classificarStatusResposta(resp);
 
                                     return (
                                     <Card 
@@ -18965,13 +19010,13 @@ export default function App() {
                                       )}
                                     >
                                       {/* Bar to select/deselect question from diagnosis */}
-                                      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
-                                        <div className="flex items-center gap-2">
+                                      <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-100">
+                                        <div className="flex flex-wrap items-center gap-2">
                                           <span className={cn(
                                             "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold",
                                             isExcluded 
                                               ? "bg-rose-50 text-rose-700 border border-rose-200" 
-                                              : "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                              : "bg-slate-100 text-slate-700 border border-slate-200"
                                           )}>
                                             {isExcluded ? (
                                               <>
@@ -18980,11 +19025,35 @@ export default function App() {
                                               </>
                                             ) : (
                                               <>
-                                                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                                <span className="w-2 h-2 rounded-full bg-slate-400"></span>
                                                 Ativa no Diagnóstico
                                               </>
                                             )}
                                           </span>
+
+                                          {!isExcluded && resp.resposta && (
+                                            <span 
+                                              className={cn(
+                                                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border shadow-2xs",
+                                                statusInfo.isConforme
+                                                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                                  : statusInfo.tipo === 'parcial'
+                                                    ? "bg-amber-50 text-amber-800 border-amber-200"
+                                                    : "bg-rose-50 text-rose-800 border-rose-200"
+                                              )}
+                                              title={statusInfo.detalhe}
+                                            >
+                                              {statusInfo.isConforme ? (
+                                                <CheckCircle2 size={13} className="text-emerald-600 shrink-0" />
+                                              ) : statusInfo.tipo === 'parcial' ? (
+                                                <AlertCircle size={13} className="text-amber-600 shrink-0" />
+                                              ) : (
+                                                <XCircle size={13} className="text-rose-600 shrink-0" />
+                                              )}
+                                              <span>{statusInfo.label}</span>
+                                            </span>
+                                          )}
+
                                           {isExcluded && (
                                             <span className="text-[11px] text-slate-400 italic">
                                               (Não computa na pontuação nem no plano de ação)
@@ -19330,7 +19399,11 @@ export default function App() {
                 });
 
                 const answeredDash = uniqueRespsDash.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'Não');
-                const totalScoreDash = answeredDash.reduce((acc, r) => acc + (r.score || 0), 0);
+                const totalScoreDash = answeredDash.reduce((acc, r) => {
+                  const lac = grauLacuna(r);
+                  const pts = lac === 0 ? 2 : lac === 1 ? 1 : 0;
+                  return acc + pts * (r.peso || 1);
+                }, 0);
                 const maxScoreDash = answeredDash.reduce((acc, r) => acc + (2 * (r.peso || 1)), 0);
                 const scoreGeralPct = answeredDash.length > 0 ? Math.round((totalScoreDash / (maxScoreDash || 1)) * 100) : 0;
 
@@ -19338,6 +19411,7 @@ export default function App() {
                 const countParcial = uniqueRespsDash.filter(r => r.resposta === 'Parcial').length;
                 const countNao = uniqueRespsDash.filter(r => r.resposta === 'Não').length;
                 const countPendente = uniqueRespsDash.length - answeredDash.length;
+                const countPontosCriticos = uniqueRespsDash.filter(r => (grauLacuna(r) ?? 0) > 0).length;
 
                 return (
                   <>
@@ -19366,8 +19440,8 @@ export default function App() {
                       <Card className="p-6">
                         <p className="text-slate-400 text-sm font-medium mb-1 uppercase tracking-wider">Pontos Críticos</p>
                         <div className="flex items-baseline gap-2">
-                          <p className="text-4xl font-bold text-rose-500">{countNao}</p>
-                          <span className="text-xs text-slate-400 font-medium">urgências</span>
+                          <p className="text-4xl font-bold text-rose-500">{countPontosCriticos}</p>
+                          <span className="text-xs text-slate-400 font-medium">{countPontosCriticos === 1 ? 'lacuna real' : 'lacunas reais'}</span>
                         </div>
                       </Card>
 
@@ -19444,7 +19518,9 @@ export default function App() {
                             const normArea = normalizeAndFormatArea(area) || area;
                             if (!acc[normArea]) acc[normArea] = { name: normArea, score: 0, totalPeso: 0 };
                             if (r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'Não') {
-                              acc[normArea].score += (r.score || 0);
+                              const lac = grauLacuna(r);
+                              const pts = lac === 0 ? 2 : lac === 1 ? 1 : 0;
+                              acc[normArea].score += pts * (r.peso || 1);
                               acc[normArea].totalPeso += (2 * (r.peso || 1));
                             }
                             return acc;
@@ -19567,7 +19643,7 @@ export default function App() {
 
                     const cleanResps = deduplicateRespostas(respostas).filter(r => !isQExcluded(r));
                     const sortedGroups = (Object.entries(cleanResps.reduce((acc: Record<string, Resposta[]>, resp) => {
-                      if (resp.resposta === 'Sim') return acc;
+                      if ((grauLacuna(resp) ?? 0) === 0) return acc; // só lacuna real (considera contexto e observações)
                       const probName = resp.problema || 'Geral';
                       if (!acc[probName]) acc[probName] = [];
                       acc[probName].push(resp);
@@ -19601,7 +19677,7 @@ export default function App() {
                             </span>
                           </div>
                           <p className="text-xs text-slate-500 font-medium">
-                            {probRespostas.length} {probRespostas.length === 1 ? 'pergunta não atendida' : 'perguntas não atendidas'}
+                            {probRespostas.length} {probRespostas.length === 1 ? 'oportunidade de melhoria / lacuna' : 'oportunidades de melhoria / lacunas'}
                           </p>
                           <div className="mt-2 text-[10px] text-emerald-600 font-bold opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                             Ver Plano de Ação <ArrowRight size={10} />
@@ -19724,14 +19800,30 @@ export default function App() {
                 historicalData={historicalData}
                 onUpdateCronograma={async (atvs) => {
                   try {
-                    const updatedDiag = { ...selectedDiagnostico, cronograma: atvs };
+                    const novosDados = sincronizarRelatorioComCronograma(selectedDiagnostico.dadosConsultoria, atvs);
+                    const updatedDiag = { ...selectedDiagnostico, cronograma: atvs, dadosConsultoria: novosDados };
                     setSelectedDiagnostico(updatedDiag);
                     setDiagnosticos(prev => prev.map(d => d.id === selectedDiagnostico.id ? updatedDiag : d));
+
+                    // Sincroniza tarefasPlano
+                    const empresaId = selectedEmpresa?.id || selectedDiagnostico.empresaId || '';
+                    const tarefasAtuais = tarefasPlano.filter(t => t.diagnosticoId === selectedDiagnostico.id);
+                    const tarefasNovas = montarTarefasDoPlano(atvs, selectedDiagnostico, empresaId, user?.uid || 'local', tarefasAtuais)
+                      .map((t, idx) => ({ ...t, id: tarefasAtuais[idx]?.id || `tarefa_${selectedDiagnostico.id}_${idx}` }));
+                    setTarefasPlano(prev => [...prev.filter(t => t.diagnosticoId !== selectedDiagnostico.id), ...tarefasNovas]);
+
+                    saveLocalDiagnosticoReport(selectedDiagnostico.id, sanitizeForFirestore(atvs), sanitizeForFirestore(novosDados)).catch(() => {});
+                    try {
+                      const saved = JSON.parse(localStorage.getItem('local_diagnosticos') || '[]');
+                      if (Array.isArray(saved)) localStorage.setItem('local_diagnosticos', JSON.stringify(saved.map((d: any) => d.id === selectedDiagnostico.id ? updatedDiag : d)));
+                    } catch {}
 
                     if (user) {
                       try {
                         await updateDoc(doc(db, 'diagnosticos', selectedDiagnostico.id), {
-                          cronograma: atvs
+                          cronograma: sanitizeForFirestore(atvs),
+                          dadosConsultoria: sanitizeForFirestore(novosDados),
+                          updatedAt: new Date().toISOString()
                         });
                       } catch (cloudErr) {
                         console.error("Error updating cronograma in cloud:", cloudErr);

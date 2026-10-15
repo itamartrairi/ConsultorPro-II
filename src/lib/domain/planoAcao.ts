@@ -186,32 +186,47 @@ export function isPerguntaNegativa(pergunta?: string, problema?: string): boolea
  */
 const PADRAO_OBS_SEM_PROBLEMA = new RegExp(
   [
-    '\\bnao (se aplica|e aplicavel|aplicavel|se enquadra|ha necessidade|existe necessidade|e necessari|precisa|necessita|ha problema|existe problema|e um problema|representa (um )?problema|afeta|impacta|ha impacto|e relevante|e prioridade|e gargalo|e deficiencia|ha deficiencia|e critico)',
-    '\\b(desnecessari|dispensavel|irrelevante|nao aplicavel|sem necessidade|sem impacto|sem problema|sem restricao|sem pendencia)',
+    '\\bnao (se aplica|e aplicavel|aplicavel|inaplicavel|se enquadra|ha necessidade|existe necessidade|tem necessidade|vejo necessidade|ha demanda|e necessari|precisa|necessita|ha problema|existe problema|tem problema|e um problema|representa (um )?problema|afeta|impacta|ha impacto|tem impacto|e relevante|tem relevancia|e prioridade|e gargalo|e deficiencia|ha deficiencia|tem deficiencia|e critico)',
+    '\\b(desnecessari|dispensavel|dispensad|isento|isenta|isentos|isentas|irrelevante|nao aplicavel|inaplicavel|sem necessidade|sem impacto|sem problema|sem restricao|sem divida|sem debito|sem pendencia|sem reclamac|sem atraso|sem gargalo|sem perda)',
     '(^|\\s)n\\/?a(\\s|$|[.,;])',
-    '\\b(atende|atendido|atendida|atendem) (plenamente|adequadamente|bem|satisfatoriamente|de outra forma)',
-    '\\b(funciona|funcionam) (bem|adequadamente|perfeitamente|satisfatoriamente)',
+    '\\b(atende|atendido|atendida|atendem) (plenamente|adequadamente|bem|satisfatoriamente|de outra forma|integralmente|conforme)',
+    '\\b(funciona|funcionam) (bem|adequadamente|perfeitamente|satisfatoriamente|redondo|direitinho)',
     '\\b(de|por) outra forma\\b|\\bforma alternativa\\b|\\balternativ(a|o)s? (adequad|eficaz)',
-    '\\bterceirizad|\\b(contador|contabilidade|escritorio|empresa parceira|cooperativa|associacao) (faz|cuida|realiza|presta|responde|atende)',
-    '\\b(situacao|processo|controle|documentacao) (esta |)(regular|adequad|ok|em dia|resolvid|satisfatori)',
-    '\\bja (esta |foi |)(resolvid|regularizad|solucionad|em dia|adequad)',
-    '\\bmei\\b[^.]*\\b(dispensad|isent|nao exige|nao obrigad)',
-    '\\b(dispensad|isent)[oa]s? (de|da|do)',
+    '\\b(terceirizad|terceirizado|terceirizada)\\b|\\b(contador|contabilidade|escritorio|empresa parceira|cooperativa|associacao|assessoria) (faz|cuida|realiza|presta|responde|atende|acompanha|gerencia)',
+    '\\b(situacao|processo|controle|documentacao|fluxo|rotina) (esta |)(regular|adequad|ok|em dia|resolvid|satisfatori|conforme)',
+    '\\bja (esta |foi |)(resolvid|regularizad|solucionad|em dia|adequad|implantad|implementad|organizado|estruturado)',
+    '\\b(proprio|propria|pelo) (dono|proprietari|gestor|titular|socio) (faz|cuida|controla|realiza|acompanha|gerencia)',
+    '\\b(gestao|controle) (familiar|simplificad|diret|informal)',
+    '\\bmei\\b[^\n.]*\\b(dispensad|isent|nao exige|nao obrigad|simplificad)',
+    '\\b(dispensad|isent)[oa]s? (de|da|do|\\b)',
+    '\\bporte (pequeno|reduzido|mei|micro|familiar)',
+    '\\b(vendas?|vende|comercializa|contato|atendimento) (diret|balcao|loja fisica|pessoal|whatsapp|proprio|propria)',
+    '\\b(a vista|pix|dinheiro)',
+    '\\b(regular|regularizado|resolvido|em dia|conforme|adequado|satisfatorio|ok|tudo ok|tudo regular)',
   ].join('|'),
   'i'
 );
 
 /** Observações que indicam que o controle/prática já existe (só vale para perguntas de controle). */
 const PADRAO_OBS_JA_FAZ = new RegExp(
-  '\\bja (possui|tem|faz|realiza|atende|controla|utiliza|usa|adota|registra|emite)',
+  '\\bja (possui|tem|faz|realiza|atende|controla|utiliza|usa|adota|registra|emite|implanta|implantou|implementou|conta com)',
+  'i'
+);
+
+/** Expressões em perguntas de risco/falha indicando que o risco não existe ou está resolvido. */
+const PADRAO_OBS_RISCO_RESOLVIDO = new RegExp(
+  '\\b(sem (dividas?|debitos?|pendencias?|restricoes?|multas?|atrasos?|reclamacoes?|problemas?)|nao (tem|possui|ha|existe) (dividas?|debitos?|pendencias?|restricoes?)|ja (quitou|quitad|pagou|pago|regularizad|resolvid)|em dia|tudo regular|tudo ok|situacao regular)\\b',
   'i'
 );
 
 export function observacaoIndicaSemProblema(observacao?: string, perguntaNegativa = false): boolean {
   const o = norm(observacao);
   if (!o) return false;
+  if (perguntaNegativa) {
+    return PADRAO_OBS_RISCO_RESOLVIDO.test(o) || PADRAO_OBS_SEM_PROBLEMA.test(o);
+  }
   if (PADRAO_OBS_SEM_PROBLEMA.test(o)) return true;
-  return !perguntaNegativa && PADRAO_OBS_JA_FAZ.test(o);
+  return PADRAO_OBS_JA_FAZ.test(o);
 }
 
 // Vereditos de IA mantidos em memória para que relatório, plano e painéis usem o mesmo critério.
@@ -221,7 +236,7 @@ const assinaturaResposta = (r: { resposta?: string; observacao?: string; pergunt
 
 /** 2 = lacuna total, 1 = parcial, 0 = sem lacuna, null = não respondida. */
 export function grauLacuna(
-  r: Pick<Resposta, 'resposta' | 'pergunta'> & { problema?: string; id?: string; observacao?: string },
+  r: { resposta?: string; pergunta?: string; problema?: string; id?: string; observacao?: string },
   overrideIA?: Map<string, boolean>
 ): number | null {
   const v = r.resposta;
@@ -266,6 +281,76 @@ export function grauLacuna(
   }
   // Pergunta de controle/boa prática: "Não" é a falta de controle (problema). "Sim" significa que tem (ponto forte).
   return v === 'Não' ? 2 : 0;
+}
+
+export interface StatusRespostaInfo {
+  tipo: 'pendente' | 'conforme' | 'conforme_obs' | 'conforme_contexto' | 'parcial' | 'lacuna';
+  label: string;
+  detalhe: string;
+  isConforme: boolean;
+}
+
+/**
+ * Classifica a resposta e gera metadados explicativos para a interface e relatórios,
+ * garantindo total transparência quando observações ou o contexto da pergunta
+ * justificam a conformidade sem gerar lacuna.
+ */
+export function classificarStatusResposta(
+  r: { resposta?: string; pergunta?: string; problema?: string; observacao?: string; id?: string },
+  overrideIA?: Map<string, boolean>
+): StatusRespostaInfo {
+  if (!r.resposta) {
+    return {
+      tipo: 'pendente',
+      label: 'Pendente',
+      detalhe: 'Aguardando preenchimento no diagnóstico',
+      isConforme: false,
+    };
+  }
+  const lac = grauLacuna(r, overrideIA);
+  const negativa = isPerguntaNegativa(r.pergunta, r.problema);
+  const temObsOk = observacaoIndicaSemProblema(r.observacao, negativa);
+
+  if (lac === 0) {
+    if (temObsOk) {
+      return {
+        tipo: 'conforme_obs',
+        label: 'Conforme (Justificado)',
+        detalhe: 'Observação do consultor indica ausência de problema, dispensa ou controle existente',
+        isConforme: true,
+      };
+    }
+    if (negativa && r.resposta === 'Não') {
+      return {
+        tipo: 'conforme_contexto',
+        label: 'Ponto Forte (Sem Risco)',
+        detalhe: 'Resposta Não em questão de risco confirma ausência de vulnerabilidade na empresa',
+        isConforme: true,
+      };
+    }
+    return {
+      tipo: 'conforme',
+      label: 'Atendido / Conforme',
+      detalhe: 'Prática de gestão plenamente atendida',
+      isConforme: true,
+    };
+  }
+
+  if (lac === 1) {
+    return {
+      tipo: 'parcial',
+      label: 'Atendimento Parcial',
+      detalhe: 'Prática parcialmente estruturada; oportunidade de melhoria',
+      isConforme: false,
+    };
+  }
+
+  return {
+    tipo: 'lacuna',
+    label: 'Lacuna a Tratar',
+    detalhe: 'Oportunidade de melhoria que gerará ação no Plano de Ação',
+    isConforme: false,
+  };
 }
 
 function pesoImpacto(impacto?: string): number {
@@ -1129,9 +1214,7 @@ export function montarTextosRelatorio(
       return `${g.area.toUpperCase()} (${resumoNiveis(g.problemas)}):\n${linhas.join('\n\n')}`;
     })
     .join('\n\n');
-  const acoesTxt = atividades
-    .map((a, i) => `${i + 1}. ${a.nome} (${a.cargaHoraria})${!a.problemasTratados?.length && a.solucaoProposta && a.solucaoProposta !== a.nome ? ` - ${a.solucaoProposta}` : ''}`)
-    .join('\n');
+  const acoesTxt = listarAcoesTexto(atividades);
   const fortesTxt = analise.pontosFortes.slice(0, 10).map((p) => `• ${p.problema} (${p.area})`).join('\n');
 
   const solucoesIndicadas = [
@@ -1142,10 +1225,199 @@ export function montarTextosRelatorio(
     .filter(Boolean)
     .join('\n\n');
 
+  return { objetivo, solucoesIndicadas, resultadosEsperados: listarResultadosTexto(atividades) };
+}
+
+// ---------------------------------------------------------------------------------------
+// Sincronia Plano de Ação ↔ Relatório
+// ---------------------------------------------------------------------------------------
+const TITULO_PROBLEMAS = 'PROBLEMAS IDENTIFICADOS:';
+const TITULO_ACOES = 'SOLUÇÕES / AÇÕES PROPOSTAS:';
+const TITULO_FORTES = 'PONTOS FORTES:';
+
+/** Lista numerada das atividades (seção "SOLUÇÕES / AÇÕES PROPOSTAS" do relatório). */
+export function listarAcoesTexto(atividades: AtividadeCronograma[]): string {
+  return atividades
+    .map((a, i) => `${i + 1}. ${a.nome} (${a.cargaHoraria})${!a.problemasTratados?.length && a.solucaoProposta && a.solucaoProposta !== a.nome ? ` - ${a.solucaoProposta}` : ''}`)
+    .join('\n');
+}
+
+/** Resultados esperados do relatório a partir das atividades / problemas tratados. */
+export function listarResultadosTexto(atividades: AtividadeCronograma[]): string {
   const resultados: string[] = [];
   for (const a of atividades) {
     if (a.problemasTratados?.length) a.problemasTratados.forEach((t) => resultados.push(`• [${t.nivel}] ${t.problema}: ${t.resultadoEsperado}`));
-    else if (a.resultadoEsperado?.trim()) resultados.push(`• ${a.resultadoEsperado}`);
+    else if (a.resultadoEsperado?.trim()) resultados.push(`• ${a.resultadoEsperado.trim().startsWith('•') ? a.resultadoEsperado.trim().slice(1).trim() : a.resultadoEsperado.trim()}`);
   }
-  return { objetivo, solucoesIndicadas, resultadosEsperados: resultados.join('\n') };
+  return resultados.join('\n');
+}
+
+type DadosTexto = { objetivo?: string; solucoesIndicadas?: string; resultadosEsperados?: string; cargaHoraria?: string };
+
+/**
+ * Atualiza os textos do relatório (ações propostas, resultados esperados, carga horária e a contagem
+ * de atividades do objetivo) para refletir o cronograma/plano atual. Preserva as seções
+ * "PROBLEMAS IDENTIFICADOS" e "PONTOS FORTES" já existentes.
+ */
+export function sincronizarRelatorioComCronograma<T extends DadosTexto>(dados: T | undefined, atividades: AtividadeCronograma[]): T {
+  const base = (dados || {}) as T;
+  const validas = (atividades || []).filter((a) => a?.nome?.trim());
+  if (validas.length === 0) return base;
+  const totalHoras = validas.reduce((s, a) => s + horasDe(a), 0);
+
+  const atual = base.solucoesIndicadas || '';
+  const iProb = atual.indexOf(TITULO_PROBLEMAS);
+  const iAcoes = atual.indexOf(TITULO_ACOES);
+  const iFortes = atual.indexOf(TITULO_FORTES);
+  const blocoProblemas = iProb >= 0 ? atual.slice(iProb, iAcoes > iProb ? iAcoes : (iFortes > iProb ? iFortes : atual.length)).trim() : '';
+  const blocoFortes = iFortes >= 0 ? atual.slice(iFortes).trim() : '';
+  const solucoesIndicadas = [blocoProblemas, `${TITULO_ACOES}\n${listarAcoesTexto(validas)}`, blocoFortes].filter(Boolean).join('\n\n');
+
+  const resultados = listarResultadosTexto(validas);
+  const objetivo = (base.objetivo || '').replace(
+    /por meio de \d+ atividades? \(\d+(?:[.,]\d+)?h\)/,
+    `por meio de ${validas.length} atividade${validas.length > 1 ? 's' : ''} (${String(totalHoras).replace('.', ',')}h)`
+  );
+
+  return {
+    ...base,
+    objetivo: objetivo || base.objetivo,
+    solucoesIndicadas,
+    resultadosEsperados: resultados || base.resultadosEsperados,
+    cargaHoraria: totalHoras > 0 ? `${String(totalHoras).replace('.', ',')}h` : base.cargaHoraria,
+  } as T;
+}
+
+/** Campos da tarefa do Plano de Ação usados na sincronia (compatível com TarefaPlanoAcao). */
+export interface TarefaSync {
+  idProblema?: string;
+  problema?: string;
+  area?: string;
+  solucaoSugerida?: string;
+  acoes?: string;
+  prioridade?: string;
+  responsavel?: string;
+  cargaHoraria?: string;
+  resultadoEsperado?: string;
+  dataInicio?: any;
+  dataFim?: any;
+  atividade?: string;
+  atividadeOrdem?: number;
+  criticidade?: string;
+}
+
+const dataStr = (d: any): string | undefined => {
+  if (!d) return undefined;
+  if (typeof d === 'string') return d;
+  if (d instanceof Date) return d.toISOString().split('T')[0];
+  if (typeof d?.toDate === 'function') return d.toDate().toISOString().split('T')[0];
+  return undefined;
+};
+
+/** Índice (no array original) da atividade a que a tarefa pertence; -1 se não achar. */
+function indiceDaAtividade(atividades: AtividadeCronograma[], t: TarefaSync): number {
+  const idxValidos = atividades.map((a, i) => (a?.nome?.trim() ? i : -1)).filter((i) => i >= 0);
+  if (typeof t.atividadeOrdem === 'number' && idxValidos[t.atividadeOrdem] !== undefined) {
+    const i = idxValidos[t.atividadeOrdem];
+    if (!t.atividade || norm(atividades[i].nome) === norm(t.atividade)) return i;
+  }
+  if (t.atividade) {
+    const i = atividades.findIndex((a) => norm(a?.nome) === norm(t.atividade));
+    if (i >= 0) return i;
+  }
+  if (t.idProblema) {
+    const i = atividades.findIndex((a) => a.idProblema === t.idProblema || a.problemasTratados?.some((p) => p.idProblema === t.idProblema));
+    if (i >= 0) return i;
+  }
+  if (t.problema) {
+    return atividades.findIndex((a) => norm(a?.nome) === norm(t.problema) || a.problemasTratados?.some((p) => norm(p.problema) === norm(t.problema)));
+  }
+  return -1;
+}
+
+function indiceDoProblema(a: AtividadeCronograma, t: TarefaSync, original?: TarefaSync): number {
+  const lista = a.problemasTratados || [];
+  const alvoId = original?.idProblema || t.idProblema;
+  const alvoNome = norm(original?.problema || t.problema);
+  let i = alvoId ? lista.findIndex((p) => p.idProblema === alvoId) : -1;
+  if (i < 0) i = lista.findIndex((p) => norm(p.problema) === alvoNome);
+  return i;
+}
+
+/** Aplica no cronograma a edição de uma tarefa do Plano de Ação. `original` = tarefa antes da edição. */
+export function aplicarTarefaNoCronograma(atividades: AtividadeCronograma[], tarefa: TarefaSync, original?: TarefaSync): AtividadeCronograma[] {
+  const lista = atividades.map((a) => ({ ...a }));
+  const i = indiceDaAtividade(lista, original || tarefa);
+  if (i < 0) return lista;
+  const atv = lista[i];
+  const prio = tarefa.prioridade === 'Alta' || tarefa.prioridade === 'Baixa' || tarefa.prioridade === 'Média' ? tarefa.prioridade : atv.prioridade;
+  const ini = dataStr(tarefa.dataInicio);
+  const fim = dataStr(tarefa.dataFim);
+
+  if (atv.problemasTratados?.length) {
+    const k = indiceDoProblema(atv, tarefa, original);
+    if (k >= 0) {
+      const p = { ...atv.problemasTratados[k] };
+      if (tarefa.problema) p.problema = tarefa.problema;
+      if (tarefa.solucaoSugerida !== undefined) {
+        const sep = tarefa.solucaoSugerida.indexOf(' — ');
+        if (sep >= 0) { p.acao = tarefa.solucaoSugerida.slice(0, sep); p.solucao = tarefa.solucaoSugerida.slice(sep + 3); }
+        else p.solucao = tarefa.solucaoSugerida;
+      }
+      if (tarefa.acoes !== undefined) p.passos = tarefa.acoes;
+      if (tarefa.resultadoEsperado !== undefined) p.resultadoEsperado = tarefa.resultadoEsperado;
+      if (tarefa.responsavel) p.responsavel = tarefa.responsavel;
+      atv.problemasTratados = atv.problemasTratados.map((x, n) => (n === k ? p : x));
+    }
+  } else {
+    if (tarefa.problema) atv.nome = tarefa.problema;
+    if (tarefa.solucaoSugerida !== undefined) atv.solucaoProposta = tarefa.solucaoSugerida;
+    if (tarefa.acoes !== undefined) atv.descricao = tarefa.acoes;
+    if (tarefa.resultadoEsperado !== undefined) atv.resultadoEsperado = tarefa.resultadoEsperado;
+    if (tarefa.responsavel) atv.responsavel = tarefa.responsavel;
+    if (tarefa.cargaHoraria) atv.cargaHoraria = tarefa.cargaHoraria;
+  }
+  atv.prioridade = prio as AtividadeCronograma['prioridade'];
+  if (ini) atv.dataInicio = ini;
+  if (fim) atv.dataFim = fim;
+  return lista;
+}
+
+/** Remove do cronograma a atividade (ou o problema tratado) correspondente à tarefa excluída. */
+export function removerTarefaDoCronograma(atividades: AtividadeCronograma[], tarefa: TarefaSync): AtividadeCronograma[] {
+  const lista = atividades.map((a) => ({ ...a }));
+  const i = indiceDaAtividade(lista, tarefa);
+  if (i < 0) return lista;
+  const atv = lista[i];
+  if (atv.problemasTratados && atv.problemasTratados.length > 1) {
+    const k = indiceDoProblema(atv, tarefa);
+    if (k >= 0) {
+      atv.problemasTratados = atv.problemasTratados.filter((_, n) => n !== k);
+      return lista;
+    }
+  }
+  return lista.filter((_, n) => n !== i);
+}
+
+/** Inclui no cronograma a tarefa criada no Plano de Ação (nova atividade antes do encerramento). */
+export function adicionarTarefaAoCronograma(atividades: AtividadeCronograma[], tarefa: TarefaSync): AtividadeCronograma[] {
+  const lista = atividades.map((a) => ({ ...a }));
+  if (indiceDaAtividade(lista, tarefa) >= 0) return lista; // já representada
+  const nova: AtividadeCronograma = {
+    nome: tarefa.problema || 'Nova atividade',
+    descricao: tarefa.acoes || '',
+    cargaHoraria: tarefa.cargaHoraria || '2h',
+    solucaoProposta: tarefa.solucaoSugerida || tarefa.problema || '',
+    resultadoEsperado: tarefa.resultadoEsperado || '',
+    responsavel: tarefa.responsavel || 'Consultor',
+    idProblema: tarefa.idProblema || undefined,
+    status: 'Pendente',
+    prioridade: (tarefa.prioridade as AtividadeCronograma['prioridade']) || 'Média',
+    dataInicio: dataStr(tarefa.dataInicio),
+    dataFim: dataStr(tarefa.dataFim),
+    area: tarefa.area,
+  };
+  const fim = lista.findIndex((a) => { const p = papelDaAtividade(a.nome); return p === 'analise' || p === 'relatorio'; });
+  if (fim >= 0) lista.splice(fim, 0, nova); else lista.push(nova);
+  return lista;
 }
