@@ -180,13 +180,61 @@ export function isPerguntaNegativa(pergunta?: string, problema?: string): boolea
   return PADRAO_PERGUNTA_NEGATIVA.test(pNorm) || (Boolean(probNorm) && PADRAO_PROBLEMA_NEGATIVO.test(probNorm));
 }
 
+/**
+ * Observações / sugestões do consultor que indicam que, apesar da resposta, NÃO há deficiência
+ * (não se aplica, já resolvido, atendido de outra forma, sem impacto etc.).
+ */
+const PADRAO_OBS_SEM_PROBLEMA = new RegExp(
+  [
+    '\\bnao (se aplica|e aplicavel|aplicavel|se enquadra|ha necessidade|existe necessidade|e necessari|precisa|necessita|ha problema|existe problema|e um problema|representa (um )?problema|afeta|impacta|ha impacto|e relevante|e prioridade|e gargalo|e deficiencia|ha deficiencia|e critico)',
+    '\\b(desnecessari|dispensavel|irrelevante|nao aplicavel|sem necessidade|sem impacto|sem problema|sem restricao|sem pendencia)',
+    '(^|\\s)n\\/?a(\\s|$|[.,;])',
+    '\\b(atende|atendido|atendida|atendem) (plenamente|adequadamente|bem|satisfatoriamente|de outra forma)',
+    '\\b(funciona|funcionam) (bem|adequadamente|perfeitamente|satisfatoriamente)',
+    '\\b(de|por) outra forma\\b|\\bforma alternativa\\b|\\balternativ(a|o)s? (adequad|eficaz)',
+    '\\bterceirizad|\\b(contador|contabilidade|escritorio|empresa parceira|cooperativa|associacao) (faz|cuida|realiza|presta|responde|atende)',
+    '\\b(situacao|processo|controle|documentacao) (esta |)(regular|adequad|ok|em dia|resolvid|satisfatori)',
+    '\\bja (esta |foi |)(resolvid|regularizad|solucionad|em dia|adequad)',
+    '\\bmei\\b[^.]*\\b(dispensad|isent|nao exige|nao obrigad)',
+    '\\b(dispensad|isent)[oa]s? (de|da|do)',
+  ].join('|'),
+  'i'
+);
+
+/** Observações que indicam que o controle/prática já existe (só vale para perguntas de controle). */
+const PADRAO_OBS_JA_FAZ = new RegExp(
+  '\\bja (possui|tem|faz|realiza|atende|controla|utiliza|usa|adota|registra|emite)',
+  'i'
+);
+
+export function observacaoIndicaSemProblema(observacao?: string, perguntaNegativa = false): boolean {
+  const o = norm(observacao);
+  if (!o) return false;
+  if (PADRAO_OBS_SEM_PROBLEMA.test(o)) return true;
+  return !perguntaNegativa && PADRAO_OBS_JA_FAZ.test(o);
+}
+
+// Vereditos de IA mantidos em memória para que relatório, plano e painéis usem o mesmo critério.
+const vereditosIA = new Map<string, { sig: string; temProblema: boolean }>();
+const assinaturaResposta = (r: { resposta?: string; observacao?: string; pergunta?: string }) =>
+  `${norm(r.resposta)}|${norm(r.observacao)}|${norm(r.pergunta)}`;
+
 /** 2 = lacuna total, 1 = parcial, 0 = sem lacuna, null = não respondida. */
 export function grauLacuna(
-  r: Pick<Resposta, 'resposta' | 'pergunta'> & { problema?: string; id?: string },
+  r: Pick<Resposta, 'resposta' | 'pergunta'> & { problema?: string; id?: string; observacao?: string },
   overrideIA?: Map<string, boolean>
 ): number | null {
   const v = r.resposta;
   if (v !== 'Sim' && v !== 'Não' && v !== 'Parcial') return null;
+
+  // 0. Veredito de IA já calculado (válido apenas se resposta/observação não mudaram)
+  if (r.id) {
+    const cache = vereditosIA.get(r.id);
+    if (cache && cache.sig === assinaturaResposta(r)) {
+      if (!cache.temProblema) return 0;
+      return v === 'Parcial' ? 1 : 2;
+    }
+  }
 
   // 1. Respeita o veredito da IA se houver
   if (overrideIA) {
@@ -203,11 +251,15 @@ export function grauLacuna(
     }
   }
 
-  // 2. Parcial sempre indica oportunidade de melhoria/lacuna parcial
+  const negativa = isPerguntaNegativa(r.pergunta, r.problema);
+
+  // 2. A observação do consultor tem prioridade: "não se aplica", "já resolvido" etc. = sem lacuna
+  if (observacaoIndicaSemProblema(r.observacao, negativa)) return 0;
+
+  // 3. Parcial indica oportunidade de melhoria/lacuna parcial
   if (v === 'Parcial') return 1;
 
-  // 3. Avaliação semântica por regras (pergunta + problema)
-  const negativa = isPerguntaNegativa(r.pergunta, r.problema);
+  // 4. Avaliação semântica por regras (pergunta + problema)
   if (negativa) {
     // Pergunta de risco/falha/limitação: "Sim" é o problema. "Não" significa que NÃO há problema (ponto forte).
     return v === 'Sim' ? 2 : 0;
@@ -787,16 +839,19 @@ export async function avaliarRespostasComIA(
   const validas = respostas.filter(r => r && (r.resposta === 'Sim' || r.resposta === 'Não' || r.resposta === 'Parcial'));
   if (validas.length === 0) return mapa;
 
-  const itens = validas.map((r, idx) => ({
+  const itensTodos = validas.map((r, idx) => ({
     id: r.id || `item_${idx}`,
     pergunta: r.pergunta || '',
     problema: r.problema || '',
     resposta: r.resposta,
     observacao: r.observacao || ''
   }));
+  const sigPorId = new Map<string, string>(validas.map((r, idx) => [r.id || `item_${idx}`, assinaturaResposta(r)]));
 
-  const prompt = `Como consultor empresarial sênior do SEBRAE especialista em diagnósticos de gestão e comércio:
+  const montarPrompt = (itens: typeof itensTodos) => `Como consultor empresarial sênior do SEBRAE especialista em diagnósticos de gestão e comércio:
 Analise cada par de pergunta, problema e resposta dada pelo empresário. Para CADA item, determine se a resposta indica a EXISTÊNCIA DE UM PROBLEMA OU GARGALO REAL que necessita de ação corretiva ("temProblema": true) ou se representa AUSÊNCIA DE PROBLEMA (situação positiva, conformidade ou diversificação) onde NÃO deve ser gerada ação corretiva ("temProblema": false).
+
+REGRA MAIS IMPORTANTE: uma resposta negativa ("Não") NEM SEMPRE significa deficiência ou requisito não atendido. Avalie o CONTEXTO da pergunta (o tema, o porte e a atividade da empresa) e, principalmente, a OBSERVAÇÃO/SUGESTÃO registrada pelo consultor, que tem prioridade sobre a resposta literal. Exemplos de "Não" que NÃO são problema: item que não se aplica à empresa, prática desnecessária para o porte (ex.: MEI dispensado), necessidade já suprida de outra forma (terceirizada, contador, informal mas eficaz), ou observação dizendo que está resolvido/sem impacto. Se a observação descrever um problema real mesmo com resposta aparentemente positiva, marque true. Na dúvida, use o texto da observação para decidir.
 
 DIRETRIZES SEMÂNTICAS OBRIGATÓRIAS DE GESTÃO E COMÉRCIO:
 1. PERGUNTAS SOBRE RISCO, LIMITAÇÃO, DEPENDÊNCIA OU OCORRÊNCIA DE FALHAS:
@@ -819,26 +874,34 @@ Retorne APENAS um array JSON:
   { "id": "id_do_item", "temProblema": false, "motivo": "Não vende apenas em feiras; diversifica canais." }
 ]`;
 
-  try {
-    const resp = await ai.models.generateContent({
-      model: 'gemini-3.6-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-      }
-    });
+  const TAMANHO_LOTE = 25;
+  for (let i = 0; i < itensTodos.length; i += TAMANHO_LOTE) {
+    const lote = itensTodos.slice(i, i + TAMANHO_LOTE);
+    try {
+      const resp = await ai.models.generateContent({
+        model: 'gemini-3.6-flash',
+        contents: montarPrompt(lote),
+        config: {
+          responseMimeType: 'application/json',
+        }
+      });
 
-    const bruto = String(resp?.text || '').replace(/```json|```/g, '').trim();
-    const parsed: any[] = JSON.parse(bruto.slice(bruto.indexOf('['), bruto.lastIndexOf(']') + 1));
-    if (Array.isArray(parsed)) {
-      for (const item of parsed) {
-        if (item && item.id !== undefined && item.temProblema !== undefined) {
-          mapa.set(String(item.id), Boolean(item.temProblema));
+      const bruto = String(resp?.text || '').replace(/```json|```/g, '').trim();
+      const parsed: any[] = JSON.parse(bruto.slice(bruto.indexOf('['), bruto.lastIndexOf(']') + 1));
+      if (Array.isArray(parsed)) {
+        for (const item of parsed) {
+          if (item && item.id !== undefined && item.temProblema !== undefined) {
+            const id = String(item.id);
+            const tem = Boolean(item.temProblema);
+            mapa.set(id, tem);
+            const sig = sigPorId.get(id);
+            if (sig) vereditosIA.set(id, { sig, temProblema: tem });
+          }
         }
       }
+    } catch (err) {
+      console.warn('[planoAcao] Avaliação semântica por IA falhou em um lote; usando regras semânticas locais:', err);
     }
-  } catch (err) {
-    console.warn('[planoAcao] Avaliação semântica por IA falhou; usando regras semânticas locais:', err);
   }
   return mapa;
 }
