@@ -9876,6 +9876,8 @@ export default function App() {
   const [completedAction, setCompletedAction] = useState<string | null>(null);
   const [creatingDiagnosis, setCreatingDiagnosis] = useState(false);
   const isCreatingDiagRef = useRef(false);
+  const isSubmittingEmpresaRef = useRef(false);
+  const isSubmittingCredenciadaRef = useRef(false);
   const [calculatingMaturity, setCalculatingMaturity] = useState(false);
   const [generatingPlan, setGeneratingPlan] = useState(false);
   const [view, setView] = useState<'home' | 'companies' | 'credenciadas' | 'licenses' | 'diagnosis' | 'dashboard' | 'premises' | 'cronograma' | 'relatorio' | 'kanban' | 'settings' | 'landing' | 'checkout' | 'licensing' | 'dados-consultoria' | 'agenda' | 'macro-dashboard' | 'maturity-assessment' | 'projects' | 'plan' | 'resultado-consultoria'>('landing');
@@ -9986,7 +9988,14 @@ export default function App() {
   const [empresas, setEmpresas] = useState<Empresa[]>(() => {
     try {
       const saved = localStorage.getItem('local_empresas');
-      return saved ? JSON.parse(saved) : [];
+      if (!saved) return [];
+      const list: Empresa[] = JSON.parse(saved);
+      const seen = new Set<string>();
+      return list.filter(e => {
+        if (!e || !e.id || seen.has(e.id)) return false;
+        seen.add(e.id);
+        return true;
+      });
     } catch { return []; }
   });
   const [currentPage, setCurrentPage] = useState(1);
@@ -9996,7 +10005,14 @@ export default function App() {
   const [empresasCredenciadas, setEmpresasCredenciadas] = useState<EmpresaCredenciada[]>(() => {
     try {
       const saved = localStorage.getItem('local_empresas_credenciadas');
-      return saved ? JSON.parse(saved) : [];
+      if (!saved) return [];
+      const list: EmpresaCredenciada[] = JSON.parse(saved);
+      const seen = new Set<string>();
+      return list.filter(c => {
+        if (!c || !c.id || seen.has(c.id)) return false;
+        seen.add(c.id);
+        return true;
+      });
     } catch { return []; }
   });
   const [allSystemCredenciadas, setAllSystemCredenciadas] = useState<EmpresaCredenciada[]>([]);
@@ -11466,8 +11482,19 @@ export default function App() {
       docs.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
       setEmpresas(prev => {
         const cloudIds = new Set(docs.map(d => d.id));
-        const localOnly = prev.filter(c => (!c.ownerId || c.ownerId === 'local' || c.ownerId === user.uid) && !cloudIds.has(c.id));
-        const merged = [...docs, ...localOnly];
+        const cloudCnpjs = new Set(docs.map(d => d.cnpj ? cleanDigits(d.cnpj) : '').filter(Boolean));
+        const localOnly = prev.filter(c => {
+          if (!c || !c.id || cloudIds.has(c.id)) return false;
+          if (c.cnpj && cloudCnpjs.has(cleanDigits(c.cnpj))) return false;
+          return (!c.ownerId || c.ownerId === 'local' || c.ownerId === user.uid);
+        });
+        const combined = [...docs, ...localOnly];
+        const seenCombined = new Set<string>();
+        const merged = combined.filter(item => {
+          if (!item.id || seenCombined.has(item.id)) return false;
+          seenCombined.add(item.id);
+          return true;
+        });
         try { localStorage.setItem('local_empresas', JSON.stringify(merged)); } catch {}
         return merged;
       });
@@ -11488,8 +11515,19 @@ export default function App() {
       data.sort((a, b) => (a.razaoSocial || '').localeCompare(b.razaoSocial || ''));
       setEmpresasCredenciadas(prev => {
         const cloudIds = new Set(data.map(d => d.id));
-        const localOnly = prev.filter(c => (!c.ownerId || c.ownerId === 'local' || c.ownerId === user.uid) && !cloudIds.has(c.id));
-        const merged = [...data, ...localOnly];
+        const cloudCnpjs = new Set(data.map(d => d.cnpj ? cleanDigits(d.cnpj) : '').filter(Boolean));
+        const localOnly = prev.filter(c => {
+          if (!c || !c.id || cloudIds.has(c.id)) return false;
+          if (c.cnpj && cloudCnpjs.has(cleanDigits(c.cnpj))) return false;
+          return (!c.ownerId || c.ownerId === 'local' || c.ownerId === user.uid);
+        });
+        const combined = [...data, ...localOnly];
+        const seenCombined = new Set<string>();
+        const merged = combined.filter(item => {
+          if (!item.id || seenCombined.has(item.id)) return false;
+          seenCombined.add(item.id);
+          return true;
+        });
         try { localStorage.setItem('local_empresas_credenciadas', JSON.stringify(merged)); } catch {}
         return merged;
       });
@@ -12656,6 +12694,7 @@ export default function App() {
   };
 
   const createEmpresa = async () => {
+    if (isSubmittingEmpresaRef.current) return;
     if (!empresaForm.razaoSocial?.trim()) {
       showToast("Por favor, preencha a Razão Social da empresa.", "error");
       return;
@@ -12677,6 +12716,8 @@ export default function App() {
       }
     }
 
+    isSubmittingEmpresaRef.current = true;
+
     // Fechar modal imediatamente para resposta instantânea na interface
     setIsModalOpen(false);
     setModalType(null);
@@ -12692,13 +12733,15 @@ export default function App() {
         setSessionCustomSegments(prev => Array.from(new Set([...prev, seg])));
         ensureSegmentInFirestore(seg);
       }
-      const tempId = 'emp_' + Date.now();
+      
+      // Gera ID determinístico/único já no padrão Firestore para o estado local e nuvem baterem perfeitamente
+      const newEmpId = doc(collection(db, 'empresas')).id;
       const razaoSocialTrimmed = formCopy.razaoSocial.trim();
       const formattedCnpj = formCopy.cnpj ? formatCNPJ(formCopy.cnpj) : undefined;
       const formattedCpfRep = formCopy.cpfRepresentante ? formatCPF(formCopy.cpfRepresentante) : undefined;
 
       const newEmp: Empresa = {
-        id: tempId,
+        id: newEmpId,
         ...formCopy,
         nome: razaoSocialTrimmed,
         razaoSocial: razaoSocialTrimmed,
@@ -12708,7 +12751,12 @@ export default function App() {
         ownerId: user?.uid || 'local'
       };
 
-      setEmpresas(prev => [newEmp, ...prev]);
+      setEmpresas(prev => {
+        if (prev.some(e => e.id === newEmpId)) return prev;
+        const updated = [newEmp, ...prev];
+        try { localStorage.setItem('local_empresas', JSON.stringify(updated)); } catch {}
+        return updated;
+      });
 
       if (user) {
         try {
@@ -12721,14 +12769,15 @@ export default function App() {
             dataCadastro: serverTimestamp(),
             ownerId: user.uid
           });
-          const docRef = await addDoc(collection(db, 'empresas'), sanitized);
-          setEmpresas(prev => prev.map(e => e.id === tempId ? { ...e, id: docRef.id } : e));
+          await setDoc(doc(db, 'empresas', newEmpId), sanitized);
         } catch (error) {
           console.error("Error saving empresa in cloud:", error);
         }
       }
     } catch (error) {
       console.error("Error creating empresa:", error);
+    } finally {
+      isSubmittingEmpresaRef.current = false;
     }
   };
 
@@ -12802,6 +12851,7 @@ export default function App() {
   };
 
   const createCredenciada = async () => {
+    if (isSubmittingCredenciadaRef.current) return;
     if (!credenciadaForm.razaoSocial?.trim()) {
       showToast("Por favor, preencha a Razão Social da empresa credenciada.", "error");
       return;
@@ -12823,6 +12873,8 @@ export default function App() {
       }
     }
 
+    isSubmittingCredenciadaRef.current = true;
+
     // Fechar modal imediatamente para resposta instantânea
     setIsModalOpen(false);
     setModalType(null);
@@ -12837,11 +12889,11 @@ export default function App() {
       const razaoSocialTrimmed = (dataToCreate.razaoSocial || '').trim();
       const formattedCnpj = dataToCreate.cnpj ? formatCNPJ(dataToCreate.cnpj) : undefined;
       const formattedCpfCons = dataToCreate.cpfConsultor ? formatCPF(dataToCreate.cpfConsultor) : undefined;
-      const tempId = 'cred_' + Date.now();
+      const newCredId = doc(collection(db, 'empresas_credenciadas')).id;
       const ownerIdVal = user?.uid || 'local';
 
       const newCred: EmpresaCredenciada = {
-        id: tempId,
+        id: newCredId,
         ...dataToCreate,
         razaoSocial: razaoSocialTrimmed,
         cnpj: formattedCnpj,
@@ -12853,7 +12905,12 @@ export default function App() {
       };
 
       // Update local state immediately for instant feedback
-      setEmpresasCredenciadas(prev => [newCred, ...prev]);
+      setEmpresasCredenciadas(prev => {
+        if (prev.some(c => c.id === newCredId)) return prev;
+        const updated = [newCred, ...prev];
+        try { localStorage.setItem('local_empresas_credenciadas', JSON.stringify(updated)); } catch {}
+        return updated;
+      });
 
       // If diagnosticoForm is active, auto-populate with the newly created credenciada
       setDiagnosticoForm(prev => ({
@@ -12879,8 +12936,7 @@ export default function App() {
             status: 'Ativa',
             tipoPlano: 'Teste'
           });
-          const docRef = await addDoc(collection(db, 'empresas_credenciadas'), sanitized);
-          setEmpresasCredenciadas(prev => prev.map(c => c.id === tempId ? { ...c, id: docRef.id } : c));
+          await setDoc(doc(db, 'empresas_credenciadas', newCredId), sanitized);
         } catch (error) {
           console.error("Error creating credenciada in cloud:", error);
           handleFirestoreError(error, OperationType.WRITE, 'empresas_credenciadas');
@@ -12888,6 +12944,8 @@ export default function App() {
       }
     } catch (error) {
       console.error("Error creating credenciada:", error);
+    } finally {
+      isSubmittingCredenciadaRef.current = false;
     }
   };
 
@@ -18080,7 +18138,14 @@ export default function App() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {empresasCredenciadas.map(emp => (
+                    {(() => {
+                      const seen = new Set<string>();
+                      return empresasCredenciadas.filter(c => {
+                        if (!c || !c.id || seen.has(c.id)) return false;
+                        seen.add(c.id);
+                        return true;
+                      });
+                    })().map(emp => (
                       <Card key={emp.id} className="hover:border-emerald-200 transition-colors group">
                         <div className="p-5">
                           <div className="flex items-start justify-between mb-4">
@@ -18138,7 +18203,10 @@ export default function App() {
                   exit={{ opacity: 0, y: -10 }}
                 >
                   {(() => {
+                    const seenEmpIds = new Set<string>();
                     const filteredEmpresas = empresas.filter(emp => {
+                      if (!emp || !emp.id || seenEmpIds.has(emp.id)) return false;
+                      seenEmpIds.add(emp.id);
                       if (empresaTipoFilter) {
                         const empType = (emp.tipoEmpresa || 'Geral').trim().toLowerCase();
                         if (empType !== empresaTipoFilter.trim().toLowerCase()) {

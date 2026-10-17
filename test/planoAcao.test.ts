@@ -184,6 +184,89 @@ console.log('  OK: textos do relatório');
   assert.equal(st3.tipo, 'lacuna');
   assert.equal(st3.isConforme, false);
 
+  // Casos reais do usuário (Comercial / Feiras / Venda institucional)
+  const qFeira = {
+    pergunta: 'O produtor tem interesse em participar da feira do município?',
+    problema: 'Feiras e Festivais',
+    resposta: 'Sim',
+    observacao: 'O interesse em participar da feira municipal fortalece vendas locais, exigindo planejamento comercial e diversificação de canais.'
+  };
+  assert.equal(isPerguntaNegativa(qFeira.pergunta, qFeira.problema), false, 'pergunta afirmativa de feira não é negativa');
+  assert.equal(grauLacuna(qFeira), 0, 'Sim com observação positiva em feira = 0');
+  const stFeira = classificarStatusResposta(qFeira);
+  assert.equal(stFeira.isConforme, true);
+  assert.equal(stFeira.tipo, 'conforme');
+
+  const qPnae = {
+    pergunta: 'Existem parcerias com o poder público para venda institucional (PNAE, PAA)?',
+    problema: 'Canais de comercialização limitados',
+    resposta: 'Sim',
+    observacao: 'A atuação no mercado institucional consolida um importante ponto forte de diversificação dos canais comerciais.'
+  };
+  assert.equal(isPerguntaNegativa(qPnae.pergunta, qPnae.problema), false, 'pergunta afirmativa de PNAE não é negativa');
+  assert.equal(grauLacuna(qPnae), 0, 'Sim com observação de ponto forte em PNAE = 0');
+  const stPnae = classificarStatusResposta(qPnae);
+  assert.equal(stPnae.isConforme, true);
+  assert.equal(stPnae.tipo, 'conforme');
+
+  // Testes em todas as demais áreas
+  // Financeiro
+  const qFin = {
+    pergunta: 'A empresa possui controle diário de entradas e saídas de caixa?',
+    problema: 'Ausência de controle financeiro',
+    resposta: 'Sim',
+    observacao: 'Fluxo de caixa atualizado diariamente no sistema'
+  };
+  assert.equal(isPerguntaNegativa(qFin.pergunta, qFin.problema), false);
+  assert.equal(grauLacuna(qFin), 0);
+  assert.equal(classificarStatusResposta(qFin).isConforme, true);
+
+  // Produção / Operações
+  const qProd = {
+    pergunta: 'Os processos internos estão documentados e padronizados?',
+    problema: 'Falta de padronização e gargalos produtivos',
+    resposta: 'Sim',
+    observacao: 'Manuais de procedimentos operacionais implantados'
+  };
+  assert.equal(isPerguntaNegativa(qProd.pergunta, qProd.problema), false);
+  assert.equal(grauLacuna(qProd), 0);
+  assert.equal(classificarStatusResposta(qProd).isConforme, true);
+
+  // Recursos Humanos
+  const qRh = {
+    pergunta: 'Existe um plano de treinamento e capacitação para a equipe?',
+    problema: 'Ausência de capacitação',
+    resposta: 'Sim',
+    observacao: 'Treinamentos mensais realizados com a equipe'
+  };
+  assert.equal(isPerguntaNegativa(qRh.pergunta, qRh.problema), false);
+  assert.equal(grauLacuna(qRh), 0);
+  assert.equal(classificarStatusResposta(qRh).isConforme, true);
+
+  // Prioridade soberana da observação:
+  // Se a observação for positiva -> análise é POSITIVA (conforme / sem lacuna)
+  const qNaoObsPositiva = {
+    pergunta: 'A empresa possui software ERP homologado?',
+    problema: 'Tecnologia',
+    resposta: 'Não',
+    observacao: 'Não se aplica ao porte atual, gestão simplificada em planilhas atende perfeitamente e sem erros.'
+  };
+  assert.equal(grauLacuna(qNaoObsPositiva), 0, 'observação positiva sobrepõe resposta Não gerando conformidade');
+  const stNaoObsPos = classificarStatusResposta(qNaoObsPositiva);
+  assert.equal(stNaoObsPos.isConforme, true);
+
+  // Se a observação for negativa -> análise é NEGATIVA (lacuna a tratar), mesmo com resposta "Sim"
+  const qSimObsNegativa = {
+    pergunta: 'A empresa possui controle financeiro?',
+    problema: 'Finanças',
+    resposta: 'Sim',
+    observacao: 'Apesar de afirmar que sim, não possui controle de fluxo de caixa e mistura contas pessoais com desvios frequentes.'
+  };
+  assert.equal(grauLacuna(qSimObsNegativa), 2, 'observação negativa sobrepõe resposta Sim gerando lacuna a tratar');
+  const stSimObsNeg = classificarStatusResposta(qSimObsNegativa);
+  assert.equal(stSimObsNeg.isConforme, false);
+  assert.equal(stSimObsNeg.tipo, 'lacuna');
+
   // Veredito da IA (por id) vale para todos os consumidores e cai se a observação mudar
   const resp = r('X', 'Possui alvará sanitário?', 'Não');
   resp.observacao = 'Atividade exercida fora de estabelecimento';

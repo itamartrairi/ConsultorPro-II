@@ -142,13 +142,12 @@ const PADRAO_PERGUNTA_NEGATIVA = new RegExp(
     '\\b(apenas|somente|exclusivamente|unicamente) (em |para |por |no |na |)(feiras|festivais|eventos|feira|um cliente|poucos clientes|um comprador|poucos compradores|um fornecedor|poucos fornecedores|uma regiao|um canal|balcao|intermediario|atravessador)',
     '\\b(concentra|concentracao) (em poucos|em um|as vendas|os clientes|de clientes|de vendas|em feiras|em festivais|em canais)',
     '\\b(canal unico|comprador unico|cliente unico|depende de atravessador|depende de intermediario)',
-    '\\bcomercializa (em |apenas em |somente em |)(feiras|festivais)',
-    '\\bvende (em |apenas em |somente em |)(feiras|festivais)',
-    '\\bja (sofreu|teve|foi|tentou|perdeu|atrasou)',
+    '\\bja (sofreu|perdeu|atrasou)',
+    '\\bja (teve|enfrentou) (prejuizo|perda|atraso|rejeicao|multa|processo|dificuldade|problema|inadimplencia)',
     '\\bfoi (rejeitad|negad|recusad|autuad|multad|notificad|embargad|protestad|negativad)',
     '\\b(tentou|tenta) (acessar|obter) (credito|financiamento|emprestimo) (e foi|sendo) (rejeitad|negad|recusad)',
     '\\b(sofre|enfrenta|apresenta) (com |)(perda|prejuizo|atraso|dificuldade|problema|queda|falta|reclama|mortalidade|inadimpl|gargalo|retrabalho)',
-    '\\b(ha|existe|existem|ocorre|ocorrem) (atraso|perda|desperdicio|reclama|inadimpl|divida|pendencia|falta|mortalidade|retrabalho|devolu|acidente|gargalo|conflito)',
+    '\\b(ha|existe|existem|ocorre|ocorrem) (frequentes? |constantes? |)(atraso|perda|desperdicio|reclama|inadimpl|divida|pendencia|falta|mortalidade|retrabalho|devolu|acidente|gargalo|conflito)',
     '\\b(possui|tem) (dividas?|pendencias?|inadimplencia|restricao|restricoes|multas?|dificuldade|problemas?|nome negativado|gargalo|prejuizo)',
     '\\besta (endividad|inadimplent|negativad|irregular)',
     '\\b(mistura|misturam|utiliza|usa) (contas?|financas?|despesas?|gastos?) (pessoais|da familia|de casa)',
@@ -156,33 +155,31 @@ const PADRAO_PERGUNTA_NEGATIVA = new RegExp(
     '\\bpaga (despesas?|contas?) (pessoais|de casa) com (o |)(caixa|dinheiro|recursos) (da empresa|do negocio)',
     '\\b(vende|opera|trabalha) (sem nota|sem emissao|na informalidade|sem alvara|sem licenca|sem registro)',
     '\\bnao (possui|tem|realiza|faz|utiliza|adota|separa|calcula|controla|emite|registra|acompanha)',
-    '\\b(falta|ausencia|inexistencia|sem) (de |)(controle|planejamento|registro|separacao|fluxo de caixa|precificacao)',
+    '(^|\\s)(falta|ausencia|inexistencia|sem) (de |)(controle|planejamento|registro|separacao|fluxo de caixa|precificacao)',
   ].join('|'),
   'i'
 );
 
 /**
- * Títulos ou descrições de temas/problemas que representam uma vulnerabilidade, limitação ou gargalo cadastrado.
+ * Títulos ou descrições de temas/problemas que representam uma vulnerabilidade cadastrada.
+ * Mantido apenas como referência/compatibilidade, NÃO deve inverter perguntas de boas práticas.
  */
 const PADRAO_PROBLEMA_NEGATIVO = new RegExp(
   [
-    '\\b(limitad|dependencia|concentracao|ausencia|falta|inexistencia|perda|desperdicio|rejeicao|endividamento|inadimplencia|gargalo|atraso|conflito|reclamac|desordem|mistura|vulnerab)',
-    'feiras e festivais',
-    'cliente unico',
-    'canal unico',
+    '\\b(dependencia de cliente|canal unico|endividamento excessivo|inadimplencia cronica|mistura de contas)\\b',
   ].join('|'),
   'i'
 );
 
-export function isPerguntaNegativa(pergunta?: string, problema?: string): boolean {
+export function isPerguntaNegativa(pergunta?: string, _problema?: string): boolean {
   const pNorm = norm(pergunta);
-  const probNorm = norm(problema);
-  return PADRAO_PERGUNTA_NEGATIVA.test(pNorm) || (Boolean(probNorm) && PADRAO_PROBLEMA_NEGATIVO.test(probNorm));
+  if (!pNorm) return false;
+  return PADRAO_PERGUNTA_NEGATIVA.test(pNorm);
 }
 
 /**
  * Observações / sugestões do consultor que indicam que, apesar da resposta, NÃO há deficiência
- * (não se aplica, já resolvido, atendido de outra forma, sem impacto etc.).
+ * (não se aplica, já resolvido, atendido de outra forma, ponto forte, diversificação, sem impacto etc.).
  */
 const PADRAO_OBS_SEM_PROBLEMA = new RegExp(
   [
@@ -203,19 +200,24 @@ const PADRAO_OBS_SEM_PROBLEMA = new RegExp(
     '\\b(vendas?|vende|comercializa|contato|atendimento) (diret|balcao|loja fisica|pessoal|whatsapp|proprio|propria)',
     '\\b(a vista|pix|dinheiro)',
     '\\b(regular|regularizado|resolvido|em dia|conforme|adequado|satisfatorio|ok|tudo ok|tudo regular)',
+    '\\b(ponto(s)? forte(s)?|ponto(s)? positivo(s)?|vantagem competitiva|boa(s)? pratica(s)?|boa atuacao|atuacao exemplar|caso de sucesso)\\b',
+    '\\b(fortalece|fortalecendo|fortalecimento|potencializa|impulsiona|consolida|consolidando|consolidado|consolidada)\\b',
+    '\\b(diversifica|diversificando|diversificacao|diversificado|diversificada|multiplos canais|varios canais|outros canais)\\b',
+    '\\b(excelente|otimo|otima|otimos|otimas|muito bom|muito boa|satisfatorio|muito positivo|muito positiva)\\b',
+    '\\b(parceria(s)? (ativa|ativas|consolidada|consolidadas|existente|existentes|com sucesso)|acesso a mercados?|venda institucional|pnae|paa)\\b',
   ].join('|'),
   'i'
 );
 
 /** Observações que indicam que o controle/prática já existe (só vale para perguntas de controle). */
 const PADRAO_OBS_JA_FAZ = new RegExp(
-  '\\bja (possui|tem|faz|realiza|atende|controla|utiliza|usa|adota|registra|emite|implanta|implantou|implementou|conta com)',
+  '\\bja (possui|tem|faz|realiza|atende|controla|utiliza|usa|adota|registra|emite|implanta|implantou|implementou|conta com|participa|atua|mantem|desenvolve)',
   'i'
 );
 
 /** Expressões em perguntas de risco/falha indicando que o risco não existe ou está resolvido. */
 const PADRAO_OBS_RISCO_RESOLVIDO = new RegExp(
-  '\\b(sem (dividas?|debitos?|pendencias?|restricoes?|multas?|atrasos?|reclamacoes?|problemas?)|nao (tem|possui|ha|existe) (dividas?|debitos?|pendencias?|restricoes?)|ja (quitou|quitad|pagou|pago|regularizad|resolvid)|em dia|tudo regular|tudo ok|situacao regular)\\b',
+  '\\b(sem (dividas?|debitos?|pendencias?|restricoes?|multas?|atrasos?|reclamacoes?|problemas?)|nao (tem|possui|ha|existe) (dividas?|debitos?|pendencias?|restricoes?)|ja (quitou|quitad|pagou|pago|regularizad|resolvid)|em dia|tudo regular|tudo ok|situacao regular|diversifica|diversificacao|ponto forte|fortalece|nao depende|outros canais|parcerias?)\\b',
   'i'
 );
 
@@ -227,6 +229,37 @@ export function observacaoIndicaSemProblema(observacao?: string, perguntaNegativ
   }
   if (PADRAO_OBS_SEM_PROBLEMA.test(o)) return true;
   return PADRAO_OBS_JA_FAZ.test(o);
+}
+
+/**
+ * Observações do consultor que indicam expressamente que HÁ UM PROBLEMA, GARGALO,
+ * DEFICIÊNCIA OU RISCO REAL, determinando análise negativa (lacuna a tratar),
+ * mesmo que a resposta marcada tenha sido "Sim".
+ */
+const PADRAO_OBS_PROBLEMA = new RegExp(
+  [
+    '\\bnao (possui|tem|faz|realiza|adota|utiliza|controla|separa|emite|registra|planeja|acompanha|funciona|consegue|aplica)\\b',
+    '\\b(falta|ausencia|inexistencia|sem) (de |)(controle|planejamento|registro|separacao|fluxo|rotina|organizacao|padrao|criterio|processo|documento|gestao|previsao)\\b',
+    '\\b(problema(s)? (grave|relevante|serio|real|critico)|e um problema|representa um problema|ha problema|tem problema)\\b',
+    '\\b(gargalo(s)?|deficiencia(s)?|vulnerabilidade(s)?|ponto(s)? fraco(s)?|debilidade(s)?|desorganizad[oa]|descontrolad[oa]|inadequado|inseguro|vulneravel)\\b',
+    '\\b(prejuizo(s)?|desperdicio(s)?|desvio(s)?|perda(s)? de (mercadoria|produto|dinheiro|producao|cliente)|retrabalho(s)? constante|reclamac(ao|oes) frequente)\\b',
+    '\\b(inadimplent|endividament|dividas? em atraso|nome negativad|restricao cadastral|protesto)\\b',
+    '\\b(mistura|misturam) (contas?|financas?|despesas?) (pessoais|da familia)\\b',
+    '\\b(retirada(s)?|saque(s)?) (descontrolad|sem controle|sem criterio|livre)\\b',
+    '\\b(apenas no papel|nao funciona na pratica|nao e feito|nao e realizado|nao e aplicado|informalidade total|totalmente informal)\\b',
+    '\\b(precisa (urgente|imediatamente|urgentemente|corrigir|ajustar)|necessita (urgente|de correcao|de ajuste)|requer correcao)\\b',
+  ].join('|'),
+  'i'
+);
+
+export function observacaoIndicaProblema(observacao?: string): boolean {
+  const o = norm(observacao);
+  if (!o) return false;
+  // Se a observação expressa ponto forte, conformidade ou ausência de problema, prevalece o positivo
+  if (PADRAO_OBS_SEM_PROBLEMA.test(o) || PADRAO_OBS_JA_FAZ.test(o)) {
+    return false;
+  }
+  return PADRAO_OBS_PROBLEMA.test(o);
 }
 
 // Vereditos de IA mantidos em memória para que relatório, plano e painéis usem o mesmo critério.
@@ -268,13 +301,23 @@ export function grauLacuna(
 
   const negativa = isPerguntaNegativa(r.pergunta, r.problema);
 
-  // 2. A observação do consultor tem prioridade: "não se aplica", "já resolvido" etc. = sem lacuna
-  if (observacaoIndicaSemProblema(r.observacao, negativa)) return 0;
+  // 2. A OBSERVAÇÃO DO CONSULTOR TEM PRIORIDADE MÁXIMA NA ANÁLISE:
+  // Se a observação é positiva (ponto forte, fortalecimento, dispensa, já atendido, sem problema):
+  // -> Análise POSITIVA (sem lacuna = 0)
+  if (observacaoIndicaSemProblema(r.observacao, negativa)) {
+    return 0;
+  }
 
-  // 3. Parcial indica oportunidade de melhoria/lacuna parcial
+  // Se a observação é negativa (indica problema, gargalo, deficiência, falta de controle, perda):
+  // -> Análise NEGATIVA (lacuna a tratar = 2, ou 1 se parcial)
+  if (observacaoIndicaProblema(r.observacao)) {
+    return v === 'Parcial' ? 1 : 2;
+  }
+
+  // 3. Resposta Parcial sem observação conclusiva indica oportunidade de melhoria/lacuna parcial
   if (v === 'Parcial') return 1;
 
-  // 4. Avaliação semântica por regras (pergunta + problema)
+  // 4. Sem observação conclusiva: segue a semântica da pergunta
   if (negativa) {
     // Pergunta de risco/falha/limitação: "Sim" é o problema. "Não" significa que NÃO há problema (ponto forte).
     return v === 'Sim' ? 2 : 0;
@@ -312,11 +355,13 @@ export function classificarStatusResposta(
   const temObsOk = observacaoIndicaSemProblema(r.observacao, negativa);
 
   if (lac === 0) {
-    if (temObsOk) {
+    if (!negativa && r.resposta === 'Sim') {
       return {
-        tipo: 'conforme_obs',
-        label: 'Conforme (Justificado)',
-        detalhe: 'Observação do consultor indica ausência de problema, dispensa ou controle existente',
+        tipo: 'conforme',
+        label: 'Atendido / Conforme',
+        detalhe: temObsOk
+          ? 'Prática de gestão plenamente atendida e reforçada pela observação do consultor'
+          : 'Prática de gestão plenamente atendida',
         isConforme: true,
       };
     }
@@ -328,6 +373,14 @@ export function classificarStatusResposta(
         isConforme: true,
       };
     }
+    if (temObsOk) {
+      return {
+        tipo: 'conforme_obs',
+        label: 'Conforme (Justificado)',
+        detalhe: 'Observação do consultor indica ausência de problema, dispensa ou controle existente',
+        isConforme: true,
+      };
+    }
     return {
       tipo: 'conforme',
       label: 'Atendido / Conforme',
@@ -336,19 +389,25 @@ export function classificarStatusResposta(
     };
   }
 
+  const temObsProb = observacaoIndicaProblema(r.observacao);
+
   if (lac === 1) {
     return {
       tipo: 'parcial',
       label: 'Atendimento Parcial',
-      detalhe: 'Prática parcialmente estruturada; oportunidade de melhoria',
+      detalhe: temObsProb
+        ? 'Observação do consultor indicou oportunidade de melhoria ou vulnerabilidade moderada'
+        : 'Prática parcialmente estruturada; oportunidade de melhoria',
       isConforme: false,
     };
   }
 
   return {
     tipo: 'lacuna',
-    label: 'Lacuna a Tratar',
-    detalhe: 'Oportunidade de melhoria que gerará ação no Plano de Ação',
+    label: temObsProb && r.resposta === 'Sim' ? 'Lacuna a Tratar (Apontada em Observação)' : 'Lacuna a Tratar',
+    detalhe: temObsProb
+      ? 'Observação do consultor identificou deficiência, falha ou necessidade corretiva real na empresa'
+      : 'Oportunidade de melhoria que gerará ação no Plano de Ação',
     isConforme: false,
   };
 }
