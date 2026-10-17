@@ -184,8 +184,8 @@ export function isPerguntaNegativa(pergunta?: string, _problema?: string): boole
  */
 const PADRAO_OBS_MANDA_CORRIGIR = new RegExp(
   [
-    // Verbos de ação no infinitivo ou imperativo de consultoria para sanar deficiência
-    '\\b(elaborar|implantar|implementar|capacitar|treinar|qualificar|desenvolver|padronizar|formalizar|estruturar|organizar|instituir|reestruturar|readequar|ajustar|corrigir|sanar|sanear|revisar|providenciar|definir|estabelecer|adotar|introduzir|criar|renegociar|quitar)\\b',
+    // Verbos de ação no infinitivo, imperativo ou presente do subjuntivo de consultoria para sanar deficiência
+    '\\b(elaborar?|elabore[ms]?|implantar?|implante[ms]?|implementar?|implemente[ms]?|capacitar?|capacite[ms]?|treinar?|treine[ms]?|qualificar?|qualifique[ms]?|desenvolver?|desenvolva[ms]?|padronizar?|padronize[ms]?|formalizar?|formalize[ms]?|estruturar?|estruture[ms]?|organizar?|organize[ms]?|instituir?|institua[ms]?|reestruturar?|reestruture[ms]?|readequar?|readeque[ms]?|ajustar?|ajuste[ms]?|corrigir?|corrija[ms]?|sanar?|sane[ms]?|sanear?|revisar?|revise[ms]?|providenciar?|providencie[ms]?|definir?|defina[ms]?|estabelecer?|estabeleca[ms]?|adotar?|adote[ms]?|introduzir?|introduza[ms]?|criar?|crie[ms]?|planejar?|planeje[ms]?|fazer?|faca[ms]?|renegociar?|renegocie[ms]?|quitar?|quite[ms]?)\\b',
     // Substantivos e locuções de ação corretiva recomendada
     '\\b(elaboracao|implantacao|implementacao|capacitacao|treinamento|qualificacao|padronizacao|formalizacao|estruturacao|reestruturacao|organizacao|readequacao|ajuste|correcao|revisao|saneamento|adocao)\\s+(de|da|do|para|urgente|prioritari)',
     // Expressões prescritivas e mandatórias de consultoria
@@ -225,7 +225,7 @@ const PADRAO_OBS_SEM_PROBLEMA = new RegExp(
   [
     '\\bnao\\s+(se\\s+aplica|e\\s+aplicavel|aplicavel|inaplicavel|se\\s+enquadra|ha\\s+necessidade|existe\\s+necessidade|tem\\s+necessidade|vejo\\s+necessidade|ha\\s+demanda|e\\s+necessari|precisa|necessita|ha\\s+problema|existe\\s+problema|tem\\s+problema|e\\s+um\\s+problema|representa\\s+(um\\s+)?problema|afeta|impacta|ha\\s+impacto|tem\\s+impacto|e\\s+relevante|tem\\s+relevancia|e\\s+prioridade|e\\s+gargalo|e\\s+deficiencia|ha\\s+deficiencia|tem\\s+deficiencia|e\\s+critico)\\b',
     '\\b(desnecessari[oa]|dispensavel|dispensad[oa]s?|isento|isenta|isentos|isentas|irrelevante|nao\\s+aplicavel|inaplicavel|sem\\s+necessidade|sem\\s+impacto|sem\\s+problema|sem\\s+restricao|sem\\s+divida|sem\\s+debito|sem\\s+pendencia|sem\\s+reclamac|sem\\s+atraso|sem\\s+gargalo|sem\\s+perda)\\b',
-    '(^|\\s)n\\/?a(\\s|$|[.,;])',
+    '(^|\\s)(n\\/a|n\\.a\\.)(\\s|$|[.,;])',
     '\\b(atende|atendido|atendida|atendem)\\s+(plenamente|adequadamente|bem|satisfatoriamente|de\\s+outra\\s+forma|integralmente)\\b',
     '\\b(funciona|funcionam)\\s+(bem|adequadamente|perfeitamente|satisfatoriamente|redondo|direitinho)\\b',
     '\\b(de|por)\\s+outra\\s+forma\\b|\\bforma\\s+alternativa\\b|\\balternativ(a|o)s?\\s+(adequad|eficaz)',

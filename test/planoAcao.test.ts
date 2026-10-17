@@ -278,6 +278,19 @@ console.log('  OK: textos do relatório');
   assert.equal(stHigiene.tipo, 'lacuna', 'Tipo deve ser lacuna');
   assert.equal(stHigiene.label, 'Lacuna a Tratar (Ação Recomendada)');
 
+  // Caso real da nova imagem: Resposta Não com observação no imperativo "Elabore um planejamento financeiro..."
+  const qCapitalGiro = {
+    pergunta: 'O produtor possui reserva financeira ou capital de giro para atravessar a entressafra?',
+    problema: 'Gestão de Capital de Giro',
+    resposta: 'Não',
+    observacao: 'Elabore um planejamento financeiro focado na formação de capital de giro e reserva para a entressafra.'
+  };
+  assert.equal(grauLacuna(qCapitalGiro), 2, 'Resposta Não com Elabore planejamento financeiro é lacuna 2');
+  const stCapital = classificarStatusResposta(qCapitalGiro);
+  assert.equal(stCapital.isConforme, false, 'Não deve ser conforme');
+  assert.equal(stCapital.tipo, 'lacuna');
+  assert.equal(stCapital.label, 'Lacuna a Tratar (Ação Recomendada)');
+
   // Demais casos de observações que mandam corrigir o problema
   const qMandaCorrigir = {
     pergunta: 'A empresa possui controle de estoque?',
