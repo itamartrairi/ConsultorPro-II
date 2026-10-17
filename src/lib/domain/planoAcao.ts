@@ -156,6 +156,15 @@ const PADRAO_PERGUNTA_NEGATIVA = new RegExp(
     '\\b(vende|opera|trabalha) (sem nota|sem emissao|na informalidade|sem alvara|sem licenca|sem registro)',
     '\\bnao (possui|tem|realiza|faz|utiliza|adota|separa|calcula|controla|emite|registra|acompanha)',
     '(^|\\s)(falta|ausencia|inexistencia|sem) (de |)(controle|planejamento|registro|separacao|fluxo de caixa|precificacao)',
+    // Preceitos ambientais: práticas destrutivas, degradadoras ou consumo de biomassa predatória
+    '\\b(uso de queimadas|faz uso de queimadas|utiliza queimadas|realiza queimadas|queimada|queimadas|fogo no plantio|queima a ceu aberto)\\b',
+    '\\b(ha uso de (lenha|madeira)|uso de (lenha|madeira)|utiliza (lenha|madeira)|consome (lenha|madeira)|queima de (lenha|madeira)|fonte poluidora)\\b',
+    '\\b(poluicao|polui|contaminacao|contamina|descarte inadequado|descarte irregular|lixo a ceu aberto|esgoto a ceu aberto|efluentes sem tratamento)\\b',
+    '\\b(desmatamento|desmata|degradacao do solo|erosao acentuada|assoreamento)\\b',
+    '\\b(agrotoxico(s)? (sem|proibid|nociv)|defensivo(s)? sem receituario|aplicacao sem epi)\\b',
+    '\\b(infracao ambiental|crime ambiental|multa ambiental|autuacao ambiental|embargo ambiental|notificacao ambiental)\\b',
+    // Preceitos trabalhistas e de segurança:
+    '\\b(acidente(s)? de trabalho|trabalho (irregular|infantil|analogo|sem registro)|autuac(ao|oes) trabalhista|multa trabalhista)\\b',
   ].join('|'),
   'i'
 );
@@ -175,6 +184,22 @@ export function isPerguntaNegativa(pergunta?: string, _problema?: string): boole
   const pNorm = norm(pergunta);
   if (!pNorm) return false;
   return PADRAO_PERGUNTA_NEGATIVA.test(pNorm);
+}
+
+/**
+ * Perguntas sobre interesse, intenção, projeto futuro ou oportunidade voluntária.
+ * Pela teoria administrativa e econômica, a resposta "Não" representa decisão estratégica do gestor
+ * (foco no modelo de negócio atual, ausência de demanda pelo insumo/parceria), e NÃO uma lacuna/falha.
+ */
+const PADRAO_PERGUNTA_INTERESSE_OPCAO = new RegExp(
+  '\\b(tem interesse em|teria interesse em|deseja|pretende|planeja|tem intencao de|ha interesse em)\\b',
+  'i'
+);
+
+export function isPerguntaInteresseOuOpcao(pergunta?: string): boolean {
+  const pNorm = norm(pergunta);
+  if (!pNorm) return false;
+  return PADRAO_PERGUNTA_INTERESSE_OPCAO.test(pNorm);
 }
 
 /**
@@ -246,6 +271,11 @@ const PADRAO_OBS_SEM_PROBLEMA = new RegExp(
     '\\b(diversifica|diversificando|diversificacao|diversificado|diversificada|multiplos\\s+canais|varios\\s+canais|outros\\s+canais)\\b',
     '\\b(excelente|otimo|otima|otimos|otimas|muito\\s+bom|muito\\s+boa|muito\\s+positivo|muito\\s+positiva)\\b',
     '\\b(parceria(s)?\\s+(ativa|ativas|consolidada|consolidadas|existente|existentes|com\\s+sucesso)|acesso\\s+a\\s+mercados?|venda\\s+institucional|pnae|paa)\\b',
+    '\\bnao\\s+(utilizacao|uso|realizacao|adocao|pratica)\\s+de\\s+(queimadas?|fogo|lenha|madeira|agrotoxicos?|defensivos?|poluentes?)\\b',
+    '\\b(maturidade\\s+(ambiental|empresarial|de\\s+gestao|produtiva)|preservacao\\s+(do\\s+solo|ambiental|das\\s+nascentes|da\\s+agua|dos\\s+recursos|da\\s+vegetacao))\\b',
+    '\\b(evidencia|demonstra|comprova|indica|revela)\\s+(a\\s+|o\\s+|)(maturidade|ponto\\s+forte|conformidade|preservacao|boas\\s+praticas|compromisso|gestao|sustentabilidade)\\b',
+    '\\b(sustentabilidade|sustentavel|pratica\\s+sustentavel|conservacao\\s+do\\s+solo|agroecolog(ia|ico|ica))\\b',
+    '\\b(conformidade\\s+ambiental|adequacao\\s+ambiental|sem\\s+impacto\\s+ambiental|baixo\\s+impacto|livre\\s+de\\s+(queimadas?|agrotoxicos?|lenha|poluicao))\\b',
   ].join('|'),
   'i'
 );
@@ -258,7 +288,7 @@ const PADRAO_OBS_JA_FAZ = new RegExp(
 
 /** Expressões em perguntas de risco/falha indicando que o risco não existe ou está resolvido. */
 const PADRAO_OBS_RISCO_RESOLVIDO = new RegExp(
-  '\\b(sem (dividas?|debitos?|pendencias?|restricoes?|multas?|atrasos?|reclamacoes?|problemas?)|nao (tem|possui|ha|existe) (dividas?|debitos?|pendencias?|restricoes?)|ja (quitou|quitad|pagou|pago|regularizad|resolvid)|em dia|tudo regular|tudo ok|situacao regular|diversifica|diversificacao|ponto forte|fortalece|nao depende|outros canais|parcerias?)\\b',
+  '\\b(sem (dividas?|debitos?|pendencias?|restricoes?|multas?|atrasos?|reclamacoes?|problemas?|queimadas?|fogo|lenha|madeira|agrotoxicos?|poluicao)|nao (tem|possui|ha|existe|faz|utiliza|usa|realiza) (dividas?|debitos?|pendencias?|restricoes?|queimadas?|queima|lenha|madeira|agrotoxicos?)|ja (quitou|quitad|pagou|pago|regularizad|resolvid)|em dia|tudo regular|tudo ok|situacao regular|diversifica|diversificacao|ponto forte|fortalece|nao depende|outros canais|parcerias?|evidencia a maturidade|preservacao do solo|sustentabilidade)\\b',
   'i'
 );
 
@@ -296,10 +326,23 @@ export function grauLacuna(
   if (v !== 'Sim' && v !== 'Não' && v !== 'Parcial') return null;
 
   const negativa = isPerguntaNegativa(r.pergunta, r.problema);
+  const interesseOpcao = isPerguntaInteresseOuOpcao(r.pergunta);
   const mandaCorrigir = observacaoIndicaProblema(r.observacao);
   const temSemProblema = !mandaCorrigir && observacaoIndicaSemProblema(r.observacao, negativa);
 
-  // 1. A OBSERVAÇÃO DO CONSULTOR TEM SOBERANIA ABSOLUTA NA ANÁLISE:
+  // 1. Preceitos administrativos e econômicos: "Não" em oportunidade ou parceria voluntária é decisão estratégica
+  if (interesseOpcao && v === 'Não') {
+    return 0; // Decisão do gestor de foco no modelo produtivo atual; não constitui deficiência
+  }
+
+  // 2. Preceitos ambientais de práticas nocivas ou consumo de biomassa (queimadas, uso de lenha/madeira, poluição):
+  // Se o produtor respondeu "Não", ele NÃO pratica o ato danoso, o que é conformidade ambiental plena.
+  const isPraticaNocivaAmbiental = /\b(queimada|queimadas|fogo|lenha|madeira|poluicao|descarte inadequado|agrotoxico)\b/i.test(r.pergunta || '');
+  if (isPraticaNocivaAmbiental && v === 'Não') {
+    return 0; // Ausência de queimada/lenha/poluição é ponto forte ambiental absoluto
+  }
+
+  // 3. A OBSERVAÇÃO DO CONSULTOR TEM SOBERANIA NA ANÁLISE:
   // Se a observação manda corrigir, elaborar, capacitar, implantar, estruturar ou descreve deficiência/problema real:
   if (mandaCorrigir) {
     // É lacuna a tratar: 1 se for Parcial, 2 se for Não ou Sim onde a prática requer correção/elaboração
@@ -311,7 +354,7 @@ export function grauLacuna(
     return 0;
   }
 
-  // 2. Veredito de IA em memória (apenas se resposta/observação não mudaram)
+  // 4. Veredito de IA em memória (apenas se resposta/observação não mudaram)
   if (r.id) {
     const cache = vereditosIA.get(r.id);
     if (cache && cache.sig === assinaturaResposta(r)) {
@@ -320,7 +363,7 @@ export function grauLacuna(
     }
   }
 
-  // 3. Respeita o veredito da IA se houver
+  // 5. Respeita o veredito da IA se houver
   if (overrideIA) {
     if (r.id && overrideIA.has(r.id)) {
       const temProb = overrideIA.get(r.id)!;
@@ -335,10 +378,10 @@ export function grauLacuna(
     }
   }
 
-  // 4. Resposta Parcial sem observação conclusiva indica oportunidade de melhoria/lacuna parcial
+  // 6. Resposta Parcial sem observação conclusiva indica oportunidade de melhoria/lacuna parcial
   if (v === 'Parcial') return 1;
 
-  // 5. Sem observação conclusiva: segue a semântica da pergunta
+  // 7. Sem observação conclusiva: segue a semântica da pergunta
   if (negativa) {
     // Pergunta de risco/falha/limitação: "Sim" é o problema (2). "Não" significa que NÃO há problema (0).
     return v === 'Sim' ? 2 : 0;
@@ -377,6 +420,22 @@ export function classificarStatusResposta(
   const temObsOk = !mandaCorrigir && observacaoIndicaSemProblema(r.observacao, negativa);
 
   if (lac === 0) {
+    if (negativa && r.resposta === 'Não') {
+      return {
+        tipo: 'conforme_contexto',
+        label: 'Ponto Forte (Sem Risco)',
+        detalhe: 'Resposta Não em questão ambiental, regulatória ou de risco confirma ausência de vulnerabilidade na empresa',
+        isConforme: true,
+      };
+    }
+    if (isPerguntaInteresseOuOpcao(r.pergunta) && r.resposta === 'Não') {
+      return {
+        tipo: 'conforme_contexto',
+        label: 'Conforme (Decisão Estratégica)',
+        detalhe: 'Resposta Não em oportunidade ou parceria voluntária reflete alinhamento ao modelo de negócio e foco produtivo atual',
+        isConforme: true,
+      };
+    }
     if (!negativa && r.resposta === 'Sim') {
       return {
         tipo: 'conforme',
@@ -384,14 +443,6 @@ export function classificarStatusResposta(
         detalhe: temObsOk
           ? 'Prática de gestão plenamente atendida e reforçada pela observação do consultor'
           : 'Prática de gestão plenamente atendida',
-        isConforme: true,
-      };
-    }
-    if (negativa && r.resposta === 'Não') {
-      return {
-        tipo: 'conforme_contexto',
-        label: 'Ponto Forte (Sem Risco)',
-        detalhe: 'Resposta Não em questão de risco confirma ausência de vulnerabilidade na empresa',
         isConforme: true,
       };
     }
@@ -1035,6 +1086,16 @@ DIRETRIZES SEMÂNTICAS OBRIGATÓRIAS DE GESTÃO E COMÉRCIO:
 3. AÇÕES CORRETIVAS E OBSERVAÇÕES PRESCRITIVAS DO CONSULTOR:
    Se a observação do consultor prescrever ou orientar CORRIGIR, ELABORAR, IMPLANTAR, CAPACITAR, TREINAR, ESTRUTURAR, PADRONIZAR ou AJUSTAR (ex.: "Elaborar procedimentos padronizados de higiene e capacitar a equipe produtiva em Boas Práticas de Fabricação"):
    -> "temProblema": true (HÁ PROBLEMA / LACUNA QUE EXIGE AÇÃO CORRETIVA). NUNCA marque false quando o consultor prescrever ações de correção, melhoria ou capacitação!
+
+4. PRECEITOS AMBIENTAIS, ESG E SUSTENTABILIDADE:
+   Exemplos: "O produtor faz uso de queimadas no plantio ou na colheita?", "Há uso de lenha/madeira na produção?", "Gera poluição/descarte inadequado de efluentes ou embalagens?":
+   - Resposta "Não": NÃO HÁ PROBLEMA (o produtor NÃO comete a prática degradadora, preservando o solo, os recursos florestais e o meio ambiente). -> "temProblema": false. NÃO gerar ação corretiva!
+   - Resposta "Sim": HÁ PROBLEMA REAL (dano/risco ambiental que exige controle, cessação de queimadas ou transição energética). -> "temProblema": true.
+
+5. DECISÕES ESTRATÉGICAS E PARCERIAS VOLUNTÁRIAS:
+   Exemplos: "O produtor tem interesse em fazer parceria com a Secretaria de Meio Ambiente para receber madeira de poda?", "Deseja participar de projeto voluntário?":
+   - Resposta "Não": NÃO HÁ PROBLEMA (decisão estratégica de foco no processo produtivo atual; o produtor não é obrigado a adotar insumos ou parcerias fora de sua demanda). -> "temProblema": false. NÃO gerar ação corretiva!
+   - Resposta "Sim": OPORTUNIDADE DE PARCERIA / INOVAÇÃO. -> "temProblema": false se já atende ou true apenas se necessitar de estruturação acordada.
 
 ITENS A AVALIAR:
 ${JSON.stringify(itens)}

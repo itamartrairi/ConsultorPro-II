@@ -9527,7 +9527,7 @@ export const getAI = () => {
 };
 
 const generateAIFeedback = async (resposta: string, pergunta: string, problema: string) => {
-  const cacheKey = generateAICacheKey('feedback_v3', { resposta, pergunta, problema });
+  const cacheKey = generateAICacheKey('feedback_v4', { resposta, pergunta, problema });
   const cached = await getCachedAI<string>(cacheKey);
   if (cached) return cached;
 
@@ -9538,20 +9538,24 @@ const generateAIFeedback = async (resposta: string, pergunta: string, problema: 
   Premissa/Pergunta: ${pergunta}
   Resposta do Cliente: ${resposta}
   
-  DIRETRIZES DE ANÁLISE SEMÂNTICA, LÓGICA E ADMINISTRAÇÃO/COMÉRCIO:
-  1. Avalie o sentido lógico da pergunta/premissa conforme as teorias de gestão:
-     - PERGUNTAS SOBRE RISCO, LIMITAÇÃO OU DEPENDÊNCIA COMERCIAL (ex: "O produtor comercializa apenas em feiras/festivais locais?", "Depende de um único cliente?", "Concentra vendas em poucos compradores?"):
-       * Em administração e comércio, atuar em canal único ou concentrado é uma VULNERABILIDADE/RISCO.
-       * Resposta "Sim": Representa DEPENDÊNCIA/RISCO (opera apenas em feiras ou canal único). Aponte diretamente a recomendação de diversificação comercial.
-       * Resposta "Não": Representa NÃO DEPENDÊNCIA / DIVERSIFICAÇÃO / MATURIDADE COMERCIAL (ele já atua além de feiras ou tem mais canais/clientes). Reconheça objetivamente o ponto forte de diversificação.
-       * Resposta "Parcial": Representa diversificação inicial. Aponte a estruturação de novos canais.
-     - PERGUNTAS SOBRE OCORRÊNCIA DE FALHAS, PREJUÍZOS, INADIMPLÊNCIA OU REJEIÇÕES (ex: "O produtor já tentou acessar crédito rural e foi rejeitado por falta de documentação?", "Possui pendências?"):
-       * Resposta "Sim": Representa um PROBLEMA / RISCO / GARGALO (prejudicial para a maturidade). Aponte diretamente a ação recomendada.
-       * Resposta "Não": Representa uma SITUAÇÃO POSITIVA / CONFORMIDADE (não sofre do problema). Reconheça objetivamente o ponto forte.
-       * Resposta "Parcial": Representa risco moderado. Aponte diretamente a ação recomendada.
-     - PERGUNTAS SOBRE CONTROLES, PLANEJAMENTO E BOAS PRÁTICAS (ex: "Possui controle financeiro?", "Realiza pesquisa de mercado?"):
-       * Resposta "Sim": Representa uma SITUAÇÃO POSITIVA / MATURIDADE. Reconheça objetivamente o ponto forte.
-       * Resposta "Não" ou "Parcial": Representa um PONTO DE ATENÇÃO / GARGALO. Aponte diretamente a ação recomendada.
+  DIRETRIZES DE ANÁLISE CONFORME TEORIAS ADMINISTRATIVAS, ECONÔMICAS E AMBIENTAIS:
+  1. PERGUNTAS SOBRE PRECEITOS AMBIENTAIS, ESG E SUSTENTABILIDADE (ex: "O produtor faz uso de queimadas?", "Há uso de lenha/madeira na produção?", "Descarte inadequado de efluentes/embalagens?"):
+     * Pela legislação ambiental (Código Florestal) e agronomia sustentável, queimadas, queima de lenha e poluição são PRÁTICAS NOCIVAS/DEGRADADORAS.
+     * Resposta "Não": Representa CONFORMIDADE AMBIENTAL / SUSTENTABILIDADE / PRESERVAÇÃO (o produtor NÃO comete o dano ambiental). Reconheça explicitamente o ponto forte e maturidade ambiental (ex: "A não utilização de queimadas preserva o solo e evidencia maturidade ambiental do produtor." ou "A ausência de uso de lenha na produção evita emissões e preserva recursos florestais."). NUNCA sugira transição energética ou ação corretiva para quem respondeu que NÃO usa lenha ou NÃO faz queimadas!
+     * Resposta "Sim": Representa DANO/RISCO AMBIENTAL. Aponte a necessidade de cessação de queimadas, transição para fontes limpas ou manejo certificado.
+  2. PERGUNTAS SOBRE INTERESSE, OPORTUNIDADE OU PARCERIA VOLUNTÁRIA (ex: "O produtor tem interesse em fazer parceria com a Secretaria de Meio Ambiente para receber madeira de poda?"):
+     * Pela teoria administrativa e econômica (teoria da firma e racionalidade econômica), parcerias opcionais dependem do modelo produtivo. Se o produtor não usa madeira ou não demanda o insumo, responder "Não" é uma decisão estratégica coerente e legítima, e NÃO uma deficiência.
+     * Resposta "Não": Reconheça a opção estratégica alinhada ao foco produtivo atual (ex: "Opção estratégica alinhada ao processo produtivo atual, sem necessidade de recebimento de resíduos de poda."). NUNCA mande formalizar parceria indesejada quando a resposta foi "Não"!
+     * Resposta "Sim": Recomende a formalização da parceria institucional para aproveitamento do insumo.
+  3. PERGUNTAS SOBRE RISCO, LIMITAÇÃO OU DEPENDÊNCIA COMERCIAL (ex: "Comercializa apenas em feiras?", "Depende de um único cliente?"):
+     * Resposta "Não": Representa NÃO DEPENDÊNCIA / DIVERSIFICAÇÃO / MATURIDADE COMERCIAL. Reconheça o ponto forte de diversificação.
+     * Resposta "Sim": Representa DEPENDÊNCIA/RISCO. Recomende diversificação de canais.
+  4. PERGUNTAS SOBRE FALHAS, PREJUÍZOS OU INADIMPLÊNCIA (ex: "Possui dívidas em atraso?", "Crédito rejeitado?"):
+     * Resposta "Não": Representa SITUAÇÃO REGULAR / PONTO FORTE.
+     * Resposta "Sim": Representa GARGALO REAL. Aponte a ação corretiva.
+  5. PERGUNTAS SOBRE CONTROLES E BOAS PRÁTICAS (ex: "Possui controle financeiro?", "Possui protocolo de higiene?"):
+     * Resposta "Sim": Representa PRÁTICA ATENDIDA / MATURIDADE.
+     * Resposta "Não" ou "Parcial": Representa OPORTUNIDADE DE MELHORIA. Aponte diretamente a ação recomendada (elaborar, implantar, capacitar).
   
   REQUISITOS DE SAÍDA (OBRIGATÓRIOS):
   - Responda em Português do Brasil, de forma profissional e direta.

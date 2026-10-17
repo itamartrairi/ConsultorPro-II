@@ -320,6 +320,60 @@ console.log('  OK: textos do relatório');
   assert.equal(grauLacuna(qRiscoComCorrecao), 2, 'Observação que manda corrigir se sobrepõe ao Não da pergunta de risco');
   assert.equal(classificarStatusResposta(qRiscoComCorrecao).isConforme, false);
 
+  // Casos reais de Preceitos Ambientais e Decisões Estratégicas
+  // 1. Queimadas: Resposta Não = Ponto Forte Ambiental / Sem Risco
+  const qQueimadasNao = {
+    pergunta: 'O produtor faz uso de queimadas no plantio ou na colheita?',
+    problema: 'Impacto Ambiental no Solo',
+    resposta: 'Não',
+    observacao: 'A não utilização de queimadas evidencia a maturidade ambiental do produtor e a preservação do solo.'
+  };
+  assert.equal(grauLacuna(qQueimadasNao), 0, 'Não em queimadas é ponto forte ambiental');
+  const stQueimadas = classificarStatusResposta(qQueimadasNao);
+  assert.equal(stQueimadas.isConforme, true);
+  assert.equal(stQueimadas.label, 'Ponto Forte (Sem Risco)');
+
+  const qQueimadasSim = {
+    pergunta: 'O produtor faz uso de queimadas no plantio ou na colheita?',
+    problema: 'Impacto Ambiental no Solo',
+    resposta: 'Sim',
+    observacao: 'Prática de queimadas frequente no manejo'
+  };
+  assert.equal(grauLacuna(qQueimadasSim), 2, 'Sim em queimadas é lacuna grave');
+  assert.equal(classificarStatusResposta(qQueimadasSim).isConforme, false);
+
+  // 2. Uso de lenha/madeira: Resposta Não = Não consome biomassa florestal / Ponto Forte
+  const qLenhaNao = {
+    pergunta: 'Há uso de lenha/madeira na produção?',
+    problema: 'Consumo de Recursos Florestais',
+    resposta: 'Não',
+    observacao: 'Transicione para fontes energéticas renováveis ou utilize lenha de reflorestamento certificado para reduzir impactos ambientais.'
+  };
+  assert.equal(grauLacuna(qLenhaNao), 0, 'Não em uso de lenha é ponto forte ambiental');
+  const stLenha = classificarStatusResposta(qLenhaNao);
+  assert.equal(stLenha.isConforme, true);
+  assert.equal(stLenha.label, 'Ponto Forte (Sem Risco)');
+
+  const qLenhaSim = {
+    pergunta: 'Há uso de lenha/madeira na produção?',
+    problema: 'Consumo de Recursos Florestais',
+    resposta: 'Sim',
+    observacao: 'Consome lenha nativa em caldeira'
+  };
+  assert.equal(grauLacuna(qLenhaSim), 2, 'Sim em uso de lenha é lacuna a tratar');
+
+  // 3. Parceria para receber madeira de poda: Pergunta de interesse/opção voluntária
+  const qPodaNao = {
+    pergunta: 'O produtor tem interesse em fazer parceria com a Secretaria de Meio Ambiente para receber madeira de poda e usá-la no beneficiamento de seus produtos?',
+    problema: 'Parcerias Institucionais',
+    resposta: 'Não',
+    observacao: 'Formalize a parceria institucional para adotar o reaproveitamento de resíduos de poda no beneficiamento agrícola.'
+  };
+  assert.equal(grauLacuna(qPodaNao), 0, 'Não em pergunta de interesse opcional é decisão estratégica e não lacuna');
+  const stPoda = classificarStatusResposta(qPodaNao);
+  assert.equal(stPoda.isConforme, true);
+  assert.equal(stPoda.label, 'Conforme (Decisão Estratégica)');
+
   // Veredito da IA (por id) vale para todos os consumidores e cai se a observação mudar
   const resp = r('X', 'Possui alvará sanitário?', 'Não');
   resp.observacao = 'Atividade exercida fora de estabelecimento';
