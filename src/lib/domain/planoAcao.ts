@@ -178,33 +178,74 @@ export function isPerguntaNegativa(pergunta?: string, _problema?: string): boole
 }
 
 /**
- * Observações / sugestões do consultor que indicam que, apesar da resposta, NÃO há deficiência
- * (não se aplica, já resolvido, atendido de outra forma, ponto forte, diversificação, sem impacto etc.).
+ * Observações que indicam AÇÃO CORRETIVA, PRESCRIÇÃO DE CONSULTORIA ou PROBLEMA REAL.
+ * Se o consultor orientou elaborar, capacitar, implantar, treinar, corrigir, adequar, etc.,
+ * ou descreveu uma carência/problema, isso representa INEQUIVOCAMENTE uma LACUNA A TRATAR.
+ */
+const PADRAO_OBS_MANDA_CORRIGIR = new RegExp(
+  [
+    // Verbos de ação no infinitivo ou imperativo de consultoria para sanar deficiência
+    '\\b(elaborar|implantar|implementar|capacitar|treinar|qualificar|desenvolver|padronizar|formalizar|estruturar|organizar|instituir|reestruturar|readequar|ajustar|corrigir|sanar|sanear|revisar|providenciar|definir|estabelecer|adotar|introduzir|criar|renegociar|quitar)\\b',
+    // Substantivos e locuções de ação corretiva recomendada
+    '\\b(elaboracao|implantacao|implementacao|capacitacao|treinamento|qualificacao|padronizacao|formalizacao|estruturacao|reestruturacao|organizacao|readequacao|ajuste|correcao|revisao|saneamento|adocao)\\s+(de|da|do|para|urgente|prioritari)',
+    // Expressões prescritivas e mandatórias de consultoria
+    '\\b(manda|mando|orienta|recomenda|sugere|determina)\\s+(a |para |)(corrigir|ajustar|elaborar|implantar|capacitar|adequar|sanar|fazer|criar|padronizar)',
+    '\\bcorrigir\\s+(o |a |os |as |)(problema|falha|gargalo|deficiencia|situacao|erro|pendencia|processo|defeito|inadimplencia)',
+    '\\bdeve(m)?\\s+(ser\\s+)?(corrigid|ajustad|elaborad|implantad|implementad|capacitad|criad|estruturad|padronizad|feit|adotad|revisad|controlad)',
+    '\\bprecisa(m)?\\s+(de\\s+)?(corrigir|ajustar|elaborar|implantar|implementar|capacitar|criar|desenvolver|padronizar|estruturar|adotar|organizar|fazer|melhorar|controlar)',
+    '\\bnecessita(m)?\\s+(de\\s+)?(correcao|ajuste|elaboracao|implantacao|capacitacao|padronizacao|estrutura|organizacao|melhoria|controle)',
+    '\\bnecessari[oa]\\s+(corrigir|ajustar|elaborar|implantar|implementar|capacitar|criar|desenvolver|padronizar|estruturar|adotar|fazer|melhorar|controlar)',
+    '\\b(recomenda-se|sugere-se|orienta-se|indica-se)\\s+(a |o |de |)(elaborar|implantar|implementar|capacitar|corrigir|ajustar|adotar|criar|padronizar|estruturar|treinar)',
+    '\\b(importante|urgente|prioritari[oa])\\s+(elaborar|implantar|implementar|capacitar|corrigir|ajustar|criar|padronizar|adotar)',
+    '\\b(plano\\s+de\\s+acao|acao\\s+corretiva|medida\\s+corretiva|oportunidade\\s+de\\s+melhoria)\\b',
+    '\\ba\\s+ser\\s+(elaborad|implantad|implementad|capacitad|corrigid|criad|padronizad|feit|adotad)',
+    '\\ba\\s+(elaborar|implantar|implementar|capacitar|corrigir|estruturar|padronizar|ajustar)\\b',
+    // Problemas e vulnerabilidades expressas (evitando falsos positivos em "não tem necessidade/problema")
+    '\\bnao\\s+(possui|tem|faz|realiza|adota|utiliza|controla|separa|emite|registra|planeja|acompanha|funciona|consegue|aplica)\\s+(nenhum|qualquer|controle|registro|planejamento|processo|rotina|separacao|padrao|documento|fluxo|gestao|ferramenta|nada|recurso|alvara|procedimento|politica|estrategia)\\b',
+    '\\b(falta|ausencia|inexistencia|sem)\\s+(de\\s+)?(controle|planejamento|registro|separacao|fluxo|rotina|organizacao|padrao|criterio|processo|documento|gestao|previsao)\\b',
+    '\\b(problema(s)?\\s+(grave|relevante|serio|real|critico)|e\\s+um\\s+problema|representa\\s+um\\s+problema|ha\\s+problema|tem\\s+problema)\\b',
+    '\\b(gargalo(s)?|deficiencia(s)?|vulnerabilidade(s)?|ponto(s)?\\s+fraco(s)?|debilidade(s)?|desorganizad[oa]|descontrolad[oa]|inadequado|inseguro|vulneravel)\\b',
+    '\\b(prejuizo(s)?|desperdicio(s)?|desvio(s)?|perda(s)?\\s+de\\s+(mercadoria|produto|dinheiro|producao|cliente)|retrabalho(s)?\\s+constante|reclamac(ao|oes)\\s+frequente)\\b',
+    '\\b(inadimplent|endividament|dividas?\\s+em\\s+atraso|nome\\s+negativad|restricao\\s+cadastral|protesto)\\b',
+    '\\b(mistura|misturam)\\s+(contas?|financas?|despesas?)\\s+(pessoais|da\\s+familia)\\b',
+    '\\b(retirada(s)?|saque(s)?)\\s+(descontrolad|sem\\s+controle|sem\\s+criterio|livre)\\b',
+    '\\b(apenas\\s+no\\s+papel|nao\\s+funciona\\s+na\\s+pratica|nao\\s+e\\s+feito|nao\\s+e\\s+realizado|nao\\s+e\\s+aplicado|informalidade\\s+total|totalmente\\s+informal)\\b',
+    '\\bcliente\\s+nao\\s+controla\\b',
+  ].join('|'),
+  'i'
+);
+
+/**
+ * Observações / justificativas que comprovam que a prática NÃO SE APLICA ou que a situação
+ * JÁ ESTÁ ATENDIDA/REGULARIZADA (ponto forte real ou dispensa legal).
+ * NUNCA deve capturar palavras soltas como "boas práticas" ou "conforme", que frequentemente
+ * aparecem em sugestões corretivas (ex: "capacitar em boas práticas de fabricação").
  */
 const PADRAO_OBS_SEM_PROBLEMA = new RegExp(
   [
-    '\\bnao (se aplica|e aplicavel|aplicavel|inaplicavel|se enquadra|ha necessidade|existe necessidade|tem necessidade|vejo necessidade|ha demanda|e necessari|precisa|necessita|ha problema|existe problema|tem problema|e um problema|representa (um )?problema|afeta|impacta|ha impacto|tem impacto|e relevante|tem relevancia|e prioridade|e gargalo|e deficiencia|ha deficiencia|tem deficiencia|e critico)',
-    '\\b(desnecessari|dispensavel|dispensad|isento|isenta|isentos|isentas|irrelevante|nao aplicavel|inaplicavel|sem necessidade|sem impacto|sem problema|sem restricao|sem divida|sem debito|sem pendencia|sem reclamac|sem atraso|sem gargalo|sem perda)',
+    '\\bnao\\s+(se\\s+aplica|e\\s+aplicavel|aplicavel|inaplicavel|se\\s+enquadra|ha\\s+necessidade|existe\\s+necessidade|tem\\s+necessidade|vejo\\s+necessidade|ha\\s+demanda|e\\s+necessari|precisa|necessita|ha\\s+problema|existe\\s+problema|tem\\s+problema|e\\s+um\\s+problema|representa\\s+(um\\s+)?problema|afeta|impacta|ha\\s+impacto|tem\\s+impacto|e\\s+relevante|tem\\s+relevancia|e\\s+prioridade|e\\s+gargalo|e\\s+deficiencia|ha\\s+deficiencia|tem\\s+deficiencia|e\\s+critico)\\b',
+    '\\b(desnecessari[oa]|dispensavel|dispensad[oa]s?|isento|isenta|isentos|isentas|irrelevante|nao\\s+aplicavel|inaplicavel|sem\\s+necessidade|sem\\s+impacto|sem\\s+problema|sem\\s+restricao|sem\\s+divida|sem\\s+debito|sem\\s+pendencia|sem\\s+reclamac|sem\\s+atraso|sem\\s+gargalo|sem\\s+perda)\\b',
     '(^|\\s)n\\/?a(\\s|$|[.,;])',
-    '\\b(atende|atendido|atendida|atendem) (plenamente|adequadamente|bem|satisfatoriamente|de outra forma|integralmente|conforme)',
-    '\\b(funciona|funcionam) (bem|adequadamente|perfeitamente|satisfatoriamente|redondo|direitinho)',
-    '\\b(de|por) outra forma\\b|\\bforma alternativa\\b|\\balternativ(a|o)s? (adequad|eficaz)',
-    '\\b(terceirizad|terceirizado|terceirizada)\\b|\\b(contador|contabilidade|escritorio|empresa parceira|cooperativa|associacao|assessoria) (faz|cuida|realiza|presta|responde|atende|acompanha|gerencia)',
-    '\\b(situacao|processo|controle|documentacao|fluxo|rotina) (esta |)(regular|adequad|ok|em dia|resolvid|satisfatori|conforme)',
-    '\\bja (esta |foi |)(resolvid|regularizad|solucionad|em dia|adequad|implantad|implementad|organizado|estruturado)',
-    '\\b(proprio|propria|pelo) (dono|proprietari|gestor|titular|socio) (faz|cuida|controla|realiza|acompanha|gerencia)',
-    '\\b(gestao|controle) (familiar|simplificad|diret|informal)',
-    '\\bmei\\b[^\n.]*\\b(dispensad|isent|nao exige|nao obrigad|simplificad)',
-    '\\b(dispensad|isent)[oa]s? (de|da|do|\\b)',
-    '\\bporte (pequeno|reduzido|mei|micro|familiar)',
-    '\\b(vendas?|vende|comercializa|contato|atendimento) (diret|balcao|loja fisica|pessoal|whatsapp|proprio|propria)',
-    '\\b(a vista|pix|dinheiro)',
-    '\\b(regular|regularizado|resolvido|em dia|conforme|adequado|satisfatorio|ok|tudo ok|tudo regular)',
-    '\\b(ponto(s)? forte(s)?|ponto(s)? positivo(s)?|vantagem competitiva|boa(s)? pratica(s)?|boa atuacao|atuacao exemplar|caso de sucesso)\\b',
+    '\\b(atende|atendido|atendida|atendem)\\s+(plenamente|adequadamente|bem|satisfatoriamente|de\\s+outra\\s+forma|integralmente)\\b',
+    '\\b(funciona|funcionam)\\s+(bem|adequadamente|perfeitamente|satisfatoriamente|redondo|direitinho)\\b',
+    '\\b(de|por)\\s+outra\\s+forma\\b|\\bforma\\s+alternativa\\b|\\balternativ(a|o)s?\\s+(adequad|eficaz)',
+    '\\b(terceirizad[oa]|terceirizada)\\b|\\b(contador|contabilidade|escritorio|empresa\\s+parceira|cooperativa|associacao|assessoria)\\s+(faz|cuida|realiza|presta|responde|atende|acompanha|gerencia)',
+    '\\b(situacao|processo|controle|documentacao|fluxo|rotina)\\s+(esta\\s+|)(regular|adequad[oa]|ok|em\\s+dia|resolvid[oa]|satisfatori[oa]|conforme)\\b',
+    '\\bja\\s+(esta\\s+|foi\\s+|)(resolvid[oa]|regularizad[oa]|solucionad[oa]|em\\s+dia|adequad[oa]|implantad[oa]|implementad[oa]|organizado|estruturado)\\b',
+    '\\b(proprio|propria|pelo)\\s+(dono|proprietari|gestor|titular|socio)\\s+(faz|cuida|controla|realiza|acompanha|gerencia)',
+    '\\b(gestao|controle)\\s+(familiar|simplificad[oa]|diret[oa]|informal)(\\s+(diret[oa]|atende|funciona|suficiente|eficaz))?\\b',
+    '\\bmei\\b[^\n.]*\\b(dispensad|isent|nao\\s+exige|nao\\s+obrigad|simplificad)',
+    '\\bporte\\s+(pequeno|reduzido|mei|micro|familiar)',
+    '\\b(vendas?|vende|comercializa|contato|atendimento)\\s+(diret[oa]|balcao|loja\\s+fisica|pessoal|whatsapp|proprio|propria)',
+    '\\b(a\\s+vista|pix|dinheiro)\\b',
+    '\\b(tudo\\s+(regular|ok|conforme|em\\s+dia)|totalmente\\s+(conforme|regular|em\\s+dia)|100%\\s+conforme)\\b',
+    '\\b(esta|estao)\\s+(regular|regularizad[oa]|em\\s+dia|conforme|adequado|satisfatorio|ok)\\b',
+    '\\b(ponto(s)?\\s+forte(s)?|ponto(s)?\\s+positivo(s)?|vantagem\\s+competitiva|atuacao\\s+exemplar|caso\\s+de\\s+sucesso)\\b',
+    '\\b(ja\\s+(adota|segue|cumpre|aplica|possui)|empresa\\s+(adota|segue|cumpre|aplica))\\s+(as\\s+|todas\\s+as\\s+)?boas\\s+praticas\\b',
     '\\b(fortalece|fortalecendo|fortalecimento|potencializa|impulsiona|consolida|consolidando|consolidado|consolidada)\\b',
-    '\\b(diversifica|diversificando|diversificacao|diversificado|diversificada|multiplos canais|varios canais|outros canais)\\b',
-    '\\b(excelente|otimo|otima|otimos|otimas|muito bom|muito boa|satisfatorio|muito positivo|muito positiva)\\b',
-    '\\b(parceria(s)? (ativa|ativas|consolidada|consolidadas|existente|existentes|com sucesso)|acesso a mercados?|venda institucional|pnae|paa)\\b',
+    '\\b(diversifica|diversificando|diversificacao|diversificado|diversificada|multiplos\\s+canais|varios\\s+canais|outros\\s+canais)\\b',
+    '\\b(excelente|otimo|otima|otimos|otimas|muito\\s+bom|muito\\s+boa|muito\\s+positivo|muito\\s+positiva)\\b',
+    '\\b(parceria(s)?\\s+(ativa|ativas|consolidada|consolidadas|existente|existentes|com\\s+sucesso)|acesso\\s+a\\s+mercados?|venda\\s+institucional|pnae|paa)\\b',
   ].join('|'),
   'i'
 );
@@ -221,45 +262,24 @@ const PADRAO_OBS_RISCO_RESOLVIDO = new RegExp(
   'i'
 );
 
+export function observacaoIndicaProblema(observacao?: string): boolean {
+  const o = norm(observacao);
+  if (!o) return false;
+  return PADRAO_OBS_MANDA_CORRIGIR.test(o);
+}
+
 export function observacaoIndicaSemProblema(observacao?: string, perguntaNegativa = false): boolean {
   const o = norm(observacao);
   if (!o) return false;
+  // Se a observação prescreve ação corretiva ou aponta problema, NUNCA pode ser considerada "sem problema"
+  if (PADRAO_OBS_MANDA_CORRIGIR.test(o)) {
+    return false;
+  }
   if (perguntaNegativa) {
     return PADRAO_OBS_RISCO_RESOLVIDO.test(o) || PADRAO_OBS_SEM_PROBLEMA.test(o);
   }
   if (PADRAO_OBS_SEM_PROBLEMA.test(o)) return true;
   return PADRAO_OBS_JA_FAZ.test(o);
-}
-
-/**
- * Observações do consultor que indicam expressamente que HÁ UM PROBLEMA, GARGALO,
- * DEFICIÊNCIA OU RISCO REAL, determinando análise negativa (lacuna a tratar),
- * mesmo que a resposta marcada tenha sido "Sim".
- */
-const PADRAO_OBS_PROBLEMA = new RegExp(
-  [
-    '\\bnao (possui|tem|faz|realiza|adota|utiliza|controla|separa|emite|registra|planeja|acompanha|funciona|consegue|aplica)\\b',
-    '\\b(falta|ausencia|inexistencia|sem) (de |)(controle|planejamento|registro|separacao|fluxo|rotina|organizacao|padrao|criterio|processo|documento|gestao|previsao)\\b',
-    '\\b(problema(s)? (grave|relevante|serio|real|critico)|e um problema|representa um problema|ha problema|tem problema)\\b',
-    '\\b(gargalo(s)?|deficiencia(s)?|vulnerabilidade(s)?|ponto(s)? fraco(s)?|debilidade(s)?|desorganizad[oa]|descontrolad[oa]|inadequado|inseguro|vulneravel)\\b',
-    '\\b(prejuizo(s)?|desperdicio(s)?|desvio(s)?|perda(s)? de (mercadoria|produto|dinheiro|producao|cliente)|retrabalho(s)? constante|reclamac(ao|oes) frequente)\\b',
-    '\\b(inadimplent|endividament|dividas? em atraso|nome negativad|restricao cadastral|protesto)\\b',
-    '\\b(mistura|misturam) (contas?|financas?|despesas?) (pessoais|da familia)\\b',
-    '\\b(retirada(s)?|saque(s)?) (descontrolad|sem controle|sem criterio|livre)\\b',
-    '\\b(apenas no papel|nao funciona na pratica|nao e feito|nao e realizado|nao e aplicado|informalidade total|totalmente informal)\\b',
-    '\\b(precisa (urgente|imediatamente|urgentemente|corrigir|ajustar)|necessita (urgente|de correcao|de ajuste)|requer correcao)\\b',
-  ].join('|'),
-  'i'
-);
-
-export function observacaoIndicaProblema(observacao?: string): boolean {
-  const o = norm(observacao);
-  if (!o) return false;
-  // Se a observação expressa ponto forte, conformidade ou ausência de problema, prevalece o positivo
-  if (PADRAO_OBS_SEM_PROBLEMA.test(o) || PADRAO_OBS_JA_FAZ.test(o)) {
-    return false;
-  }
-  return PADRAO_OBS_PROBLEMA.test(o);
 }
 
 // Vereditos de IA mantidos em memória para que relatório, plano e painéis usem o mesmo critério.
@@ -275,7 +295,23 @@ export function grauLacuna(
   const v = r.resposta;
   if (v !== 'Sim' && v !== 'Não' && v !== 'Parcial') return null;
 
-  // 0. Veredito de IA já calculado (válido apenas se resposta/observação não mudaram)
+  const negativa = isPerguntaNegativa(r.pergunta, r.problema);
+  const mandaCorrigir = observacaoIndicaProblema(r.observacao);
+  const temSemProblema = !mandaCorrigir && observacaoIndicaSemProblema(r.observacao, negativa);
+
+  // 1. A OBSERVAÇÃO DO CONSULTOR TEM SOBERANIA ABSOLUTA NA ANÁLISE:
+  // Se a observação manda corrigir, elaborar, capacitar, implantar, estruturar ou descreve deficiência/problema real:
+  if (mandaCorrigir) {
+    // É lacuna a tratar: 1 se for Parcial, 2 se for Não ou Sim onde a prática requer correção/elaboração
+    return v === 'Parcial' ? 1 : 2;
+  }
+
+  // Se a observação expressa inequivocamente ausência de problema (dispensa legal, MEI isento, já resolvido/atendido):
+  if (temSemProblema) {
+    return 0;
+  }
+
+  // 2. Veredito de IA em memória (apenas se resposta/observação não mudaram)
   if (r.id) {
     const cache = vereditosIA.get(r.id);
     if (cache && cache.sig === assinaturaResposta(r)) {
@@ -284,7 +320,7 @@ export function grauLacuna(
     }
   }
 
-  // 1. Respeita o veredito da IA se houver
+  // 3. Respeita o veredito da IA se houver
   if (overrideIA) {
     if (r.id && overrideIA.has(r.id)) {
       const temProb = overrideIA.get(r.id)!;
@@ -299,30 +335,15 @@ export function grauLacuna(
     }
   }
 
-  const negativa = isPerguntaNegativa(r.pergunta, r.problema);
-
-  // 2. A OBSERVAÇÃO DO CONSULTOR TEM PRIORIDADE MÁXIMA NA ANÁLISE:
-  // Se a observação é positiva (ponto forte, fortalecimento, dispensa, já atendido, sem problema):
-  // -> Análise POSITIVA (sem lacuna = 0)
-  if (observacaoIndicaSemProblema(r.observacao, negativa)) {
-    return 0;
-  }
-
-  // Se a observação é negativa (indica problema, gargalo, deficiência, falta de controle, perda):
-  // -> Análise NEGATIVA (lacuna a tratar = 2, ou 1 se parcial)
-  if (observacaoIndicaProblema(r.observacao)) {
-    return v === 'Parcial' ? 1 : 2;
-  }
-
-  // 3. Resposta Parcial sem observação conclusiva indica oportunidade de melhoria/lacuna parcial
+  // 4. Resposta Parcial sem observação conclusiva indica oportunidade de melhoria/lacuna parcial
   if (v === 'Parcial') return 1;
 
-  // 4. Sem observação conclusiva: segue a semântica da pergunta
+  // 5. Sem observação conclusiva: segue a semântica da pergunta
   if (negativa) {
-    // Pergunta de risco/falha/limitação: "Sim" é o problema. "Não" significa que NÃO há problema (ponto forte).
+    // Pergunta de risco/falha/limitação: "Sim" é o problema (2). "Não" significa que NÃO há problema (0).
     return v === 'Sim' ? 2 : 0;
   }
-  // Pergunta de controle/boa prática: "Não" é a falta de controle (problema). "Sim" significa que tem (ponto forte).
+  // Pergunta de controle/boa prática: "Não" é a falta de controle (2). "Sim" significa que tem (0).
   return v === 'Não' ? 2 : 0;
 }
 
@@ -352,7 +373,8 @@ export function classificarStatusResposta(
   }
   const lac = grauLacuna(r, overrideIA);
   const negativa = isPerguntaNegativa(r.pergunta, r.problema);
-  const temObsOk = observacaoIndicaSemProblema(r.observacao, negativa);
+  const mandaCorrigir = observacaoIndicaProblema(r.observacao);
+  const temObsOk = !mandaCorrigir && observacaoIndicaSemProblema(r.observacao, negativa);
 
   if (lac === 0) {
     if (!negativa && r.resposta === 'Sim') {
@@ -389,14 +411,12 @@ export function classificarStatusResposta(
     };
   }
 
-  const temObsProb = observacaoIndicaProblema(r.observacao);
-
   if (lac === 1) {
     return {
       tipo: 'parcial',
       label: 'Atendimento Parcial',
-      detalhe: temObsProb
-        ? 'Observação do consultor indicou oportunidade de melhoria ou vulnerabilidade moderada'
+      detalhe: mandaCorrigir
+        ? 'Observação do consultor prescreveu ação de melhoria ou identificou vulnerabilidade moderada'
         : 'Prática parcialmente estruturada; oportunidade de melhoria',
       isConforme: false,
     };
@@ -404,9 +424,11 @@ export function classificarStatusResposta(
 
   return {
     tipo: 'lacuna',
-    label: temObsProb && r.resposta === 'Sim' ? 'Lacuna a Tratar (Apontada em Observação)' : 'Lacuna a Tratar',
-    detalhe: temObsProb
-      ? 'Observação do consultor identificou deficiência, falha ou necessidade corretiva real na empresa'
+    label: mandaCorrigir
+      ? 'Lacuna a Tratar (Ação Recomendada)'
+      : 'Lacuna a Tratar',
+    detalhe: mandaCorrigir
+      ? 'Observação do consultor prescreve ações corretivas (elaboração, capacitação, implantação ou ajuste) para sanar a deficiência'
       : 'Oportunidade de melhoria que gerará ação no Plano de Ação',
     isConforme: false,
   };
@@ -1009,6 +1031,10 @@ DIRETRIZES SEMÂNTICAS OBRIGATÓRIAS DE GESTÃO E COMÉRCIO:
    - Resposta "Sim": NÃO HÁ PROBLEMA (aplica a boa prática). -> "temProblema": false. NÃO gerar ação corretiva!
    - Resposta "Não": HÁ PROBLEMA (falta de controle essencial). -> "temProblema": true.
    - Resposta "Parcial": HÁ GARGALO PARCIAL (oportunidade de ampliação/melhoria). -> "temProblema": true.
+
+3. AÇÕES CORRETIVAS E OBSERVAÇÕES PRESCRITIVAS DO CONSULTOR:
+   Se a observação do consultor prescrever ou orientar CORRIGIR, ELABORAR, IMPLANTAR, CAPACITAR, TREINAR, ESTRUTURAR, PADRONIZAR ou AJUSTAR (ex.: "Elaborar procedimentos padronizados de higiene e capacitar a equipe produtiva em Boas Práticas de Fabricação"):
+   -> "temProblema": true (HÁ PROBLEMA / LACUNA QUE EXIGE AÇÃO CORRETIVA). NUNCA marque false quando o consultor prescrever ações de correção, melhoria ou capacitação!
 
 ITENS A AVALIAR:
 ${JSON.stringify(itens)}

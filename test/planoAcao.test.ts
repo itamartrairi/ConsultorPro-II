@@ -265,7 +265,47 @@ console.log('  OK: textos do relatório');
   assert.equal(grauLacuna(qSimObsNegativa), 2, 'observação negativa sobrepõe resposta Sim gerando lacuna a tratar');
   const stSimObsNeg = classificarStatusResposta(qSimObsNegativa);
   assert.equal(stSimObsNeg.isConforme, false);
-  assert.equal(stSimObsNeg.tipo, 'lacuna');
+  // Caso real da imagem: Resposta Não com observação que manda corrigir/elaborar/capacitar
+  const qProtocoloHigiene = {
+    pergunta: 'Existe algum protocolo escrito de higiene e segurança seguido na produção?',
+    problema: 'Higiene e Segurança na Produção',
+    resposta: 'Não',
+    observacao: 'Elaborar procedimentos padronizados de higiene e capacitar a equipe produtiva em Boas Práticas de Fabricação.'
+  };
+  assert.equal(grauLacuna(qProtocoloHigiene), 2, 'Resposta Não com observação de elaborar/capacitar em boas práticas é lacuna 2');
+  const stHigiene = classificarStatusResposta(qProtocoloHigiene);
+  assert.equal(stHigiene.isConforme, false, 'Não deve ser conforme');
+  assert.equal(stHigiene.tipo, 'lacuna', 'Tipo deve ser lacuna');
+  assert.equal(stHigiene.label, 'Lacuna a Tratar (Ação Recomendada)');
+
+  // Demais casos de observações que mandam corrigir o problema
+  const qMandaCorrigir = {
+    pergunta: 'A empresa possui controle de estoque?',
+    problema: 'Estoque descontrolado',
+    resposta: 'Não',
+    observacao: 'Manda corrigir o problema implantando fichas de controle de entrada e saída.'
+  };
+  assert.equal(grauLacuna(qMandaCorrigir), 2);
+  assert.equal(classificarStatusResposta(qMandaCorrigir).isConforme, false);
+
+  const qNecessarioAjustar = {
+    pergunta: 'Realiza precificação correta dos produtos?',
+    problema: 'Margem de lucro baixa',
+    resposta: 'Não',
+    observacao: 'Necessário ajustar a precificação e apurar os custos fixos reais.'
+  };
+  assert.equal(grauLacuna(qNecessarioAjustar), 2);
+  assert.equal(classificarStatusResposta(qNecessarioAjustar).isConforme, false);
+
+  // Pergunta de risco com resposta Não, mas a observação manda corrigir
+  const qRiscoComCorrecao = {
+    pergunta: 'A empresa possui dívidas em atraso ou restrições?',
+    problema: 'Endividamento excessivo',
+    resposta: 'Não',
+    observacao: 'Corrigir pendências cadastrais urgentes e renegociar débitos com fornecedores.'
+  };
+  assert.equal(grauLacuna(qRiscoComCorrecao), 2, 'Observação que manda corrigir se sobrepõe ao Não da pergunta de risco');
+  assert.equal(classificarStatusResposta(qRiscoComCorrecao).isConforme, false);
 
   // Veredito da IA (por id) vale para todos os consumidores e cai se a observação mudar
   const resp = r('X', 'Possui alvará sanitário?', 'Não');
