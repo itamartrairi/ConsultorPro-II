@@ -187,9 +187,61 @@ export function isPerguntaNegativa(pergunta?: string, _problema?: string): boole
 }
 
 /**
+ * Expressões regulares que identificam perguntas sobre OBRIGAÇÕES LEGAIS, REGULATÓRIAS,
+ * AMBIENTAIS, SANITÁRIAS, TRABALHISTAS OU FISCAIS em todas as áreas e setores (Agronegócio,
+ * Indústria, Comércio, Serviços, Alimentos e Bebidas).
+ * Pela legislação brasileira e pelas teorias da administração e direito regulatório, o cumprimento
+ * dessas obrigações é MANDATÓRIO para a operação legal da empresa/propriedade.
+ * Portanto:
+ *  - NUNCA podem ser consideradas meras "opções voluntárias" ou "decisões estratégicas dispensáveis",
+ *    mesmo que a pergunta seja formulada com "tem interesse em tirar licença", "deseja regularizar", etc.
+ *  - "Não" = Irregularidade / Ilegalidade / Vulnerabilidade Grave -> LACUNA A TRATAR (grauLacuna = 2).
+ *  - "Parcial" = Em processo de regularização / pendência -> ATENDIMENTO PARCIAL (grauLacuna = 1).
+ *  - "Sim" = Atendido / Conforme (grauLacuna = 0), salvo se a observação apontar que a licença está vencida ou irregular.
+ */
+const PADRAO_OBRIGACAO_LEGAL_REGULATORIA = new RegExp(
+  [
+    '\\b(licenca|licencas|licenciamento|licenca ambiental|licenciamento ambiental|licenca previa|licenca de instalacao|licenca de operacao|dispensa de licenciamento)\\b',
+    '\\b(alvara|alvara de funcionamento|alvara de localizacao|alvara sanitario|vigilancia sanitaria|anvisa)\\b',
+    '\\b(outorga|outorga de agua|direito de uso da agua|recurso hidrico|recursos hidricos)\\b',
+    '\\b(car\\b|cadastro ambiental rural|reserva legal|area de preservacao permanente|app\\b|regularizacao ambiental|plano de manejo)\\b',
+    '\\b(registro no sim|registro no sie|registro no sif|selo arte|registro de estabelecimento|registro sanitari|inspecao sanitari)\\b',
+    '\\b(seguranca do trabalho|saude ocupacional|epi\\b|epis\\b|equipamento(s)? de protecao|norma(s)? regulamentadora(s)?|nr[- ]?\\d+|ppra|pcmso|pgr\\b|ltcat|aso\\b)\\b',
+    '\\b(registro de empregad|registro de funcionari|carteira assinada|ctps|esocial|fgts|trabalhista|formalizacao dos funcionari)\\b',
+    '\\b(formalizacao do negocio|abertura de empresa|registro na junta|contrato social|cnpj|inscricao estadual|inscricao municipal|regularidade fiscal)\\b',
+    '\\b(nota fiscal|notas fiscais|emissao de nota|cupom fiscal|nfe\\b|nfce\\b|tribut(o|os|ari)|imposto(s)?|recolhimento fiscal)\\b',
+  ].join('|'),
+  'i'
+);
+
+export function isPerguntaObrigacaoLegalOuRegulatoria(pergunta?: string): boolean {
+  const pNorm = norm(pergunta);
+  if (!pNorm) return false;
+  return PADRAO_OBRIGACAO_LEGAL_REGULATORIA.test(pNorm);
+}
+
+/**
+ * Perguntas sobre participação em feiras (do município, locais, do produtor, livres) e canais de comercialização direta.
+ * Feiras municipais são canais estratégicos indispensáveis para o produtor e a pequena empresa.
+ * Se o produtor responde "Não", NÃO ESTÁ CONFORME (trata-se de lacuna a tratar / oportunidade de mercado desaproveitada).
+ */
+const PADRAO_FEIRA_CANAL_COMERCIAL = new RegExp(
+  '\\b(feira|feiras|feira do municipio|feira municipal|feira livre|feira do produtor|mercado municipal|canal de comercializacao|canais de comercializacao)\\b',
+  'i'
+);
+
+export function isPerguntaFeiraOuCanalComercial(pergunta?: string): boolean {
+  const pNorm = norm(pergunta);
+  if (!pNorm) return false;
+  return PADRAO_FEIRA_CANAL_COMERCIAL.test(pNorm);
+}
+
+/**
  * Perguntas sobre interesse, intenção, projeto futuro ou oportunidade voluntária.
  * Pela teoria administrativa e econômica, a resposta "Não" representa decisão estratégica do gestor
  * (foco no modelo de negócio atual, ausência de demanda pelo insumo/parceria), e NÃO uma lacuna/falha.
+ * NOTA CRÍTICA: Se a pergunta envolver obrigação legal, sanitária, ambiental ou regulatória,
+ * OU se envolver feira do município e canais de comercialização, NUNCA é mera opção facultativa!
  */
 const PADRAO_PERGUNTA_INTERESSE_OPCAO = new RegExp(
   '\\b(tem interesse em|teria interesse em|deseja|pretende|planeja|tem intencao de|ha interesse em)\\b',
@@ -199,35 +251,44 @@ const PADRAO_PERGUNTA_INTERESSE_OPCAO = new RegExp(
 export function isPerguntaInteresseOuOpcao(pergunta?: string): boolean {
   const pNorm = norm(pergunta);
   if (!pNorm) return false;
+  // Exclui peremptoriamente qualquer obrigação legal, regulatória, fiscal, sanitária ou ambiental
+  if (isPerguntaObrigacaoLegalOuRegulatoria(pNorm)) return false;
+  // Exclui peremptoriamente feiras e canais comerciais (não ter interesse na feira NÃO é conforme!)
+  if (isPerguntaFeiraOuCanalComercial(pNorm)) return false;
+  // Exclui capacitação, treinamentos, controles e gestão
+  if (/\b(capacitac|treinament|curso|consultori|gestao|controle|planejament|precificac|associac|cooperativ)\b/i.test(pNorm)) return false;
   return PADRAO_PERGUNTA_INTERESSE_OPCAO.test(pNorm);
 }
 
 /**
  * Observações que indicam AÇÃO CORRETIVA, PRESCRIÇÃO DE CONSULTORIA ou PROBLEMA REAL.
- * Se o consultor orientou elaborar, capacitar, implantar, treinar, corrigir, adequar, etc.,
+ * Se o consultor orientou elaborar, capacitar, implantar, treinar, corrigir, orientar, regularizar, etc.,
  * ou descreveu uma carência/problema, isso representa INEQUIVOCAMENTE uma LACUNA A TRATAR.
  */
 const PADRAO_OBS_MANDA_CORRIGIR = new RegExp(
   [
     // Verbos de ação no infinitivo, imperativo ou presente do subjuntivo de consultoria para sanar deficiência
-    '\\b(elaborar?|elabore[ms]?|implantar?|implante[ms]?|implementar?|implemente[ms]?|capacitar?|capacite[ms]?|treinar?|treine[ms]?|qualificar?|qualifique[ms]?|desenvolver?|desenvolva[ms]?|padronizar?|padronize[ms]?|formalizar?|formalize[ms]?|estruturar?|estruture[ms]?|organizar?|organize[ms]?|instituir?|institua[ms]?|reestruturar?|reestruture[ms]?|readequar?|readeque[ms]?|ajustar?|ajuste[ms]?|corrigir?|corrija[ms]?|sanar?|sane[ms]?|sanear?|revisar?|revise[ms]?|providenciar?|providencie[ms]?|definir?|defina[ms]?|estabelecer?|estabeleca[ms]?|adotar?|adote[ms]?|introduzir?|introduza[ms]?|criar?|crie[ms]?|planejar?|planeje[ms]?|fazer?|faca[ms]?|renegociar?|renegocie[ms]?|quitar?|quite[ms]?)\\b',
+    '\\b(elaborar?|elabore[ms]?|implantar?|implante[ms]?|implementar?|implemente[ms]?|capacitar?|capacite[ms]?|treinar?|treine[ms]?|qualificar?|qualifique[ms]?|desenvolver?|desenvolva[ms]?|padronizar?|padronize[ms]?|formalizar?|formalize[ms]?|estruturar?|estruture[ms]?|organizar?|organize[ms]?|instituir?|institua[ms]?|reestruturar?|reestruture[ms]?|readequar?|readeque[ms]?|ajustar?|ajuste[ms]?|corrigir?|corrija[ms]?|sanar?|sane[ms]?|sanear?|revisar?|revise[ms]?|providenciar?|providencie[ms]?|definir?|defina[ms]?|estabelecer?|estabeleca[ms]?|adotar?|adote[ms]?|introduzir?|introduza[ms]?|criar?|crie[ms]?|planejar?|planeje[ms]?|fazer?|faca[ms]?|renegociar?|renegocie[ms]?|quitar?|quite[ms]?|regularizar?|regularize[ms]?|adequar?|adeque[ms]?|conscientizar?|conscientize[ms]?|licenciar?|licencie[ms]?|orientar?|oriente[ms]?|solicitar?|solicite[ms]?|protocolar?|protocole[ms]?)\\b',
     // Substantivos e locuções de ação corretiva recomendada
-    '\\b(elaboracao|implantacao|implementacao|capacitacao|treinamento|qualificacao|padronizacao|formalizacao|estruturacao|reestruturacao|organizacao|readequacao|ajuste|correcao|revisao|saneamento|adocao)\\s+(de|da|do|para|urgente|prioritari)',
+    '\\b(elaboracao|implantacao|implementacao|capacitacao|treinamento|qualificacao|padronizacao|formalizacao|estruturacao|reestruturacao|organizacao|readequacao|ajuste|correcao|revisao|saneamento|adocao|regularizacao|adequacao|licenciamento)\\s+(de|da|do|para|urgente|prioritari)',
     // Expressões prescritivas e mandatórias de consultoria
-    '\\b(manda|mando|orienta|recomenda|sugere|determina)\\s+(a |para |)(corrigir|ajustar|elaborar|implantar|capacitar|adequar|sanar|fazer|criar|padronizar)',
+    '\\b(manda|mando|orienta|recomenda|sugere|determina)\\s+(a |para |)(corrigir|ajustar|elaborar|implantar|capacitar|adequar|sanar|fazer|criar|padronizar|regularizar|licenciar)',
+    '\\b(oriente|orientar|orientem|orientando|orientacao)\\s+(o |a |os |as )?(produtor|produtores|empresa|cliente|gestor|equipe|empreendedor)?',
+    '\\b(regularize|regularizar|regularizacao|adequacao|licenciamento|obter licenca|tirar licenca)\\b',
+    '\\b(importancia|necessidade)\\s+(do|da|de)\\s+(licenciamento|regularizacao|alvara|registro|outorga|car\\b|formalizacao|controle|planejamento)',
     '\\bcorrigir\\s+(o |a |os |as |)(problema|falha|gargalo|deficiencia|situacao|erro|pendencia|processo|defeito|inadimplencia)',
-    '\\bdeve(m)?\\s+(ser\\s+)?(corrigid|ajustad|elaborad|implantad|implementad|capacitad|criad|estruturad|padronizad|feit|adotad|revisad|controlad)',
-    '\\bprecisa(m)?\\s+(de\\s+)?(corrigir|ajustar|elaborar|implantar|implementar|capacitar|criar|desenvolver|padronizar|estruturar|adotar|organizar|fazer|melhorar|controlar)',
-    '\\bnecessita(m)?\\s+(de\\s+)?(correcao|ajuste|elaboracao|implantacao|capacitacao|padronizacao|estrutura|organizacao|melhoria|controle)',
-    '\\bnecessari[oa]\\s+(corrigir|ajustar|elaborar|implantar|implementar|capacitar|criar|desenvolver|padronizar|estruturar|adotar|fazer|melhorar|controlar)',
-    '\\b(recomenda-se|sugere-se|orienta-se|indica-se)\\s+(a |o |de |)(elaborar|implantar|implementar|capacitar|corrigir|ajustar|adotar|criar|padronizar|estruturar|treinar)',
-    '\\b(importante|urgente|prioritari[oa])\\s+(elaborar|implantar|implementar|capacitar|corrigir|ajustar|criar|padronizar|adotar)',
+    '\\bdeve(m)?\\s+(ser\\s+)?(corrigid|ajustad|elaborad|implantad|implementad|capacitad|criad|estruturad|padronizad|feit|adotad|revisad|controlad|regularizad|licenciad)',
+    '\\bprecisa(m)?\\s+(de\\s+)?(corrigir|ajustar|elaborar|implantar|implementar|capacitar|criar|desenvolver|padronizar|estruturar|adotar|organizar|fazer|melhorar|controlar|regularizar)',
+    '\\bnecessita(m)?\\s+(de\\s+)?(correcao|ajuste|elaboracao|implantacao|capacitacao|padronizacao|estrutura|organizacao|melhoria|controle|regularizacao)',
+    '\\bnecessari[oa]\\s+(corrigir|ajustar|elaborar|implantar|implementar|capacitar|criar|desenvolver|padronizar|estruturar|adotar|fazer|melhorar|controlar|regularizar)',
+    '\\b(recomenda-se|sugere-se|orienta-se|indica-se)\\s+(a |o |de |)(elaborar|implantar|implementar|capacitar|corrigir|ajustar|adotar|criar|padronizar|estruturar|treinar|regularizar)',
+    '\\b(importante|urgente|prioritari[oa])\\s+(elaborar|implantar|implementar|capacitar|corrigir|ajustar|criar|padronizar|adotar|regularizar)',
     '\\b(plano\\s+de\\s+acao|acao\\s+corretiva|medida\\s+corretiva|oportunidade\\s+de\\s+melhoria)\\b',
-    '\\ba\\s+ser\\s+(elaborad|implantad|implementad|capacitad|corrigid|criad|padronizad|feit|adotad)',
-    '\\ba\\s+(elaborar|implantar|implementar|capacitar|corrigir|estruturar|padronizar|ajustar)\\b',
+    '\\ba\\s+ser\\s+(elaborad|implantad|implementad|capacitad|corrigid|criad|padronizad|feit|adotad|regularizad)',
+    '\\ba\\s+(elaborar|implantar|implementar|capacitar|corrigir|estruturar|padronizar|ajustar|regularizar)\\b',
     // Problemas e vulnerabilidades expressas (evitando falsos positivos em "não tem necessidade/problema")
-    '\\bnao\\s+(possui|tem|faz|realiza|adota|utiliza|controla|separa|emite|registra|planeja|acompanha|funciona|consegue|aplica)\\s+(nenhum|qualquer|controle|registro|planejamento|processo|rotina|separacao|padrao|documento|fluxo|gestao|ferramenta|nada|recurso|alvara|procedimento|politica|estrategia)\\b',
-    '\\b(falta|ausencia|inexistencia|sem)\\s+(de\\s+)?(controle|planejamento|registro|separacao|fluxo|rotina|organizacao|padrao|criterio|processo|documento|gestao|previsao)\\b',
+    '\\bnao\\s+(possui|tem|faz|realiza|adota|utiliza|controla|separa|emite|registra|planeja|acompanha|funciona|consegue|aplica)\\s+(nenhum|qualquer|controle|registro|planejamento|processo|rotina|separacao|padrao|documento|fluxo|gestao|ferramenta|nada|recurso|alvara|procedimento|politica|estrategia|licenca)\\b',
+    '\\b(falta|ausencia|inexistencia|sem)\\s+(de\\s+)?(controle|planejamento|registro|separacao|fluxo|rotina|organizacao|padrao|criterio|processo|documento|gestao|previsao|licenca|alvara)\\b',
     '\\b(problema(s)?\\s+(grave|relevante|serio|real|critico)|e\\s+um\\s+problema|representa\\s+um\\s+problema|ha\\s+problema|tem\\s+problema)\\b',
     '\\b(gargalo(s)?|deficiencia(s)?|vulnerabilidade(s)?|ponto(s)?\\s+fraco(s)?|debilidade(s)?|desorganizad[oa]|descontrolad[oa]|inadequado|inseguro|vulneravel)\\b',
     '\\b(prejuizo(s)?|desperdicio(s)?|desvio(s)?|perda(s)?\\s+de\\s+(mercadoria|produto|dinheiro|producao|cliente)|retrabalho(s)?\\s+constante|reclamac(ao|oes)\\s+frequente)\\b',
@@ -326,13 +387,21 @@ export function grauLacuna(
   if (v !== 'Sim' && v !== 'Não' && v !== 'Parcial') return null;
 
   const negativa = isPerguntaNegativa(r.pergunta, r.problema);
+  const obrigacaoLegal = isPerguntaObrigacaoLegalOuRegulatoria(r.pergunta);
   const interesseOpcao = isPerguntaInteresseOuOpcao(r.pergunta);
   const mandaCorrigir = observacaoIndicaProblema(r.observacao);
   const temSemProblema = !mandaCorrigir && observacaoIndicaSemProblema(r.observacao, negativa);
 
-  // 1. Preceitos administrativos e econômicos: "Não" em oportunidade ou parceria voluntária é decisão estratégica
-  if (interesseOpcao && v === 'Não') {
-    return 0; // Decisão do gestor de foco no modelo produtivo atual; não constitui deficiência
+  // 1. A OBSERVAÇÃO DO CONSULTOR TEM SOBERANIA NA ANÁLISE:
+  // Se a observação manda orientar, corrigir, elaborar, capacitar, implantar, estruturar ou descreve deficiência real:
+  if (mandaCorrigir) {
+    // É lacuna a tratar: 1 se for Parcial, 2 se for Não ou Sim onde a prática requer intervenção/correção
+    return v === 'Parcial' ? 1 : 2;
+  }
+
+  // Se a observação expressa inequivocamente ausência de problema (dispensa legal, MEI isento, já resolvido/atendido):
+  if (temSemProblema) {
+    return 0;
   }
 
   // 2. Preceitos ambientais de práticas nocivas ou consumo de biomassa (queimadas, uso de lenha/madeira, poluição):
@@ -342,16 +411,10 @@ export function grauLacuna(
     return 0; // Ausência de queimada/lenha/poluição é ponto forte ambiental absoluto
   }
 
-  // 3. A OBSERVAÇÃO DO CONSULTOR TEM SOBERANIA NA ANÁLISE:
-  // Se a observação manda corrigir, elaborar, capacitar, implantar, estruturar ou descreve deficiência/problema real:
-  if (mandaCorrigir) {
-    // É lacuna a tratar: 1 se for Parcial, 2 se for Não ou Sim onde a prática requer correção/elaboração
-    return v === 'Parcial' ? 1 : 2;
-  }
-
-  // Se a observação expressa inequivocamente ausência de problema (dispensa legal, MEI isento, já resolvido/atendido):
-  if (temSemProblema) {
-    return 0;
+  // 3. Preceitos administrativos e econômicos: "Não" em oportunidade ou parceria voluntária é decisão estratégica
+  // (Lembrando que isPerguntaInteresseOuOpcao já exclui terminantemente qualquer obrigação legal/regulatória)
+  if (interesseOpcao && v === 'Não') {
+    return 0; // Decisão do gestor de foco no modelo produtivo atual; não constitui deficiência
   }
 
   // 4. Veredito de IA em memória (apenas se resposta/observação não mudaram)
@@ -378,10 +441,19 @@ export function grauLacuna(
     }
   }
 
-  // 6. Resposta Parcial sem observação conclusiva indica oportunidade de melhoria/lacuna parcial
+  // 6. OBRIGAÇÕES LEGAIS, REGULATÓRIAS, SANITÁRIAS E AMBIENTAIS (Licença, Alvará, CAR, Outorga, EPI, Fiscal):
+  // Responder "Não" a uma obrigação legal sem dispensa comprovada significa operar em situação irregular/ilegal.
+  // Mesmo que a pergunta seja formulada como "tem interesse em tirar licença", o "Não" é lacuna grave!
+  if (obrigacaoLegal) {
+    if (v === 'Não') return 2; // Ilegalidade / Irregularidade = Lacuna Crítica
+    if (v === 'Parcial') return 1;
+    return 0;
+  }
+
+  // 7. Resposta Parcial sem observação conclusiva indica oportunidade de melhoria/lacuna parcial
   if (v === 'Parcial') return 1;
 
-  // 7. Sem observação conclusiva: segue a semântica da pergunta
+  // 8. Sem observação conclusiva: segue a semântica da pergunta
   if (negativa) {
     // Pergunta de risco/falha/limitação: "Sim" é o problema (2). "Não" significa que NÃO há problema (0).
     return v === 'Sim' ? 2 : 0;
@@ -416,6 +488,7 @@ export function classificarStatusResposta(
   }
   const lac = grauLacuna(r, overrideIA);
   const negativa = isPerguntaNegativa(r.pergunta, r.problema);
+  const obrigacaoLegal = isPerguntaObrigacaoLegalOuRegulatoria(r.pergunta);
   const mandaCorrigir = observacaoIndicaProblema(r.observacao);
   const temObsOk = !mandaCorrigir && observacaoIndicaSemProblema(r.observacao, negativa);
 
@@ -428,7 +501,7 @@ export function classificarStatusResposta(
         isConforme: true,
       };
     }
-    if (isPerguntaInteresseOuOpcao(r.pergunta) && r.resposta === 'Não') {
+    if (!obrigacaoLegal && isPerguntaInteresseOuOpcao(r.pergunta) && r.resposta === 'Não') {
       return {
         tipo: 'conforme_contexto',
         label: 'Conforme (Decisão Estratégica)',
@@ -465,10 +538,35 @@ export function classificarStatusResposta(
   if (lac === 1) {
     return {
       tipo: 'parcial',
-      label: 'Atendimento Parcial',
+      label: isPerguntaFeiraOuCanalComercial(r.pergunta)
+        ? 'Atendimento Parcial (Feira / Comercialização)'
+        : 'Atendimento Parcial',
       detalhe: mandaCorrigir
         ? 'Observação do consultor prescreveu ação de melhoria ou identificou vulnerabilidade moderada'
         : 'Prática parcialmente estruturada; oportunidade de melhoria',
+      isConforme: false,
+    };
+  }
+
+  // lac === 2
+  if (obrigacaoLegal && r.resposta === 'Não') {
+    return {
+      tipo: 'lacuna',
+      label: 'Lacuna a Tratar (Exigência Legal/Regulatória)',
+      detalhe: mandaCorrigir
+        ? 'Observação do consultor orienta regularização legal indispensável para evitar autuações, embargos e passivos'
+        : 'Ausência de licença, alvará ou registro legal expõe o negócio a riscos de autuação e embargo',
+      isConforme: false,
+    };
+  }
+
+  if (isPerguntaFeiraOuCanalComercial(r.pergunta) && r.resposta === 'Não') {
+    return {
+      tipo: 'lacuna',
+      label: 'Lacuna a Tratar (Canal Comercial / Feira)',
+      detalhe: mandaCorrigir
+        ? 'Observação do consultor prescreve orientação e sensibilização do produtor sobre as oportunidades da feira do município'
+        : 'A ausência de interesse ou participação na feira do município representa perda de oportunidade de venda direta e escoamento da produção',
       isConforme: false,
     };
   }
@@ -1070,31 +1168,41 @@ Analise cada par de pergunta, problema e resposta dada pelo empresário. Para CA
 
 REGRA MAIS IMPORTANTE: uma resposta negativa ("Não") NEM SEMPRE significa deficiência ou requisito não atendido. Avalie o CONTEXTO da pergunta (o tema, o porte e a atividade da empresa) e, principalmente, a OBSERVAÇÃO/SUGESTÃO registrada pelo consultor, que tem prioridade sobre a resposta literal. Exemplos de "Não" que NÃO são problema: item que não se aplica à empresa, prática desnecessária para o porte (ex.: MEI dispensado), necessidade já suprida de outra forma (terceirizada, contador, informal mas eficaz), ou observação dizendo que está resolvido/sem impacto. Se a observação descrever um problema real mesmo com resposta aparentemente positiva, marque true. Na dúvida, use o texto da observação para decidir.
 
-DIRETRIZES SEMÂNTICAS OBRIGATÓRIAS DE GESTÃO E COMÉRCIO:
-1. PERGUNTAS SOBRE RISCO, LIMITAÇÃO, DEPENDÊNCIA OU OCORRÊNCIA DE FALHAS:
+DIRETRIZES SEMÂNTICAS OBRIGATÓRIAS DE GESTÃO, DIREITO REGULATÓRIO E AMBIENTAL:
+1. OBRIGAÇÕES LEGAIS, REGULATÓRIAS, AMBIENTAIS, SANITÁRIAS E TRABALHISTAS:
+   Exemplos: "O produtor tem interesse em tirar licença ambiental?", "Possui alvará de funcionamento?", "Possui alvará sanitário?", "Possui outorga de água?", "Possui CAR (Cadastro Ambiental Rural)?", "Utiliza EPIs?", "Emite nota fiscal?":
+   - Resposta "Não" ou "Parcial": HÁ PROBLEMA REAL ("temProblema": true). O cumprimento de exigências legais e ambientais é mandatório. Operar sem licença, alvará ou registro expõe o negócio a multas graves, embargos e crime ambiental. NUNCA classifique como decisão estratégica!
+   - Resposta "Sim": NÃO HÁ PROBLEMA ("temProblema": false), salvo se a observação apontar que a licença/alvará está vencido ou irregular.
+
+2. PERGUNTAS SOBRE RISCO, LIMITAÇÃO, DEPENDÊNCIA OU OCORRÊNCIA DE FALHAS:
    Exemplos: "O produtor comercializa apenas em feiras/festivais locais?", "Depende de poucos compradores?", "Já teve crédito rejeitado?", "Possui dívidas em atraso?", "Mistura finanças pessoais?", "Sofre perdas na produção?":
    - Resposta "Não": NÃO HÁ PROBLEMA (o produtor NÃO opera apenas em feiras, não possui dívidas, etc. Ele diversifica e tem maturidade). -> "temProblema": false. NÃO gerar ação corretiva!
    - Resposta "Sim": HÁ PROBLEMA REAL (dependência comercial, inadimplência, perdas, etc.). -> "temProblema": true.
    - Resposta "Parcial": HÁ GARGALO PARCIAL. -> "temProblema": true.
 
-2. PERGUNTAS SOBRE CONTROLES, PLANEJAMENTO E BOAS PRÁTICAS:
-   Exemplos: "Possui controle financeiro?", "Realiza precificação?", "Possui alvará sanitário?", "A maior parte da produção é vendida beneficiada?":
+3. PERGUNTAS SOBRE CONTROLES, PLANEJAMENTO E BOAS PRÁTICAS:
+   Exemplos: "Possui controle financeiro?", "Realiza precificação?", "Os processos internos estão padronizados?":
    - Resposta "Sim": NÃO HÁ PROBLEMA (aplica a boa prática). -> "temProblema": false. NÃO gerar ação corretiva!
    - Resposta "Não": HÁ PROBLEMA (falta de controle essencial). -> "temProblema": true.
    - Resposta "Parcial": HÁ GARGALO PARCIAL (oportunidade de ampliação/melhoria). -> "temProblema": true.
 
-3. AÇÕES CORRETIVAS E OBSERVAÇÕES PRESCRITIVAS DO CONSULTOR:
-   Se a observação do consultor prescrever ou orientar CORRIGIR, ELABORAR, IMPLANTAR, CAPACITAR, TREINAR, ESTRUTURAR, PADRONIZAR ou AJUSTAR (ex.: "Elaborar procedimentos padronizados de higiene e capacitar a equipe produtiva em Boas Práticas de Fabricação"):
-   -> "temProblema": true (HÁ PROBLEMA / LACUNA QUE EXIGE AÇÃO CORRETIVA). NUNCA marque false quando o consultor prescrever ações de correção, melhoria ou capacitação!
+4. AÇÕES CORRETIVAS E OBSERVAÇÕES PRESCRITIVAS DO CONSULTOR:
+   Se a observação do consultor prescrever ou orientar CORRIGIR, ELABORAR, IMPLANTAR, CAPACITAR, TREINAR, ESTRUTURAR, PADRONIZAR, AJUSTAR, REGULARIZAR ou ORIENTAR (ex.: "Oriente o produtor sobre a importância do licenciamento ambiental para a regularização legal e manejo sustentável" ou "Elaborar procedimentos padronizados de higiene e capacitar a equipe produtiva em Boas Práticas de Fabricação"):
+   -> "temProblema": true (HÁ PROBLEMA / LACUNA QUE EXIGE AÇÃO CORRETIVA). NUNCA marque false quando o consultor prescrever orientações, correções, melhorias ou capacitações!
 
-4. PRECEITOS AMBIENTAIS, ESG E SUSTENTABILIDADE:
+5. PRECEITOS AMBIENTAIS, ESG E SUSTENTABILIDADE DE PRÁTICAS NOCIVAS:
    Exemplos: "O produtor faz uso de queimadas no plantio ou na colheita?", "Há uso de lenha/madeira na produção?", "Gera poluição/descarte inadequado de efluentes ou embalagens?":
    - Resposta "Não": NÃO HÁ PROBLEMA (o produtor NÃO comete a prática degradadora, preservando o solo, os recursos florestais e o meio ambiente). -> "temProblema": false. NÃO gerar ação corretiva!
    - Resposta "Sim": HÁ PROBLEMA REAL (dano/risco ambiental que exige controle, cessação de queimadas ou transição energética). -> "temProblema": true.
 
-5. DECISÕES ESTRATÉGICAS E PARCERIAS VOLUNTÁRIAS:
-   Exemplos: "O produtor tem interesse em fazer parceria com a Secretaria de Meio Ambiente para receber madeira de poda?", "Deseja participar de projeto voluntário?":
-   - Resposta "Não": NÃO HÁ PROBLEMA (decisão estratégica de foco no processo produtivo atual; o produtor não é obrigado a adotar insumos ou parcerias fora de sua demanda). -> "temProblema": false. NÃO gerar ação corretiva!
+6. PERGUNTAS SOBRE PARTICIPAÇÃO EM FEIRAS E CANAIS DE COMERCIALIZAÇÃO LOCAL:
+   Exemplos: "O produtor tem interesse em participar da feira do município?", "Participa de feiras livres/municipais?":
+   - Resposta "Não" ou "Parcial": HÁ PROBLEMA REAL ("temProblema": true). A ausência de interesse ou participação na feira do município representa desaproveitamento de canal de venda direta, menor escoamento e perda de receita para o negócio. NUNCA classifique como decisão estratégica ou conforme!
+   - Resposta "Sim": NÃO HÁ PROBLEMA ("temProblema": false), salvo se a observação indicar problemas de logística ou qualidade.
+
+7. DECISÕES ESTRATÉGICAS E PARCERIAS PURAMENTE VOLUNTÁRIAS DE INSUMOS/RESÍDUOS:
+   Exemplos: "O produtor tem interesse em fazer parceria com a Secretaria de Meio Ambiente para receber madeira de poda?":
+   - Resposta "Não": NÃO HÁ PROBLEMA (decisão estratégica de foco no processo produtivo atual; o produtor não demanda o insumo). -> "temProblema": false. NÃO gerar ação corretiva!
    - Resposta "Sim": OPORTUNIDADE DE PARCERIA / INOVAÇÃO. -> "temProblema": false se já atende ou true apenas se necessitar de estruturação acordada.
 
 ITENS A AVALIAR:

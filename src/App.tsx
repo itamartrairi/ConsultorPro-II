@@ -9527,7 +9527,7 @@ export const getAI = () => {
 };
 
 const generateAIFeedback = async (resposta: string, pergunta: string, problema: string) => {
-  const cacheKey = generateAICacheKey('feedback_v4', { resposta, pergunta, problema });
+  const cacheKey = generateAICacheKey('feedback_v5', { resposta, pergunta, problema });
   const cached = await getCachedAI<string>(cacheKey);
   if (cached) return cached;
 
@@ -9538,25 +9538,32 @@ const generateAIFeedback = async (resposta: string, pergunta: string, problema: 
   Premissa/Pergunta: ${pergunta}
   Resposta do Cliente: ${resposta}
   
-  DIRETRIZES DE ANÁLISE CONFORME TEORIAS ADMINISTRATIVAS, ECONÔMICAS E AMBIENTAIS:
-  1. PERGUNTAS SOBRE PRECEITOS AMBIENTAIS, ESG E SUSTENTABILIDADE (ex: "O produtor faz uso de queimadas?", "Há uso de lenha/madeira na produção?", "Descarte inadequado de efluentes/embalagens?"):
+  DIRETRIZES DE ANÁLISE CONFORME TEORIAS ADMINISTRATIVAS, ECONÔMICAS, AMBIENTAIS E REGULATÓRIAS:
+  1. PERGUNTAS SOBRE OBRIGAÇÕES LEGAIS, AMBIENTAIS, SANITÁRIAS, TRABALHISTAS E FISCAIS (ex: "Licença ambiental", "Alvará de funcionamento", "Alvará sanitário", "Outorga d'água", "CAR - Cadastro Ambiental Rural", "EPIs", "Emissão de nota fiscal"):
+     * O cumprimento de normas legais e ambientais é MANDATÓRIO para a operação regular de qualquer negócio (Agronegócio, Comércio, Indústria, Serviços).
+     * Resposta "Não" ou "Parcial": Representa ILEGALIDADE / RISCO REGULATÓRIO / INFRAÇÃO. Recomende diretamente a orientação do consultor ou procedimento para obtenção e regularização da licença/alvará junto aos órgãos competentes (ex: "Oriente o produtor sobre a importância do licenciamento ambiental para a regularização legal e manejo sustentável."). NUNCA trate exigência legal como opção estratégica dispensável!
+     * Resposta "Sim": Representa CONFORMIDADE LEGAL/REGULATÓRIA.
+  2. PERGUNTAS SOBRE PARTICIPAÇÃO EM FEIRAS E CANAIS DE COMERCIALIZAÇÃO (ex: "O produtor tem interesse em participar da feira do município?", "Participa da feira livre?"):
+     * Pela gestão comercial e agronegócio, feiras municipais e feiras do produtor são canais estratégicos indispensáveis de venda direta, divulgação da produção e agregação de renda para o produtor.
+     * Resposta "Não" ou "Parcial": NÃO ESTÁ CONFORME (representa desaproveitamento de canal comercial relevante, desinteresse ou resistência em acessar a feira local, gerando perda de receita e dependência de intermediários). Recomende diretamente ação de sensibilização, orientação ou capacitação do produtor sobre as vantagens e oportunidades da feira do município (ex: "Sensibilize o produtor sobre as oportunidades da feira do município para ampliar vendas e renda." ou "Oriente o produtor a participar da feira municipal para escoar sua produção diretamente."). NUNCA trate desinteresse na feira como decisão estratégica conforme!
+     * Resposta "Sim": Representa CONFORMIDADE / APROVEITAMENTO DE CANAL. Reconheça o ponto forte de atuação na feira municipal.
+  3. PRECEITOS AMBIENTAIS, ESG E SUSTENTABILIDADE DE PRÁTICAS NOCIVAS (ex: "O produtor faz uso de queimadas?", "Há uso de lenha/madeira na produção?", "Descarte inadequado de efluentes/embalagens?"):
      * Pela legislação ambiental (Código Florestal) e agronomia sustentável, queimadas, queima de lenha e poluição são PRÁTICAS NOCIVAS/DEGRADADORAS.
      * Resposta "Não": Representa CONFORMIDADE AMBIENTAL / SUSTENTABILIDADE / PRESERVAÇÃO (o produtor NÃO comete o dano ambiental). Reconheça explicitamente o ponto forte e maturidade ambiental (ex: "A não utilização de queimadas preserva o solo e evidencia maturidade ambiental do produtor." ou "A ausência de uso de lenha na produção evita emissões e preserva recursos florestais."). NUNCA sugira transição energética ou ação corretiva para quem respondeu que NÃO usa lenha ou NÃO faz queimadas!
      * Resposta "Sim": Representa DANO/RISCO AMBIENTAL. Aponte a necessidade de cessação de queimadas, transição para fontes limpas ou manejo certificado.
-  2. PERGUNTAS SOBRE INTERESSE, OPORTUNIDADE OU PARCERIA VOLUNTÁRIA (ex: "O produtor tem interesse em fazer parceria com a Secretaria de Meio Ambiente para receber madeira de poda?"):
-     * Pela teoria administrativa e econômica (teoria da firma e racionalidade econômica), parcerias opcionais dependem do modelo produtivo. Se o produtor não usa madeira ou não demanda o insumo, responder "Não" é uma decisão estratégica coerente e legítima, e NÃO uma deficiência.
-     * Resposta "Não": Reconheça a opção estratégica alinhada ao foco produtivo atual (ex: "Opção estratégica alinhada ao processo produtivo atual, sem necessidade de recebimento de resíduos de poda."). NUNCA mande formalizar parceria indesejada quando a resposta foi "Não"!
+  4. PARCERIAS COMUNITÁRIAS PURAMENTE VOLUNTÁRIAS E ESPECÍFICAS DE RESÍDUOS/INSUMOS (ex: "O produtor tem interesse em fazer parceria com a Secretaria de Meio Ambiente para receber madeira de poda?"):
+     * Pela teoria administrativa e econômica (teoria da firma e racionalidade econômica), parcerias opcionais de insumos dependem do modelo produtivo. Se o produtor não usa madeira ou não demanda o insumo, responder "Não" é uma opção de foco produtivo.
+     * Resposta "Não": Reconheça a opção estratégica alinhada ao foco produtivo atual (ex: "A decisão reflete uma opção estratégica alinhada ao processo produtivo atual, sem necessidade de receber resíduos."). NUNCA confunda parcerias de resíduos com feiras municipais ou canais comerciais!
      * Resposta "Sim": Recomende a formalização da parceria institucional para aproveitamento do insumo.
-  3. PERGUNTAS SOBRE RISCO, LIMITAÇÃO OU DEPENDÊNCIA COMERCIAL (ex: "Comercializa apenas em feiras?", "Depende de um único cliente?"):
+  5. PERGUNTAS SOBRE RISCO, LIMITAÇÃO OU DEPENDÊNCIA COMERCIAL (ex: "Comercializa apenas em feiras?", "Depende de um único cliente?"):
      * Resposta "Não": Representa NÃO DEPENDÊNCIA / DIVERSIFICAÇÃO / MATURIDADE COMERCIAL. Reconheça o ponto forte de diversificação.
      * Resposta "Sim": Representa DEPENDÊNCIA/RISCO. Recomende diversificação de canais.
-  4. PERGUNTAS SOBRE FALHAS, PREJUÍZOS OU INADIMPLÊNCIA (ex: "Possui dívidas em atraso?", "Crédito rejeitado?"):
+  6. PERGUNTAS SOBRE FALHAS, PREJUÍZOS OU INADIMPLÊNCIA (ex: "Possui dívidas em atraso?", "Crédito rejeitado?"):
      * Resposta "Não": Representa SITUAÇÃO REGULAR / PONTO FORTE.
      * Resposta "Sim": Representa GARGALO REAL. Aponte a ação corretiva.
-  5. PERGUNTAS SOBRE CONTROLES E BOAS PRÁTICAS (ex: "Possui controle financeiro?", "Possui protocolo de higiene?"):
+  7. PERGUNTAS SOBRE CONTROLES E BOAS PRÁTICAS GERAIS (ex: "Possui controle financeiro?", "Possui protocolo de higiene?", "Processos padronizados?"):
      * Resposta "Sim": Representa PRÁTICA ATENDIDA / MATURIDADE.
      * Resposta "Não" ou "Parcial": Representa OPORTUNIDADE DE MELHORIA. Aponte diretamente a ação recomendada (elaborar, implantar, capacitar).
-  
   REQUISITOS DE SAÍDA (OBRIGATÓRIOS):
   - Responda em Português do Brasil, de forma profissional e direta.
   - Gere APENAS 1 (uma) única frase curta e objetiva, entre 12 e 18 palavras.

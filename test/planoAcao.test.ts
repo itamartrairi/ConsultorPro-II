@@ -4,6 +4,7 @@ import {
   isPerguntaNegativa, grauLacuna, classificarStatusResposta, papelDaAtividade, horasDe, MAX_ATIVIDADES, tarefasDasAtividades, agruparPorArea,
   ATIVIDADE_DIAGNOSTICO, ATIVIDADE_DEVOLUTIVA, ATIVIDADE_FERRAMENTAS, ATIVIDADE_ANALISE_FINAL, ATIVIDADE_RELATORIO_FINAL,
   aplicarTarefaNoCronograma, removerTarefaDoCronograma, adicionarTarefaAoCronograma, sincronizarRelatorioComCronograma,
+  isPerguntaFeiraOuCanalComercial, isPerguntaInteresseOuOpcao,
 } from '../src/lib/domain/planoAcao';
 
 const r = (idProblema: string, pergunta: string, resposta: any, peso = 1, area = 'Finanças') =>
@@ -197,6 +198,29 @@ console.log('  OK: textos do relatório');
   assert.equal(stFeira.isConforme, true);
   assert.equal(stFeira.tipo, 'conforme');
 
+  // Não em feira NÃO ESTÁ CONFORME (Lacuna Comercial a Tratar)
+  const qFeiraNao = {
+    pergunta: 'O produtor tem interesse em participar da feira do município?',
+    problema: 'Feiras e Festivais',
+    resposta: 'Não',
+    observacao: ''
+  };
+  assert.equal(isPerguntaFeiraOuCanalComercial(qFeiraNao.pergunta), true, 'detecta feira como canal comercial');
+  assert.equal(isPerguntaInteresseOuOpcao(qFeiraNao.pergunta), false, 'feira NÃO é mera opção estratégica dispensável');
+  assert.equal(grauLacuna(qFeiraNao), 2, 'Não ter interesse na feira do município é lacuna a tratar');
+  const stFeiraNao = classificarStatusResposta(qFeiraNao);
+  assert.equal(stFeiraNao.isConforme, false, 'Não em feira do município NÃO está conforme');
+  assert.equal(stFeiraNao.tipo, 'lacuna');
+  assert.equal(stFeiraNao.label, 'Lacuna a Tratar (Canal Comercial / Feira)');
+
+  // Mesmo que haja observação sugerindo canal alternativo, não ter interesse na feira do município é lacuna:
+  const qFeiraNaoComObs = {
+    ...qFeiraNao,
+    observacao: 'Sensibilize o produtor sobre as oportunidades da feira do município para ampliar vendas e renda.'
+  };
+  assert.equal(grauLacuna(qFeiraNaoComObs), 2);
+  assert.equal(classificarStatusResposta(qFeiraNaoComObs).isConforme, false);
+
   const qPnae = {
     pergunta: 'Existem parcerias com o poder público para venda institucional (PNAE, PAA)?',
     problema: 'Canais de comercialização limitados',
@@ -367,12 +391,67 @@ console.log('  OK: textos do relatório');
     pergunta: 'O produtor tem interesse em fazer parceria com a Secretaria de Meio Ambiente para receber madeira de poda e usá-la no beneficiamento de seus produtos?',
     problema: 'Parcerias Institucionais',
     resposta: 'Não',
-    observacao: 'Formalize a parceria institucional para adotar o reaproveitamento de resíduos de poda no beneficiamento agrícola.'
+    observacao: 'A decisão reflete uma opção estratégica alinhada ao processo produtivo atual, sem necessidade de receber resíduos.'
   };
   assert.equal(grauLacuna(qPodaNao), 0, 'Não em pergunta de interesse opcional é decisão estratégica e não lacuna');
   const stPoda = classificarStatusResposta(qPodaNao);
   assert.equal(stPoda.isConforme, true);
   assert.equal(stPoda.label, 'Conforme (Decisão Estratégica)');
+
+  // 4. Caso real da imagem: Licença ambiental é obrigação legal e regulatória (NÃO é mera opção estratégica!)
+  const qLicencaAmbiental = {
+    pergunta: 'O produtor tem interesse em tirar licença ambiental?',
+    problema: 'Licenciamento Ambiental',
+    resposta: 'Não',
+    observacao: 'Oriente o produtor sobre a importância do licenciamento ambiental para a regularização legal e manejo sustentável.'
+  };
+  assert.equal(grauLacuna(qLicencaAmbiental), 2, 'Não em licença ambiental é lacuna a tratar 2');
+  const stLicenca = classificarStatusResposta(qLicencaAmbiental);
+  assert.equal(stLicenca.isConforme, false, 'Não deve ser conforme');
+  assert.equal(stLicenca.tipo, 'lacuna');
+  assert.equal(stLicenca.label, 'Lacuna a Tratar (Exigência Legal/Regulatória)');
+
+  // 5. Testes em todas as demais áreas com obrigações legais / regulatórias:
+  // Alvará de funcionamento
+  const qAlvaraFunc = {
+    pergunta: 'A empresa possui alvará de funcionamento regularizado?',
+    problema: 'Formalização e Regularidade',
+    resposta: 'Não',
+    observacao: ''
+  };
+  assert.equal(grauLacuna(qAlvaraFunc), 2);
+  assert.equal(classificarStatusResposta(qAlvaraFunc).isConforme, false);
+  assert.equal(classificarStatusResposta(qAlvaraFunc).label, 'Lacuna a Tratar (Exigência Legal/Regulatória)');
+
+  // Vigilância sanitária
+  const qAlvaraSanit = {
+    pergunta: 'A empresa possui alvará sanitário da Vigilância Sanitária?',
+    problema: 'Adequação Sanitária',
+    resposta: 'Não',
+    observacao: 'Providenciar adequações físicas e solicitar vistoria da vigilância sanitária.'
+  };
+  assert.equal(grauLacuna(qAlvaraSanit), 2);
+  assert.equal(classificarStatusResposta(qAlvaraSanit).isConforme, false);
+
+  // Fiscal / Tributário (Emissão de nota fiscal)
+  const qNotaFiscal = {
+    pergunta: 'A empresa emite nota fiscal em 100% das vendas realizadas?',
+    problema: 'Gestão Fiscal',
+    resposta: 'Não',
+    observacao: 'Regularize a emissão de nota fiscal para evitar autuações da Receita.'
+  };
+  assert.equal(grauLacuna(qNotaFiscal), 2);
+  assert.equal(classificarStatusResposta(qNotaFiscal).isConforme, false);
+
+  // Trabalhista e Segurança (EPIs / Registro em carteira)
+  const qEpi = {
+    pergunta: 'Todos os funcionários utilizam os EPIs obrigatórios?',
+    problema: 'Segurança do Trabalho',
+    resposta: 'Não',
+    observacao: 'Forneça os EPIs e treine a equipe conforme as normas regulamentadoras NR-6.'
+  };
+  assert.equal(grauLacuna(qEpi), 2);
+  assert.equal(classificarStatusResposta(qEpi).isConforme, false);
 
   // Veredito da IA (por id) vale para todos os consumidores e cai se a observação mudar
   const resp = r('X', 'Possui alvará sanitário?', 'Não');
