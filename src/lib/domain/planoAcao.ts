@@ -1558,6 +1558,7 @@ export interface TarefaSync {
   atividade?: string;
   atividadeOrdem?: number;
   criticidade?: string;
+  status?: string;
 }
 
 const dataStr = (d: any): string | undefined => {
@@ -1631,6 +1632,10 @@ export function aplicarTarefaNoCronograma(atividades: AtividadeCronograma[], tar
     if (tarefa.responsavel) atv.responsavel = tarefa.responsavel;
     if (tarefa.cargaHoraria) atv.cargaHoraria = tarefa.cargaHoraria;
   }
+  if (tarefa.status !== undefined) {
+    atv.status = tarefa.status as any;
+    atv.incluirNoRelatorio = isAtividadeConcluida(tarefa.status);
+  }
   atv.prioridade = prio as AtividadeCronograma['prioridade'];
   if (ini) atv.dataInicio = ini;
   if (fim) atv.dataFim = fim;
@@ -1665,13 +1670,27 @@ export function adicionarTarefaAoCronograma(atividades: AtividadeCronograma[], t
     resultadoEsperado: tarefa.resultadoEsperado || '',
     responsavel: tarefa.responsavel || 'Consultor',
     idProblema: tarefa.idProblema || undefined,
-    status: 'Pendente',
+    status: (tarefa.status as any) || 'Pendente',
     prioridade: (tarefa.prioridade as AtividadeCronograma['prioridade']) || 'Média',
     dataInicio: dataStr(tarefa.dataInicio),
     dataFim: dataStr(tarefa.dataFim),
     area: tarefa.area,
+    incluirNoRelatorio: isAtividadeConcluida(tarefa.status),
   };
   const fim = lista.findIndex((a) => { const p = papelDaAtividade(a.nome); return p === 'analise' || p === 'relatorio'; });
   if (fim >= 0) lista.splice(fim, 0, nova); else lista.push(nova);
   return lista;
 }
+
+/** Verifica se a atividade tem status Concluído. */
+export function isAtividadeConcluida(status?: string): boolean {
+  return (status || '').toLowerCase().includes('conclu');
+}
+
+/** Verifica se a atividade deve constar no relatório (apenas Concluídas podem constar). */
+export function isAtividadeNoRelatorio(atv?: Pick<AtividadeCronograma, 'status' | 'incluirNoRelatorio'> | null): boolean {
+  if (!atv) return false;
+  if (!isAtividadeConcluida(atv.status)) return false;
+  return atv.incluirNoRelatorio !== false;
+}
+

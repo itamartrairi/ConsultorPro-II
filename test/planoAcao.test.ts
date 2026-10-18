@@ -5,6 +5,7 @@ import {
   ATIVIDADE_DIAGNOSTICO, ATIVIDADE_DEVOLUTIVA, ATIVIDADE_FERRAMENTAS, ATIVIDADE_ANALISE_FINAL, ATIVIDADE_RELATORIO_FINAL,
   aplicarTarefaNoCronograma, removerTarefaDoCronograma, adicionarTarefaAoCronograma, sincronizarRelatorioComCronograma,
   isPerguntaFeiraOuCanalComercial, isPerguntaInteresseOuOpcao,
+  isAtividadeConcluida, isAtividadeNoRelatorio,
 } from '../src/lib/domain/planoAcao';
 
 const r = (idProblema: string, pergunta: string, resposta: any, peso = 1, area = 'Finanças') =>
@@ -533,5 +534,47 @@ console.log('  OK: textos do relatório');
 
   console.log('  OK: sincronização bidirecional entre Plano de Ação e Relatório');
 }
+
+// 12. Regra de seleção "No Relatório" exclusiva para status Concluído
+{
+  // Concluído é elegível por padrão (true)
+  assert.equal(isAtividadeConcluida('Concluído'), true);
+  assert.equal(isAtividadeConcluida('CONCLUÍDO'), true);
+  assert.equal(isAtividadeNoRelatorio({ status: 'Concluído' }), true);
+  assert.equal(isAtividadeNoRelatorio({ status: 'Concluído', incluirNoRelatorio: true }), true);
+  // Concluído desmarcado explicitamente pelo usuário
+  assert.equal(isAtividadeNoRelatorio({ status: 'Concluído', incluirNoRelatorio: false }), false);
+
+  // Demais status NUNCA são permitidos no relatório, mesmo se incluirNoRelatorio vier true
+  const outrosStatus = ['Pendente', 'Em Andamento', 'Atrasado', 'Não Iniciado', 'Cancelado', undefined];
+  for (const st of outrosStatus) {
+    assert.equal(isAtividadeConcluida(st), false, `Status ${st} não deve ser considerado concluído`);
+    assert.equal(isAtividadeNoRelatorio({ status: st as any }), false, `Status ${st} não deve constar no relatório`);
+    assert.equal(isAtividadeNoRelatorio({ status: st as any, incluirNoRelatorio: true }), false, `Status ${st} com incluirNoRelatorio:true deve ser bloqueado`);
+  }
+
+  // Ao sincronizar tarefa com mudança de status via aplicarTarefaNoCronograma
+  const atvs = [
+    { nome: 'Atividade 1', status: 'Pendente', cargaHoraria: '4h', solucaoProposta: 'Sol 1', incluirNoRelatorio: false }
+  ];
+  const atualizadaConcluida = aplicarTarefaNoCronograma(atvs as any, {
+    problema: 'Atividade 1',
+    status: 'Concluído'
+  });
+  assert.equal(atualizadaConcluida[0].status, 'Concluído');
+  assert.equal(atualizadaConcluida[0].incluirNoRelatorio, true);
+  assert.equal(isAtividadeNoRelatorio(atualizadaConcluida[0]), true);
+
+  const revertidaPendente = aplicarTarefaNoCronograma(atualizadaConcluida, {
+    problema: 'Atividade 1',
+    status: 'Em Andamento'
+  });
+  assert.equal(revertidaPendente[0].status, 'Em Andamento');
+  assert.equal(revertidaPendente[0].incluirNoRelatorio, false);
+  assert.equal(isAtividadeNoRelatorio(revertidaPendente[0]), false);
+
+  console.log('  OK: seleção "No Relatório" exclusiva para status Concluído e bloqueio dos demais status');
+}
+
 console.log('Todos os testes de planoAcao passaram.');
 

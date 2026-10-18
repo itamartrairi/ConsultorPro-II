@@ -152,7 +152,7 @@ export function instalarLeituraDescriptografada(): void {
     const cache = cacheDescriptografia.get(key);
     if (cache && cache.raw === raw) return cache.valor;
     const valor = decryptValue(raw);
-    if (valor.startsWith('enc:v1:')) return null;
+    if (valor.startsWith('enc:v1:') || /[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(valor)) return null;
     cacheDescriptografia.set(key, { raw, valor });
     return valor;
   };

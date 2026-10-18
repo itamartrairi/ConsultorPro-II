@@ -182,6 +182,8 @@ import {
   removerTarefaDoCronograma,
   adicionarTarefaAoCronograma,
   sincronizarRelatorioComCronograma,
+  isAtividadeConcluida,
+  isAtividadeNoRelatorio,
 } from './lib/domain/planoAcao';
 
 // --- Safe LocalStorage with AES-256 Encryption at Rest ---
@@ -2229,10 +2231,11 @@ const CronogramaView = ({
     loadLocalDiagnosticoReport(selectedDiagnostico.id).then((cached) => {
       if (!isMounted || !cached) return;
       if (cached.cronograma && Array.isArray(cached.cronograma) && cached.cronograma.length > 0) {
-        setAtividades(prev => {
-          if (!prev || prev.length === 0) return cached.cronograma;
-          return cached.cronograma;
-        });
+        const calibrated = (cached.cronograma as AtividadeCronograma[]).map(atv => ({
+          ...atv,
+          incluirNoRelatorio: isAtividadeConcluida(atv.status) ? (atv.incluirNoRelatorio !== false) : false
+        }));
+        setAtividades(calibrated);
       }
 
       if (cached.dadosConsultoria && Object.keys(cached.dadosConsultoria).length > 0) {
@@ -2555,7 +2558,11 @@ const CronogramaView = ({
   // Sync state if selectedDiagnostico changes from outside
   useEffect(() => {
     if (selectedDiagnostico.cronograma && selectedDiagnostico.cronograma.length > 0 && selectedDiagnostico.cronograma.some(a => a.nome && a.nome.trim() !== '')) {
-      setAtividades(selectedDiagnostico.cronograma);
+      const calibradas = selectedDiagnostico.cronograma.map(atv => ({
+        ...atv,
+        incluirNoRelatorio: isAtividadeConcluida(atv.status) ? (atv.incluirNoRelatorio !== false) : false
+      }));
+      setAtividades(calibradas);
     } else {
       const segment = selectedDiagnostico.tipoEmpresa || 'Geral';
       const sameSegmentDiag = (historicalData || []).find(d => 
@@ -2571,7 +2578,8 @@ const CronogramaView = ({
           return {
             ...atv,
             dataInicio: defaultDate,
-            dataFim: defaultDate
+            dataFim: defaultDate,
+            incluirNoRelatorio: isAtividadeConcluida(atv.status) ? (atv.incluirNoRelatorio !== false) : false
           };
         });
         setAtividades(adapted);
@@ -2780,7 +2788,13 @@ const CronogramaView = ({
 
   const updateAtividade = async (index: number, field: keyof AtividadeCronograma, value: string) => {
     const newAtividades = [...atividades];
-    newAtividades[index] = { ...newAtividades[index], [field]: value };
+    const isChangingStatus = field === 'status';
+    const isConcluida = isChangingStatus ? isAtividadeConcluida(value) : isAtividadeConcluida(newAtividades[index].status);
+    newAtividades[index] = { 
+      ...newAtividades[index], 
+      [field]: value,
+      ...(isChangingStatus ? { incluirNoRelatorio: isConcluida } : {})
+    };
     setAtividades(newAtividades);
 
     const sanitizedAtv = sanitizeForFirestore(newAtividades);
@@ -2828,9 +2842,10 @@ const CronogramaView = ({
     setAtividades(prev => {
       const updated = [...prev];
       const current = updated[index];
-      const isCurrentlyIncluded = current.incluirNoRelatorio !== undefined 
-        ? current.incluirNoRelatorio 
-        : (current.status || '').toLowerCase().includes('conclu');
+      if (!isAtividadeConcluida(current.status)) {
+        return prev;
+      }
+      const isCurrentlyIncluded = isAtividadeNoRelatorio(current);
       updated[index] = {
         ...current,
         incluirNoRelatorio: !isCurrentlyIncluded
@@ -2840,13 +2855,16 @@ const CronogramaView = ({
   };
 
   const selectAllAtividadesRelatorio = () => {
-    setAtividades(prev => prev.map(a => ({ ...a, incluirNoRelatorio: true })));
+    setAtividades(prev => prev.map(a => ({
+      ...a,
+      incluirNoRelatorio: isAtividadeConcluida(a.status)
+    })));
   };
 
   const selectConcluidasAtividadesRelatorio = () => {
     setAtividades(prev => prev.map(a => ({
       ...a,
-      incluirNoRelatorio: (a.status || '').toLowerCase().includes('conclu')
+      incluirNoRelatorio: isAtividadeConcluida(a.status)
     })));
   };
 
@@ -3089,12 +3107,7 @@ const CronogramaView = ({
     // Selected activities for the report
     const atividadesSelecionadas = atividades
       .map((atv, originalIndex) => ({ atv, originalIndex, activityNumber: originalIndex + 1 }))
-      .filter(item => {
-        if (item.atv.incluirNoRelatorio !== undefined) {
-          return item.atv.incluirNoRelatorio;
-        }
-        return (item.atv.status || '').toLowerCase().includes('conclu');
-      });
+      .filter(item => isAtividadeNoRelatorio(item.atv));
 
     const totalHorasSelecionadas = atividadesSelecionadas.reduce((acc, item) => {
       const horas = parseInt((item.atv.cargaHoraria || '').toString().replace(/\D/g, '')) || 0;
@@ -4271,7 +4284,7 @@ const CronogramaView = ({
             <div className="flex items-center gap-2">
               <ListFilter size={16} className="text-slate-400 shrink-0" />
               <div className="text-xs text-slate-700 font-medium">
-                <strong>{atividades.filter(a => a.incluirNoRelatorio !== undefined ? a.incluirNoRelatorio : (a.status || '').toLowerCase().includes('conclu')).length} de {atividades.length}</strong> atividades selecionadas para o relatório (<strong>{atividades.filter(a => a.incluirNoRelatorio !== undefined ? a.incluirNoRelatorio : (a.status || '').toLowerCase().includes('conclu')).reduce((acc, a) => acc + (parseInt((a.cargaHoraria || '0').replace(/\D/g, '')) || 0), 0)}hs</strong> de {atividades.reduce((acc, a) => acc + (parseInt((a.cargaHoraria || '0').replace(/\D/g, '')) || 0), 0)}hs)
+                <strong>{atividades.filter(isAtividadeNoRelatorio).length} de {atividades.length}</strong> atividades selecionadas para o relatório (<strong>{atividades.filter(isAtividadeNoRelatorio).reduce((acc, a) => acc + (parseInt((a.cargaHoraria || '0').replace(/\D/g, '')) || 0), 0)}hs</strong> de {atividades.reduce((acc, a) => acc + (parseInt((a.cargaHoraria || '0').replace(/\D/g, '')) || 0), 0)}hs)
               </div>
             </div>
 
@@ -4280,25 +4293,16 @@ const CronogramaView = ({
                 type="button"
                 onClick={selectConcluidasAtividadesRelatorio}
                 className="px-2.5 py-1 text-xs font-bold bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 rounded-lg border border-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
-                title="Incluir apenas atividades que possuem status Concluído"
+                title="Incluir todas as atividades que possuem status Concluído"
               >
                 <CheckCircle size={13} className="text-emerald-600" />
                 <span>Selecionar Concluídas</span>
               </button>
               <button
                 type="button"
-                onClick={selectAllAtividadesRelatorio}
-                className="px-2.5 py-1 text-xs font-bold bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 rounded-lg border border-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
-                title="Incluir todas as atividades no relatório"
-              >
-                <CheckCheck size={13} className="text-blue-600" />
-                <span>Selecionar Todas</span>
-              </button>
-              <button
-                type="button"
                 onClick={clearSelectionAtividadesRelatorio}
                 className="px-2.5 py-1 text-xs font-bold bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 rounded-lg border border-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
-                title="Limpar seleção para escolher manualmente"
+                title="Limpar seleção do relatório"
               >
                 <Square size={13} className="text-slate-400" />
                 <span>Desmarcar Todas</span>
@@ -4308,9 +4312,8 @@ const CronogramaView = ({
         </Card>
 
         {atividades.map((atv, idx) => {
-          const isIncluded = atv.incluirNoRelatorio !== undefined 
-            ? atv.incluirNoRelatorio 
-            : (atv.status || '').toLowerCase().includes('conclu');
+          const isConcluida = isAtividadeConcluida(atv.status);
+          const isIncluded = isAtividadeNoRelatorio(atv);
 
           return (
           <Card 
@@ -4352,17 +4355,27 @@ const CronogramaView = ({
                 {/* Botão de Inclusão no Relatório */}
                 <button
                   type="button"
-                  onClick={() => toggleAtividadeRelatorio(idx)}
+                  disabled={!isConcluida}
+                  onClick={() => {
+                    if (!isConcluida) return;
+                    toggleAtividadeRelatorio(idx);
+                  }}
                   className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border shadow-2xs cursor-pointer",
-                    isIncluded
-                      ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100"
-                      : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200"
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border shadow-2xs",
+                    !isConcluida
+                      ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60"
+                      : isIncluded
+                        ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100 cursor-pointer"
+                        : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200 cursor-pointer"
                   )}
-                  title="Clique para incluir ou remover esta atividade do Relatório de Consultoria"
+                  title={
+                    !isConcluida
+                      ? "Apenas atividades com status Concluído podem ser incluídas no relatório"
+                      : "Clique para incluir ou remover esta atividade do Relatório de Consultoria"
+                  }
                 >
                   {isIncluded ? <CheckSquare size={15} className="text-emerald-600" /> : <Square size={15} className="text-slate-400" />}
-                  <span>{isIncluded ? "No Relatório" : "Oculta do Relatório"}</span>
+                  <span>{isIncluded ? "No Relatório" : isConcluida ? "Oculta do Relatório" : "Oculta (Requer Concluído)"}</span>
                 </button>
 
                 <div className="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
@@ -4588,7 +4601,11 @@ const CronogramaView = ({
           onConfirm={async () => {
             if (editingActivityIndex === null || !editingActivity) return;
             const idx = editingActivityIndex;
-            const updatedAtv = editingActivity;
+            const isConcluida = isAtividadeConcluida(editingActivity.status);
+            const updatedAtv: AtividadeCronograma = {
+              ...editingActivity,
+              incluirNoRelatorio: isConcluida ? (editingActivity.incluirNoRelatorio !== false) : false
+            };
             const newAtividades = [...atividades];
             newAtividades[idx] = updatedAtv;
             setAtividades(newAtividades);
@@ -4655,39 +4672,55 @@ const CronogramaView = ({
               </Button>
             </div>
             {/* Toggle para inclusão no relatório */}
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
-              <div>
-                <label className="text-xs font-bold text-slate-700 block">Incluir esta Atividade no Relatório de Consultoria</label>
-                <p className="text-[11px] text-slate-500">Se desmarcado, esta atividade não aparecerá no PDF gerado.</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  const currentInc = editingActivity.incluirNoRelatorio !== undefined 
-                    ? editingActivity.incluirNoRelatorio 
-                    : (editingActivity.status || '').toLowerCase().includes('conclu');
-                  setEditingActivity({ ...editingActivity, incluirNoRelatorio: !currentInc });
-                }}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border cursor-pointer",
-                  (editingActivity.incluirNoRelatorio !== undefined ? editingActivity.incluirNoRelatorio : (editingActivity.status || '').toLowerCase().includes('conclu'))
-                    ? "bg-emerald-50 text-emerald-800 border-emerald-300"
-                    : "bg-white text-slate-600 border-slate-200"
-                )}
-              >
-                {(editingActivity.incluirNoRelatorio !== undefined ? editingActivity.incluirNoRelatorio : (editingActivity.status || '').toLowerCase().includes('conclu')) ? (
-                  <>
-                    <CheckSquare size={16} className="text-emerald-600" />
-                    <span>No Relatório</span>
-                  </>
-                ) : (
-                  <>
-                    <Square size={16} className="text-slate-400" />
-                    <span>Oculta do Relatório</span>
-                  </>
-                )}
-              </button>
-            </div>
+            {(() => {
+              const isConcluida = isAtividadeConcluida(editingActivity.status);
+              const isIncluded = isConcluida && (editingActivity.incluirNoRelatorio !== false);
+
+              return (
+                <div className={cn(
+                  "p-3 border rounded-xl flex items-center justify-between transition-colors",
+                  isConcluida ? "bg-slate-50 border-slate-200" : "bg-slate-100/70 border-slate-200/80"
+                )}>
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block">Incluir esta Atividade no Relatório de Consultoria</label>
+                    <p className="text-[11px] text-slate-500">
+                      {isConcluida 
+                        ? "Atividade com status Concluído. Se desmarcado, esta atividade não aparecerá no PDF gerado." 
+                        : "Apenas atividades com status Concluído podem ser incluídas no relatório."}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={!isConcluida}
+                    onClick={() => {
+                      if (!isConcluida) return;
+                      setEditingActivity({ ...editingActivity, incluirNoRelatorio: !isIncluded });
+                    }}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border",
+                      !isConcluida
+                        ? "bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed opacity-60"
+                        : isIncluded
+                          ? "bg-emerald-50 text-emerald-800 border-emerald-300 cursor-pointer hover:bg-emerald-100"
+                          : "bg-white text-slate-600 border-slate-200 cursor-pointer hover:bg-slate-50"
+                    )}
+                    title={!isConcluida ? "Apenas atividades com status Concluído podem ser incluídas" : undefined}
+                  >
+                    {isIncluded ? (
+                      <>
+                        <CheckSquare size={16} className="text-emerald-600" />
+                        <span>No Relatório</span>
+                      </>
+                    ) : (
+                      <>
+                        <Square size={16} className="text-slate-400" />
+                        <span>{isConcluida ? "Oculta do Relatório" : "Bloqueado"}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              );
+            })()}
 
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Vincular a Problema Diagnosticado</label>
@@ -4786,8 +4819,14 @@ const CronogramaView = ({
                   value={editingActivity.status}
                   onChange={(e) => {
                     const statusVal = e.target.value as any;
-                    const autoProg = statusVal === 'Concluído' ? 100 : statusVal === 'Em Andamento' ? 50 : statusVal === 'Atrasado' ? 25 : 0;
-                    setEditingActivity({...editingActivity, status: statusVal, progressoKPI: autoProg});
+                    const isConcluida = isAtividadeConcluida(statusVal);
+                    const autoProg = isConcluida ? 100 : statusVal === 'Em Andamento' ? 50 : statusVal === 'Atrasado' ? 25 : 0;
+                    setEditingActivity({
+                      ...editingActivity, 
+                      status: statusVal, 
+                      progressoKPI: autoProg,
+                      incluirNoRelatorio: isConcluida
+                    });
                   }}
                 >
                   <option value="Pendente">Pendente</option>
@@ -16421,7 +16460,7 @@ export default function App() {
     // Cronograma
     if (selectedDiagnostico.cronograma && selectedDiagnostico.cronograma.length > 0) {
       const cronogramaData = selectedDiagnostico.cronograma
-        .filter(atv => atv.nome || atv.descricao)
+        .filter(atv => (atv.nome || atv.descricao) && isAtividadeNoRelatorio(atv))
         .map(atv => [
           atv.nome || '',
           formatarDescricaoObjetiva(atv.descricao) || '',
