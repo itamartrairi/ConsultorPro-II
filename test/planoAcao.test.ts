@@ -461,8 +461,37 @@ console.log('  OK: textos do relatório');
     { models: { generateContent: async () => ({ text: JSON.stringify([{ id: resp.id, temProblema: false }]) }) } }, [resp]);
   assert.equal(ia.get(resp.id), false);
   assert.equal(grauLacuna(resp), 0, 'veredito da IA usado sem passar o mapa');
-  resp.observacao = 'Mudou o contexto';
-  assert.equal(grauLacuna(resp), 2, 'veredito antigo descartado quando a observação muda');
+  // Casos reais de conformidade e maturidade com resposta Sim (ex.: qualidade da cajuína, padronização, controle operacional)
+  const qCajuinaQualidade = {
+    pergunta: 'Existe uma análise definida para garantir a qualidade da cajuína em cada lote?',
+    problema: 'Controle de Qualidade',
+    resposta: 'Sim',
+    observacao: 'A análise de qualidade em cada lote demonstra maturidade operacional e assegura a padronização da cajuína.'
+  };
+  assert.equal(grauLacuna(qCajuinaQualidade), 0, 'Sim em controle de qualidade da cajuína é ponto forte');
+  assert.equal(classificarStatusResposta(qCajuinaQualidade).isConforme, true);
+  assert.equal(classificarStatusResposta(qCajuinaQualidade).label, 'Ponto Forte (Conforme)');
+
+  const qCajuinaParametros = {
+    pergunta: 'Existe controle de tempo, temperatura e proporção de açúcar em cada lote produzido?',
+    problema: 'Parâmetros Produtivos',
+    resposta: 'Sim',
+    observacao: 'O controle de parâmetros produtivos evidencia excelente maturidade operacional e garante a padronização da cajuína.'
+  };
+  assert.equal(grauLacuna(qCajuinaParametros), 0, 'Sim em controle de parâmetros da cajuína é ponto forte');
+  assert.equal(classificarStatusResposta(qCajuinaParametros).isConforme, true);
+  assert.equal(classificarStatusResposta(qCajuinaParametros).label, 'Ponto Forte (Conforme)');
+
+  // Outros casos da biblioteca onde resposta Sim é acompanhada de observação afirmativa de boas práticas
+  const qBoasPraticasEstoque = {
+    pergunta: 'A empresa possui controle de estoque?',
+    problema: 'Gestão de Estoques',
+    resposta: 'Sim',
+    observacao: 'O controle de estoque assegura a organização dos insumos e otimiza a rotatividade.'
+  };
+  assert.equal(grauLacuna(qBoasPraticasEstoque), 0);
+  assert.equal(classificarStatusResposta(qBoasPraticasEstoque).isConforme, true);
+
   console.log('  OK: observações e contexto não geram lacuna indevida');
 }
 

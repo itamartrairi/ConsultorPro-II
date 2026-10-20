@@ -265,12 +265,32 @@ export function isPerguntaInteresseOuOpcao(pergunta?: string): boolean {
  * Se o consultor orientou elaborar, capacitar, implantar, treinar, corrigir, orientar, regularizar, etc.,
  * ou descreveu uma carência/problema, isso representa INEQUIVOCAMENTE uma LACUNA A TRATAR.
  */
+/**
+ * Expressões que confirmam maturidade, qualidade, conformidade, segurança ou padronização atingida.
+ * NUNCA devem ser interpretadas como indicação de problema ou ação corretiva.
+ */
+const PADRAO_CONFIRMA_CONFORME = new RegExp(
+  [
+    '\\b(garante|garantindo|assegura|assegurando|promove|promovendo|comprova|comprovando|evidencia|evidenciando|demonstra|demonstrando|revela|revelando|mantem|mantendo|fortalece|fortalecendo|consolida|consolidando)\\s+(a\\s+|o\\s+|as\\s+|os\\s+|)([a-zÀ-ÿ]+\\s+)?(padronizacao|qualidade|seguranca|conformidade|estabilidade|eficiencia|maturidade|boas\\s+praticas|controle)\\b',
+    '\\b(demonstra|demonstrando|evidencia|evidenciando|comprova|comprovando|revela|revelando)\\s+(a\\s+|o\\s+|)([a-zÀ-ÿ]+\\s+)?(maturidade|ponto\\s+forte|conformidade|qualidade|padronizacao|boas\\s+praticas|gestao|sustentabilidade)\\b',
+    '\\b(maturidade\\s+operacional|maturidade\\s+produtiva|maturidade\\s+de\\s+gestao|maturidade\\s+empresarial|excelente\\s+maturidade)\\b',
+    '\\b(padronizacao\\s+da\\s+cajuina|padronizacao\\s+do\\s+produto|padronizacao\\s+dos\\s+produtos|padronizacao\\s+produtiva|qualidade\\s+da\\s+cajuina|qualidade\\s+do\\s+produto|controle\\s+de\\s+parametros)\\b',
+  ].join('|'),
+  'i'
+);
+
+/**
+ * Observações que indicam AÇÃO CORRETIVA, PRESCRIÇÃO DE CONSULTORIA ou PROBLEMA REAL.
+ * Se o consultor orientou elaborar, capacitar, implantar, treinar, corrigir, orientar, regularizar, etc.,
+ * ou descreveu uma carência/problema, isso representa INEQUIVOCAMENTE uma LACUNA A TRATAR.
+ */
 const PADRAO_OBS_MANDA_CORRIGIR = new RegExp(
   [
     // Verbos de ação no infinitivo, imperativo ou presente do subjuntivo de consultoria para sanar deficiência
     '\\b(elaborar?|elabore[ms]?|implantar?|implante[ms]?|implementar?|implemente[ms]?|capacitar?|capacite[ms]?|treinar?|treine[ms]?|qualificar?|qualifique[ms]?|desenvolver?|desenvolva[ms]?|padronizar?|padronize[ms]?|formalizar?|formalize[ms]?|estruturar?|estruture[ms]?|organizar?|organize[ms]?|instituir?|institua[ms]?|reestruturar?|reestruture[ms]?|readequar?|readeque[ms]?|ajustar?|ajuste[ms]?|corrigir?|corrija[ms]?|sanar?|sane[ms]?|sanear?|revisar?|revise[ms]?|providenciar?|providencie[ms]?|definir?|defina[ms]?|estabelecer?|estabeleca[ms]?|adotar?|adote[ms]?|introduzir?|introduza[ms]?|criar?|crie[ms]?|planejar?|planeje[ms]?|fazer?|faca[ms]?|renegociar?|renegocie[ms]?|quitar?|quite[ms]?|regularizar?|regularize[ms]?|adequar?|adeque[ms]?|conscientizar?|conscientize[ms]?|licenciar?|licencie[ms]?|orientar?|oriente[ms]?|solicitar?|solicite[ms]?|protocolar?|protocole[ms]?)\\b',
-    // Substantivos e locuções de ação corretiva recomendada
-    '\\b(elaboracao|implantacao|implementacao|capacitacao|treinamento|qualificacao|padronizacao|formalizacao|estruturacao|reestruturacao|organizacao|readequacao|ajuste|correcao|revisao|saneamento|adocao|regularizacao|adequacao|licenciamento)\\s+(de|da|do|para|urgente|prioritari)',
+    // Substantivos e locuções prescritivas de ação corretiva recomendada
+    '\\b(necessidade|necessaria|necessario|recomenda-se|recomenda|sugere-se|sugere|orienta-se|orienta|urgente|prioritari[oa]|providenciar|promover|falta|ausencia|carencia)\\s+(de\\s+|a\\s+|o\\s+|)(elaboracao|implantacao|implementacao|capacitacao|treinamento|qualificacao|padronizacao|formalizacao|estruturacao|reestruturacao|organizacao|readequacao|ajuste|correcao|revisao|saneamento|adocao|regularizacao|adequacao|licenciamento)\\b',
+    '\\b(elaboracao|implantacao|implementacao|capacitacao|treinamento|qualificacao|padronizacao|formalizacao|estruturacao|reestruturacao|organizacao|readequacao|ajuste|correcao|revisao|saneamento|adocao|regularizacao|adequacao|licenciamento)\\s+(urgente|prioritari[oa]|obrigatori[oa]|emergencial)',
     // Expressões prescritivas e mandatórias de consultoria
     '\\b(manda|mando|orienta|recomenda|sugere|determina)\\s+(a |para |)(corrigir|ajustar|elaborar|implantar|capacitar|adequar|sanar|fazer|criar|padronizar|regularizar|licenciar)',
     '\\b(oriente|orientar|orientem|orientando|orientacao)\\s+(o |a |os |as )?(produtor|produtores|empresa|cliente|gestor|equipe|empreendedor)?',
@@ -333,8 +353,8 @@ const PADRAO_OBS_SEM_PROBLEMA = new RegExp(
     '\\b(excelente|otimo|otima|otimos|otimas|muito\\s+bom|muito\\s+boa|muito\\s+positivo|muito\\s+positiva)\\b',
     '\\b(parceria(s)?\\s+(ativa|ativas|consolidada|consolidadas|existente|existentes|com\\s+sucesso)|acesso\\s+a\\s+mercados?|venda\\s+institucional|pnae|paa)\\b',
     '\\bnao\\s+(utilizacao|uso|realizacao|adocao|pratica)\\s+de\\s+(queimadas?|fogo|lenha|madeira|agrotoxicos?|defensivos?|poluentes?)\\b',
-    '\\b(maturidade\\s+(ambiental|empresarial|de\\s+gestao|produtiva)|preservacao\\s+(do\\s+solo|ambiental|das\\s+nascentes|da\\s+agua|dos\\s+recursos|da\\s+vegetacao))\\b',
-    '\\b(evidencia|demonstra|comprova|indica|revela)\\s+(a\\s+|o\\s+|)(maturidade|ponto\\s+forte|conformidade|preservacao|boas\\s+praticas|compromisso|gestao|sustentabilidade)\\b',
+    '\\b(maturidade\\s+(ambiental|empresarial|de\\s+gestao|produtiva|operacional)|preservacao\\s+(do\\s+solo|ambiental|das\\s+nascentes|da\\s+agua|dos\\s+recursos|da\\s+vegetacao))\\b',
+    '\\b(evidencia|evidenciando|demonstra|demonstrando|comprova|comprovando|indica|indicando|revela|revelando)\\s+(a\\s+|o\\s+|as\\s+|os\\s+|)([a-zÀ-ÿ]+\\s+)?(maturidade|ponto\\s+forte|conformidade|preservacao|boas\\s+praticas|compromisso|gestao|sustentabilidade|qualidade|padronizacao)\\b',
     '\\b(sustentabilidade|sustentavel|pratica\\s+sustentavel|conservacao\\s+do\\s+solo|agroecolog(ia|ico|ica))\\b',
     '\\b(conformidade\\s+ambiental|adequacao\\s+ambiental|sem\\s+impacto\\s+ambiental|baixo\\s+impacto|livre\\s+de\\s+(queimadas?|agrotoxicos?|lenha|poluicao))\\b',
   ].join('|'),
@@ -353,15 +373,42 @@ const PADRAO_OBS_RISCO_RESOLVIDO = new RegExp(
   'i'
 );
 
+/** Expressões na observação que expressamente desmentem/contestam a resposta formal Sim. */
+const PADRAO_OBS_CONTESTA_SIM = new RegExp(
+  [
+    '\\b(apesar de|embora|marcou sim|respondeu sim|disse que sim|afirma que sim)\\b[^\n.]*\\b(nao (possui|tem|faz|realiza|adota|utiliza|aplica|controla|separa|emite)|apenas no papel|nao funciona|inexistente|descontrolad|desvios?|dividas?|irregular|vencid[oa]|informal)\\b',
+    '\\b(nao funciona na pratica|apenas no papel|totalmente informal|informalidade total|cliente nao controla)\\b',
+    '\\b(mistura|misturam) (contas?|financas?|despesas?) (pessoais|da familia)\\b',
+    '\\b(retirada(s)?|saque(s)?) (descontrolad|sem controle|sem criterio|livre)\\b',
+    '\\b(licenca|alvara|extintor|certificado|registro) (vencid[oa]|irregular|cassad[oa]|cancelad[oa])\\b',
+  ].join('|'),
+  'i'
+);
+
+export function observacaoContestaSim(observacao?: string): boolean {
+  const o = norm(observacao);
+  if (!o) return false;
+  if (PADRAO_CONFIRMA_CONFORME.test(o) || PADRAO_OBS_SEM_PROBLEMA.test(o)) {
+    return false;
+  }
+  return PADRAO_OBS_CONTESTA_SIM.test(o);
+}
+
 export function observacaoIndicaProblema(observacao?: string): boolean {
   const o = norm(observacao);
   if (!o) return false;
+  // Expressões que confirmam maturidade, qualidade ou conformidade NUNCA indicam problema
+  if (PADRAO_CONFIRMA_CONFORME.test(o) || PADRAO_OBS_SEM_PROBLEMA.test(o)) {
+    return false;
+  }
   return PADRAO_OBS_MANDA_CORRIGIR.test(o);
 }
 
 export function observacaoIndicaSemProblema(observacao?: string, perguntaNegativa = false): boolean {
   const o = norm(observacao);
   if (!o) return false;
+  // Confirmação explícita de conformidade, padronização ou maturidade
+  if (PADRAO_CONFIRMA_CONFORME.test(o)) return true;
   // Se a observação prescreve ação corretiva ou aponta problema, NUNCA pode ser considerada "sem problema"
   if (PADRAO_OBS_MANDA_CORRIGIR.test(o)) {
     return false;
@@ -392,10 +439,21 @@ export function grauLacuna(
   const mandaCorrigir = observacaoIndicaProblema(r.observacao);
   const temSemProblema = !mandaCorrigir && observacaoIndicaSemProblema(r.observacao, negativa);
 
-  // 1. A OBSERVAÇÃO DO CONSULTOR TEM SOBERANIA NA ANÁLISE:
+  // 1. REGRA FUNDAMENTAL: RESPOSTA "SIM" EM PERGUNTA POSITIVA/CONTROLE É CONFORME / PONTO FORTE (grauLacuna = 0)
+  // Por definição conceitual e metodológica, responder "Sim" a uma boa prática ou controle atesta que a empresa
+  // atende ao requisito. A observação só pode desqualificar o "Sim" se expressamente registrar fraude,
+  // abandono ou que o processo na verdade não existe na prática (observacaoContestaSim).
+  if (!negativa && v === 'Sim') {
+    if (observacaoContestaSim(r.observacao)) {
+      return 2; // Observação contradiz o Sim formal do cliente e atesta vulnerabilidade real
+    }
+    return 0; // Ponto Forte / Conforme
+  }
+
+  // 2. A OBSERVAÇÃO DO CONSULTOR TEM SOBERANIA NA ANÁLISE:
   // Se a observação manda orientar, corrigir, elaborar, capacitar, implantar, estruturar ou descreve deficiência real:
   if (mandaCorrigir) {
-    // É lacuna a tratar: 1 se for Parcial, 2 se for Não ou Sim onde a prática requer intervenção/correção
+    // É lacuna a tratar: 1 se for Parcial, 2 se for Não ou Sim em pergunta de risco
     return v === 'Parcial' ? 1 : 2;
   }
 
@@ -404,7 +462,7 @@ export function grauLacuna(
     return 0;
   }
 
-  // 2. Preceitos ambientais de práticas nocivas ou consumo de biomassa (queimadas, uso de lenha/madeira, poluição):
+  // 3. Preceitos ambientais de práticas nocivas ou consumo de biomassa (queimadas, uso de lenha/madeira, poluição):
   // Se o produtor respondeu "Não", ele NÃO pratica o ato danoso, o que é conformidade ambiental plena.
   const isPraticaNocivaAmbiental = /\b(queimada|queimadas|fogo|lenha|madeira|poluicao|descarte inadequado|agrotoxico)\b/i.test(r.pergunta || '');
   if (isPraticaNocivaAmbiental && v === 'Não') {
@@ -510,12 +568,13 @@ export function classificarStatusResposta(
       };
     }
     if (!negativa && r.resposta === 'Sim') {
+      const isReforcadoPontoForte = temObsOk || PADRAO_CONFIRMA_CONFORME.test(norm(r.observacao));
       return {
         tipo: 'conforme',
-        label: 'Atendido / Conforme',
-        detalhe: temObsOk
-          ? 'Prática de gestão plenamente atendida e reforçada pela observação do consultor'
-          : 'Prática de gestão plenamente atendida',
+        label: isReforcadoPontoForte ? 'Ponto Forte (Conforme)' : 'Atendido / Conforme',
+        detalhe: isReforcadoPontoForte
+          ? 'Prática de gestão plenamente atendida e reforçada como ponto forte da empresa'
+          : 'Prática de gestão plenamente atendida e conforme',
         isConforme: true,
       };
     }
