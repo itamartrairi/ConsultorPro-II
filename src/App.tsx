@@ -4103,6 +4103,8 @@ const CronogramaView = ({
           </Modal>
         )}
 
+        {/* Evidências Gerais da Consultoria (Ocultado a pedido) */}
+        {false && (
         <Card className="p-6 mb-8 border-slate-100 shadow-sm">
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
             <div className="flex items-center gap-3">
@@ -4228,6 +4230,7 @@ const CronogramaView = ({
             )}
           </div>
         </Card>
+        )}
 
         {/* Painel de Controle: Relatório de Consultoria & Seleção de Atividades */}
         <Card className="p-5 border-slate-200 bg-white shadow-sm">
@@ -9311,34 +9314,6 @@ const HomeView = ({
         </motion.div>
       )}
 
-      <div className="bg-gradient-to-br from-sky-700 via-sky-600 to-blue-500 rounded-[2.5rem] p-12 text-white shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
-        <div className="relative z-10">
-          {currentCredenciada && (
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white/20 backdrop-blur-md rounded-full text-xs font-black text-white mb-3 tracking-wide border border-white/25 shadow-sm">
-              <Building2 size={13} className="text-emerald-300" />
-              <span>{currentCredenciada.razaoSocial}</span>
-              {currentCredenciada.cnpj && (
-                <span className="font-mono opacity-90 font-bold border-l border-white/30 pl-2">
-                  {formatCNPJ(currentCredenciada.cnpj)}
-                </span>
-              )}
-            </div>
-          )}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 bg-white/15 backdrop-blur-md rounded-full text-xs font-bold text-sky-100 mb-4 tracking-widest uppercase border border-white/20 ml-2">
-            by Itàmar Gomes
-          </div>
-          <h2 className="text-5xl font-black tracking-tighter mb-6 leading-none">Melhore os resultados dos seus clientes.</h2>
-          <p className="text-sky-100 text-lg max-w-2xl font-medium leading-relaxed opacity-90">
-            Gerencie clientes, realize diagnósticos precisos e acompanhe a execução dos planos de ação em tempo real.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            <Button onClick={() => setView('companies')} variant="secondary" className="bg-white text-sky-600 hover:bg-sky-50 border-none px-8 py-6 text-sm font-bold uppercase tracking-widest rounded-3xl shadow-lg">
-              Começar Agora
-            </Button>
-          </div>
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <Card className="p-8 hover:shadow-2xl transition-all cursor-pointer border-slate-100 group rounded-[2rem] bg-white relative overflow-hidden" onClick={() => setView('companies')}>
