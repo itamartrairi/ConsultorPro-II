@@ -63,6 +63,7 @@ import {
 import { getAI, extractAndParseJSON, Type } from '../App';
 import { SyncSummary } from './SmartSyncModal';
 import { tiposDeNegocio } from '../lib/domain/relatorioSegmentos';
+import { grauLacuna } from '../lib/domain/planoAcao';
 
 // --- Custom Interfaces ---
 interface Empresa {
@@ -310,19 +311,53 @@ export const MacroDashboardView = ({
           });
         }
         
+        let localRespsCache: any[] = [];
+        try {
+          const rawLocal = localStorage.getItem('local_respostas');
+          if (rawLocal) localRespsCache = JSON.parse(rawLocal);
+        } catch {}
+
         const items = diagnosticos.map(diag => {
-          const resps = allRespsMap.get(diag.id) || [];
-          const totalScore = resps.reduce((acc, r) => acc + (r.score || 0), 0);
-          const totalPeso = resps.reduce((acc, r) => acc + (2 * (r.peso || 1)), 0);
+          let resps = allRespsMap.get(diag.id) || [];
+          if (resps.length === 0 && localRespsCache.length > 0) {
+            resps = localRespsCache.filter((r: any) => r.diagnosticoId === diag.id);
+          }
+          
+          const excludedIds = (diag as any).excludedPremissaIds || [];
+          const isExcluded = (r: any) => {
+            if (excludedIds.length === 0) return false;
+            const qKey = r.premissaId || r.id;
+            return excludedIds.includes(qKey) || (r.premissaId ? excludedIds.includes(r.premissaId) : false) || excludedIds.includes(r.id);
+          };
+
+          const seenQ = new Set<string>();
+          const uniqueResps: any[] = [];
+          resps.forEach((r: any) => {
+            if (isExcluded(r)) return;
+            const normQ = (r.pergunta || '').trim().toLowerCase();
+            if (normQ && seenQ.has(normQ)) return;
+            if (normQ) seenQ.add(normQ);
+            uniqueResps.push(r);
+          });
+
+          const answeredResps = uniqueResps.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'Não');
+          const totalScore = answeredResps.reduce((acc, r) => {
+            const lac = grauLacuna(r);
+            const pts = lac === 0 ? 2 : lac === 1 ? 1 : 0;
+            return acc + pts * (r.peso || 1);
+          }, 0);
+          const totalPeso = answeredResps.reduce((acc, r) => acc + (2 * (r.peso || 1)), 0);
           const score = totalPeso > 0 ? Math.round((totalScore / totalPeso) * 100) : 0;
           
           const areaScores: { [area: string]: { scoreTotal: number, pesoTotal: number } } = {};
-          resps.forEach((r: any) => {
+          answeredResps.forEach((r: any) => {
             const areaName = r.area || 'Geral';
             if (!areaScores[areaName]) {
               areaScores[areaName] = { scoreTotal: 0, pesoTotal: 0 };
             }
-            areaScores[areaName].scoreTotal += (r.score || 0);
+            const lac = grauLacuna(r);
+            const pts = lac === 0 ? 2 : lac === 1 ? 1 : 0;
+            areaScores[areaName].scoreTotal += pts * (r.peso || 1);
             areaScores[areaName].pesoTotal += (2 * (r.peso || 1));
           });
           

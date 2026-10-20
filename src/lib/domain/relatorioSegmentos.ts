@@ -156,7 +156,17 @@ export function montarRelatorioSegmentos(params: {
   for (const emp of empresasMap.values()) {
     const diagsDaEmpresa = diagnosticos.filter((d) => d.empresaId === emp.id);
     const comRespostas = diagsDaEmpresa
-      .map((d) => ({ d, resps: deduplicar(respostasPorDiag.get(d.id) || []) }))
+      .map((d) => {
+        const raw = respostasPorDiag.get(d.id) || [];
+        const excludedIds = d.excludedPremissaIds || [];
+        const isExcluded = (r: Resposta) => {
+          if (excludedIds.length === 0) return false;
+          const qKey = r.premissaId || r.id;
+          return excludedIds.includes(qKey) || (r.premissaId ? excludedIds.includes(r.premissaId) : false) || excludedIds.includes(r.id);
+        };
+        const resps = deduplicar(raw).filter(r => !isExcluded(r));
+        return { d, resps };
+      })
       .filter((x) => x.resps.some((r) => grauLacuna(r) !== null))
       .sort((a, b) => (paraData(b.d.dataDiagnostico)?.getTime() || 0) - (paraData(a.d.dataDiagnostico)?.getTime() || 0));
     const seg = segmentoDe(emp, comRespostas[0]?.d || diagsDaEmpresa[0]);

@@ -1220,7 +1220,14 @@ const DadosConsultoriaView = ({
     return list.filter(r => r.diagnosticoId === selectedDiagnostico.id);
   }, [respostas, selectedDiagnostico?.id]);
 
-  const uniqueDiagRespostas = useMemo(() => deduplicateRespostas(diagRespostas), [diagRespostas]);
+  const uniqueDiagRespostas = useMemo(() => {
+    const excludedIds = selectedDiagnostico?.excludedPremissaIds || [];
+    const isQExcluded = (r: Resposta) => {
+      const qKey = r.premissaId || r.id;
+      return excludedIds.includes(qKey) || (r.premissaId ? excludedIds.includes(r.premissaId) : false) || excludedIds.includes(r.id);
+    };
+    return deduplicateRespostas(diagRespostas).filter(r => !isQExcluded(r));
+  }, [diagRespostas, selectedDiagnostico?.excludedPremissaIds]);
   const totalDiagnosticoPerguntas = uniqueDiagRespostas.length;
   const answeredDiagnosticoPerguntas = uniqueDiagRespostas.filter(r => 
     r.resposta === 'Sim' || r.resposta === 'Não' || r.resposta === 'Parcial' || (Boolean(r.resposta) && String(r.resposta).trim() !== '')
@@ -5176,7 +5183,18 @@ const RelatorioView = ({
     });
   }, [selectedDiagnostico?.cronograma]);
 
-  const uniqueRespostas = useMemo(() => deduplicateRespostas(respostas), [respostas]);
+  const uniqueRespostas = useMemo(() => {
+    const diagId = selectedDiagnostico?.id;
+    const excludedIds = selectedDiagnostico?.excludedPremissaIds || [];
+    const isQExcluded = (r: Resposta) => {
+      const qKey = r.premissaId || r.id;
+      return excludedIds.includes(qKey) || (r.premissaId ? excludedIds.includes(r.premissaId) : false) || excludedIds.includes(r.id);
+    };
+
+    const diagRespostas = diagId ? (respostas || []).filter(r => !r.diagnosticoId || r.diagnosticoId === diagId) : (respostas || []);
+    const deduplicated = deduplicateRespostas(diagRespostas);
+    return deduplicated.filter(r => !isQExcluded(r));
+  }, [respostas, selectedDiagnostico?.id, selectedDiagnostico?.excludedPremissaIds]);
 
   // Group all responses by problem
   const responsesByProblem = useMemo(() => {
@@ -5314,13 +5332,18 @@ const RelatorioView = ({
         const prob = problemas.find(p => p.id === r.idProblema || p.descricao_problemas === r.problema);
         area = prob?.area || 'Geral';
       }
-      if (!acc[area]) acc[area] = { name: area, score: 0, totalPeso: 0 };
-      acc[area].score += (r.score || 0);
-      acc[area].totalPeso += (r.peso || 1);
+      const normArea = normalizeAndFormatArea(area) || area;
+      if (!acc[normArea]) acc[normArea] = { name: normArea, score: 0, totalPeso: 0 };
+      if (r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'Não') {
+        const lac = grauLacuna(r);
+        const pts = lac === 0 ? 2 : lac === 1 ? 1 : 0;
+        acc[normArea].score += pts * (r.peso || 1);
+        acc[normArea].totalPeso += (2 * (r.peso || 1));
+      }
       return acc;
     }, {})).map((item: any) => ({
       name: item.name,
-      value: Math.round((item.score / (2 * (item.totalPeso || 1))) * 100)
+      value: item.totalPeso > 0 ? Math.round((item.score / item.totalPeso) * 100) : 0
     }));
   }, [uniqueRespostas, problemas]);
 
@@ -5335,9 +5358,13 @@ const RelatorioView = ({
     const answeredRespostas = uniqueRespostas.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'Não');
     if (answeredRespostas.length === 0) return '0';
     
-    const totalScore = answeredRespostas.reduce((acc, r) => acc + (r.score || 0), 0);
+    const totalScore = answeredRespostas.reduce((acc, r) => {
+      const lac = grauLacuna(r);
+      const pts = lac === 0 ? 2 : lac === 1 ? 1 : 0;
+      return acc + pts * (r.peso || 1);
+    }, 0);
     const maxScore = answeredRespostas.reduce((acc, r) => acc + (2 * (r.peso || 1)), 0);
-    return ((totalScore / (maxScore || 1)) * 100).toFixed(0);
+    return Math.round((totalScore / (maxScore || 1)) * 100).toString();
   }, [uniqueRespostas]);
 
   // Forecast calculations
@@ -5527,8 +5554,8 @@ const RelatorioView = ({
       }
 
       // Add High-Level Metrics Summary Table
-      const totalSim = uniqueRespostas.filter(r => r.resposta === 'Sim').length;
-      const totalNao = uniqueRespostas.filter(r => r.resposta === 'Não').length;
+      const totalSim = uniqueRespostas.filter(r => (r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'Não') && grauLacuna(r) === 0).length;
+      const totalNao = uniqueRespostas.filter(r => (grauLacuna(r) ?? 0) > 0).length;
       const totalParcial = uniqueRespostas.filter(r => r.resposta === 'Parcial').length;
       autoTable(doc, {
         startY: currentY,
@@ -5996,15 +6023,15 @@ const RelatorioView = ({
             <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-100 flex flex-col gap-1 shadow-sm">
               <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Pontos Fortes</span>
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black text-emerald-800">{uniqueRespostas.filter(r => r.resposta === 'Sim').length}</span>
+                <span className="text-2xl font-black text-emerald-800">{uniqueRespostas.filter(r => (r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'Não') && grauLacuna(r) === 0).length}</span>
                 <span className="text-[10px] text-emerald-600 font-medium">itens conformes</span>
               </div>
             </div>
             <div className="bg-rose-50 p-3 rounded-xl border border-rose-100 flex flex-col gap-1 shadow-sm">
               <span className="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Pontos Críticos</span>
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-black text-rose-800">{uniqueRespostas.filter(r => r.resposta === 'Não').length}</span>
-                <span className="text-[10px] text-rose-600 font-medium">urgências</span>
+                <span className="text-2xl font-black text-rose-800">{uniqueRespostas.filter(r => (grauLacuna(r) ?? 0) > 0).length}</span>
+                <span className="text-[10px] text-rose-600 font-medium">lacunas a tratar</span>
               </div>
             </div>
             <div className="bg-amber-50 p-3 rounded-xl border border-amber-100 flex flex-col gap-1 shadow-sm">
@@ -16371,7 +16398,14 @@ export default function App() {
   };
 
   const generatePDF = () => {
-    const cleanResps = deduplicateRespostas(respostas);
+    const diagId = selectedDiagnostico?.id;
+    const excludedIds = selectedDiagnostico?.excludedPremissaIds || [];
+    const isQExcluded = (r: Resposta) => {
+      const qKey = r.premissaId || r.id;
+      return excludedIds.includes(qKey) || (r.premissaId ? excludedIds.includes(r.premissaId) : false) || excludedIds.includes(r.id);
+    };
+    const diagResps = diagId ? (respostas || []).filter(r => !r.diagnosticoId || r.diagnosticoId === diagId) : (respostas || []);
+    const cleanResps = deduplicateRespostas(diagResps).filter(r => !isQExcluded(r));
     if (!selectedEmpresa || !selectedDiagnostico || cleanResps.length === 0) return;
 
     const doc = new jsPDF();
@@ -16391,7 +16425,11 @@ export default function App() {
 
     // Summary
     const answeredRespostas = cleanResps.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'Não');
-    const totalScore = answeredRespostas.reduce((acc, r) => acc + (r.score || 0), 0);
+    const totalScore = answeredRespostas.reduce((acc, r) => {
+      const lac = grauLacuna(r);
+      const pts = lac === 0 ? 2 : lac === 1 ? 1 : 0;
+      return acc + pts * (r.peso || 1);
+    }, 0);
     const maxScore = answeredRespostas.reduce((acc, r) => acc + (2 * (r.peso || 1)), 0);
     const performance = answeredRespostas.length > 0 ? ((totalScore / (maxScore || 1)) * 100).toFixed(1) : '0';
 
@@ -19484,6 +19522,7 @@ export default function App() {
                 const seenQ = new Set<string>();
                 const uniqueRespsDash: Resposta[] = [];
                 respostas.forEach(resp => {
+                  if (resp.diagnosticoId && resp.diagnosticoId !== selectedDiagnostico.id) return;
                   if (isQExcluded(resp)) return;
                   const normQ = (resp.pergunta || '').trim().toLowerCase();
                   if (normQ && seenQ.has(normQ)) return;
