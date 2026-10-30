@@ -6,6 +6,7 @@ import {
   aplicarTarefaNoCronograma, removerTarefaDoCronograma, adicionarTarefaAoCronograma, sincronizarRelatorioComCronograma,
   isPerguntaFeiraOuCanalComercial, isPerguntaInteresseOuOpcao,
   isAtividadeConcluida, isAtividadeNoRelatorio,
+  deduplicateTarefasPlano, findDuplicateTarefaIds,
 } from '../src/lib/domain/planoAcao';
 
 const r = (idProblema: string, pergunta: string, resposta: any, peso = 1, area = 'Finanças') =>
@@ -605,5 +606,91 @@ console.log('  OK: textos do relatório');
   console.log('  OK: seleção "No Relatório" exclusiva para status Concluído e bloqueio dos demais status');
 }
 
+// Teste de deduplicação de tarefas do Plano de Ação
+{
+  const tarefasDuplicadas: any[] = [
+    {
+      id: 'doc_firestore_1',
+      diagnosticoId: 'diag_cajuina_1',
+      atividadeOrdem: 0,
+      atividade: 'Diagnóstico Empresarial',
+      problema: 'Diagnóstico Empresarial',
+      acoes: 'Levantamento de lacunas',
+      status: 'Concluído',
+      cargaHoraria: '4h',
+      responsavel: 'Vania Maria',
+      ordem: 0
+    },
+    {
+      id: 'tarefa_diag_cajuina_1_0',
+      diagnosticoId: 'diag_cajuina_1',
+      atividadeOrdem: 0,
+      atividade: 'Diagnóstico Empresarial',
+      problema: 'Diagnóstico Empresarial',
+      acoes: 'Levantamento de lacunas',
+      status: 'Pendente',
+      cargaHoraria: '4h',
+      responsavel: 'Consultor',
+      ordem: 0
+    },
+    {
+      id: 'doc_firestore_2',
+      diagnosticoId: 'diag_cajuina_1',
+      atividadeOrdem: 1,
+      atividade: 'Devolutiva do Diagnóstico',
+      problema: 'Devolutiva do Diagnóstico',
+      status: 'Concluído',
+      cargaHoraria: '3h',
+      ordem: 1
+    },
+    {
+      id: 'tarefa_diag_cajuina_1_1',
+      diagnosticoId: 'diag_cajuina_1',
+      atividadeOrdem: 1,
+      atividade: 'Devolutiva do Diagnóstico',
+      problema: 'Devolutiva do Diagnóstico',
+      status: 'Pendente',
+      cargaHoraria: '3h',
+      ordem: 1
+    },
+    {
+      id: 'doc_firestore_3_a',
+      diagnosticoId: 'diag_cajuina_1',
+      idProblema: 'PROD_1',
+      atividadeOrdem: 2,
+      atividade: 'Produção: Resolução',
+      problema: 'Falta de padronização no processo de fabricação da cajuína',
+      status: 'Em Andamento',
+      evidenciaUrl: 'data:image/png;base64,xxx',
+      ordem: 2
+    },
+    {
+      id: 'doc_firestore_3_b',
+      diagnosticoId: 'diag_cajuina_1',
+      idProblema: 'PROD_1',
+      atividadeOrdem: 2,
+      atividade: 'Produção: Resolução',
+      problema: 'Falta de padronização no processo de fabricação da cajuína',
+      status: 'Pendente',
+      ordem: 2
+    }
+  ];
+
+  const limpas = deduplicateTarefasPlano(tarefasDuplicadas);
+  assert.equal(limpas.length, 3, 'Deve reduzir 6 tarefas (3 pares duplicados) para exatamente 3 tarefas únicas');
+  assert.equal(limpas[0].id, 'doc_firestore_1', 'Deve preservar o ID definitivo da nuvem');
+  assert.equal(limpas[0].status, 'Concluído', 'Status Concluído deve prevalecer sobre Pendente');
+  assert.equal(limpas[0].responsavel, 'Vania Maria', 'Responsável preenchido deve prevalecer');
+  assert.equal(limpas[1].id, 'doc_firestore_2');
+  assert.equal(limpas[2].status, 'Em Andamento');
+  assert.equal(limpas[2].evidenciaUrl, 'data:image/png;base64,xxx', 'Evidência deve ser preservada na mesclagem');
+
+  const dupIds = findDuplicateTarefaIds(tarefasDuplicadas);
+  assert.deepEqual(dupIds, ['tarefa_diag_cajuina_1_0', 'tarefa_diag_cajuina_1_1', 'doc_firestore_3_b'], 'Deve identificar com precisão os IDs redundantes');
+
+  console.log('  OK: deduplicação de tarefas do plano de ação e identificação de IDs redundantes');
+}
+
 console.log('Todos os testes de planoAcao passaram.');
+
 

@@ -1128,136 +1128,12 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
             </div>
           </div>
 
-          {/* 2. MATRIZ DE PROBLEMAS DIAGNOSTICADOS VS SOLUÇÕES IMPLEMENTADAS */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-              <div>
-                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <Layers className="h-5 w-5 text-sky-600" />
-                  2. Matriz de Problemas Diagnosticados vs. Soluções Implementadas
-                </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Confronte cada gargalo encontrado no diagnóstico inicial com a solução prática executada e sua eficácia (0 a 10).
-                </p>
-              </div>
-
-              <Button
-                type="button"
-                onClick={handleAddRow}
-                variant="outline"
-                className="text-xs font-semibold text-sky-700 border-sky-300 hover:bg-sky-50 flex items-center gap-1.5"
-              >
-                <Plus size={14} /> Adicionar Item
-              </Button>
-            </div>
-
-            {/* Matrix Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 text-slate-700 font-bold border-b border-slate-200">
-                    <th className="py-3 px-3 w-28">Área</th>
-                    <th className="py-3 px-3">Problema Diagnosticado</th>
-                    <th className="py-3 px-3">Solução Implementada</th>
-                    <th className="py-3 px-3 w-36">Status</th>
-                    <th className="py-3 px-3 w-24 text-center">Eficácia (0-10)</th>
-                    <th className="py-3 px-3">Evidência / Resultado</th>
-                    <th className="py-3 px-2 w-10 text-center">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {problemasSolucoes.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-400">
-                        Nenhum problema/solução adicionado. Clique no botão acima para adicionar ou recarregar do diagnóstico.
-                      </td>
-                    </tr>
-                  ) : (
-                    problemasSolucoes.map((item, idx) => (
-                      <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
-                        <td className="py-2.5 px-3 align-top">
-                          <input
-                            type="text"
-                            value={item.area}
-                            onChange={(e) => handleUpdateRow(item.id, 'area', e.target.value)}
-                            placeholder="Área"
-                            className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-800"
-                          />
-                        </td>
-                        <td className="py-2.5 px-3 align-top">
-                          <textarea
-                            rows={2}
-                            value={item.problema}
-                            onChange={(e) => handleUpdateRow(item.id, 'problema', e.target.value)}
-                            placeholder="Descreva o gargalo identificado..."
-                            className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 resize-y"
-                          />
-                        </td>
-                        <td className="py-2.5 px-3 align-top">
-                          <textarea
-                            rows={2}
-                            value={item.solucaoImplementada}
-                            onChange={(e) => handleUpdateRow(item.id, 'solucaoImplementada', e.target.value)}
-                            placeholder="Ações e soluções práticas implantadas..."
-                            className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 resize-y"
-                          />
-                        </td>
-                        <td className="py-2.5 px-3 align-top">
-                          <select
-                            value={item.status}
-                            onChange={(e) => handleUpdateRow(item.id, 'status', e.target.value)}
-                            className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-medium text-slate-800"
-                          >
-                            <option value="Concluído">Concluído (100%)</option>
-                            <option value="Em Andamento">Em Andamento</option>
-                            <option value="Parcial">Parcialmente</option>
-                            <option value="Não Iniciado">Não Iniciado</option>
-                          </select>
-                        </td>
-                        <td className="py-2.5 px-3 align-top text-center">
-                          <select
-                            value={item.notaEficacia}
-                            onChange={(e) => handleUpdateRow(item.id, 'notaEficacia', parseInt(e.target.value))}
-                            className="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-bold text-sky-700 text-center"
-                          >
-                            {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0].map(n => (
-                              <option key={n} value={n}>{n}</option>
-                            ))}
-                          </select>
-                        </td>
-                        <td className="py-2.5 px-3 align-top">
-                          <textarea
-                            rows={2}
-                            value={item.evidenciaResultado}
-                            onChange={(e) => handleUpdateRow(item.id, 'evidenciaResultado', e.target.value)}
-                            placeholder="Ex: Planilha validada, redução de 20% no retrabalho..."
-                            className="w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs text-slate-800 resize-y"
-                          />
-                        </td>
-                        <td className="py-2.5 px-2 align-top text-center">
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteRow(item.id)}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 transition-colors rounded-lg hover:bg-rose-50"
-                            title="Excluir linha"
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* 3. ANÁLISE QUALITATIVA, IMPACTO NA GESTÃO E FEEDBACK */}
+          {/* 2. ANÁLISE QUALITATIVA, IMPACTO NA GESTÃO E FEEDBACK */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
             <div className="border-b border-slate-100 pb-3">
               <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                 <FileText className="h-5 w-5 text-sky-600" />
-                3. Parecer Técnico, Impacto na Gestão e Satisfação do Cliente
+                2. Parecer Técnico, Impacto na Gestão e Satisfação do Cliente
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
                 Registre os depoimentos, a transformação na rotina do cliente e as orientações estratégicas de continuidade.
@@ -1650,57 +1526,11 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
               </div>
             </div>
 
-            {/* TABELA DE PROBLEMAS DIAGNOSTICADOS VS SOLUÇÕES IMPLEMENTADAS */}
-            <div className="space-y-2">
-              <h3 className="text-xs font-black uppercase text-slate-800 tracking-wider border-b border-slate-200 pb-1 flex items-center justify-between">
-                <span>Matriz de Problemas Diagnosticados e Soluções Implementadas</span>
-                <span className="text-[10px] text-slate-500 font-normal">Total: {problemasSolucoes.length} itens</span>
-              </h3>
-
-              <table className="w-full text-left text-[11px] border border-slate-200 border-collapse">
-                <thead>
-                  <tr className="bg-slate-100 text-slate-800 font-bold border-b border-slate-200">
-                    <th className="p-2 border-r border-slate-200 w-24">Área</th>
-                    <th className="p-2 border-r border-slate-200">Problema Diagnosticado</th>
-                    <th className="p-2 border-r border-slate-200">Solução Prática Implementada</th>
-                    <th className="p-2 border-r border-slate-200 w-24">Status</th>
-                    <th className="p-2 text-center w-16">Eficácia</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
-                  {problemasSolucoes.map((row) => (
-                    <tr key={row.id} className="text-slate-800">
-                      <td className="p-2 border-r border-slate-200 font-bold text-[10px] bg-slate-50 align-top">
-                        {row.area}
-                      </td>
-                      <td className="p-2 border-r border-slate-200 align-top">
-                        {row.problema || '—'}
-                      </td>
-                      <td className="p-2 border-r border-slate-200 align-top">
-                        <div className="font-medium">{row.solucaoImplementada || '—'}</div>
-                        {row.evidenciaResultado && (
-                          <div className="text-[10px] text-slate-500 italic mt-0.5">
-                            Evidência: {row.evidenciaResultado}
-                          </div>
-                        )}
-                      </td>
-                      <td className="p-2 border-r border-slate-200 align-top text-[10px]">
-                        <span className="font-semibold">{row.status}</span>
-                      </td>
-                      <td className="p-2 text-center align-top font-bold text-sky-800">
-                        {row.notaEficacia}/10
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* 3. PARECER TÉCNICO, IMPACTO NA GESTÃO E SATISFAÇÃO DO CLIENTE */}
+            {/* 2. PARECER TÉCNICO, IMPACTO NA GESTÃO E SATISFAÇÃO DO CLIENTE */}
             <div className="space-y-2">
               <h3 className="text-xs font-black uppercase text-slate-800 tracking-wider border-b border-slate-200 pb-1 flex items-center gap-1.5">
                 <FileText size={13} className="text-slate-500" />
-                3. Parecer Técnico, Impacto na Gestão e Satisfação do Cliente
+                2. Parecer Técnico, Impacto na Gestão e Satisfação do Cliente
               </h3>
             </div>
 

@@ -184,6 +184,8 @@ import {
   sincronizarRelatorioComCronograma,
   isAtividadeConcluida,
   isAtividadeNoRelatorio,
+  deduplicateTarefasPlano,
+  findDuplicateTarefaIds,
 } from './lib/domain/planoAcao';
 
 // --- Safe LocalStorage with AES-256 Encryption at Rest ---
@@ -2697,7 +2699,7 @@ const CronogramaView = ({
 
       // 3. Sync local tarefasPlano state and localStorage
       const validAtividades = (sanitizedAtividades || []).filter((atv: any) => atv.nome?.trim());
-      const tarefasAtuais = (tarefasPlano || []).filter(t => t.diagnosticoId === selectedDiagnostico.id);
+      const tarefasAtuais = deduplicateTarefasPlano((tarefasPlano || []).filter(t => t.diagnosticoId === selectedDiagnostico.id));
       const tarefasExpandidas = montarTarefasDoPlano(
         validAtividades,
         selectedDiagnostico,
@@ -2705,15 +2707,15 @@ const CronogramaView = ({
         auth.currentUser?.uid || 'local',
         tarefasAtuais
       );
-      const newTarefasFromAtividades: TarefaPlanoAcao[] = tarefasExpandidas.map((t, index) => ({
+      const newTarefasFromAtividades: TarefaPlanoAcao[] = deduplicateTarefasPlano(tarefasExpandidas.map((t, index) => ({
         ...t,
         id: tarefasAtuais[index]?.id || `tarefa_${selectedDiagnostico.id}_${index}`
-      }));
+      })));
 
       if (setTarefasPlano) {
         setTarefasPlano(prev => {
           const others = prev.filter(t => t.diagnosticoId !== selectedDiagnostico.id);
-          return [...others, ...newTarefasFromAtividades];
+          return deduplicateTarefasPlano([...others, ...newTarefasFromAtividades]);
         });
       }
 
@@ -2721,7 +2723,7 @@ const CronogramaView = ({
         const savedTasks = localStorage.getItem('local_tarefas_plano');
         const parsedTasks = savedTasks ? JSON.parse(savedTasks) : [];
         const others = Array.isArray(parsedTasks) ? parsedTasks.filter((t: any) => t.diagnosticoId !== selectedDiagnostico.id) : [];
-        localStorage.setItem('local_tarefas_plano', JSON.stringify([...others, ...newTarefasFromAtividades]));
+        localStorage.setItem('local_tarefas_plano', JSON.stringify(deduplicateTarefasPlano([...others, ...newTarefasFromAtividades])));
       } catch (e) {
         console.warn("Could not save local_tarefas_plano", e);
       }
@@ -6462,6 +6464,8 @@ const GestaoPlanoView = ({
   const [isSavingPlano, setIsSavingPlano] = useState(false);
   const [saveSuccessPlano, setSaveSuccessPlano] = useState(false);
 
+  const cleanTarefas = useMemo(() => deduplicateTarefasPlano(tarefas), [tarefas]);
+
   const getEmpresaNome = (id: string) => empresas.find(e => e.id === id)?.nome || 'Empresa desconhecida';
 
   const getTarefaAtividadeInfo = (t: TarefaPlanoAcao): { index: number; nome: string; cargaHoraria: string; label: string } => {
@@ -6555,7 +6559,7 @@ const GestaoPlanoView = ({
         const savedTasks = localStorage.getItem('local_tarefas_plano');
         const parsedTasks = savedTasks ? JSON.parse(savedTasks) : [];
         const others = Array.isArray(parsedTasks) ? parsedTasks.filter((t: any) => t.diagnosticoId !== selectedDiagnostico.id) : [];
-        localStorage.setItem('local_tarefas_plano', JSON.stringify([...others, ...sortedTarefas]));
+        localStorage.setItem('local_tarefas_plano', JSON.stringify(deduplicateTarefasPlano([...others, ...sortedTarefas])));
 
         const savedDiags = localStorage.getItem('local_diagnosticos');
         const parsedDiags = savedDiags ? JSON.parse(savedDiags) : [];
@@ -6629,7 +6633,7 @@ const GestaoPlanoView = ({
   };
 
   const sortedTarefas = useMemo(() => {
-    const list = [...tarefas];
+    const list = [...cleanTarefas];
     const parseDate = (val: any) => {
       if (!val) return 0;
       if (val.toDate && typeof val.toDate === 'function') return val.toDate().getTime();
@@ -6875,7 +6879,7 @@ const GestaoPlanoView = ({
     const hoje = new Date();
     hoje.setHours(0,0,0,0);
     
-    return tarefas.filter(t => {
+    return cleanTarefas.filter(t => {
       if (t.status === 'Concluído') return false;
       const dataVenc = t.dataVencimento || t.dataFim;
       if (!dataVenc) return false;
@@ -10131,7 +10135,7 @@ export default function App() {
   const [tarefasPlano, setTarefasPlano] = useState<TarefaPlanoAcao[]>(() => {
     try {
       const saved = localStorage.getItem('local_tarefas_plano');
-      return saved ? JSON.parse(saved) : [];
+      return saved ? deduplicateTarefasPlano(JSON.parse(saved)) : [];
     } catch { return []; }
   });
 
@@ -10500,10 +10504,11 @@ export default function App() {
           }
         }
       }
-      summary.details.tarefas.total = (summary.details.tarefas.total || 0) + finalTasks.length;
-      idsNaNuvemDepois['tarefas_plano'] = finalTasks.map((x: any) => x.id).filter(Boolean);
-      setTarefasPlano(finalTasks);
-      localStorage.setItem('local_tarefas_plano', JSON.stringify(finalTasks));
+      const cleanTasks = deduplicateTarefasPlano(finalTasks);
+      summary.details.tarefas.total = (summary.details.tarefas.total || 0) + cleanTasks.length;
+      idsNaNuvemDepois['tarefas_plano'] = cleanTasks.map((x: any) => x.id).filter(Boolean);
+      setTarefasPlano(cleanTasks);
+      localStorage.setItem('local_tarefas_plano', JSON.stringify(cleanTasks));
 
       // --- D2. Sync Empresas Credenciadas do Usuário (Isolado por usuário) ---
       const cloudCredSnap = await getDocs(query(collection(db, 'empresas_credenciadas'), where('ownerId', '==', user.uid)));
@@ -11635,10 +11640,25 @@ export default function App() {
       setTarefasPlano(prev => {
         const cloudIds = new Set(docs.map(d => d.id));
         const localOnly = prev.filter(t => (!t.ownerId || t.ownerId === 'local' || t.ownerId === user.uid) && !cloudIds.has(t.id));
-        const merged = [...docs, ...localOnly];
+        const merged = deduplicateTarefasPlano([...docs, ...localOnly]);
         try { localStorage.setItem('local_tarefas_plano', JSON.stringify(merged)); } catch {}
         return merged;
       });
+
+      // Se houver documentos duplicados na nuvem (Firestore), expurga os extras em background
+      const dupCloudIds = findDuplicateTarefaIds(docs);
+      if (dupCloudIds.length > 0) {
+        (async () => {
+          try {
+            const batch = writeBatch(db);
+            dupCloudIds.forEach(id => batch.delete(doc(db, 'tarefas_plano', id)));
+            await batch.commit();
+            console.log(`[Deduplicação] ${dupCloudIds.length} tarefas duplicadas expurgadas do Firestore com sucesso.`);
+          } catch (e) {
+            console.warn("[Deduplicação] Aviso ao expurgar duplicadas:", e);
+          }
+        })();
+      }
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'tarefas_plano'));
 
     const qAreas = query(collection(db, 'areas'), ownerFilter());
@@ -14574,7 +14594,7 @@ export default function App() {
       .map((t, index) => ({ ...t, id: user ? doc(collection(db, 'tarefas_plano')).id : `tarefa_${diag.id}_${index}_${Date.now()}` }));
 
     const diagAtualizado: Diagnostico = { ...diag, cronograma, dadosConsultoria: dados };
-    setTarefasPlano(prev => [...prev.filter(t => t.diagnosticoId !== diag.id), ...tarefasNovas]);
+    setTarefasPlano(prev => deduplicateTarefasPlano([...prev.filter(t => t.diagnosticoId !== diag.id), ...tarefasNovas]));
     setSelectedDiagnostico(diagAtualizado);
     setDiagnosticos(prev => prev.map(d => d.id === diag.id ? diagAtualizado : d));
     saveLocalDiagnosticoReport(diag.id, sanitizeForFirestore(cronograma), sanitizeForFirestore(dados)).catch(() => {});
@@ -17934,7 +17954,7 @@ export default function App() {
                   exit={{ opacity: 0, scale: 0.98 }}
                 >
                   <GestaoPlanoView 
-                    tarefas={tarefasPlano.filter(t => selectedDiagnostico && t.diagnosticoId === selectedDiagnostico.id)}
+                    tarefas={deduplicateTarefasPlano(tarefasPlano.filter(t => selectedDiagnostico && t.diagnosticoId === selectedDiagnostico.id))}
                     empresas={empresas}
                     onEdit={(t) => {
                       setModalType('editTarefa');
@@ -19939,10 +19959,10 @@ export default function App() {
 
                     // Sincroniza tarefasPlano
                     const empresaId = selectedEmpresa?.id || selectedDiagnostico.empresaId || '';
-                    const tarefasAtuais = tarefasPlano.filter(t => t.diagnosticoId === selectedDiagnostico.id);
+                    const tarefasAtuais = deduplicateTarefasPlano(tarefasPlano.filter(t => t.diagnosticoId === selectedDiagnostico.id));
                     const tarefasNovas = montarTarefasDoPlano(atvs, selectedDiagnostico, empresaId, user?.uid || 'local', tarefasAtuais)
                       .map((t, idx) => ({ ...t, id: tarefasAtuais[idx]?.id || `tarefa_${selectedDiagnostico.id}_${idx}` }));
-                    setTarefasPlano(prev => [...prev.filter(t => t.diagnosticoId !== selectedDiagnostico.id), ...tarefasNovas]);
+                    setTarefasPlano(prev => deduplicateTarefasPlano([...prev.filter(t => t.diagnosticoId !== selectedDiagnostico.id), ...tarefasNovas]));
 
                     saveLocalDiagnosticoReport(selectedDiagnostico.id, sanitizeForFirestore(atvs), sanitizeForFirestore(novosDados)).catch(() => {});
                     try {
@@ -19977,7 +19997,7 @@ export default function App() {
               exit={{ opacity: 0, scale: 0.98 }}
             >
               <GestaoPlanoView 
-                tarefas={tarefasPlano.filter(t => selectedDiagnostico && t.diagnosticoId === selectedDiagnostico.id)}
+                tarefas={deduplicateTarefasPlano(tarefasPlano.filter(t => selectedDiagnostico && t.diagnosticoId === selectedDiagnostico.id))}
                 empresas={empresas}
                 onEdit={(t) => { setModalData(t); setModalType('editTarefa'); setTarefaForm({ ...t, acoes: limparEvidenciasAcoes(t.acoes) }); setIsModalOpen(true); }}
                 onDelete={(t) => { setModalData(t); setModalType('deleteTarefa'); setIsModalOpen(true); }}

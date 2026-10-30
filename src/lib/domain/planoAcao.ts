@@ -1753,3 +1753,163 @@ export function isAtividadeNoRelatorio(atv?: Pick<AtividadeCronograma, 'status' 
   return atv.incluirNoRelatorio !== false;
 }
 
+/**
+ * Deduplica tarefas do Plano de Ação por escopo do diagnóstico.
+ * Mescla registros repetidos preservando o melhor ID (cloud > local),
+ * o status mais avançado e quaisquer evidências/comentários já anexados.
+ */
+export function deduplicateTarefasPlano<T extends {
+  id?: string;
+  diagnosticoId?: string;
+  atividadeOrdem?: number;
+  atividade?: string;
+  idProblema?: string;
+  problema?: string;
+  area?: string;
+  status?: string;
+  acoes?: string;
+  prioridade?: string;
+  responsavel?: string;
+  cargaHoraria?: string;
+  dataInicio?: any;
+  dataFim?: any;
+  dataVencimento?: any;
+  ordem?: number;
+  evidenciaUrl?: string;
+  evidenciaNome?: string;
+  comentarios?: string;
+}>(tarefas: T[]): T[] {
+  if (!tarefas || !Array.isArray(tarefas)) return [];
+  if (tarefas.length <= 1) return [...tarefas];
+
+  const norm = (v?: string) => (v || '').trim().toLowerCase();
+
+  const getTaskKey = (t: T): string => {
+    const diag = norm(t.diagnosticoId);
+    const probId = norm(t.idProblema);
+    const probNome = norm(t.problema);
+    const atvNome = norm(t.atividade);
+    const atvOrd = t.atividadeOrdem !== undefined && t.atividadeOrdem !== null ? String(t.atividadeOrdem) : '';
+    const area = norm(t.area);
+
+    if (probId) {
+      return `${diag}|idprob:${probId}|atv:${atvOrd || atvNome}`;
+    }
+    if (atvOrd || atvNome) {
+      return `${diag}|atv:${atvOrd || atvNome}|prob:${probNome}`;
+    }
+    return `${diag}|area:${area}|prob:${probNome}`;
+  };
+
+  const map = new Map<string, T>();
+  const isTempId = (id?: string) => !id || id.startsWith('tarefa_') || id.startsWith('temp_') || id.startsWith('local_');
+
+  for (const t of tarefas) {
+    if (!t) continue;
+    const key = getTaskKey(t);
+
+    if (!map.has(key)) {
+      map.set(key, t);
+    } else {
+      const existing = map.get(key)!;
+
+      // Prioriza ID definitivo da nuvem (Firestore) sobre ID temporário local
+      const preferExistingId = !isTempId(existing.id) || isTempId(t.id);
+      const chosenId = preferExistingId ? existing.id : t.id;
+
+      // Status: Concluído > Em Andamento > Pendente
+      const statusWeight: Record<string, number> = { 'concluído': 3, 'concluido': 3, 'em andamento': 2, 'pendente': 1 };
+      const sExisting = norm(existing.status);
+      const sCurrent = norm(t.status);
+      const chosenStatus = (statusWeight[sCurrent] || 0) > (statusWeight[sExisting] || 0)
+        ? t.status
+        : existing.status;
+
+      const merged: T = {
+        ...existing,
+        ...t,
+        id: chosenId,
+        status: chosenStatus,
+        evidenciaUrl: t.evidenciaUrl || existing.evidenciaUrl,
+        evidenciaNome: t.evidenciaNome || existing.evidenciaNome,
+        comentarios: t.comentarios || existing.comentarios,
+        responsavel: (t.responsavel && t.responsavel !== 'Consultor') ? t.responsavel : (existing.responsavel || t.responsavel),
+        dataInicio: t.dataInicio || existing.dataInicio,
+        dataFim: t.dataFim || existing.dataFim,
+        dataVencimento: t.dataVencimento || existing.dataVencimento,
+        cargaHoraria: t.cargaHoraria || existing.cargaHoraria,
+        ordem: existing.ordem !== undefined ? existing.ordem : t.ordem,
+        atividadeOrdem: existing.atividadeOrdem !== undefined ? existing.atividadeOrdem : t.atividadeOrdem,
+      };
+
+      map.set(key, merged);
+    }
+  }
+
+  // Garante unicidade estrita de id no resultado final
+  const result: T[] = [];
+  const seenIds = new Set<string>();
+  for (const item of map.values()) {
+    if (item.id) {
+      if (seenIds.has(item.id)) continue;
+      seenIds.add(item.id);
+    }
+    result.push(item);
+  }
+
+  return result;
+}
+
+/**
+ * Identifica IDs duplicados redundantes para exclusão no Firestore/banco de dados.
+ */
+export function findDuplicateTarefaIds(tarefas: {
+  id?: string;
+  diagnosticoId?: string;
+  atividadeOrdem?: number;
+  atividade?: string;
+  idProblema?: string;
+  problema?: string;
+  area?: string;
+}[]): string[] {
+  if (!tarefas || !Array.isArray(tarefas) || tarefas.length <= 1) return [];
+
+  const norm = (v?: string) => (v || '').trim().toLowerCase();
+  const getTaskKey = (t: any): string => {
+    const diag = norm(t.diagnosticoId);
+    const probId = norm(t.idProblema);
+    const probNome = norm(t.problema);
+    const atvNome = norm(t.atividade);
+    const atvOrd = t.atividadeOrdem !== undefined && t.atividadeOrdem !== null ? String(t.atividadeOrdem) : '';
+    const area = norm(t.area);
+
+    if (probId) return `${diag}|idprob:${probId}|atv:${atvOrd || atvNome}`;
+    if (atvOrd || atvNome) return `${diag}|atv:${atvOrd || atvNome}|prob:${probNome}`;
+    return `${diag}|area:${area}|prob:${probNome}`;
+  };
+
+  const seenKeys = new Map<string, string>(); // key -> primary id
+  const duplicatesToDelete: string[] = [];
+  const isTemp = (id?: string) => !id || id.startsWith('tarefa_') || id.startsWith('temp_') || id.startsWith('local_');
+
+  for (const t of tarefas) {
+    if (!t || !t.id) continue;
+    const key = getTaskKey(t);
+    if (!seenKeys.has(key)) {
+      seenKeys.set(key, t.id);
+    } else {
+      const primaryId = seenKeys.get(key)!;
+      // Se o atual for ID persistente da nuvem e o anterior for temporário, troca e deleta o temporário
+      if (isTemp(primaryId) && !isTemp(t.id)) {
+        duplicatesToDelete.push(primaryId);
+        seenKeys.set(key, t.id);
+      } else {
+        duplicatesToDelete.push(t.id);
+      }
+    }
+  }
+
+  return duplicatesToDelete;
+}
+
+
