@@ -192,7 +192,8 @@ export const MacroDashboardView = ({
   userEmail,
   storageMode = 'cloud',
   onGerarRelatorioSegmentos,
-  gerandoRelatorioSegmentos = false
+  gerandoRelatorioSegmentos = false,
+  onOpenRelatorioConsolidadoSgf
 }: {
   empresas: Empresa[];
   diagnosticos: Diagnostico[];
@@ -208,6 +209,8 @@ export const MacroDashboardView = ({
   /** Gera o PDF "Resumo dos Diagnósticos por Tipo de Negócio" com todos os clientes. */
   onGerarRelatorioSegmentos?: (tipoDeNegocio?: string) => void;
   gerandoRelatorioSegmentos?: boolean;
+  /** Abre a visão interativa do Relatório Consolidado SGF & Áreas */
+  onOpenRelatorioConsolidadoSgf?: () => void;
 }) => {
   const [loadingMacro, setLoadingMacro] = useState(false);
   const [macroHistory, setMacroHistory] = useState<MacroItem[]>([]);
@@ -962,6 +965,16 @@ export const MacroDashboardView = ({
             >
               {gerandoRelatorioSegmentos ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
               <span>{gerandoRelatorioSegmentos ? 'Gerando relatório...' : 'Relatório por Tipo de Negócio'}</span>
+            </button>
+          )}
+          {onOpenRelatorioConsolidadoSgf && (
+            <button
+              onClick={onOpenRelatorioConsolidadoSgf}
+              title="Abrir Relatório Consolidado SGF & Áreas com filtros, tabelas e gráficos comparativos"
+              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer"
+            >
+              <Layers size={16} />
+              <span>Relatório SGF & Áreas</span>
             </button>
           )}
           <button

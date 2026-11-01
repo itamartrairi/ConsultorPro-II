@@ -39,6 +39,7 @@ import { AgendaView } from './components/AgendaView';
 import { MacroDashboardView } from './components/MacroDashboardView';
 import MaturidadeView from './components/MaturidadeView';
 import { ResultadoConsultoriaView } from './components/ResultadoConsultoriaView';
+import { RelatorioConsolidadoSgfView } from './components/RelatorioConsolidadoSgfView';
 import { SmartSyncModal, type SyncSummary } from './components/SmartSyncModal';
 import { BackupExportModal, type BackupExportStats } from './components/BackupExportModal';
 import { ConnectionStatus } from './components/SettingsView';
@@ -9936,7 +9937,8 @@ export default function App() {
   const isSubmittingCredenciadaRef = useRef(false);
   const [calculatingMaturity, setCalculatingMaturity] = useState(false);
   const [generatingPlan, setGeneratingPlan] = useState(false);
-  const [view, setView] = useState<'home' | 'companies' | 'credenciadas' | 'licenses' | 'diagnosis' | 'dashboard' | 'premises' | 'cronograma' | 'relatorio' | 'kanban' | 'settings' | 'landing' | 'checkout' | 'licensing' | 'dados-consultoria' | 'agenda' | 'macro-dashboard' | 'maturity-assessment' | 'projects' | 'plan' | 'resultado-consultoria'>('landing');
+  const [view, setViewInternal] = useState<'home' | 'companies' | 'credenciadas' | 'licenses' | 'diagnosis' | 'dashboard' | 'premises' | 'cronograma' | 'relatorio' | 'kanban' | 'settings' | 'landing' | 'checkout' | 'licensing' | 'dados-consultoria' | 'agenda' | 'macro-dashboard' | 'maturity-assessment' | 'projects' | 'plan' | 'resultado-consultoria' | 'relatorio-consolidado-sgf'>('landing');
+  const setView = (v: any) => setViewInternal(v);
   const [customLogo, setCustomLogo] = useState<string | null>(() => {
     const v = localStorage.getItem('sebrae_custom_logo');
     return v && v.startsWith('data:') ? v : null;
@@ -12590,7 +12592,7 @@ export default function App() {
             />
           </NavGroup>
 
-          <NavGroup icon={TrendingUp} label="Diagnósticos & Avaliação" groupKey="diagnosticos" count={4}>
+          <NavGroup icon={TrendingUp} label="Diagnósticos & Avaliação" groupKey="diagnosticos" count={5}>
             <NavItem 
               icon={TrendingUp} 
               label="Maturidade Empresarial" 
@@ -12602,6 +12604,12 @@ export default function App() {
               label="Resultado da Consultoria" 
               active={view === 'resultado-consultoria'} 
               onClick={() => { setView('resultado-consultoria'); }} 
+            />
+            <NavItem 
+              icon={FileSpreadsheet} 
+              label="Relatório SGF & Áreas" 
+              active={view === 'relatorio-consolidado-sgf'} 
+              onClick={() => { setView('relatorio-consolidado-sgf'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }} 
             />
             <NavItem 
               icon={History} 
@@ -18062,6 +18070,7 @@ export default function App() {
                     storageMode={storageMode}
                     onGerarRelatorioSegmentos={gerarRelatorioSegmentos}
                     gerandoRelatorioSegmentos={gerandoRelatorioSegmentos}
+                    onOpenRelatorioConsolidadoSgf={() => setView('relatorio-consolidado-sgf')}
                     onNavigateToDiagnosis={(diag) => {
                       setSelectedDiagnostico(diag);
                       const emp = empresas.find(e => e.id === diag.empresaId);
@@ -18112,6 +18121,31 @@ export default function App() {
                     customLogo={customLogo}
                     customConsultoraLogo={customConsultoraLogo}
                     logoChoice={logoChoice}
+                  />
+                </motion.div>
+              )}
+              {view === 'relatorio-consolidado-sgf' && (
+                <motion.div 
+                  key="relatorio-consolidado-sgf"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  <RelatorioConsolidadoSgfView 
+                    empresas={empresas}
+                    diagnosticos={diagnosticos}
+                    respostas={respostas}
+                    user={user}
+                    customLogo={customLogo}
+                    customConsultoraLogo={customConsultoraLogo}
+                    logoChoice={logoChoice}
+                    setPdfUrl={setPdfUrl}
+                    onNavigateToDiagnosis={(diag) => {
+                      setSelectedDiagnostico(diag);
+                      const emp = empresas.find(e => e.id === diag.empresaId);
+                      if (emp) setSelectedEmpresa(emp);
+                      setView('projects');
+                    }}
                   />
                 </motion.div>
               )}
