@@ -244,4 +244,41 @@ if (!sgfNovo) {
 }
 console.log('  OK: Modificação de segmento e SGF no diagnóstico altera o relatório em tempo real');
 
+// Testando filtro de clientes contextuais por Código SGF e por Área Diagnosticada
+const relatorioContextoSgf1 = montarRelatorioConsolidadoSgf({
+  empresas: empresasMock,
+  diagnosticos: diagnosticosMock,
+  respostas: respostasMock,
+  filtros: { codigoSgf: 'SGF-2026-001' }
+});
+
+if (relatorioContextoSgf1.opcoesClientes.length !== 1 || relatorioContextoSgf1.opcoesClientes[0].nome !== 'Fazenda Boa Esperança') {
+  throw new Error(`Esperado somente cliente 'Fazenda Boa Esperança' para SGF-2026-001, obteve: ${JSON.stringify(relatorioContextoSgf1.opcoesClientes)}`);
+}
+console.log('  OK: Filtro de cliente restrito ao Código SGF selecionado');
+
+const relatorioContextoAreaComercial = montarRelatorioConsolidadoSgf({
+  empresas: empresasMock,
+  diagnosticos: diagnosticosMock,
+  respostas: respostasMock,
+  filtros: { area: 'Comercial' }
+});
+
+if (relatorioContextoAreaComercial.opcoesClientes.length !== 1 || relatorioContextoAreaComercial.opcoesClientes[0].nome !== 'Mercadinho Central') {
+  throw new Error(`Esperado somente cliente 'Mercadinho Central' para Área Comercial, obteve: ${JSON.stringify(relatorioContextoAreaComercial.opcoesClientes)}`);
+}
+console.log('  OK: Filtro de cliente restrito à Área Diagnosticada selecionada');
+
+const relatorioContextoSgf2AreaComercial = montarRelatorioConsolidadoSgf({
+  empresas: empresasMock,
+  diagnosticos: diagnosticosMock,
+  respostas: respostasMock,
+  filtros: { codigoSgf: 'SGF-2026-002', area: 'Comercial' }
+});
+
+if (relatorioContextoSgf2AreaComercial.opcoesClientes.length !== 1 || relatorioContextoSgf2AreaComercial.opcoesClientes[0].id !== 'emp-2') {
+  throw new Error(`Esperado somente emp-2 para combinação de SGF-2026-002 e Área Comercial`);
+}
+console.log('  OK: Filtro de cliente combinado por Código SGF + Área');
+
 console.log('Todos os testes de relatorioConsolidadoSgf passaram com sucesso!');

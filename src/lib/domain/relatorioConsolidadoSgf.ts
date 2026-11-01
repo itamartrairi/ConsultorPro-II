@@ -359,12 +359,9 @@ export function montarRelatorioConsolidadoSgf(params: {
   const tiposSet = new Set<string>();
   const sgfSet = new Set<string>();
   const areasSet = new Set<string>();
-  const clientesMap = new Map<string, string>();
 
-  // Também popular seletores com empresas e diagnósticos mesmo se não tiverem perguntas
+  // Popular conjuntos de tipos, SGF e áreas
   params.empresas.forEach(e => {
-    const nome = (e as any).nomeFantasia || e.nome || (e as any).razaoSocial || 'Cliente';
-    if (e.id) clientesMap.set(e.id, nome);
     const tipo = (e.tipoEmpresa || (e as any).ramoAtividade || '').trim();
     if (tipo) tiposSet.add(tipo);
   });
@@ -372,21 +369,71 @@ export function montarRelatorioConsolidadoSgf(params: {
   params.diagnosticos.forEach(d => {
     const sgf = (d.dadosConsultoria?.codigoSgf || (d as any).codigoSgf || '').trim();
     if (sgf) sgfSet.add(sgf);
-    const tipo = (d.tipoEmpresa || '').trim();
+    const tipo = (d.tipoEmpresa || (d as any)?.dadosConsultoria?.tipoEmpresa || '').trim();
     if (tipo) tiposSet.add(tipo);
-    if (d.empresaId && !clientesMap.has(d.empresaId)) {
-      clientesMap.set(d.empresaId, d.nomeEmpresa || 'Cliente');
-    }
+    (d.areasDiagnostico || []).forEach(a => {
+      if (a) areasSet.add(normalizeAndFormatArea(a));
+    });
   });
 
   todosItens.forEach(it => {
     if (it.tipoNegocio) tiposSet.add(it.tipoNegocio);
     if (it.codigoSgf) sgfSet.add(it.codigoSgf);
     if (it.area) areasSet.add(it.area);
-    if (it.empresaId && !clientesMap.has(it.empresaId)) {
-      clientesMap.set(it.empresaId, it.cliente);
+  });
+
+  // Aplicação dos filtros de contexto
+  const buscaNorm = normalizarTexto(filtros.buscaTexto);
+  const tipoFiltro = filtros.tipoNegocio && filtros.tipoNegocio !== 'Todos' ? normalizarTexto(filtros.tipoNegocio) : '';
+  const sgfFiltro = filtros.codigoSgf && filtros.codigoSgf !== 'Todos' ? normalizarTexto(filtros.codigoSgf) : '';
+  const areaFiltro = filtros.area && filtros.area !== 'Todas' ? normalizarTexto(filtros.area) : '';
+  const empresaFiltro = filtros.empresaId && filtros.empresaId !== 'Todas' ? filtros.empresaId : '';
+
+  // Clientes contextuais: exibe somente os clientes de cada código SGF e/ou área diagnosticada selecionados
+  const clientesContextoMap = new Map<string, string>();
+
+  todosItens.forEach(it => {
+    if (tipoFiltro && normalizarTexto(it.tipoNegocio) !== tipoFiltro) return;
+    if (sgfFiltro && normalizarTexto(it.codigoSgf) !== sgfFiltro) return;
+    if (areaFiltro && normalizarTexto(it.area) !== areaFiltro) return;
+
+    const cId = it.empresaId || it.cliente;
+    if (cId && !clientesContextoMap.has(cId)) {
+      clientesContextoMap.set(cId, it.cliente);
     }
   });
+
+  // Se nenhum filtro de contexto estiver ativo, exibir todos os clientes cadastrados no sistema
+  if (!sgfFiltro && !areaFiltro && !tipoFiltro) {
+    params.empresas.forEach(e => {
+      const nome = (e as any).nomeFantasia || e.nome || (e as any).razaoSocial || 'Cliente';
+      if (e.id && !clientesContextoMap.has(e.id)) {
+        clientesContextoMap.set(e.id, nome);
+      }
+    });
+    params.diagnosticos.forEach(d => {
+      if (d.empresaId && !clientesContextoMap.has(d.empresaId)) {
+        clientesContextoMap.set(d.empresaId, d.nomeEmpresa || 'Cliente');
+      }
+    });
+  } else {
+    // Se houver filtros ativos, incluir também diagnósticos que atendam ao filtro de SGF/Área/Tipo mesmo sem respostas
+    params.diagnosticos.forEach(d => {
+      const dSgf = (d.dadosConsultoria?.codigoSgf || (d as any).codigoSgf || '').trim();
+      const dTipo = (d.tipoEmpresa || (d as any)?.dadosConsultoria?.tipoEmpresa || '').trim();
+      const dAreas = (d.areasDiagnostico || []).map(a => normalizeAndFormatArea(a));
+
+      if (sgfFiltro && normalizarTexto(dSgf) !== sgfFiltro) return;
+      if (tipoFiltro && normalizarTexto(dTipo) !== tipoFiltro) return;
+      if (areaFiltro && !dAreas.some(a => normalizarTexto(a) === areaFiltro)) return;
+
+      if (d.empresaId && !clientesContextoMap.has(d.empresaId)) {
+        const emp = params.empresas.find(e => e.id === d.empresaId);
+        const nome = (emp as any)?.nomeFantasia || emp?.nome || d.nomeEmpresa || 'Cliente';
+        clientesContextoMap.set(d.empresaId, nome);
+      }
+    });
+  }
 
   const opcoesTiposNegocio = Array.from(tiposSet).sort((a, b) => a.localeCompare(b));
   const opcoesCodigosSgf = Array.from(sgfSet).sort((a, b) => {
@@ -395,16 +442,9 @@ export function montarRelatorioConsolidadoSgf(params: {
     return a.localeCompare(b);
   });
   const opcoesAreas = Array.from(areasSet).sort((a, b) => a.localeCompare(b));
-  const opcoesClientes = Array.from(clientesMap.entries())
+  const opcoesClientes = Array.from(clientesContextoMap.entries())
     .map(([id, nome]) => ({ id, nome }))
     .sort((a, b) => a.nome.localeCompare(b.nome));
-
-  // Aplicação dos filtros
-  const buscaNorm = normalizarTexto(filtros.buscaTexto);
-  const tipoFiltro = filtros.tipoNegocio && filtros.tipoNegocio !== 'Todos' ? normalizarTexto(filtros.tipoNegocio) : '';
-  const sgfFiltro = filtros.codigoSgf && filtros.codigoSgf !== 'Todos' ? normalizarTexto(filtros.codigoSgf) : '';
-  const areaFiltro = filtros.area && filtros.area !== 'Todas' ? normalizarTexto(filtros.area) : '';
-  const empresaFiltro = filtros.empresaId && filtros.empresaId !== 'Todas' ? filtros.empresaId : '';
 
   const itensFiltrados = todosItens.filter(it => {
     if (tipoFiltro && normalizarTexto(it.tipoNegocio) !== tipoFiltro) return false;

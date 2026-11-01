@@ -286,6 +286,16 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
     });
   }, [empresas, diagnosticos, respostas, premissas, problemas, filtrosAtivos]);
 
+  // Auto-ajuste: se o cliente selecionado não pertencer ao SGF ou Área filtrada atual, voltar para 'Todas'
+  useEffect(() => {
+    if (empresaId !== 'Todas' && dadosConsolidados.opcoesClientes.length > 0) {
+      const clienteAindaValido = dadosConsolidados.opcoesClientes.some(c => c.id === empresaId);
+      if (!clienteAindaValido) {
+        setEmpresaId('Todas');
+      }
+    }
+  }, [dadosConsolidados.opcoesClientes, empresaId]);
+
   // Limpar filtros
   const handleLimparFiltros = () => {
     playClickSound();
@@ -534,7 +544,11 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
               onChange={(e) => setEmpresaId(e.target.value)}
               className="w-full px-2.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200"
             >
-              <option value="Todas">Todos os clientes ({dadosConsolidados.opcoesClientes.length})</option>
+              <option value="Todas">
+                {codigoSgf !== 'Todos' || area !== 'Todas'
+                  ? `Clientes no filtro (${dadosConsolidados.opcoesClientes.length})`
+                  : `Todos os clientes (${dadosConsolidados.opcoesClientes.length})`}
+              </option>
               {dadosConsolidados.opcoesClientes.map(c => (
                 <option key={c.id} value={c.id}>{c.nome}</option>
               ))}
