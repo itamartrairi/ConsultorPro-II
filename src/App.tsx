@@ -18135,6 +18135,8 @@ export default function App() {
                     empresas={empresas}
                     diagnosticos={diagnosticos}
                     respostas={respostas}
+                    premissas={premissas}
+                    problemas={problemas}
                     user={user}
                     customLogo={customLogo}
                     customConsultoraLogo={customConsultoraLogo}
