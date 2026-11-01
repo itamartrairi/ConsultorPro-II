@@ -41,7 +41,7 @@ import {
   type RelatorioConsolidadoSgfData
 } from '../lib/domain/relatorioConsolidadoSgf';
 import { gerarPdfConsolidadoSgf } from '../lib/relatorios/pdfConsolidadoSgf';
-import { loadAllLocalRespostas } from '../lib/domain/respostas';
+import { loadAllLocalRespostas, deduplicateRespostas, clearRespostasCache } from '../lib/domain/respostas';
 import { db } from '../firebase';
 import { collection, query, where, getDocs, ownerFilter } from '../lib/firestoreOwned';
 import { playClickSound, playSuccessSound } from '../lib/sound';
@@ -74,13 +74,37 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
   logoChoice = 'sebrae',
   setPdfUrl,
 }) => {
-  // Estados para dados completos das tabelas do sistema
-  const [empresas, setEmpresas] = useState<Empresa[]>(propEmpresas);
-  const [diagnosticos, setDiagnosticos] = useState<Diagnostico[]>(propDiagnosticos);
-  const [respostas, setRespostas] = useState<Resposta[]>(propRespostas);
-  const [premissas, setPremissas] = useState<Premissa[]>(propPremissas);
-  const [problemas, setProblemas] = useState<Problema[]>(propProblemas);
+  // Listas armazenadas de fallback (caso não venham nas props)
+  const [empresasCarregadas, setEmpresasCarregadas] = useState<Empresa[]>([]);
+  const [diagnosticosCarregados, setDiagnosticosCarregados] = useState<Diagnostico[]>([]);
+  const [respostasCarregadas, setRespostasCarregadas] = useState<Resposta[]>([]);
+  const [premissasCarregadas, setPremissasCarregadas] = useState<Premissa[]>([]);
+  const [problemasCarregados, setProblemasCarregadas] = useState<Problema[]>([]);
   const [carregandoTabelas, setCarregandoTabelas] = useState<boolean>(true);
+
+  // Dados reativos conectados diretamente às props (qualquer alteração no diagnóstico reflete em tempo real)
+  const empresas = useMemo(() => {
+    return propEmpresas && propEmpresas.length > 0 ? propEmpresas : empresasCarregadas;
+  }, [propEmpresas, empresasCarregadas]);
+
+  const diagnosticos = useMemo(() => {
+    return propDiagnosticos && propDiagnosticos.length > 0 ? propDiagnosticos : diagnosticosCarregados;
+  }, [propDiagnosticos, diagnosticosCarregados]);
+
+  const premissas = useMemo(() => {
+    return propPremissas && propPremissas.length > 0 ? propPremissas : premissasCarregadas;
+  }, [propPremissas, premissasCarregadas]);
+
+  const problemas = useMemo(() => {
+    return propProblemas && propProblemas.length > 0 ? propProblemas : problemasCarregados;
+  }, [propProblemas, problemasCarregados]);
+
+  // Respostas consolidadas: combina base persistida de todos os diagnósticos com as alterações em tempo real das props
+  const respostas = useMemo(() => {
+    const base = respostasCarregadas.length > 0 ? respostasCarregadas : loadAllLocalRespostas();
+    const ativas = propRespostas || [];
+    return deduplicateRespostas([...base, ...ativas]);
+  }, [respostasCarregadas, propRespostas]);
 
   // Estado dos filtros
   const [tipoNegocio, setTipoNegocio] = useState<string>('Todos');
@@ -98,8 +122,8 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
   const carregarTabelasDoSistema = async () => {
     setCarregandoTabelas(true);
     try {
-      // 1. Carregar Empresas do LocalStorage ou Cloud
-      let listaEmpresas: Empresa[] = propEmpresas.length > 0 ? propEmpresas : [];
+      // 1. Carregar Empresas do LocalStorage ou Cloud se props vazias
+      let listaEmpresas: Empresa[] = propEmpresas && propEmpresas.length > 0 ? propEmpresas : [];
       if (listaEmpresas.length === 0) {
         try {
           const savedEmp = localStorage.getItem('local_empresas');
@@ -117,10 +141,10 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
           }
         } catch {}
       }
-      setEmpresas(listaEmpresas);
+      setEmpresasCarregadas(listaEmpresas);
 
-      // 2. Carregar Diagnósticos do LocalStorage ou Cloud
-      let listaDiags: Diagnostico[] = propDiagnosticos.length > 0 ? propDiagnosticos : [];
+      // 2. Carregar Diagnósticos do LocalStorage ou Cloud se props vazias
+      let listaDiags: Diagnostico[] = propDiagnosticos && propDiagnosticos.length > 0 ? propDiagnosticos : [];
       if (listaDiags.length === 0) {
         try {
           const savedDiags = localStorage.getItem('local_diagnosticos');
@@ -138,16 +162,48 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
           }
         } catch {}
       }
-      setDiagnosticos(listaDiags);
+      setDiagnosticosCarregados(listaDiags);
 
       // 3. Carregar TODAS as Respostas de todos os diagnósticos
       const mapaRespostas = new Map<string, Resposta>();
 
-      // A. Respostas do cache local
+      // A. Respostas da Nuvem (Firestore) carregadas PRIMEIRO (menor precedência)
+      if (user) {
+        try {
+          const snapResps = await getDocs(query(collection(db, 'respostas'), ownerFilter()));
+          snapResps.docs.forEach(docSnap => {
+            mapaRespostas.set(docSnap.id, { id: docSnap.id, ...docSnap.data() } as Resposta);
+          });
+        } catch (e) {
+          console.warn('[Relatório SGF] Busca geral de respostas por owner falhou; buscando por diagnósticos:', e);
+        }
+
+        const diagsEfetivos = listaDiags.length > 0 ? listaDiags : propDiagnosticos;
+        const diagIds = diagsEfetivos.map(d => d.id).filter(Boolean);
+        const chunkSize = 30;
+        for (let i = 0; i < diagIds.length; i += chunkSize) {
+          const chunk = diagIds.slice(i, i + chunkSize);
+          try {
+            const qChunk = query(collection(db, 'respostas'), where('diagnosticoId', 'in', chunk));
+            const snapChunk = await getDocs(qChunk);
+            snapChunk.docs.forEach(docSnap => {
+              mapaRespostas.set(docSnap.id, { id: docSnap.id, ...docSnap.data() } as Resposta);
+            });
+          } catch (err) {}
+        }
+      }
+
+      // B. Respostas do Armazenamento Local (sobrescrevem nuvem com edições locais mais recentes)
       try {
-        loadAllLocalRespostas().forEach(r => {
-          if (r?.id) mapaRespostas.set(r.id, r);
-        });
+        const rawLocalAll = localStorage.getItem('local_all_respostas');
+        if (rawLocalAll) {
+          const parsed = JSON.parse(rawLocalAll);
+          if (Array.isArray(parsed)) {
+            parsed.forEach((r: any) => {
+              if (r?.id) mapaRespostas.set(r.id, r);
+            });
+          }
+        }
       } catch {}
 
       try {
@@ -163,54 +219,21 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
       } catch {}
 
       try {
-        const rawLocalAll = localStorage.getItem('local_all_respostas');
-        if (rawLocalAll) {
-          const parsed = JSON.parse(rawLocalAll);
-          if (Array.isArray(parsed)) {
-            parsed.forEach((r: any) => {
-              if (r?.id) mapaRespostas.set(r.id, r);
-            });
-          }
-        }
+        clearRespostasCache();
+        loadAllLocalRespostas().forEach(r => {
+          if (r?.id) mapaRespostas.set(r.id, r);
+        });
       } catch {}
 
-      // Respostas passadas nas props
+      // C. Respostas ativas passadas nas props (têm precedência máxima de modificações recentes)
       if (Array.isArray(propRespostas) && propRespostas.length > 0) {
         propRespostas.forEach(r => {
           if (r?.id) mapaRespostas.set(r.id, r);
         });
       }
 
-      // B. Respostas na Nuvem (Firestore)
-      if (user) {
-        try {
-          // Busca geral pelo owner
-          const snapResps = await getDocs(query(collection(db, 'respostas'), ownerFilter()));
-          snapResps.docs.forEach(docSnap => {
-            mapaRespostas.set(docSnap.id, { id: docSnap.id, ...docSnap.data() } as Resposta);
-          });
-        } catch (e) {
-          console.warn('[Relatório SGF] Busca geral de respostas por owner falhou; buscando por diagnósticos:', e);
-        }
-
-        // Se ainda tiver diagnósticos sem resposta, buscar em blocos pelos IDs
-        const diagIds = listaDiags.map(d => d.id).filter(Boolean);
-        const chunkSize = 30;
-        for (let i = 0; i < diagIds.length; i += chunkSize) {
-          const chunk = diagIds.slice(i, i + chunkSize);
-          try {
-            const qChunk = query(collection(db, 'respostas'), where('diagnosticoId', 'in', chunk));
-            const snapChunk = await getDocs(qChunk);
-            snapChunk.docs.forEach(docSnap => {
-              mapaRespostas.set(docSnap.id, { id: docSnap.id, ...docSnap.data() } as Resposta);
-            });
-          } catch (err) {
-            // quiet chunk fallback
-          }
-        }
-      }
-
-      setRespostas(Array.from(mapaRespostas.values()));
+      const deduplicadas = deduplicateRespostas(Array.from(mapaRespostas.values()));
+      setRespostasCarregadas(deduplicadas);
 
       // 4. Carregar Premissas e Problemas se vazios
       let listaPremissas = propPremissas;
@@ -220,7 +243,7 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
           if (savedP) listaPremissas = JSON.parse(savedP);
         } catch {}
       }
-      setPremissas(listaPremissas);
+      setPremissasCarregadas(listaPremissas);
 
       let listaProblemas = propProblemas;
       if (listaProblemas.length === 0) {
@@ -229,7 +252,7 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
           if (savedProb) listaProblemas = JSON.parse(savedProb);
         } catch {}
       }
-      setProblemas(listaProblemas);
+      setProblemasCarregadas(listaProblemas);
 
     } catch (err) {
       console.error('Erro ao conectar tabelas do sistema:', err);

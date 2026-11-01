@@ -9504,6 +9504,7 @@ import {
   loadAllLocalRespostas,
   saveAllLocalRespostas,
   getRespostasForDiagnostico,
+  clearRespostasCache,
 } from './lib/domain/respostas';
 import { isValidLogoSource } from './lib/media/logo';
 import { Type } from './lib/ai/schemaTypes';
@@ -9814,6 +9815,7 @@ export default function App() {
   const syncedDiagsRef = useRef<Set<string>>(new Set());
   const pendingResponsesBuffer = useRef<Map<string, Resposta>>(new Map());
   const saveDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const flushPendingResponsesRef = useRef<() => void>(() => {});
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -9938,7 +9940,15 @@ export default function App() {
   const [calculatingMaturity, setCalculatingMaturity] = useState(false);
   const [generatingPlan, setGeneratingPlan] = useState(false);
   const [view, setViewInternal] = useState<'home' | 'companies' | 'credenciadas' | 'licenses' | 'diagnosis' | 'dashboard' | 'premises' | 'cronograma' | 'relatorio' | 'kanban' | 'settings' | 'landing' | 'checkout' | 'licensing' | 'dados-consultoria' | 'agenda' | 'macro-dashboard' | 'maturity-assessment' | 'projects' | 'plan' | 'resultado-consultoria' | 'relatorio-consolidado-sgf'>('landing');
-  const setView = (v: any) => setViewInternal(v);
+  const setView = (v: any) => {
+    if (pendingResponsesBuffer.current.size > 0 && flushPendingResponsesRef.current) {
+      try {
+        flushPendingResponsesRef.current();
+      } catch {}
+    }
+    clearRespostasCache();
+    setViewInternal(v);
+  };
   const [customLogo, setCustomLogo] = useState<string | null>(() => {
     const v = localStorage.getItem('sebrae_custom_logo');
     return v && v.startsWith('data:') ? v : null;
@@ -12609,7 +12619,7 @@ export default function App() {
               icon={FileSpreadsheet} 
               label="Relatório SGF & Áreas" 
               active={view === 'relatorio-consolidado-sgf'} 
-              onClick={() => { setView('relatorio-consolidado-sgf'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }} 
+              onClick={() => { setView('relatorio-consolidado-sgf'); }} 
             />
             <NavItem 
               icon={History} 
@@ -16239,6 +16249,7 @@ export default function App() {
 
     // 1. Efficient batched write to localStorage
     saveAllLocalRespostas(itemsToSave);
+    clearRespostasCache();
 
     // 2. Batched write to Firestore if logged in
     if (user && itemsToSave.length > 0) {
@@ -16272,6 +16283,7 @@ export default function App() {
     setSaveStatus('saved');
     setLastSavedTime(new Date());
   };
+  flushPendingResponsesRef.current = flushPendingResponses;
 
   const updateResposta = (
     id: string, 

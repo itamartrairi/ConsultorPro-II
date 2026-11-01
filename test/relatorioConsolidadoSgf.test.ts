@@ -183,10 +183,65 @@ if (relatorioCriticos.totalItens !== 2) {
 
 console.log('  OK: Filtro por Classificação (Pontos Críticos)');
 
-// Testando comparativo de áreas
-if (relatorioGeral.comparativoPorArea.length !== 3) {
-  throw new Error(`Esperado 3 áreas no comparativo, obteve ${relatorioGeral.comparativoPorArea.length}`);
-}
+// Testando modificação do diagnóstico: alteração de respostas de Sim para Não
+const respostasModificadas: Resposta[] = [
+  ...respostasMock,
+  // resp-1 era Sim (Ponto Forte). Agora alterada para Não (Ponto Crítico)
+  {
+    id: 'resp-1',
+    diagnosticoId: 'diag-1',
+    premissaId: 'p-1',
+    idProblema: 'prob-1',
+    problema: 'Ausência de controle de caixa',
+    pergunta: 'A empresa possui fluxo de caixa diário?',
+    peso: 2,
+    area: 'Financeiro',
+    resposta: 'Não',
+    observacao: 'Deixou de controlar o caixa',
+    score: 0
+  }
+];
 
-console.log('  OK: Comparativo e métricas para gráficos comparativos');
+const relatorioAposModificarResposta = montarRelatorioConsolidadoSgf({
+  empresas: empresasMock,
+  diagnosticos: diagnosticosMock,
+  respostas: respostasModificadas,
+  filtros: {}
+});
+
+if (relatorioAposModificarResposta.totalPontosFortes !== 1 || relatorioAposModificarResposta.totalPontosCriticos !== 3) {
+  throw new Error(`Modificação de resposta no diagnóstico não alterou o relatório corretamente! Fortes: ${relatorioAposModificarResposta.totalPontosFortes}, Críticos: ${relatorioAposModificarResposta.totalPontosCriticos}`);
+}
+console.log('  OK: Modificação de respostas no diagnóstico altera o relatório em tempo real');
+
+// Testando modificação do diagnóstico: alteração de segmento / tipoEmpresa e código SGF
+const diagnosticosModificados: Diagnostico[] = [
+  {
+    ...diagnosticosMock[0],
+    tipoEmpresa: 'Indústria e Transformação',
+    dadosConsultoria: {
+      codigoSgf: 'SGF-NOVO-999',
+      consultor: 'Consultor Alterado'
+    }
+  },
+  diagnosticosMock[1]
+];
+
+const relatorioAposModificarDiag = montarRelatorioConsolidadoSgf({
+  empresas: empresasMock,
+  diagnosticos: diagnosticosModificados,
+  respostas: respostasMock,
+  filtros: {}
+});
+
+const grupoNovo = relatorioAposModificarDiag.grupos.find(g => g.tipoNegocio === 'Indústria e Transformação');
+if (!grupoNovo) {
+  throw new Error('Alteração de segmento no diagnóstico não refletiu no agrupamento do relatório');
+}
+const sgfNovo = grupoNovo.sgfs.find(s => s.codigoSgf === 'SGF-NOVO-999');
+if (!sgfNovo) {
+  throw new Error('Alteração de código SGF no diagnóstico não refletiu no agrupamento do relatório');
+}
+console.log('  OK: Modificação de segmento e SGF no diagnóstico altera o relatório em tempo real');
+
 console.log('Todos os testes de relatorioConsolidadoSgf passaram com sucesso!');

@@ -7,6 +7,7 @@
 import type { Diagnostico, Empresa, Resposta, Premissa, Problema } from '../../types/domain';
 import { grauLacuna } from './planoAcao';
 import { normalizeAndFormatArea } from './areas';
+import { deduplicateRespostas } from './respostas';
 
 export type ClassificacaoDiagnostico = 'Ponto Forte' | 'Ponto Crítico' | 'Oportunidade de Melhoria' | 'Pendente';
 
@@ -140,7 +141,9 @@ export function extrairItensDiagnosticos(params: {
   premissas?: Premissa[];
   problemas?: Problema[];
 }): ItemDiagnosticoConsolidado[] {
-  const { empresas, diagnosticos, respostas, premissas = [], problemas = [] } = params;
+  const { empresas, diagnosticos, respostas: rawRespostas, premissas = [], problemas = [] } = params;
+  // Desduplica respostas garantindo que as modificações mais recentes prevaleçam
+  const respostas = deduplicateRespostas(rawRespostas || []);
 
   // Mapas por ID e variações de maiúsculas/minúsculas
   const empresasMap = new Map<string, Empresa>();
@@ -202,8 +205,9 @@ export function extrairItensDiagnosticos(params: {
       (diag as any)?.dadosConsultoria?.razaoSocial ||
       'Cliente';
 
+    // Priorizar tipoEmpresa do diagnóstico específico modificado antes da empresa geral
     const tipoNegocio =
-      (emp?.tipoEmpresa || (emp as any)?.ramoAtividade || diag?.tipoEmpresa || (diag as any)?.dadosConsultoria?.tipoEmpresa || '').trim() ||
+      (diag?.tipoEmpresa || (diag as any)?.dadosConsultoria?.tipoEmpresa || emp?.tipoEmpresa || (emp as any)?.ramoAtividade || '').trim() ||
       'Não informado';
 
     const codigoSgfRaw =
@@ -282,7 +286,7 @@ export function extrairItensDiagnosticos(params: {
       'Cliente';
 
     const tipoNegocio =
-      (emp?.tipoEmpresa || (emp as any)?.ramoAtividade || diag.tipoEmpresa || (diag as any)?.dadosConsultoria?.tipoEmpresa || '').trim() ||
+      (diag.tipoEmpresa || (diag as any)?.dadosConsultoria?.tipoEmpresa || emp?.tipoEmpresa || (emp as any)?.ramoAtividade || '').trim() ||
       'Não informado';
 
     const codigoSgfRaw =

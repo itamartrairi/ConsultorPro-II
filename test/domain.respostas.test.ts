@@ -47,4 +47,18 @@ const c = makeResp({ id: '3', pergunta: 'Outra pergunta?', resposta: 'Não', sco
 const dedup2 = deduplicateRespostas([a, b, c]);
 assert(dedup2.length === 2, 'perguntas diferentes → 2 itens');
 
+// Cenário crítico: Consultor altera a resposta de 'Sim' para 'Não' (grau de lacuna maior / ponto crítico)
+const antesSim = makeResp({ id: '10', pergunta: 'Tem controle?', resposta: 'Sim', score: 2, observacao: 'antes' });
+const depoisNao = makeResp({ id: '10', pergunta: 'Tem controle?', resposta: 'Não', score: 0, observacao: 'precisa implantar' });
+const alteradoParaNao = deduplicateRespostas([antesSim, depoisNao]);
+assert(alteradoParaNao.length === 1, 'alteração Sim para Não mantém 1 item');
+assert(alteradoParaNao[0].resposta === 'Não', 'alteração de Sim para Não deve prevalecer');
+assert(alteradoParaNao[0].observacao === 'precisa implantar', 'observação atualizada prevalece');
+
+// Cenário inverso: Consultor altera de 'Não' para 'Sim' (resolvido / ponto forte)
+const depoisSim = makeResp({ id: '10', pergunta: 'Tem controle?', resposta: 'Sim', score: 2, observacao: 'implantado com sucesso' });
+const alteradoParaSim = deduplicateRespostas([depoisNao, depoisSim]);
+assert(alteradoParaSim.length === 1, 'alteração Não para Sim mantém 1 item');
+assert(alteradoParaSim[0].resposta === 'Sim', 'alteração de Não para Sim deve prevalecer');
+
 console.log('Todos os testes de domain/respostas passaram.\n');

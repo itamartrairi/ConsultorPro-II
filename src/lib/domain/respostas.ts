@@ -16,8 +16,7 @@ export function deduplicateRespostas(respostasList: Resposta[]): Resposta[] {
     const normArea = resp.area ? `${normalizeAndFormatArea(resp.area).toLowerCase()}::` : '';
     const normQ = (resp.pergunta || '').trim().toLowerCase();
     
-    // Always include normArea in key to prevent responses from different areas (e.g. Financeiro vs Operacional)
-    // from colliding or overwriting each other, even if question text or generic IDs match.
+    // Identificador único da questão no contexto do diagnóstico e área
     const key = resp.premissaId
       ? `${diagScope}${normArea}prem:${resp.premissaId}`
       : normQ
@@ -36,13 +35,19 @@ export function deduplicateRespostas(respostasList: Resposta[]): Resposta[] {
       const existingAnswered = isAnswered(existing);
 
       if (respAnswered && !existingAnswered) {
-        map.set(key, resp);
-      } else if (respAnswered && existingAnswered) {
-        if (resp.observacao && !existing.observacao) {
-          map.set(key, resp);
-        } else if ((resp.score || 0) > (existing.score || 0)) {
-          map.set(key, resp);
-        }
+        // Nova resposta preenchida substitui item não respondido
+        map.set(key, { ...existing, ...resp });
+      } else if (!respAnswered && existingAnswered) {
+        // Item existente já respondido tem prioridade sobre template não respondido
+        const mergedObs = (resp.observacao && !existing.observacao) ? resp.observacao : existing.observacao;
+        map.set(key, { ...resp, ...existing, observacao: mergedObs });
+      } else {
+        // Ambos respondidos ou ambos pendentes: o item que vem depois na lista
+        // representa a alteração mais recente feita pelo consultor no diagnóstico.
+        const mergedObs = (resp.observacao !== undefined && resp.observacao !== '')
+          ? resp.observacao
+          : existing.observacao;
+        map.set(key, { ...existing, ...resp, observacao: mergedObs });
       }
     }
   }
@@ -61,16 +66,18 @@ export function loadAllLocalRespostas(): Resposta[] {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        cachedAllRespostasMap = new Map(parsed.map((r: Resposta) => [r.id, r]));
-        return parsed;
+        const deduped = deduplicateRespostas(parsed);
+        cachedAllRespostasMap = new Map(deduped.map((r: Resposta) => [r.id, r]));
+        return deduped;
       }
     }
     const legacy = localStorage.getItem('local_respostas');
     if (legacy) {
       const parsed = JSON.parse(legacy);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        cachedAllRespostasMap = new Map(parsed.map((r: Resposta) => [r.id, r]));
-        return parsed;
+        const deduped = deduplicateRespostas(parsed);
+        cachedAllRespostasMap = new Map(deduped.map((r: Resposta) => [r.id, r]));
+        return deduped;
       }
     }
   } catch (e) {
@@ -86,10 +93,11 @@ export function saveAllLocalRespostas(newOrUpdated: Resposta[]): void {
     if (!cachedAllRespostasMap) {
       loadAllLocalRespostas();
     }
-    newOrUpdated.forEach((r) => {
-      if (r?.id) cachedAllRespostasMap!.set(r.id, r);
-    });
-    const all = Array.from(cachedAllRespostasMap!.values());
+    const existingList = Array.from(cachedAllRespostasMap!.values());
+    const combined = deduplicateRespostas([...existingList, ...newOrUpdated]);
+    cachedAllRespostasMap = new Map(combined.map((r: Resposta) => [r.id, r]));
+
+    const all = Array.from(cachedAllRespostasMap.values());
     localStorage.setItem('local_all_respostas', JSON.stringify(all));
     localStorage.setItem('local_respostas', JSON.stringify(all));
   } catch (e) {
@@ -99,7 +107,7 @@ export function saveAllLocalRespostas(newOrUpdated: Resposta[]): void {
 
 export function getRespostasForDiagnostico(diagId: string): Resposta[] {
   const all = loadAllLocalRespostas();
-  return all.filter((r) => r.diagnosticoId === diagId);
+  return deduplicateRespostas(all.filter((r) => r.diagnosticoId === diagId));
 }
 
 export function clearRespostasCache(): void {
