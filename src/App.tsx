@@ -12125,8 +12125,9 @@ export default function App() {
 
   const generatePlanoAcaoPDF = async () => {
     try {
-      const filteredTarefas = tarefasPlano
-        .filter(t => selectedDiagnostico && t.diagnosticoId === selectedDiagnostico.id)
+      const filteredTarefas = deduplicateTarefasPlano(
+        tarefasPlano.filter(t => selectedDiagnostico && t.diagnosticoId === selectedDiagnostico.id)
+      )
         .sort((a, b) => {
           const oA = a.ordem !== undefined && a.ordem !== null ? a.ordem : 999999;
           const oB = b.ordem !== undefined && b.ordem !== null ? b.ordem : 999999;
