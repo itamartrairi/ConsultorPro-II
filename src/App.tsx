@@ -3429,6 +3429,28 @@ const CronogramaView = ({
       }
     }
 
+    // Declaração do cliente (somente no relatório final)
+    if (tipoRelatorioVal !== 'PARCIAL') {
+      const nomeClienteDeclaracao = selectedEmpresa?.representante || selectedEmpresa?.nome || '________________';
+      const textoDeclaracao = `Eu, ${nomeClienteDeclaracao}, declaro que a consultoria relatada neste relatório foi concluída com êxito, que me comprometo a executar as ações sugeridas e que o consultor está isento de responsabilidade pelas ações não executadas por mim.`;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      const linhasDeclaracao = doc.splitTextToSize(textoDeclaracao, 180);
+      const alturaDeclaracao = linhasDeclaracao.length * 4.5 + 14;
+      if (checkPageBreak(alturaDeclaracao)) currentY = 50;
+      currentY += 4;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setTextColor(30, 41, 59);
+      doc.text('DECLARAÇÃO DO CLIENTE', 15, currentY);
+      currentY += 6;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(51, 65, 85);
+      doc.text(textoDeclaracao, 15, currentY, { align: 'justify', maxWidth: 180, lineHeightFactor: 1.4 });
+      currentY += linhasDeclaracao.length * 4.5 + 6;
+    }
+
     checkPageBreak(15);
 
     autoTable(doc, {
