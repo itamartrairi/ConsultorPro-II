@@ -2122,6 +2122,188 @@ const CronogramaView = ({
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  // ===== Sincronização em tempo real: Relatório da Consultoria -> Plano de Ação =====
+  // Toda alteração feita no relatório (atividades do cronograma e textos) é gravada sozinha,
+  // após uma pequena pausa na digitação, no diagnóstico e nas tarefas do Plano de Ação.
+  // Os listeners onSnapshot do Firestore levam a mudança na hora para os outros aparelhos.
+  type StatusAutoSync = 'idle' | 'pendente' | 'sincronizando' | 'sincronizado' | 'local' | 'offline' | 'erro';
+  const AUTO_SYNC_ATRASO_MS = 1200;
+  const [autoSyncStatus, setAutoSyncStatus] = useState<StatusAutoSync>('idle');
+  const assinaturaRelatorio = (atvs?: AtividadeCronograma[], dados?: DadosConsultoria): string =>
+    JSON.stringify({ a: atvs || [], d: dados || {} }, (k, v) => (k === 'evidencias' && Array.isArray(v) ? v.length : v));
+  const syncBaselineRef = useRef<string | null>(null);
+  const origemExternaSigRef = useRef<string | null>(null);
+  const autoSyncTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoSyncPendenteRef = useRef<{ diag: Diagnostico; atividades: AtividadeCronograma[]; dados: DadosConsultoria } | null>(null);
+  const relatorioAtualRef = useRef<{ atividades: AtividadeCronograma[]; dados: DadosConsultoria }>({ atividades, dados: dadosConsultoria });
+  relatorioAtualRef.current = { atividades, dados: dadosConsultoria };
+  const tarefasPlanoRef = useRef<TarefaPlanoAcao[] | undefined>(tarefasPlano);
+  tarefasPlanoRef.current = tarefasPlano;
+  const diagAtualRef = useRef<Diagnostico>(selectedDiagnostico);
+  diagAtualRef.current = selectedDiagnostico;
+
+  /** Aplica dados vindos de fora (nuvem, cache local, outro aparelho) sem disparar nova sincronização. */
+  const aplicarRelatorioExterno = (novasAtividades?: AtividadeCronograma[], novosDados?: DadosConsultoria) => {
+    const atual = relatorioAtualRef.current;
+    origemExternaSigRef.current = assinaturaRelatorio(novasAtividades ?? atual.atividades, novosDados ?? atual.dados);
+    if (novasAtividades) setAtividades(novasAtividades);
+    if (novosDados) setDadosConsultoria(novosDados);
+  };
+
+  /** Atualiza o diagnóstico no estado da aplicação, no IndexedDB e no localStorage. */
+  const persistirRelatorioLocal = (diag: Diagnostico, atvs: AtividadeCronograma[], dados: DadosConsultoria) => {
+    const sanitizedAtividades = sanitizeForFirestore(atvs);
+    const sanitizedDados = sanitizeForFirestore(dados);
+    if (diagAtualRef.current && diagAtualRef.current.id === diag.id) {
+      setSelectedDiagnostico({ ...diagAtualRef.current, cronograma: sanitizedAtividades, dadosConsultoria: sanitizedDados });
+    }
+    if (setDiagnosticos) {
+      setDiagnosticos(prev => prev.map(d => d.id === diag.id ? { ...d, cronograma: sanitizedAtividades, dadosConsultoria: sanitizedDados } : d));
+    }
+    if (diag.id) {
+      saveLocalDiagnosticoReport(diag.id, sanitizedAtividades, sanitizedDados).catch(err => {
+        console.warn("[AutoSync] Aviso ao salvar relatório no IndexedDB:", err);
+      });
+    }
+    try {
+      const saved = localStorage.getItem('local_diagnosticos');
+      const parsed = saved ? JSON.parse(saved) : [];
+      if (Array.isArray(parsed)) {
+        const nextList = parsed.map((d: any) => d.id === diag.id ? { ...d, cronograma: sanitizedAtividades, dadosConsultoria: sanitizedDados } : d);
+        localStorage.setItem('local_diagnosticos', JSON.stringify(nextList));
+      }
+    } catch (e) {
+      console.warn("[AutoSync] Could not save local_diagnosticos", e);
+    }
+  };
+
+  /**
+   * Recalcula as tarefas do Plano de Ação a partir das atividades do relatório e grava
+   * no estado local, no localStorage e no Firestore. As tarefas são casadas pela chave
+   * (atividade + problema), mantendo o mesmo documento, o status, comentários e evidências.
+   */
+  const sincronizarTarefasDoPlano = async (diag: Diagnostico, atvs: AtividadeCronograma[], dados: DadosConsultoria): Promise<StatusAutoSync> => {
+    const empresaId = selectedEmpresa?.id || diag.empresaId || '';
+    const validas = (atvs || []).filter(a => a?.nome?.trim());
+    const norm = (v?: string) => (v || '').trim().toLowerCase();
+    const chaves = (t: { atividade?: string; idProblema?: string; problema?: string }) => [
+      'atv|' + norm(t.atividade) + '|' + norm(t.problema),
+      norm(t.idProblema) + '|' + norm(t.problema)
+    ];
+    const currentUser = auth.currentUser;
+    const existentes = deduplicateTarefasPlano((tarefasPlanoRef.current || []).filter(t => t.diagnosticoId === diag.id));
+    const geradas = montarTarefasDoPlano(validas, diag, empresaId, currentUser?.uid || 'local', existentes);
+    const porChave = new Map<string, TarefaPlanoAcao[]>();
+    existentes.forEach(t => chaves(t).forEach(k => {
+      const lista = porChave.get(k) || [];
+      lista.push(t);
+      porChave.set(k, lista);
+    }));
+    const usados = new Set<string>();
+    const novas: TarefaPlanoAcao[] = geradas.map((t, i) => {
+      let id: string | undefined;
+      for (const k of chaves(t)) {
+        const candidata = (porChave.get(k) || []).find(e => !usados.has(e.id));
+        if (candidata) { id = candidata.id; break; }
+      }
+      if (!id) {
+        id = currentUser ? doc(collection(db, 'tarefas_plano')).id : 'tarefa_' + diag.id + '_' + i + '_' + Date.now();
+      }
+      usados.add(id);
+      return { ...t, id } as TarefaPlanoAcao;
+    });
+    const idsExistentes = new Set(existentes.map(t => t.id));
+
+    // 1. Estado local e localStorage: o Plano de Ação muda na hora
+    if (setTarefasPlano) {
+      setTarefasPlano(prev => deduplicateTarefasPlano([...prev.filter(t => t.diagnosticoId !== diag.id), ...novas]));
+    }
+    try {
+      const savedTasks = localStorage.getItem('local_tarefas_plano');
+      const parsedTasks = savedTasks ? JSON.parse(savedTasks) : [];
+      const outras = Array.isArray(parsedTasks) ? parsedTasks.filter((t: any) => t.diagnosticoId !== diag.id) : [];
+      localStorage.setItem('local_tarefas_plano', JSON.stringify(deduplicateTarefasPlano([...outras, ...novas])));
+    } catch (e) {
+      console.warn("[AutoSync] Could not save local_tarefas_plano", e);
+    }
+
+    if (!currentUser || !diag.id) return 'local';
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      // O Firestore guarda as gravações e envia quando a internet voltar
+      updateDoc(doc(db, 'diagnosticos', diag.id), { cronograma: sanitizeForFirestore(atvs), dadosConsultoria: sanitizeForFirestore(dados), updatedAt: new Date().toISOString() }).catch(() => {});
+      return 'offline';
+    }
+
+    // 2. Nuvem (Firestore): diagnóstico + tarefas do plano
+    const gravarNaNuvem = async () => {
+      await updateDoc(doc(db, 'diagnosticos', diag.id), {
+        cronograma: sanitizeForFirestore(atvs),
+        dadosConsultoria: sanitizeForFirestore(dados),
+        updatedAt: new Date().toISOString()
+      });
+      const snap = await getDocs(query(collection(db, 'tarefas_plano'), ownerFilter(), where('diagnosticoId', '==', diag.id)));
+      const idsNovos = new Set(novas.map(t => t.id));
+      const agora = new Date().toISOString();
+      const batch = writeBatch(db);
+      novas.forEach(t => {
+        const { id, ...dadosTarefa } = t;
+        batch.set(doc(db, 'tarefas_plano', id), sanitizeForFirestore({
+          ...dadosTarefa,
+          ownerId: currentUser.uid,
+          updatedAt: agora,
+          ...(idsExistentes.has(id) ? {} : { dataCadastro: agora })
+        }), { merge: true });
+      });
+      (snap?.docs || []).forEach(d => {
+        if (!idsNovos.has(d.id)) batch.delete(d.ref);
+      });
+      await batch.commit();
+    };
+    try {
+      await Promise.race([
+        gravarNaNuvem(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout ao sincronizar na nuvem")), 8000))
+      ]);
+      return 'sincronizado';
+    } catch (err) {
+      console.warn("[AutoSync] Aviso ao sincronizar relatório e plano na nuvem:", err);
+      return 'erro';
+    }
+  };
+
+  const executarAutoSync = async (pendente: { diag: Diagnostico; atividades: AtividadeCronograma[]; dados: DadosConsultoria }) => {
+    setAutoSyncStatus('sincronizando');
+    persistirRelatorioLocal(pendente.diag, pendente.atividades, pendente.dados);
+    const resultado = await sincronizarTarefasDoPlano(pendente.diag, pendente.atividades, pendente.dados);
+    if (!autoSyncPendenteRef.current) setAutoSyncStatus(resultado);
+  };
+
+  /** Grava agora o que estiver aguardando (troca de diagnóstico, saída da tela, etc.). */
+  const dispararAutoSyncAgora = () => {
+    if (autoSyncTimerRef.current) {
+      clearTimeout(autoSyncTimerRef.current);
+      autoSyncTimerRef.current = null;
+    }
+    const pendente = autoSyncPendenteRef.current;
+    autoSyncPendenteRef.current = null;
+    if (pendente) {
+      executarAutoSync(pendente).catch(err => {
+        console.warn("[AutoSync] Erro na sincronização automática:", err);
+        setAutoSyncStatus('erro');
+      });
+    }
+  };
+  const dispararAutoSyncAgoraRef = useRef(dispararAutoSyncAgora);
+  dispararAutoSyncAgoraRef.current = dispararAutoSyncAgora;
+
+  const cancelarAutoSyncPendente = () => {
+    if (autoSyncTimerRef.current) {
+      clearTimeout(autoSyncTimerRef.current);
+      autoSyncTimerRef.current = null;
+    }
+    autoSyncPendenteRef.current = null;
+  };
+
   const [editingActivityIndex, setEditingActivityIndex] = useState<number | null>(null);
   const [editingActivity, setEditingActivity] = useState<AtividadeCronograma | null>(null);
 
@@ -2240,20 +2422,27 @@ const CronogramaView = ({
     let isMounted = true;
     loadLocalDiagnosticoReport(selectedDiagnostico.id).then((cached) => {
       if (!isMounted || !cached) return;
+      // Não sobrescreve edições que ainda estão aguardando a sincronização automática
+      if (autoSyncPendenteRef.current) return;
+      let proximasAtividades: AtividadeCronograma[] | undefined;
+      let proximosDados: DadosConsultoria | undefined;
       if (cached.cronograma && Array.isArray(cached.cronograma) && cached.cronograma.length > 0) {
-        const calibrated = (cached.cronograma as AtividadeCronograma[]).map(atv => ({
+        proximasAtividades = (cached.cronograma as AtividadeCronograma[]).map(atv => ({
           ...atv,
           incluirNoRelatorio: isAtividadeConcluida(atv.status) ? (atv.incluirNoRelatorio !== false) : false
         }));
-        setAtividades(calibrated);
       }
 
       if (cached.dadosConsultoria && Object.keys(cached.dadosConsultoria).length > 0) {
-        setDadosConsultoria(prev => ({
+        const prev: DadosConsultoria = relatorioAtualRef.current.dados || {};
+        proximosDados = {
           ...cached.dadosConsultoria,
           ...prev,
           evidencias: cached.dadosConsultoria.evidencias || prev.evidencias
-        }));
+        };
+      }
+      if (proximasAtividades || proximosDados) {
+        aplicarRelatorioExterno(proximasAtividades, proximosDados);
       }
     });
     return () => { isMounted = false; };
@@ -2475,7 +2664,7 @@ const CronogramaView = ({
       }
       
       if (newText !== dadosConsultoria.solucoesIndicadas) {
-        setDadosConsultoria(prev => ({ ...prev, solucoesIndicadas: newText }));
+        aplicarRelatorioExterno(undefined, { ...relatorioAtualRef.current.dados, solucoesIndicadas: newText });
       }
     }
   }, [respostas, solucoes]);
@@ -2566,24 +2755,32 @@ const CronogramaView = ({
   };
 
   // Sync state if selectedDiagnostico changes from outside
+  // (outra tela, outro aparelho via onSnapshot, ou troca de diagnóstico)
   useEffect(() => {
+    const pendente = autoSyncPendenteRef.current;
+    if (pendente) {
+      // Edição local ainda não gravada: no mesmo diagnóstico ela tem prioridade;
+      // se trocou de diagnóstico, grava agora no diagnóstico anterior.
+      if (pendente.diag.id === selectedDiagnostico.id) return;
+      dispararAutoSyncAgora();
+    }
+    let proximasAtividades: AtividadeCronograma[] | undefined;
     if (selectedDiagnostico.cronograma && selectedDiagnostico.cronograma.length > 0 && selectedDiagnostico.cronograma.some(a => a.nome && a.nome.trim() !== '')) {
-      const calibradas = selectedDiagnostico.cronograma.map(atv => ({
+      proximasAtividades = selectedDiagnostico.cronograma.map(atv => ({
         ...atv,
         incluirNoRelatorio: isAtividadeConcluida(atv.status) ? (atv.incluirNoRelatorio !== false) : false
       }));
-      setAtividades(calibradas);
     } else {
       const segment = selectedDiagnostico.tipoEmpresa || 'Geral';
-      const sameSegmentDiag = (historicalData || []).find(d => 
-        d.tipoEmpresa && 
-        d.tipoEmpresa.toLowerCase() === segment.toLowerCase() && 
-        d.cronograma && 
-        d.cronograma.length > 0 && 
+      const sameSegmentDiag = (historicalData || []).find(d =>
+        d.tipoEmpresa &&
+        d.tipoEmpresa.toLowerCase() === segment.toLowerCase() &&
+        d.cronograma &&
+        d.cronograma.length > 0 &&
         d.cronograma.some(a => a.nome && a.nome.trim() !== '')
       );
       if (sameSegmentDiag && sameSegmentDiag.cronograma) {
-        const adapted = sameSegmentDiag.cronograma.map((atv, idx) => {
+        proximasAtividades = sameSegmentDiag.cronograma.map((atv, idx) => {
           const defaultDate = getActivityDateStr(selectedDiagnostico.dataDiagnostico, idx);
           return {
             ...atv,
@@ -2592,13 +2789,41 @@ const CronogramaView = ({
             incluirNoRelatorio: isAtividadeConcluida(atv.status) ? (atv.incluirNoRelatorio !== false) : false
           };
         });
-        setAtividades(adapted);
       }
     }
-    if (selectedDiagnostico.dadosConsultoria) {
-      setDadosConsultoria(selectedDiagnostico.dadosConsultoria);
+    const proximosDados = selectedDiagnostico.dadosConsultoria || undefined;
+    if (!proximasAtividades && !proximosDados) return;
+    const atual = relatorioAtualRef.current;
+    const assinaturaRecebida = assinaturaRelatorio(proximasAtividades ?? atual.atividades, proximosDados ?? atual.dados);
+    if (assinaturaRecebida === assinaturaRelatorio(atual.atividades, atual.dados)) return;
+    aplicarRelatorioExterno(proximasAtividades, proximosDados);
+  }, [selectedDiagnostico.id, selectedDiagnostico.cronograma, selectedDiagnostico.dadosConsultoria]);
+
+  // Detecta as alterações feitas no relatório e agenda a gravação automática
+  useEffect(() => {
+    const assinatura = assinaturaRelatorio(atividades, dadosConsultoria);
+    if (assinatura === origemExternaSigRef.current) {
+      origemExternaSigRef.current = null;
+      syncBaselineRef.current = assinatura;
+      return;
     }
-  }, [selectedDiagnostico.id, selectedDiagnostico.cronograma]);
+    if (syncBaselineRef.current === null) {
+      syncBaselineRef.current = assinatura;
+      return;
+    }
+    if (assinatura === syncBaselineRef.current || !selectedDiagnostico?.id) return;
+    syncBaselineRef.current = assinatura;
+    autoSyncPendenteRef.current = { diag: selectedDiagnostico, atividades, dados: dadosConsultoria };
+    setAutoSyncStatus('pendente');
+    if (autoSyncTimerRef.current) clearTimeout(autoSyncTimerRef.current);
+    autoSyncTimerRef.current = setTimeout(() => {
+      autoSyncTimerRef.current = null;
+      dispararAutoSyncAgoraRef.current();
+    }, AUTO_SYNC_ATRASO_MS);
+  }, [atividades, dadosConsultoria]);
+
+  // Ao sair da tela do relatório, grava o que estiver pendente
+  useEffect(() => () => { dispararAutoSyncAgoraRef.current(); }, []);
 
   const handleClear = () => {
     setAtividades(PLANO_DE_ACAO_PADRAO);
@@ -2698,85 +2923,17 @@ const CronogramaView = ({
         console.warn("Could not save to localStorage local_diagnosticos", e);
       }
 
-      // 3. Sync local tarefasPlano state and localStorage
-      const validAtividades = (sanitizedAtividades || []).filter((atv: any) => atv.nome?.trim());
-      const tarefasAtuais = deduplicateTarefasPlano((tarefasPlano || []).filter(t => t.diagnosticoId === selectedDiagnostico.id));
-      const tarefasExpandidas = montarTarefasDoPlano(
-        validAtividades,
-        selectedDiagnostico,
-        selectedEmpresa?.id || selectedDiagnostico.empresaId || '',
-        auth.currentUser?.uid || 'local',
-        tarefasAtuais
-      );
-      const newTarefasFromAtividades: TarefaPlanoAcao[] = deduplicateTarefasPlano(tarefasExpandidas.map((t, index) => ({
-        ...t,
-        id: tarefasAtuais[index]?.id || `tarefa_${selectedDiagnostico.id}_${index}`
-      })));
-
-      if (setTarefasPlano) {
-        setTarefasPlano(prev => {
-          const others = prev.filter(t => t.diagnosticoId !== selectedDiagnostico.id);
-          return deduplicateTarefasPlano([...others, ...newTarefasFromAtividades]);
+      // 3 e 4. Plano de Ação (estado local, localStorage e nuvem) em segundo plano, sem travar a tela.
+      // As tarefas são casadas por atividade + problema, preservando status, comentários e evidências.
+      cancelarAutoSyncPendente();
+      syncBaselineRef.current = assinaturaRelatorio(atividadesParaSalvar, dadosParaSalvar);
+      setAutoSyncStatus('sincronizando');
+      sincronizarTarefasDoPlano(selectedDiagnostico, atividadesParaSalvar, dadosParaSalvar)
+        .then(resultado => { if (!autoSyncPendenteRef.current) setAutoSyncStatus(resultado); })
+        .catch(cloudErr => {
+          console.warn("[CloudSync] Background sync note for cronograma:", cloudErr);
+          setAutoSyncStatus('erro');
         });
-      }
-
-      try {
-        const savedTasks = localStorage.getItem('local_tarefas_plano');
-        const parsedTasks = savedTasks ? JSON.parse(savedTasks) : [];
-        const others = Array.isArray(parsedTasks) ? parsedTasks.filter((t: any) => t.diagnosticoId !== selectedDiagnostico.id) : [];
-        localStorage.setItem('local_tarefas_plano', JSON.stringify(deduplicateTarefasPlano([...others, ...newTarefasFromAtividades])));
-      } catch (e) {
-        console.warn("Could not save local_tarefas_plano", e);
-      }
-
-      // 4. Background cloud sync without blocking the UI
-      const currentUser = auth.currentUser;
-      if (currentUser && selectedDiagnostico.id) {
-        (async () => {
-          try {
-            const syncPromise = async () => {
-              await updateDoc(doc(db, 'diagnosticos', selectedDiagnostico.id), {
-                cronograma: sanitizedAtividades,
-                dadosConsultoria: sanitizedDados,
-                updatedAt: new Date().toISOString()
-              });
-
-              const qCurrentTasks = query(collection(db, 'tarefas_plano'), ownerFilter(), where('diagnosticoId', '==', selectedDiagnostico.id));
-              const snapCurrentTasks = await getDocs(qCurrentTasks);
-              const existingDocs = snapCurrentTasks?.docs || [];
-
-              const batch = writeBatch(db);
-              tarefasExpandidas.forEach((tarefa, index) => {
-                const taskData = sanitizeForFirestore({
-                  ...tarefa,
-                  ownerId: currentUser.uid,
-                  dataCadastro: new Date().toISOString()
-                });
-
-                if (index < existingDocs.length) {
-                  batch.update(existingDocs[index].ref, taskData);
-                } else {
-                  const newTaskRef = doc(collection(db, 'tarefas_plano'));
-                  batch.set(newTaskRef, taskData);
-                }
-              });
-
-              for (let i = tarefasExpandidas.length; i < existingDocs.length; i++) {
-                batch.delete(existingDocs[i].ref);
-              }
-
-              await batch.commit();
-            };
-
-            await Promise.race([
-              syncPromise(),
-              new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout ao sincronizar na nuvem")), 4500))
-            ]);
-          } catch (cloudErr) {
-            console.warn("[CloudSync] Background sync note for cronograma:", cloudErr);
-          }
-        })();
-      }
 
       // Success feedback immediately applied
       clearTimeout(safetyTimer);
@@ -2817,6 +2974,18 @@ const CronogramaView = ({
 
     if (selectedDiagnostico.id) {
       saveLocalDiagnosticoReport(selectedDiagnostico.id, sanitizedAtv, sanitizedDados);
+    }
+
+    // Reflete a mudança de status no Plano de Ação imediatamente (a gravação automática usa este estado)
+    if (field === 'status' && setTarefasPlano && selectedDiagnostico.id) {
+      const nomeAtividade = newAtividades[index].nome;
+      setTarefasPlano(prev => prev.map(t => {
+        if (t.diagnosticoId !== selectedDiagnostico.id) return t;
+        const daAtividade = typeof t.atividadeOrdem === 'number'
+          ? t.atividadeOrdem === index
+          : (t.ordem === index || t.problema === nomeAtividade);
+        return daAtividade ? { ...t, status: value as TarefaPlanoAcao['status'] } : t;
+      }));
     }
 
     if (field === 'status' && auth.currentUser && selectedDiagnostico.id) {
@@ -3531,6 +3700,27 @@ const CronogramaView = ({
               </>
             )}
           </Button>
+          <span
+            className={cn(
+              "inline-flex items-center gap-1.5 self-center text-[11px] font-semibold px-2.5 py-1 rounded-full border",
+              autoSyncStatus === 'erro' ? "text-red-700 bg-red-50 border-red-200"
+                : autoSyncStatus === 'offline' || autoSyncStatus === 'local' ? "text-amber-700 bg-amber-50 border-amber-200"
+                : autoSyncStatus === 'sincronizado' ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                : "text-slate-500 bg-slate-50 border-slate-200"
+            )}
+            title="As alterações do relatório atualizam o Plano de Ação automaticamente e aparecem na hora nos outros aparelhos conectados."
+          >
+            {autoSyncStatus === 'pendente' || autoSyncStatus === 'sincronizando'
+              ? <Loader2 className="animate-spin" size={12} />
+              : autoSyncStatus === 'sincronizado' ? <CheckCircle2 size={12} /> : <Cloud size={12} />}
+            {autoSyncStatus === 'pendente' ? "Alterações pendentes..."
+              : autoSyncStatus === 'sincronizando' ? "Sincronizando com o Plano de Ação..."
+              : autoSyncStatus === 'sincronizado' ? "Plano de Ação sincronizado"
+              : autoSyncStatus === 'local' ? "Plano atualizado neste aparelho"
+              : autoSyncStatus === 'offline' ? "Sem internet: envia ao reconectar"
+              : autoSyncStatus === 'erro' ? "Falha ao sincronizar (salvo localmente)"
+              : "Sincronização automática ativa"}
+          </span>
         </div>
       </div>
 
