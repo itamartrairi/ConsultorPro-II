@@ -16,7 +16,8 @@ import {
   ListTodo,
   FileText,
   Briefcase,
-  ExternalLink
+  ExternalLink,
+  RefreshCw
 } from 'lucide-react';
 import { 
   collection, 
@@ -31,6 +32,18 @@ import {
 } from '../lib/firestoreOwned';
 import { db } from '../firebase';
 import { Button } from './Button';
+import {
+  connectGoogleCalendar,
+  getStoredGoogleToken,
+  clearGoogleToken,
+  getGoogleLoginEmail,
+  listGoogleEvents,
+  upsertGoogleEvent,
+  deleteGoogleEvent,
+  GoogleCalendarAuthError,
+  type GoogleCalendarToken,
+  type GoogleAgendaEvento
+} from '../lib/googleCalendar';
 
 interface Empresa {
   id: string;
@@ -55,6 +68,8 @@ interface AgendaEvento {
   descricao?: string;
   status: 'Agendado' | 'Realizado' | 'Cancelado';
   ownerId: string;
+  googleEventId?: string | null;
+  googleEventLink?: string | null;
 }
 
 interface AgendaViewProps {
@@ -93,7 +108,12 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
   const [syncToGoogleOnSave, setSyncToGoogleOnSave] = useState(true);
 
   // Google Calendar Integration Account
-  const GOOGLE_CALENDAR_EMAIL = 'itamartrairi@gmail.com';
+  // Google Agenda do usuário logado (cada consultor conecta a própria conta Google)
+  const [gcalToken, setGcalToken] = useState<GoogleCalendarToken | null>(() => getStoredGoogleToken(user?.uid));
+  const [gcalEvents, setGcalEvents] = useState<GoogleAgendaEvento[]>([]);
+  const [gcalLoading, setGcalLoading] = useState(false);
+  const [gcalError, setGcalError] = useState('');
+  const GOOGLE_CALENDAR_EMAIL = gcalToken?.email || getGoogleLoginEmail(user);
 
   const getGoogleCalendarUrl = (evento: {
     titulo: string;
@@ -212,6 +232,103 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
     if (!formEmpresaId) return [];
     return diagnosticos.filter(d => d.empresaId === formEmpresaId);
   }, [diagnosticos, formEmpresaId]);
+  // ---- Sincronização com o Google Agenda ----
+  const handleGcalError = (err: any) => {
+    console.error('Google Agenda:', err);
+    if (err instanceof GoogleCalendarAuthError) {
+      clearGoogleToken(user?.uid);
+      setGcalToken(null);
+      setGcalEvents([]);
+    }
+    setGcalError(err?.message || 'Erro ao falar com o Google Agenda.');
+  };
+
+  const loadGoogleEvents = async (token = gcalToken?.token) => {
+    if (!token) return;
+    setGcalLoading(true);
+    try {
+      const evs = await listGoogleEvents(token, new Date(year, month, 1), new Date(year, month + 1, 1));
+      setGcalEvents(evs);
+      setGcalError('');
+    } catch (err) {
+      handleGcalError(err);
+    } finally {
+      setGcalLoading(false);
+    }
+  };
+
+  // Ao trocar de usuário, usa a conexão salva daquele usuário
+  useEffect(() => {
+    setGcalToken(getStoredGoogleToken(user?.uid));
+    setGcalEvents([]);
+  }, [user?.uid]);
+
+  // Carrega os eventos do Google do mês exibido
+  useEffect(() => {
+    if (gcalToken) loadGoogleEvents(gcalToken.token);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gcalToken?.token, year, month]);
+
+  const handleConnectGoogle = async () => {
+    if (!user) return;
+    setGcalError('');
+    try {
+      const t = await connectGoogleCalendar(user);
+      setGcalToken(t);
+    } catch (err: any) {
+      setGcalError(err?.message || 'Não foi possível conectar ao Google Agenda.');
+    }
+  };
+
+  const handleDisconnectGoogle = () => {
+    clearGoogleToken(user?.uid);
+    setGcalToken(null);
+    setGcalEvents([]);
+    setGcalError('');
+  };
+
+  const syncEventToGoogle = async (
+    appId: string,
+    data: any,
+    googleEventId?: string | null,
+    googleEventLink?: string | null
+  ) => {
+    const token = gcalToken?.token;
+    if (!token) return;
+    try {
+      const empresa = empresas.find(e => e.id === data.empresaId);
+      const res = await upsertGoogleEvent(token, googleEventId, {
+        appId,
+        titulo: data.titulo,
+        data: data.data,
+        horaInicio: data.horaInicio,
+        horaFim: data.horaFim,
+        descricao: data.descricao,
+        tipo: data.tipo,
+        status: data.status,
+        empresaNome: empresa?.nome
+      });
+      if (res.id !== googleEventId || (res.link || null) !== (googleEventLink || null)) {
+        await updateDoc(doc(db, 'agenda_eventos', appId), { googleEventId: res.id, googleEventLink: res.link || null });
+      }
+      loadGoogleEvents(token);
+    } catch (err) {
+      handleGcalError(err);
+    }
+  };
+
+  // Eventos que existem só no Google (os criados pelo app já aparecem como compromissos do app)
+  const googleOnlyEvents = useMemo(() => {
+    const googleIds = new Set(eventos.map(e => e.googleEventId).filter(Boolean));
+    const appIds = new Set(eventos.map(e => e.id));
+    return gcalEvents.filter(g => !(g.consultorProId && appIds.has(g.consultorProId)) && !googleIds.has(g.id));
+  }, [gcalEvents, eventos]);
+
+  const googleEventsForSelectedDate = useMemo(
+    () => googleOnlyEvents.filter(g => g.data === selectedDateStr),
+    [googleOnlyEvents, selectedDateStr]
+  );
+
 
   // Submit new or edited event
   const handleSubmitEvent = async (e: React.FormEvent) => {
@@ -235,15 +352,21 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
         ownerId: user.uid
       };
 
+      let savedId: string | null = editingEventId;
+
       if (editingEventId) {
         // Update
         await updateDoc(doc(db, 'agenda_eventos', editingEventId), payload);
       } else {
         // Create
-        await addDoc(collection(db, 'agenda_eventos'), payload);
+        const newRef = await addDoc(collection(db, 'agenda_eventos'), payload);
+        savedId = newRef.id;
       }
 
-      if (syncToGoogleOnSave) {
+      const existingEvt = editingEventId ? eventos.find(ev => ev.id === editingEventId) : undefined;
+      if (gcalToken && savedId && (syncToGoogleOnSave || existingEvt?.googleEventId)) {
+        await syncEventToGoogle(savedId, payload, existingEvt?.googleEventId, existingEvt?.googleEventLink);
+      } else if (syncToGoogleOnSave) {
         const gcalUrl = getGoogleCalendarUrl(payload);
         window.open(gcalUrl, '_blank', 'noopener,noreferrer');
       }
@@ -273,7 +396,16 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
   const handleDeleteEvent = async (evtId: string) => {
     if (!window.confirm("Deseja realmente remover este compromisso da agenda?")) return;
     try {
+      const evtToDelete = eventos.find(ev => ev.id === evtId);
       await deleteDoc(doc(db, 'agenda_eventos', evtId));
+      if (evtToDelete?.googleEventId && gcalToken) {
+        try {
+          await deleteGoogleEvent(gcalToken.token, evtToDelete.googleEventId);
+          loadGoogleEvents();
+        } catch (gErr) {
+          handleGcalError(gErr);
+        }
+      }
     } catch (err) {
       console.error("Erro ao deletar compromisso:", err);
       alert("Erro ao remover compromisso.");
@@ -289,6 +421,9 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
     const nextStatus = nextStatusMap[evt.status];
     try {
       await updateDoc(doc(db, 'agenda_eventos', evt.id), { status: nextStatus });
+      if (evt.googleEventId && gcalToken) {
+        await syncEventToGoogle(evt.id, { ...evt, status: nextStatus }, evt.googleEventId, evt.googleEventLink);
+      }
     } catch (err) {
       console.error("Erro ao atualizar status:", err);
     }
@@ -321,6 +456,37 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
           <p className="text-slate-500 text-sm">Organize suas reuniões, sessões de diagnóstico e feedbacks com os clientes</p>
         </div>
         <div className="flex items-center gap-3">
+          {gcalToken ? (
+            <>
+              <button
+                type="button"
+                onClick={() => loadGoogleEvents()}
+                title={`Google Agenda conectado (${GOOGLE_CALENDAR_EMAIL}). Clique para atualizar.`}
+                className="flex items-center gap-2 px-3 py-2 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs font-bold hover:bg-emerald-100 transition-all"
+              >
+                <RefreshCw size={14} className={gcalLoading ? 'animate-spin' : ''} />
+                <span className="hidden md:inline">Sincronizado</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleDisconnectGoogle}
+                title="Desconectar o Google Agenda"
+                className="px-3 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-all"
+              >
+                Desconectar
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={handleConnectGoogle}
+              title="Vincular ao Google Agenda da conta logada"
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-sky-600 text-white text-sm font-bold shadow-sm hover:bg-sky-700 transition-all"
+            >
+              <CalendarIcon size={15} />
+              <span>Conectar Google Agenda</span>
+            </button>
+          )}
           <a
             href={`https://calendar.google.com/calendar/u/0/r?authuser=${GOOGLE_CALENDAR_EMAIL}`}
             target="_blank"
@@ -344,6 +510,12 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
         </div>
       </div>
 
+      {gcalError && (
+        <div className="flex items-start justify-between gap-3 p-4 rounded-2xl border border-amber-200 bg-amber-50 text-amber-800 text-sm">
+          <span>{gcalError}</span>
+          <button type="button" onClick={() => setGcalError('')} className="text-amber-600 hover:text-amber-800 font-bold text-xs shrink-0">Fechar</button>
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left column: Calendar & Quick list */}
         <div className="lg:col-span-2 space-y-6">
@@ -388,7 +560,9 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                 const formattedMonth = (month + 1).toString().padStart(2, '0');
                 const dateStr = `${year}-${formattedMonth}-${formattedDay}`;
 
-                const hasEvents = eventos.some(e => e.data === dateStr);
+                const hasAppEvents = eventos.some(e => e.data === dateStr);
+                const hasGoogleEvents = googleOnlyEvents.some(g => g.data === dateStr);
+                const hasEvents = hasAppEvents || hasGoogleEvents;
                 const hasPendingEvents = eventos.some(e => e.data === dateStr && e.status === 'Agendado');
                 const isSelected = selectedDateStr === dateStr;
                 const isToday = new Date().toISOString().split('T')[0] === dateStr;
@@ -408,13 +582,14 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                     <span>{dayNum}</span>
                     {hasEvents && (
                       <div className="flex gap-1 justify-center items-center">
-                        <span className={`w-1.5 h-1.5 rounded-full ${
+                        {hasAppEvents && (<span className={`w-1.5 h-1.5 rounded-full ${
                           isSelected 
                             ? 'bg-white' 
                             : hasPendingEvents 
                               ? 'bg-sky-500 animate-pulse' 
                               : 'bg-slate-400'
-                        }`} />
+                        }`} />)}
+                      {hasGoogleEvents && <span title="Google Agenda" className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white/70' : 'bg-indigo-400'}`} />}
                       </div>
                     )}
                   </button>
@@ -509,7 +684,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
 
                       <div className="flex items-center gap-1 shrink-0 md:self-center self-end">
                         <a
-                          href={getGoogleCalendarUrl(evt)}
+                          href={evt.googleEventLink || getGoogleCalendarUrl(evt)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
@@ -542,6 +717,32 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                     </div>
                   );
                 })}
+              </div>
+            )}
+            {googleEventsForSelectedDate.length > 0 && (
+              <div className="mt-6 pt-5 border-t border-slate-100 space-y-3">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-indigo-400" />
+                  Do Google Agenda ({googleEventsForSelectedDate.length})
+                </p>
+                {googleEventsForSelectedDate.map(g => (
+                  <a
+                    key={g.id}
+                    href={g.link || `https://calendar.google.com/calendar/u/0/r?authuser=${GOOGLE_CALENDAR_EMAIL}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 p-3 rounded-2xl border border-indigo-100 bg-indigo-50/50 hover:bg-indigo-50 transition-all"
+                  >
+                    <div className="text-xs font-bold text-indigo-700 w-24 shrink-0">
+                      {g.diaInteiro ? 'Dia inteiro' : `${g.horaInicio} - ${g.horaFim}`}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-slate-800 truncate">{g.titulo}</p>
+                      {g.local && <p className="text-xs text-slate-500 truncate">{g.local}</p>}
+                    </div>
+                    <ExternalLink size={14} className="text-indigo-400 shrink-0" />
+                  </a>
+                ))}
               </div>
             )}
           </div>
@@ -585,7 +786,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                         )}
                       </div>
                       <a
-                        href={getGoogleCalendarUrl(evt)}
+                        href={evt.googleEventLink || getGoogleCalendarUrl(evt)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="p-1.5 text-slate-300 hover:text-emerald-600 hover:bg-slate-50 rounded-lg shrink-0 transition-colors"
@@ -757,7 +958,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
                   </div>
                   <div>
                     <p className="text-xs font-bold text-slate-800">Sincronizar com Google Agenda</p>
-                    <p className="text-[11px] text-slate-500">Abrir pré-preenchido para <span className="font-mono font-medium text-emerald-800">{GOOGLE_CALENDAR_EMAIL}</span></p>
+                    <p className="text-[11px] text-slate-500">{gcalToken ? 'Gravar automaticamente no Google Agenda de ' : 'Abrir pré-preenchido para '}<span className="font-mono font-medium text-emerald-800">{GOOGLE_CALENDAR_EMAIL}</span></p>
                   </div>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
