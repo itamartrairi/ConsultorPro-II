@@ -12756,6 +12756,34 @@ export default function App() {
     );
   };
 
+  // Seções do menu: cada seção aparece como um item no menu lateral e seus submenus viram abas no topo da página
+  const getNavSections = () => [
+    { key: 'gestao', label: "Gestão & Atendimento", icon: Briefcase, show: true, tabs: [
+      { label: "Clientes", icon: Building2, active: view === 'companies', onClick: () => { setView('companies'); setSelectedEmpresa(null); } },
+      { label: "Projetos", icon: Briefcase, active: view === 'projects', onClick: () => { setView('projects'); setSelectedEmpresa(null); setSelectedDiagnostico(null); } },
+      { label: "Agenda do Consultor", icon: CalendarDays, active: view === 'agenda', onClick: () => { setView('agenda'); } },
+      { label: "Credenciadas", icon: Building2, active: view === 'credenciadas', onClick: () => { setView('credenciadas'); } },
+    ] },
+    { key: 'diagnosticos', label: "Diagnósticos & Avaliação", icon: TrendingUp, show: true, tabs: [
+      { label: "Maturidade Empresarial", icon: TrendingUp, active: view === 'maturity-assessment', onClick: () => { setView('maturity-assessment'); setSelectedEmpresa(null); setSelectedDiagnostico(null); } },
+      { label: "Resultado da Consultoria", icon: CheckSquare, active: view === 'resultado-consultoria', onClick: () => { setView('resultado-consultoria'); } },
+      { label: "Relatório SGF & Áreas", icon: FileSpreadsheet, active: view === 'relatorio-consolidado-sgf', onClick: () => { setView('relatorio-consolidado-sgf'); } },
+      { label: "Histórico", icon: History, active: view === 'dashboard' && !selectedDiagnostico, onClick: () => { setView('companies'); } },
+      { label: "Biblioteca de Perguntas", icon: FileText, active: view === 'premises', onClick: () => setView('premises') },
+    ] },
+    { key: 'diagnosticoAtivo', label: "Diagnóstico Ativo", icon: FileSpreadsheet, show: !!selectedDiagnostico, tabs: [
+      { label: "Dados da Consultoria", icon: FileSpreadsheet, active: view === 'dados-consultoria', onClick: () => setView('dados-consultoria') },
+      { label: "Relatório de Consultoria", icon: Calendar, active: view === 'cronograma', onClick: () => setView('cronograma') },
+      { label: "Relatório", icon: FileText, active: view === 'relatorio', onClick: () => setView('relatorio') },
+    ] },
+    { key: 'licencas', label: "Licenças & Acesso", icon: Trophy, show: isAdmin, tabs: [
+      { label: "Gestão de Licenças", icon: ShieldCheck, active: view === 'licenses', onClick: () => { setView('licenses'); } },
+      { label: "Licenciamento", icon: Trophy, active: view === 'licensing', onClick: () => setView('licensing') },
+    ] },
+  ];
+  const isNavSectionActive = (key: string) => getNavSections().some(s => s.key === key && s.tabs.some(t => t.active));
+  const openNavSection = (key: string) => { getNavSections().find(s => s.key === key)?.tabs[0].onClick(); };
+
   const Sidebar = () => (
     <aside className={cn(
       "fixed inset-y-0 left-0 z-50 w-80 h-screen bg-white border-r border-slate-100 transition-transform duration-300 ease-in-out lg:sticky lg:top-0 lg:left-0 lg:translate-x-0 shrink-0 print:hidden select-none",
@@ -12788,65 +12816,18 @@ export default function App() {
 
           <div className="pt-2" />
 
-          <NavGroup icon={Briefcase} label="Gestão & Atendimento" groupKey="gestao" count={4}>
-            <NavItem 
-              icon={Building2} 
-              label="Clientes" 
-              active={view === 'companies'} 
-              onClick={() => { setView('companies'); setSelectedEmpresa(null); }} 
-            />
-            <NavItem 
-              icon={Briefcase} 
-              label="Projetos" 
-              active={view === 'projects'} 
-              onClick={() => { setView('projects'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }} 
-            />
-            <NavItem 
-              icon={CalendarDays} 
-              label="Agenda do Consultor" 
-              active={view === 'agenda'} 
-              onClick={() => { setView('agenda'); }} 
-            />
-            <NavItem 
-              icon={Building2} 
-              label="Credenciadas" 
-              active={view === 'credenciadas'} 
-              onClick={() => { setView('credenciadas'); }} 
-            />
-          </NavGroup>
-
-          <NavGroup icon={TrendingUp} label="Diagnósticos & Avaliação" groupKey="diagnosticos" count={5}>
-            <NavItem 
-              icon={TrendingUp} 
-              label="Maturidade Empresarial" 
-              active={view === 'maturity-assessment'} 
-              onClick={() => { setView('maturity-assessment'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }} 
-            />
-            <NavItem 
-              icon={CheckSquare} 
-              label="Resultado da Consultoria" 
-              active={view === 'resultado-consultoria'} 
-              onClick={() => { setView('resultado-consultoria'); }} 
-            />
-            <NavItem 
-              icon={FileSpreadsheet} 
-              label="Relatório SGF & Áreas" 
-              active={view === 'relatorio-consolidado-sgf'} 
-              onClick={() => { setView('relatorio-consolidado-sgf'); }} 
-            />
-            <NavItem 
-              icon={History} 
-              label="Histórico" 
-              active={view === 'dashboard' && !selectedDiagnostico} 
-              onClick={() => { setView('companies'); }} 
-            />
-            <NavItem 
-              icon={FileText} 
-              label="Biblioteca de Perguntas" 
-              active={view === 'premises'} 
-              onClick={() => setView('premises')} 
-            />
-          </NavGroup>
+          <NavItem
+            icon={Briefcase}
+            label="Gestão & Atendimento"
+            active={isNavSectionActive('gestao')}
+            onClick={() => openNavSection('gestao')}
+          />
+          <NavItem
+            icon={TrendingUp}
+            label="Diagnósticos & Avaliação"
+            active={isNavSectionActive('diagnosticos')}
+            onClick={() => openNavSection('diagnosticos')}
+          />
 
           <button
             onClick={() => { setView('macro-dashboard'); setSelectedEmpresa(null); setSelectedDiagnostico(null); setIsSidebarOpen(false); }}
@@ -12856,44 +12837,21 @@ export default function App() {
             <span>Dashboard Macro</span>
           </button>
 
-          {isAdmin && (
-            <NavGroup icon={Trophy} label="Licenças & Acesso" groupKey="licencas" count={2}>
-              <NavItem 
-                icon={ShieldCheck} 
-                label="Gestão de Licenças" 
-                active={view === 'licenses'} 
-                onClick={() => { setView('licenses'); }} 
-              />
-              <NavItem 
-                icon={Trophy} 
-                label="Licenciamento" 
-                active={view === 'licensing'} 
-                onClick={() => setView('licensing')} 
-              />
-            </NavGroup>
+          {!!selectedDiagnostico && (
+            <NavItem
+              icon={FileSpreadsheet}
+              label="Diagnóstico Ativo"
+              active={isNavSectionActive('diagnosticoAtivo')}
+              onClick={() => openNavSection('diagnosticoAtivo')}
+            />
           )}
-
-          {selectedDiagnostico && (
-            <NavGroup icon={FileSpreadsheet} label="Diagnóstico Ativo" groupKey="diagnosticoAtivo" count={3}>
-              <NavItem 
-                icon={FileSpreadsheet} 
-                label="Dados da Consultoria" 
-                active={view === 'dados-consultoria'} 
-                onClick={() => setView('dados-consultoria')} 
-              />
-              <NavItem 
-                icon={Calendar} 
-                label="Relatório de Consultoria" 
-                active={view === 'cronograma'} 
-                onClick={() => setView('cronograma')} 
-              />
-              <NavItem 
-                icon={FileText} 
-                label="Relatório" 
-                active={view === 'relatorio'} 
-                onClick={() => setView('relatorio')} 
-              />
-            </NavGroup>
+          {isAdmin && (
+            <NavItem
+              icon={Trophy}
+              label="Licenças & Acesso"
+              active={isNavSectionActive('licencas')}
+              onClick={() => openNavSection('licencas')}
+            />
           )}
         </nav>
 
@@ -18177,6 +18135,41 @@ export default function App() {
                 return null;
               })()
             )}
+
+            {/* Abas da seção atual (submenus) */}
+            {(() => {
+              const section = getNavSections().find(s => s.show && s.tabs.some(t => t.active));
+              if (!section) return null;
+              const SectionIcon = section.icon;
+              return (
+                <div className="mb-6 print:hidden">
+                  <div className="flex items-center gap-2 mb-3 px-1 text-xs font-black uppercase tracking-widest text-slate-400">
+                    <SectionIcon size={14} />
+                    <span>{section.label}</span>
+                  </div>
+                  <div className="flex gap-1 overflow-x-auto bg-white border border-slate-100 rounded-2xl p-1.5 shadow-sm">
+                    {section.tabs.map(tab => {
+                      const TabIcon = tab.icon;
+                      return (
+                        <button
+                          key={tab.label}
+                          onClick={tab.onClick}
+                          className={cn(
+                            "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-200",
+                            tab.active
+                              ? "bg-emerald-600 text-white shadow-md shadow-emerald-200"
+                              : "text-slate-500 hover:bg-emerald-50 hover:text-emerald-600"
+                          )}
+                        >
+                          <TabIcon size={16} />
+                          <span>{tab.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
 
             <AnimatePresence mode="wait">
                 {view === 'kanban' && (
