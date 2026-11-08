@@ -452,6 +452,13 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
     }
   }, [diagnosticos, projects]);
 
+  // Atividades (tipo de negócio) existentes nos projetos, para o filtro
+  const atividadesDisponiveis = useMemo(() => {
+    const set = new Set<string>();
+    projects.forEach(p => { const t = (p.tipoEmpresa || '').trim(); if (t) set.add(t); });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  }, [projects]);
+
   // Filtered projects
   const filteredProjects = useMemo(() => {
     return projects.filter(proj => {
@@ -473,7 +480,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                             tipoEmpresa.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             projName.toLowerCase().includes(searchQuery.toLowerCase());
                             
-      const matchesFocus = focusFilter === 'Todos' || tipoEmpresa === focusFilter;
+      const matchesFocus = focusFilter === 'Todos' || tipoEmpresa.trim() === focusFilter;
       
       return matchesClient && matchesProjName && matchesDate && matchesSearch && matchesFocus;
     });
@@ -1118,18 +1125,16 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
 
               {/* Filter 4: Segment / Focus */}
               <div className="space-y-1">
-                <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Segmento / Foco</label>
+                <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Atividade</label>
                 <select
                   value={focusFilter}
                   onChange={(e) => setFocusFilter(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:border-emerald-500 transition-all"
                 >
-                  <option value="Todos">Todos os Focos</option>
-                  <option value="Geral">Diagnóstico Geral</option>
-                  <option value="Comercial">Aceleração Comercial</option>
-                  <option value="Inovação">Inovação e Tecnologia</option>
-                  <option value="Processos">Otimização de Processos</option>
-                  <option value="Estratégico">Planejamento Estratégico</option>
+                  <option value="Todos">Todas as Atividades</option>
+{atividadesDisponiveis.map(a => (
+  <option key={a} value={a}>{a}</option>
+))}
                 </select>
               </div>
             </div>
@@ -1329,7 +1334,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
                                 </div>
                               </div>
                               <p className="text-slate-400 text-xs font-semibold flex items-center gap-1">
-                                <span>Foco: <strong className="text-slate-500">{project.tipoEmpresa || 'Geral'}</strong></span>
+                                <span>Atividade: <strong className="text-slate-500">{project.tipoEmpresa || 'Geral'}</strong></span>
                                 <span>•</span>
                                 <span className="font-mono text-[10px]">Início: {project.startDate.toLocaleDateString('pt-BR')}</span>
                               </p>
@@ -1669,18 +1674,16 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
 
               {/* Filter 4: Segment / Focus */}
               <div className="space-y-1">
-                <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Segmento / Foco</label>
+                <label className="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Atividade</label>
                 <select
                   value={focusFilter}
                   onChange={(e) => setFocusFilter(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 focus:outline-none focus:border-emerald-500 transition-all"
                 >
-                  <option value="Todos">Todos os Focos</option>
-                  <option value="Geral">Diagnóstico Geral</option>
-                  <option value="Comercial">Aceleração Comercial</option>
-                  <option value="Inovação">Inovação e Tecnologia</option>
-                  <option value="Processos">Otimização de Processos</option>
-                  <option value="Estratégico">Planejamento Estratégico</option>
+                  <option value="Todos">Todas as Atividades</option>
+{atividadesDisponiveis.map(a => (
+  <option key={a} value={a}>{a}</option>
+))}
                 </select>
               </div>
             </div>
