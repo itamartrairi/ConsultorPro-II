@@ -12769,7 +12769,6 @@ export default function App() {
       { label: "Resultado da Consultoria", icon: CheckSquare, active: view === 'resultado-consultoria', onClick: () => { setView('resultado-consultoria'); } },
       { label: "Relatório SGF & Áreas", icon: FileSpreadsheet, active: view === 'relatorio-consolidado-sgf', onClick: () => { setView('relatorio-consolidado-sgf'); } },
       { label: "Histórico", icon: History, active: view === 'dashboard' && !selectedDiagnostico, onClick: () => { setView('companies'); } },
-      { label: "Biblioteca de Perguntas", icon: FileText, active: view === 'premises', onClick: () => setView('premises') },
     ] },
     { key: 'diagnosticoAtivo', label: "Diagnóstico Ativo", icon: FileSpreadsheet, show: !!selectedDiagnostico, tabs: [
       { label: "Dados da Consultoria", icon: FileSpreadsheet, active: view === 'dados-consultoria', onClick: () => setView('dados-consultoria') },
@@ -12827,6 +12826,12 @@ export default function App() {
             label="Diagnósticos & Avaliação"
             active={isNavSectionActive('diagnosticos')}
             onClick={() => openNavSection('diagnosticos')}
+          />
+          <NavItem
+            icon={FileText}
+            label="Biblioteca de Perguntas"
+            active={view === 'premises'}
+            onClick={() => setView('premises')}
           />
 
           <NavItem
