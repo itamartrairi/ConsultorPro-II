@@ -218,6 +218,8 @@ export const MacroDashboardView = ({
   const [activeTab, setActiveTab] = useState<'visao-geral' | 'setores' | 'clientes'>('visao-geral');
   const [searchQuery, setSearchQuery] = useState('');
   const [sectorFilter, setSectorFilter] = useState('Todos');
+  const [clientFilter, setClientFilter] = useState('Todos');
+  const matchesClient = (empresaId?: string) => clientFilter === 'Todos' || empresaId === clientFilter;
   const [isSyncLogExpanded, setIsSyncLogExpanded] = useState(false);
   const [segmentoRelatorio, setSegmentoRelatorio] = useState('Todos');
   const tiposRelatorio = useMemo(() => tiposDeNegocio(empresas as any, diagnosticos as any), [empresas, diagnosticos]);
@@ -429,14 +431,32 @@ export const MacroDashboardView = ({
     return ['Todos', ...Array.from(sectors)];
   }, [macroHistory]);
 
+  // Clientes com diagnóstico ou tarefas, para o filtro de cliente (respeita o filtro de setor)
+  const availableClients = useMemo(() => {
+    const ids = new Set<string>();
+    macroHistory.forEach(h => { if (sectorFilter === 'Todos' || h.tipoEmpresa === sectorFilter) ids.add(h.empresaId); });
+    (activeTarefas || []).forEach(t => {
+      const emp = empresas.find(e => e.id === t.empresaId);
+      if (t.empresaId && (sectorFilter === 'Todos' || (emp?.tipoEmpresa || 'Geral') === sectorFilter)) ids.add(t.empresaId);
+    });
+    return empresas
+      .filter(e => ids.has(e.id))
+      .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
+  }, [macroHistory, activeTarefas, empresas, sectorFilter]);
+
+  // Se o cliente escolhido sair da lista (troca de setor), volta para Todos
+  useEffect(() => {
+    if (clientFilter !== 'Todos' && !availableClients.some(c => c.id === clientFilter)) setClientFilter('Todos');
+  }, [availableClients, clientFilter]);
+
   // Filter macro history based on query & sector filter
   const filteredHistory = useMemo(() => {
     return macroHistory.filter(h => {
       const matchesSearch = h.empresaNome.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesSector = sectorFilter === 'Todos' || h.tipoEmpresa === sectorFilter;
-      return matchesSearch && matchesSector;
+      return matchesSearch && matchesSector && matchesClient(h.empresaId);
     });
-  }, [macroHistory, searchQuery, sectorFilter]);
+  }, [macroHistory, searchQuery, sectorFilter, clientFilter]);
 
   // Get active diagnosed companies matching filters
   const diagnosedCompanies = useMemo(() => {
@@ -471,7 +491,7 @@ export const MacroDashboardView = ({
       
       diagsUpToMonth.forEach(h => {
         // Only apply sector filter if specified, to keep "Média Portfolio" consistent or filtered
-        if (sectorFilter === 'Todos' || h.tipoEmpresa === sectorFilter) {
+        if ((sectorFilter === 'Todos' || h.tipoEmpresa === sectorFilter) && matchesClient(h.empresaId)) {
           activeShares[h.empresaId] = h.score;
         }
       });
@@ -496,7 +516,7 @@ export const MacroDashboardView = ({
       
       return result;
     });
-  }, [macroHistory, selectedCompanies, sectorFilter]);
+  }, [macroHistory, selectedCompanies, sectorFilter, clientFilter]);
 
   // Sector Data for comparisons
   const sectorData = useMemo(() => {
@@ -504,6 +524,7 @@ export const MacroDashboardView = ({
     const latestCompanyDiag = new Map<string, any>();
     
     macroHistory.forEach(h => {
+      if (!matchesClient(h.empresaId)) return;
       latestCompanyDiag.set(h.empresaId, h);
     });
     
@@ -522,7 +543,7 @@ export const MacroDashboardView = ({
       Maturidade: Math.round(data.total / data.count),
       Clientes: data.count
     })).sort((a, b) => b.Maturidade - a.Maturidade);
-  }, [macroHistory]);
+  }, [macroHistory, clientFilter]);
 
   // Area-specific average maturity scores across portfolio
   const areaProgressData = useMemo(() => {
@@ -530,7 +551,7 @@ export const MacroDashboardView = ({
     
     macroHistory.forEach(h => {
       // Respect sector filter when aggregating areas
-      if (sectorFilter === 'Todos' || h.tipoEmpresa === sectorFilter) {
+      if ((sectorFilter === 'Todos' || h.tipoEmpresa === sectorFilter) && matchesClient(h.empresaId)) {
         latestCompanyDiag.set(h.empresaId, h);
       }
     });
@@ -556,7 +577,7 @@ export const MacroDashboardView = ({
       Maturidade: Math.round(data.total / data.count),
       Clientes: data.count
     })).sort((a, b) => b.Maturidade - a.Maturidade);
-  }, [macroHistory, sectorFilter]);
+  }, [macroHistory, sectorFilter, clientFilter]);
 
   // Comprehensive Client Summary
   const clientSummary = useMemo(() => {
@@ -605,9 +626,9 @@ export const MacroDashboardView = ({
     return clients.filter(c => {
       const matchesSearch = c.nome.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesSector = sectorFilter === 'Todos' || c.segmento === sectorFilter;
-      return matchesSearch && matchesSector;
+      return matchesSearch && matchesSector && matchesClient(c.id);
     }).sort((a, b) => b.latestScore - a.latestScore);
-  }, [empresas, macroHistory, searchQuery, sectorFilter]);
+  }, [empresas, macroHistory, searchQuery, sectorFilter, clientFilter]);
 
   // Key KPI stats calculations
   const activeAverageScore = useMemo(() => {
@@ -674,9 +695,9 @@ export const MacroDashboardView = ({
 
       const matchesSector = sectorFilter === 'Todos' || empSector === sectorFilter;
 
-      return matchesSearch && matchesSector;
+      return matchesSearch && matchesSector && matchesClient(t.empresaId);
     });
-  }, [activeTarefas, empresas, searchQuery, sectorFilter]);
+  }, [activeTarefas, empresas, searchQuery, sectorFilter, clientFilter]);
 
   // Task stats and timeline analysis
   const taskAnalytics = useMemo(() => {
@@ -1350,6 +1371,20 @@ export const MacroDashboardView = ({
                 >
                   {availableSectors.map(s => (
                     <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-400 text-xs flex items-center gap-1"><Filter size={12} /> Cliente:</span>
+                <select
+                  value={clientFilter}
+                  onChange={(e) => setClientFilter(e.target.value)}
+                  className="bg-white border border-slate-200 text-xs font-semibold text-slate-700 px-3 py-1.5 rounded-xl outline-none focus:border-sky-500 max-w-[220px]"
+                >
+                  <option value="Todos">Todos os clientes</option>
+                  {availableClients.map(emp => (
+                    <option key={emp.id} value={emp.id}>{emp.nome}</option>
                   ))}
                 </select>
               </div>
