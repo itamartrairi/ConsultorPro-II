@@ -12829,13 +12829,12 @@ export default function App() {
             onClick={() => openNavSection('diagnosticos')}
           />
 
-          <button
-            onClick={() => { setView('macro-dashboard'); setSelectedEmpresa(null); setSelectedDiagnostico(null); setIsSidebarOpen(false); }}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-600 text-white font-bold shadow-lg shadow-emerald-200 hover:bg-emerald-700 transition-all duration-200"
-          >
-            <BarChart3 size={20} />
-            <span>Dashboard Macro</span>
-          </button>
+          <NavItem
+            icon={BarChart3}
+            label="Dashboard Macro"
+            active={view === 'macro-dashboard'}
+            onClick={() => { setView('macro-dashboard'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }}
+          />
 
           {!!selectedDiagnostico && (
             <NavItem
