@@ -12765,7 +12765,6 @@ export default function App() {
       { label: "Credenciadas", icon: Building2, active: view === 'credenciadas', onClick: () => { setView('credenciadas'); } },
     ] },
     { key: 'diagnosticos', label: "Diagnósticos & Avaliação", icon: TrendingUp, show: true, tabs: [
-      { label: "Maturidade Empresarial", icon: TrendingUp, active: view === 'maturity-assessment', onClick: () => { setView('maturity-assessment'); setSelectedEmpresa(null); setSelectedDiagnostico(null); } },
       { label: "Resultado da Consultoria", icon: CheckSquare, active: view === 'resultado-consultoria', onClick: () => { setView('resultado-consultoria'); } },
       { label: "Relatório SGF & Áreas", icon: FileSpreadsheet, active: view === 'relatorio-consolidado-sgf', onClick: () => { setView('relatorio-consolidado-sgf'); } },
       { label: "Histórico", icon: History, active: view === 'dashboard' && !selectedDiagnostico, onClick: () => { setView('companies'); } },
@@ -12826,6 +12825,12 @@ export default function App() {
             label="Diagnósticos & Avaliação"
             active={isNavSectionActive('diagnosticos')}
             onClick={() => openNavSection('diagnosticos')}
+          />
+          <NavItem
+            icon={TrendingUp}
+            label="Maturidade Empresarial"
+            active={view === 'maturity-assessment'}
+            onClick={() => { setView('maturity-assessment'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }}
           />
           <NavItem
             icon={FileText}
