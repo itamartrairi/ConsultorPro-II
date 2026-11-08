@@ -124,7 +124,8 @@ import {
   Infinity as InfinityIcon,
   Zap,
   Bot,
-  Tv
+  Tv,
+  Gauge
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -12827,7 +12828,7 @@ export default function App() {
             onClick={() => openNavSection('diagnosticos')}
           />
           <NavItem
-            icon={TrendingUp}
+            icon={Gauge}
             label="Maturidade Empresarial"
             active={view === 'maturity-assessment'}
             onClick={() => { setView('maturity-assessment'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }}
