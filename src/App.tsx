@@ -10029,6 +10029,9 @@ export default function App() {
   const pendingResponsesBuffer = useRef<Map<string, Resposta>>(new Map());
   const saveDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const flushPendingResponsesRef = useRef<() => void>(() => {});
+  const saveErrorNotifiedRef = useRef(false);
+  // Diagnóstico cujas respostas da nuvem já chegaram (evita criar perguntas duplicadas antes do 1º snapshot)
+  const [cloudRespostasDiagId, setCloudRespostasDiagId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -12059,6 +12062,7 @@ export default function App() {
     const q = query(collection(db, 'respostas'), ownerFilter(), where('diagnosticoId', '==', selectedDiagnostico.id));
     return onSnapshot(q, (snap) => {
       const cloudDocs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Resposta));
+      setCloudRespostasDiagId(selectedDiagnostico.id);
       if (cloudDocs.length > 0) {
         setRespostas(prev => {
           const map = new Map<string, Resposta>();
@@ -12076,7 +12080,17 @@ export default function App() {
               return item.id === c.id || (c.premissaId && item.premissaId === c.premissaId);
             });
             if (matchKey) {
-              map.set(matchKey, { ...map.get(matchKey)!, ...c, id: matchKey });
+              const local = map.get(matchKey)!;
+              const isAns = (r: Resposta) => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'Não';
+              // Não sobrescrever uma alteração local que ainda está aguardando envio
+              const pending = pendingResponsesBuffer.current.has(matchKey) || pendingResponsesBuffer.current.has(c.id);
+              const localTs = local.updatedAt || 0;
+              const cloudTs = c.updatedAt || 0;
+              // A nuvem só substitui se for mais recente (ou, sem data, se não apagar uma resposta já preenchida)
+              const cloudWins = cloudTs > localTs || (cloudTs === localTs && (isAns(c) || !isAns(local)));
+              if (!pending && cloudWins) {
+                map.set(matchKey, { ...local, ...c, id: matchKey });
+              }
             } else {
               map.set(c.id, c);
             }
@@ -12091,6 +12105,7 @@ export default function App() {
       setRespostasLoaded(true);
     }, (error) => {
       console.error("Erro ao escutar respostas:", error);
+      setCloudRespostasDiagId(selectedDiagnostico.id);
       setRespostasLoaded(true);
     });
   }, [selectedDiagnostico?.id, user]);
@@ -12098,6 +12113,8 @@ export default function App() {
   // Auto-sync missing respostas for selectedDiagnostico if any selected area has missing premissas
   useEffect(() => {
     if (!selectedDiagnostico?.id || !respostasLoaded || premissas.length === 0) return;
+    // Logado: espera as respostas da nuvem chegarem antes de criar as que faltam (senão cria duplicadas em branco)
+    if (user && cloudRespostasDiagId !== selectedDiagnostico.id) return;
     if (syncedDiagsRef.current.has(selectedDiagnostico.id)) return;
     syncedDiagsRef.current.add(selectedDiagnostico.id);
 
@@ -12183,7 +12200,7 @@ export default function App() {
         syncMissing();
       }
     }
-  }, [selectedDiagnostico?.id, selectedDiagnostico?.areasDiagnostico, selectedDiagnostico?.tipoEmpresa, premissas, respostasLoaded, problemas, user?.uid]);
+  }, [selectedDiagnostico?.id, selectedDiagnostico?.areasDiagnostico, selectedDiagnostico?.tipoEmpresa, premissas, respostasLoaded, problemas, user?.uid, cloudRespostasDiagId]);
 
   useEffect(() => {
     if ((view === 'dashboard' || view === 'relatorio' || view === 'cronograma') && selectedEmpresa) {
@@ -16451,14 +16468,28 @@ export default function App() {
               idProblema: resp.idProblema || '',
               problema: resp.problema || '',
               pergunta: resp.pergunta,
-              area: resp.area
+              area: resp.area,
+              updatedAt: resp.updatedAt || Date.now()
             }), { merge: true });
           });
           await batch.commit();
         }
       } catch (err) {
-        console.warn("Aviso ao sincronizar lote de respostas no Firestore:", err);
+        console.error("Erro ao salvar respostas no Firestore:", err);
+        // Devolve para a fila (sem sobrescrever alterações mais novas) e tenta de novo depois
+        itemsToSave.forEach(it => {
+          if (!pendingResponsesBuffer.current.has(it.id)) pendingResponsesBuffer.current.set(it.id, it);
+        });
+        if (!saveErrorNotifiedRef.current) {
+          saveErrorNotifiedRef.current = true;
+          showToast("As respostas foram salvas neste computador, mas não na nuvem. Vou tentar enviar de novo automaticamente.", "error", "Falha ao salvar");
+        }
+        if (!saveDebounceTimerRef.current) {
+          saveDebounceTimerRef.current = setTimeout(() => flushPendingResponsesRef.current(), 15000);
+        }
+        return;
       }
+      saveErrorNotifiedRef.current = false;
     }
 
     setSaveStatus('saved');
@@ -16528,7 +16559,8 @@ export default function App() {
       resposta: val,
       observacao: obsText,
       score,
-      ownerId: user?.uid || targetItem?.ownerId || extraData?.ownerId || 'local'
+      ownerId: user?.uid || targetItem?.ownerId || extraData?.ownerId || 'local',
+      updatedAt: Date.now()
     };
 
     // 1. Immediate in-memory React state update (0ms UI latency, instantaneous feedback)
