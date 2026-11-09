@@ -1160,6 +1160,8 @@ const DadosConsultoriaView = ({
   empresas,
   diagnosticos,
   respostas = [],
+  problemas = [],
+  solucoes = [],
   setSelectedEmpresa,
   setSelectedDiagnostico,
   setDiagnosticos,
@@ -1173,6 +1175,8 @@ const DadosConsultoriaView = ({
   empresas: Empresa[];
   diagnosticos: Diagnostico[];
   respostas?: Resposta[];
+  problemas?: Problema[];
+  solucoes?: Solucao[];
   setSelectedEmpresa: (empresa: Empresa | null) => void;
   setSelectedDiagnostico: (diag: Diagnostico | null) => void;
   setDiagnosticos: React.Dispatch<React.SetStateAction<Diagnostico[]>>;
@@ -1224,6 +1228,7 @@ const DadosConsultoriaView = ({
     return list.filter(r => r.diagnosticoId === selectedDiagnostico.id);
   }, [respostas, selectedDiagnostico?.id]);
 
+  const [syncingDiag, setSyncingDiag] = useState(false);
   const uniqueDiagRespostas = useMemo(() => {
     const excludedIds = selectedDiagnostico?.excludedPremissaIds || [];
     const isQExcluded = (r: Resposta) => {
@@ -1864,36 +1869,58 @@ const DadosConsultoriaView = ({
             type="button"
             size="sm"
             variant="outline"
-            onClick={() => {
-              const atvs = selectedDiagnostico?.cronograma || [];
-              if (!atvs || atvs.length === 0) {
-                alert("Nenhuma atividade encontrada no cronograma do relatório para sincronizar. Selecione ou aplique um modelo no relatório primeiro.");
+            disabled={syncingDiag}
+            onClick={async () => {
+              // Preenche Objetivo, Problemas/Soluções e Resultados Esperados a partir das respostas do diagnóstico
+              if (!selectedDiagnostico) {
+                alert("Selecione um diagnóstico primeiro.");
                 return;
               }
-
-              const validAtvs = atvs.filter(a => a.nome && a.nome.trim() !== '');
-              const totalHoras = validAtvs.reduce((acc, a) => acc + (parseInt(a.cargaHoraria?.replace(/\D/g, '') || '0', 10) || 0), 0);
-              const solucoesLista = validAtvs.map((s, i) => `• Atividade ${i + 1} (${s.nome}): ${s.solucaoProposta || s.descricao}`).join('\n');
-              const resultadosLista = validAtvs.map((s) => `• ${s.resultadoEsperado || s.solucaoProposta || s.nome}`).filter(Boolean).join('\n');
-
-              let probsHeader = "PROBLEMAS IDENTIFICADOS:\n• Necessidade de organização das rotinas financeiras, controle por ciclo e apuração de resultados\n\n";
-              if (dadosConsultoria.solucoesIndicadas?.includes("PROBLEMAS IDENTIFICADOS:")) {
-                probsHeader = dadosConsultoria.solucoesIndicadas.split("SOLUÇÕES / AÇÕES PROPOSTAS:")[0];
+              const respondidas = uniqueDiagRespostas.filter(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'Não');
+              if (respondidas.length === 0) {
+                alert("Responda o diagnóstico primeiro: os Objetivos, Problemas e Soluções são gerados a partir das respostas.");
+                return;
               }
-
-              setDadosConsultoria(prev => ({
-                ...prev,
-                cargaHoraria: totalHoras > 0 ? `${totalHoras}hs` : prev.cargaHoraria,
-                solucoesIndicadas: `${probsHeader}SOLUÇÕES / AÇÕES PROPOSTAS:\n${solucoesLista}`,
-                resultadosEsperados: resultadosLista
-              }));
-
-              playSuccessSound();
-              alert("Soluções e Resultados Esperados sincronizados em perfeita sintonia com as atividades do Cronograma!");
+              const temTexto = [dadosConsultoria.objetivo, dadosConsultoria.solucoesIndicadas, dadosConsultoria.resultadosEsperados]
+                .some(t => t && String(t).trim() !== '');
+              if (temTexto && !window.confirm("Isso vai substituir o Objetivo, os Problemas/Soluções e os Resultados Esperados atuais pelo que foi apurado no diagnóstico. Continuar?")) {
+                return;
+              }
+              setSyncingDiag(true);
+              try {
+                let overrideIA: Map<string, boolean> | undefined;
+                const ai = getAI();
+                if (ai) {
+                  try {
+                    overrideIA = await avaliarRespostasComIA(ai as any, uniqueDiagRespostas);
+                  } catch (err) {
+                    console.warn("Avaliação semântica por IA falhou, usando regras locais:", err);
+                  }
+                }
+                const analise = analisarDiagnostico(uniqueDiagRespostas, problemas, solucoes, overrideIA);
+                if (analise.totalRespondidas === 0) {
+                  alert("Responda o diagnóstico primeiro: os Objetivos, Problemas e Soluções são gerados a partir das respostas.");
+                  return;
+                }
+                const contexto = {
+                  nomeEmpresa: selectedEmpresa?.nomeFantasia || selectedEmpresa?.nome || selectedDiagnostico.nomeEmpresa,
+                  tipoEmpresa: selectedDiagnostico.tipoEmpresa || selectedEmpresa?.tipoEmpresa,
+                  tipoProdutoServico: selectedDiagnostico.tipoProdutoServico || dadosConsultoria.tipoProdutoServico || (selectedEmpresa as any)?.tipoProdutoServico || ''
+                };
+                const textos = montarTextosRelatorio(analise, selectedDiagnostico.cronograma || [], contexto);
+                setDadosConsultoria(prev => ({ ...prev, ...textos }));
+                playSuccessSound();
+                alert(`Objetivos, Problemas e Soluções atualizados a partir do diagnóstico (${analise.problemas.length} problema(s) com lacunas).`);
+              } catch (err) {
+                console.error("Erro ao atualizar a partir do diagnóstico:", err);
+                alert("Não foi possível atualizar a partir do diagnóstico. Tente novamente.");
+              } finally {
+                setSyncingDiag(false);
+              }
             }}
             className="border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 text-xs font-semibold"
           >
-            <Sparkles size={14} className="mr-1.5 text-emerald-600" /> Sincronizar com o Cronograma
+            <Sparkles size={14} className="mr-1.5 text-emerald-600" /> {syncingDiag ? "Atualizando..." : "Atualizar com o Diagnóstico"}
           </Button>
         </div>
 
@@ -20161,6 +20188,8 @@ export default function App() {
                 empresas={empresas}
                 diagnosticos={diagnosticos}
                 respostas={respostas}
+                problemas={problemas}
+                solucoes={solucoes}
                 setSelectedEmpresa={setSelectedEmpresa}
                 setSelectedDiagnostico={setSelectedDiagnostico}
                 setDiagnosticos={setDiagnosticos}
