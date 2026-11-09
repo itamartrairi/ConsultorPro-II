@@ -24,7 +24,7 @@ export interface ResumoCliente {
   problemas: ProblemaDiagnosticado[];
   /** Conformidade (0–100) por área deste cliente. */
   areas: Record<string, number>;
-  /** Conformidade geral projetada após implementar as soluções indicadas na consultoria (até 90%). */
+  /** Conformidade geral projetada após implementar as soluções indicadas na consultoria (até 95%). */
   conformidadeProjetada: number;
   /** Conformidade projetada por área após a consultoria. */
   areasProjetadas: Record<string, number>;
@@ -117,7 +117,7 @@ function conformidadePorArea(respostas: Resposta[]): Record<string, number> {
 }
 
 /** Teto de conformidade esperado após implementar as soluções indicadas na consultoria. */
-export const META_POS_CONSULTORIA = 90;
+export const META_POS_CONSULTORIA = 95;
 
 const chaveProblema = (s: unknown) =>
   String(s ?? '')
@@ -129,7 +129,7 @@ const chaveProblema = (s: unknown) =>
 /**
  * Projeção da conformidade após a consultoria: as lacunas ligadas a problemas com solução
  * indicada no plano de ação são consideradas resolvidas após a implementação; as demais
- * permanecem. O resultado é limitado a META_POS_CONSULTORIA (90%) e nunca fica abaixo do atual.
+ * permanecem. O resultado é limitado a META_POS_CONSULTORIA (95%) e nunca fica abaixo do atual.
  * Se nenhuma solução estiver cadastrada para o cliente, considera-se que a consultoria trata
  * todos os problemas diagnosticados.
  */
