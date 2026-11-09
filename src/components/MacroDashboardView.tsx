@@ -2075,65 +2075,6 @@ export const MacroDashboardView = ({
                   </div>
                 </div>
               </div>
-
-              {/* AI Strategic Insights Card */}
-              <div className="p-6 bg-gradient-to-br from-sky-900 via-sky-950 to-slate-950 rounded-3xl text-white shadow-md relative overflow-hidden border border-sky-800/20">
-                <div className="absolute top-0 right-0 w-80 h-80 bg-sky-500/10 rounded-full -translate-y-1/3 translate-x-1/3 blur-3xl pointer-events-none"></div>
-                <div className="relative z-10 space-y-4">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-300 border border-sky-500/30 flex items-center justify-center">
-                        <Sparkles size={20} className="animate-pulse" />
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-base">Relatório Estratégico com Inteligência Artificial</h4>
-                        <p className="text-sky-200 text-xs font-sans">Gere um diagnóstico avançado com recomendações seniores para a sua carteira</p>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={generatePortfolioAIInsight}
-                      disabled={generatingInsight}
-                      className="px-5 py-2.5 bg-sky-600 hover:bg-sky-500 text-white hover:text-white rounded-xl text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-2 shadow-lg hover:shadow-sky-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {generatingInsight ? (
-                        <>
-                          <Loader2 size={14} className="animate-spin" />
-                          <span>Analisando Dados...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles size={14} />
-                          <span>Gerar Insights de Consultoria</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {aiInsight && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="p-5 bg-white/5 border border-white/10 rounded-2xl text-xs text-sky-100 font-sans leading-relaxed overflow-y-auto max-h-[24rem] scrollbar-thin mt-2"
-                    >
-                      <div className="prose prose-invert prose-xs max-w-none text-slate-100">
-                        {aiInsight.split('\n').map((line, idx) => {
-                          if (line.startsWith('### ')) {
-                            return <h5 key={idx} className="font-bold text-slate-200 text-sm mt-3 mb-1">{line.replace('### ', '')}</h5>;
-                          }
-                          if (line.startsWith('## ')) {
-                            return <h4 key={idx} className="font-extrabold text-white text-base mt-4 mb-2 border-b border-white/10 pb-1">{line.replace('## ', '')}</h4>;
-                          }
-                          if (line.startsWith('**') && line.endsWith('**')) {
-                            return <p key={idx} className="font-bold text-slate-100 mt-2">{line.replace(/\*\*/g, '')}</p>;
-                          }
-                          return <p key={idx} className="mb-2 last:mb-0 text-slate-300 font-medium">{line}</p>;
-                        })}
-                      </div>
-                    </motion.div>
-                  )}
-                </div>
-              </div>
             </div>
           )}
 
