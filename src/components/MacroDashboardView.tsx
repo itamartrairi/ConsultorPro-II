@@ -966,20 +966,8 @@ export const MacroDashboardView = ({
         {/* Navigation & Export Action Header */}
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           {onGerarRelatorioSegmentos && (
-            <select
-              value={segmentoRelatorio}
-              onChange={(e) => setSegmentoRelatorio(e.target.value)}
-              disabled={gerandoRelatorioSegmentos}
-              title="Tipo de negócio do relatório"
-              className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-200"
-            >
-              <option value="Todos">Todos os tipos de negócio</option>
-              {tiposRelatorio.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-          )}
-          {onGerarRelatorioSegmentos && (
             <button
-              onClick={() => { if (!gerandoRelatorioSegmentos) onGerarRelatorioSegmentos(segmentoRelatorio); }}
+              onClick={() => { if (!gerandoRelatorioSegmentos) onGerarRelatorioSegmentos(sectorFilter); }}
               disabled={gerandoRelatorioSegmentos}
               title="Resumo do diagnóstico de todos os clientes, agrupado por tipo de negócio (PDF)"
               className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-wait"
@@ -1038,6 +1026,60 @@ export const MacroDashboardView = ({
           </div>
         </div>
       </div>
+
+      {diagnosticos.length > 0 && (
+        <>
+          {/* Filters & Control bar - Fixado no Topo (Sticky) */}
+          <div className="sticky top-[72px] z-20 bg-slate-50/95 backdrop-blur-md rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row gap-4 items-center justify-between transition-all">
+            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+              <div className="relative flex-grow sm:flex-grow-0 sm:w-64">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
+                  <Search size={16} />
+                </span>
+                <input
+                  type="text"
+                  placeholder="Pesquisar por cliente..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 rounded-xl text-xs placeholder:text-slate-400 text-slate-700"
+                />
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-400 text-xs flex items-center gap-1"><Filter size={12} /> Setor:</span>
+                <select
+                  value={sectorFilter}
+                  onChange={(e) => setSectorFilter(e.target.value)}
+                  className="bg-white border border-slate-200 text-xs font-semibold text-slate-700 px-3 py-1.5 rounded-xl outline-none focus:border-sky-500"
+                >
+                  {availableSectors.map(s => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-400 text-xs flex items-center gap-1"><Filter size={12} /> Cliente:</span>
+                <select
+                  value={clientFilter}
+                  onChange={(e) => setClientFilter(e.target.value)}
+                  className="bg-white border border-slate-200 text-xs font-semibold text-slate-700 px-3 py-1.5 rounded-xl outline-none focus:border-sky-500 max-w-[220px]"
+                >
+                  <option value="Todos">Todos os clientes</option>
+                  {availableClients.map(emp => (
+                    <option key={emp.id} value={emp.id}>{emp.nome}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Selected stats info helper */}
+            <div className="text-right text-slate-400 text-[11px] font-sans">
+              Mostrando <strong className="text-slate-600">{diagnosedCompanies.length}</strong> de <strong className="text-slate-600">{empresas.length}</strong> empresas com diagnósticos ativos.
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Detailed Firestore Cloud Sync Status Log */}
       <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden transition-all">
@@ -1343,56 +1385,6 @@ export const MacroDashboardView = ({
                 <p className="text-2xl font-black text-violet-600 mt-1">{strongGrowthCount}</p>
                 <p className="text-xs text-slate-500 mt-0.5 font-sans">clientes evoluídos &gt; 10%</p>
               </div>
-            </div>
-          </div>
-
-          {/* Filters & Control bar - Fixado no Topo (Sticky) */}
-          <div className="sticky top-[72px] z-20 bg-slate-50/95 backdrop-blur-md rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row gap-4 items-center justify-between transition-all">
-            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
-              <div className="relative flex-grow sm:flex-grow-0 sm:w-64">
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                  <Search size={16} />
-                </span>
-                <input
-                  type="text"
-                  placeholder="Pesquisar por cliente..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 focus:border-sky-500 focus:ring-1 focus:ring-sky-500/20 rounded-xl text-xs placeholder:text-slate-400 text-slate-700"
-                />
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <span className="text-slate-400 text-xs flex items-center gap-1"><Filter size={12} /> Setor:</span>
-                <select
-                  value={sectorFilter}
-                  onChange={(e) => setSectorFilter(e.target.value)}
-                  className="bg-white border border-slate-200 text-xs font-semibold text-slate-700 px-3 py-1.5 rounded-xl outline-none focus:border-sky-500"
-                >
-                  {availableSectors.map(s => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <span className="text-slate-400 text-xs flex items-center gap-1"><Filter size={12} /> Cliente:</span>
-                <select
-                  value={clientFilter}
-                  onChange={(e) => setClientFilter(e.target.value)}
-                  className="bg-white border border-slate-200 text-xs font-semibold text-slate-700 px-3 py-1.5 rounded-xl outline-none focus:border-sky-500 max-w-[220px]"
-                >
-                  <option value="Todos">Todos os clientes</option>
-                  {availableClients.map(emp => (
-                    <option key={emp.id} value={emp.id}>{emp.nome}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Selected stats info helper */}
-            <div className="text-right text-slate-400 text-[11px] font-sans">
-              Mostrando <strong className="text-slate-600">{diagnosedCompanies.length}</strong> de <strong className="text-slate-600">{empresas.length}</strong> empresas com diagnósticos ativos.
             </div>
           </div>
 
