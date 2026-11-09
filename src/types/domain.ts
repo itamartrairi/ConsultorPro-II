@@ -236,4 +236,5 @@ export interface Resposta {
   evidenciaUrl?: string;
   evidenciaNome?: string;
   ownerId?: string;
+  updatedAt?: number; // epoch ms da última alteração (resolve conflito local x nuvem)
 }
