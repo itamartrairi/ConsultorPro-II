@@ -6,7 +6,7 @@
  * Para cada cliente considera o diagnóstico MAIS RECENTE que tenha respostas.
  */
 import type { Diagnostico, Empresa, Problema, Resposta, Solucao } from '../../types/domain';
-import { analisarDiagnostico, grauLacuna, type NivelCriticidade } from './planoAcao';
+import { analisarDiagnostico, grauLacuna, limparEvidenciasAcoes, type AnaliseDiagnostico, type NivelCriticidade } from './planoAcao';
 
 export interface ResumoCliente {
   empresaId: string;
@@ -24,6 +24,10 @@ export interface ResumoCliente {
   problemas: ProblemaDiagnosticado[];
   /** Conformidade (0–100) por área deste cliente. */
   areas: Record<string, number>;
+  /** Conformidade geral projetada após implementar as soluções indicadas na consultoria (até 90%). */
+  conformidadeProjetada: number;
+  /** Conformidade projetada por área após a consultoria. */
+  areasProjetadas: Record<string, number>;
 }
 
 export interface ProblemaDiagnosticado {
@@ -32,6 +36,10 @@ export interface ProblemaDiagnosticado {
   nivel: NivelCriticidade;
   /** Perguntas do diagnóstico que evidenciam o problema, com a resposta dada. */
   evidencias: string[];
+  /** Solução indicada no plano de ação da consultoria (se houver). */
+  solucao?: string;
+  acoes?: string;
+  kpis?: string;
 }
 
 export interface ProblemaRecorrente {
@@ -47,6 +55,8 @@ export interface ResumoArea {
   conformidadeMedia: number;
   clientesAvaliados: number;
   clientesComLacuna: number;
+  /** Conformidade média projetada após a consultoria. */
+  conformidadeProjetada: number;
 }
 
 export interface ResumoSegmento {
@@ -57,6 +67,8 @@ export interface ResumoSegmento {
   conformidadeMedia: number;
   conformidadeMin: number;
   conformidadeMax: number;
+  /** Conformidade média projetada após a consultoria. */
+  conformidadeProjetada: number;
   criticos: number;
   altos: number;
   moderados: number;
@@ -102,6 +114,60 @@ function conformidadePorArea(respostas: Resposta[]): Record<string, number> {
   const out: Record<string, number> = {};
   for (const [area, v] of Object.entries(acc)) out[area] = v.max ? Math.round((1 - v.lac / v.max) * 100) : 100;
   return out;
+}
+
+/** Teto de conformidade esperado após implementar as soluções indicadas na consultoria. */
+export const META_POS_CONSULTORIA = 90;
+
+const chaveProblema = (s: unknown) =>
+  String(s ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+
+/**
+ * Projeção da conformidade após a consultoria: as lacunas ligadas a problemas com solução
+ * indicada no plano de ação são consideradas resolvidas após a implementação; as demais
+ * permanecem. O resultado é limitado a META_POS_CONSULTORIA (90%) e nunca fica abaixo do atual.
+ * Se nenhuma solução estiver cadastrada para o cliente, considera-se que a consultoria trata
+ * todos os problemas diagnosticados.
+ */
+function projetarConformidade(
+  respostas: Resposta[],
+  an: AnaliseDiagnostico,
+  atuais: Record<string, number>
+): { geral: number; areas: Record<string, number> } {
+  const algumaSolucao = an.problemas.some((p) => p.solucao);
+  const cobertos = new Set<string>();
+  an.problemas.forEach((p) => {
+    if (!algumaSolucao || p.solucao) {
+      cobertos.add(chaveProblema(p.idProblema));
+      cobertos.add(chaveProblema(p.problema));
+    }
+  });
+  cobertos.delete('');
+  const acc: Record<string, { lac: number; max: number }> = {};
+  let lacT = 0;
+  let maxT = 0;
+  for (const r of respostas) {
+    const g = grauLacuna(r);
+    if (g === null) continue;
+    const area = (r.area || 'Geral').trim() || 'Geral';
+    const peso = Number(r.peso) > 0 ? Number(r.peso) : 1;
+    const coberta = cobertos.has(chaveProblema(r.idProblema)) || cobertos.has(chaveProblema(r.problema));
+    const lac = coberta ? 0 : g * peso;
+    acc[area] ||= { lac: 0, max: 0 };
+    acc[area].lac += lac;
+    acc[area].max += 2 * peso;
+    lacT += lac;
+    maxT += 2 * peso;
+  }
+  const projetar = (atual: number, v: { lac: number; max: number }) =>
+    Math.max(atual, Math.min(META_POS_CONSULTORIA, v.max ? Math.round((1 - v.lac / v.max) * 100) : atual));
+  const areas: Record<string, number> = {};
+  for (const [area, v] of Object.entries(acc)) areas[area] = projetar(atuais[area] ?? 0, v);
+  return { geral: projetar(an.scoreGeral, { lac: lacT, max: maxT }), areas };
 }
 
 /** Remove respostas repetidas da mesma pergunta (fica a mais recente respondida). */
@@ -180,6 +246,8 @@ export function montarRelatorioSegmentos(params: {
     const { d, resps } = comRespostas[0];
     const an = analisarDiagnostico(resps, problemas, solucoes);
     analises.set(d.id, an);
+    const areasAtuais = conformidadePorArea(resps);
+    const proj = projetarConformidade(resps, an, areasAtuais);
     grupo.clientes.push({
       empresaId: emp.id,
       cliente: nome,
@@ -188,6 +256,8 @@ export function montarRelatorioSegmentos(params: {
       totalDiagnosticos: diagsDaEmpresa.length,
       respondidas: an.totalRespondidas,
       conformidade: an.scoreGeral,
+      conformidadeProjetada: proj.geral,
+      areasProjetadas: proj.areas,
       criticos: an.problemas.filter((p) => p.nivel === 'Crítico').length,
       altos: an.problemas.filter((p) => p.nivel === 'Alto').length,
       moderados: an.problemas.filter((p) => p.nivel === 'Moderado').length,
@@ -197,8 +267,11 @@ export function montarRelatorioSegmentos(params: {
         area: p.area,
         nivel: p.nivel,
         evidencias: p.lacunas.map((l) => `${l.pergunta} (${l.resposta})`),
+        solucao: p.solucao?.solucao_recomendada ? String(p.solucao.solucao_recomendada) : undefined,
+        acoes: limparEvidenciasAcoes(p.solucao?.acoes_sugeridas) || undefined,
+        kpis: p.solucao?.kpis_sugeridos ? String(p.solucao.kpis_sugeridos) : undefined,
       })),
-      areas: conformidadePorArea(resps),
+      areas: areasAtuais,
     });
   }
 
@@ -214,11 +287,17 @@ export function montarRelatorioSegmentos(params: {
       if (!areasAcc.has(a)) areasAcc.set(a, []);
       areasAcc.get(a)!.push(v);
     }));
+    const areasProjAcc = new Map<string, number[]>();
+    clientes.forEach((c) => Object.entries(c.areasProjetadas).forEach(([a, v]) => {
+      if (!areasProjAcc.has(a)) areasProjAcc.set(a, []);
+      areasProjAcc.get(a)!.push(v);
+    }));
     const areas: ResumoArea[] = Array.from(areasAcc, ([area, vals]) => ({
       area,
       conformidadeMedia: media(vals),
       clientesAvaliados: vals.length,
       clientesComLacuna: vals.filter((v) => v < 100).length,
+      conformidadeProjetada: media(areasProjAcc.get(area) || vals),
     })).sort((a, b) => a.conformidadeMedia - b.conformidadeMedia || a.area.localeCompare(b.area));
 
     // Problemas recorrentes no segmento
@@ -252,6 +331,7 @@ export function montarRelatorioSegmentos(params: {
       conformidadeMedia: media(conf),
       conformidadeMin: conf.length ? Math.min(...conf) : 0,
       conformidadeMax: conf.length ? Math.max(...conf) : 0,
+      conformidadeProjetada: media(clientes.map((c) => c.conformidadeProjetada)),
       criticos: clientes.reduce((s, c) => s + c.criticos, 0),
       altos: clientes.reduce((s, c) => s + c.altos, 0),
       moderados: clientes.reduce((s, c) => s + c.moderados, 0),
