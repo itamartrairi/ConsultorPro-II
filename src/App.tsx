@@ -8015,7 +8015,7 @@ const LandingPage = ({ setView }: { setView: (v: any) => void }) => {
               <Button
                 variant="ghost"
                 onClick={() => {
-                  navigator.clipboard.writeText("https://gestorconsultorpro.netlify.app/");
+                  navigator.clipboard.writeText("https://consultorpro-2.netlify.app/");
                   alert("Link de teste copiado para sua área de transferência!");
                 }}
                 className="text-white/60 hover:text-white hover:bg-white/10 flex items-center gap-2 text-xs uppercase tracking-widest font-black"
@@ -8984,13 +8984,13 @@ const LicenseManagementView = ({
         </div>
         <div className="flex bg-white/10 p-2 rounded-2xl border border-white/20 w-full md:w-auto items-center gap-4">
           <code className="text-xs font-mono px-4 text-emerald-50 truncate max-w-[240px]">
-            https://gestorconsultorpro.netlify.app/
+            https://consultorpro-2.netlify.app/
           </code>
           <Button 
             variant="secondary"
             size="sm"
             onClick={() => {
-              navigator.clipboard.writeText("https://gestorconsultorpro.netlify.app/");
+              navigator.clipboard.writeText("https://consultorpro-2.netlify.app/");
               alert("Link de divulgação copiado!");
             }}
             className="bg-white text-emerald-600 hover:bg-emerald-50 font-bold whitespace-nowrap cursor-pointer"
@@ -9722,6 +9722,7 @@ import {
   computeLicenseDaysLeft,
 } from './lib/domain/license';
 import { addDaysIso, licensePeriodDays } from './lib/licenseDays';
+import { syncServerClock } from './lib/serverClock';
 import {
   analisarDiagnostico,
   grauLacuna,
@@ -10313,6 +10314,10 @@ export default function App() {
   const itemsPerPage = 9;
   const [empresaSearchTerm, setEmpresaSearchTerm] = useState('');
   const [empresaTipoFilter, setEmpresaTipoFilter] = useState('');
+  // Licença do usuário lida direto do Firestore (não do cache local, que pode estar
+  // desatualizado ou alterado). 'pending' enquanto verifica; sem registro → bloqueia.
+  const [licenseRecord, setLicenseRecord] = useState<EmpresaCredenciada | null>(null);
+  const [licenseCheck, setLicenseCheck] = useState<'pending' | 'ok' | 'missing' | 'error'>('pending');
   const [empresasCredenciadas, setEmpresasCredenciadas] = useState<EmpresaCredenciada[]>(() => {
     try {
       const saved = localStorage.getItem('local_empresas_credenciadas');
@@ -10793,6 +10798,12 @@ export default function App() {
         const cloud = cloudCredMap.get(id);
         if (local && !cloud && foiExcluidoNaNuvem('empresas_credenciadas', id)) {
           registrarRemocao('outros');
+          continue;
+        }
+
+        // Cadastro de licença só nasce no login (com a data do servidor). Cópia local sem
+        // registro na nuvem não sobe: as regras recusariam e travariam o lote inteiro.
+        if (local && !cloud && !isAdmin) {
           continue;
         }
 
@@ -11690,6 +11701,51 @@ export default function App() {
     }
   };
 
+  // Busca o cadastro de licença do usuário no Firestore e sincroniza o relógio com o servidor.
+  // Se houver mais de um registro de licença, vale o MAIS ANTIGO (criar outro não renova o teste).
+  const refreshLicenseRecord = async (u: User) => {
+    syncServerClock();
+    let falhou = false;
+    for (let tentativa = 0; tentativa < 3; tentativa++) {
+      try {
+        const snap = await getDocs(query(collection(db, 'empresas_credenciadas'), where('ownerId', '==', u.uid)));
+        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
+        const candidatos = docs.filter(d => 'providerId' in d || (!!u.email && d.email === u.email));
+        const ts = (d: any) => toJsDate(d.dataCadastro)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        const rec = candidatos.sort((a, b) => ts(a) - ts(b))[0];
+        if (rec) {
+          setLicenseRecord(rec as EmpresaCredenciada);
+          setLicenseCheck('ok');
+          return;
+        }
+        falhou = false;
+      } catch (e) {
+        console.error('Erro ao verificar a licença:', e);
+        falhou = true;
+      }
+      // O cadastro é criado no primeiro login; espera um pouco antes de tentar de novo.
+      await new Promise(r => setTimeout(r, 1500));
+    }
+    setLicenseRecord(null);
+    setLicenseCheck(falhou ? 'error' : 'missing');
+  };
+
+  // Reparo (admin): cadastros antigos ficaram com a data de cadastro inválida (o marcador
+  // de hora do servidor era gravado como objeto comum), então o teste nunca diminuía.
+  // Para esses registros, o prazo passa a contar a partir de agora.
+  const repairedLicenseIds = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!isAdmin || !user) return;
+    empresasCredenciadas.forEach((c: any) => {
+      if (!c?.id || String(c.id).startsWith('local') || repairedLicenseIds.current.has(c.id)) return;
+      if (c.tipoPlano === 'Definitiva' || toJsDate(c.validadeLicenca) || toJsDate(c.dataCadastro)) return;
+      repairedLicenseIds.current.add(c.id);
+      updateDoc(doc(db, 'empresas_credenciadas', c.id), { dataCadastro: serverTimestamp() })
+        .then(() => setEmpresasCredenciadas(prev => prev.map(p => p.id === c.id ? { ...p, dataCadastro: new Date().toISOString() } : p)))
+        .catch(e => console.error('Erro ao reparar a data de cadastro da licença:', e));
+    });
+  }, [isAdmin, user, empresasCredenciadas]);
+
   // Auth Listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
@@ -11744,7 +11800,9 @@ export default function App() {
         }
 
         // Auto-check and register credenciada record if not existing yet
-        syncUserWithCredenciada(u);
+        setLicenseRecord(null);
+        setLicenseCheck('pending');
+        syncUserWithCredenciada(u).finally(() => refreshLicenseRecord(u));
       } else {
         setIsAdmin(false);
       }
@@ -17955,12 +18013,14 @@ export default function App() {
   }
 
   // Subscription check logic
-  const checkSubscriptionExpiration = () => {
+  const checkSubscriptionExpiration = (): { expired: boolean; daysLeft: number; plan: string; missing?: 'missing' | 'error' } => {
     if (isAdmin) return { expired: false, daysLeft: 99999, plan: 'Admin' };
-    if (empresasCredenciadas.length === 0) return { expired: false, daysLeft: 99999, plan: 'Nenhum' };
-    
-    const myCredenciada = empresasCredenciadas.find(e => e.ownerId === user?.uid);
-    if (!myCredenciada) return { expired: false, daysLeft: 99999, plan: 'Nenhum' };
+    if (!user) return { expired: false, daysLeft: 99999, plan: 'Nenhum' };
+    if (licenseCheck === 'pending') return { expired: false, daysLeft: 99999, plan: 'Verificando' };
+
+    // A licença vem do Firestore (licenseRecord), não do cache local. Sem registro → bloqueia.
+    const myCredenciada = licenseRecord;
+    if (!myCredenciada) return { expired: true, daysLeft: 0, plan: 'Teste', missing: licenseCheck === 'error' ? 'error' : 'missing' };
 
     const plano = myCredenciada.tipoPlano || 'Teste';
     if (plano === 'Definitiva') {
@@ -17977,8 +18037,17 @@ export default function App() {
   const isPaidPlan = (plan: string) => ['Mensal', 'Anual', 'Definitiva'].includes(plan);
   const isUserBlocked = !isAdmin && empresasCredenciadas.length > 0 && empresasCredenciadas.some(e => e.ownerId === user?.uid && e.status === 'Bloqueada');
   const isPlanExpired = subStatus.expired;
+  const isLicenseBlocked = !isAdmin && !!user && licenseRecord?.status === 'Bloqueada';
 
-  if (isUserBlocked || isPlanExpired) {
+  if (user && !isAdmin && licenseCheck === 'pending') {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-center text-slate-500 font-medium">
+        Verificando sua licença...
+      </div>
+    );
+  }
+
+  if (isUserBlocked || isLicenseBlocked || isPlanExpired) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-center">
         <Card className="max-w-md w-full p-12 shadow-2xl border-rose-100">
@@ -17986,20 +18055,30 @@ export default function App() {
             <Lock size={40} />
           </div>
           <h1 className="text-3xl font-bold text-slate-800 mb-4">
-            {isPlanExpired ? `Plano ${subStatus.plan} Expirado` : "Acesso Bloqueado"}
+            {subStatus.missing ? "Licença Não Verificada" : isPlanExpired ? `Plano ${subStatus.plan} Expirado` : "Acesso Bloqueado"}
           </h1>
           <p className="text-slate-500 mb-8 leading-relaxed">
-            {isPlanExpired 
+            {subStatus.missing 
+              ? (subStatus.missing === 'error' ? 'Não foi possível verificar sua licença. Confira sua conexão com a internet e tente novamente.' : 'Não encontramos o cadastro da sua licença. Tente novamente ou entre em contato com o suporte.') 
+              : isPlanExpired 
               ? `Seu plano ${subStatus.plan} expirou. Para continuar utilizando todas as funcionalidades, por favor, realize a renovação ou assine um novo plano.`
               : "Sua licença de uso está temporariamente suspensa pelo administrador. Entre em contato com o suporte para regularizar sua situação."}
           </p>
           <div className="space-y-4">
-            {isPlanExpired && (
+            {isPlanExpired && !subStatus.missing && (
               <Button 
                 onClick={() => setView('checkout')}
                 className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 font-bold shadow-lg shadow-emerald-200"
               >
                 Renovar Assinatura
+              </Button>
+            )}
+            {subStatus.missing && user && (
+              <Button
+                onClick={() => { setLicenseCheck('pending'); refreshLicenseRecord(user); }}
+                className="w-full h-12 bg-sky-600 hover:bg-sky-700 font-bold"
+              >
+                Tentar Novamente
               </Button>
             )}
             <Button 
