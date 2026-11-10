@@ -7,6 +7,10 @@ export function sanitizeForFirestore(obj: any): any {
   if (obj === null || typeof obj !== 'object') return obj;
   if (obj instanceof Date) return obj.toISOString();
   if (
+    // Marcadores do Firestore (serverTimestamp, deleteField, increment...). No build de
+    // produção o nome da classe é minificado, então o teste por constructor.name falhava e o
+    // marcador virava um objeto comum ({ _methodName }): a data de cadastro não era gravada.
+    typeof obj._methodName === 'string' ||
     typeof obj.toDate === 'function' ||
     typeof obj.toMillis === 'function' ||
     obj.constructor?.name === 'Timestamp' ||
