@@ -33,6 +33,45 @@ export function toJsDate(v: any): Date | null {
 
 const DAY_MS = 1000 * 60 * 60 * 24;
 
+// --- Relógio da licença ------------------------------------------------------
+// Os dias da licença não podem depender só do relógio do computador do usuário:
+// atrasar o relógio do PC dava dias a mais. Usamos a hora do servidor quando ela é
+// conhecida (setServerTime) e, sem ela, nunca deixamos o tempo voltar para antes do
+// último horário já visto neste navegador.
+const CLOCK_KEY = 'cp_license_clock';
+let serverOffsetMs: number | null = null;
+
+function readLastSeen(): number {
+  try {
+    const v = Number((globalThis as any).localStorage?.getItem(CLOCK_KEY));
+    return Number.isFinite(v) && v > 0 ? v : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function saveLastSeen(ms: number): void {
+  try {
+    (globalThis as any).localStorage?.setItem(CLOCK_KEY, String(ms));
+  } catch {
+    /* sem armazenamento local (ex.: testes no Node) */
+  }
+}
+
+/** Registra a hora do servidor (ms). Depois disso o relógio do PC só conta a diferença. */
+export function setServerTime(serverMs: number): void {
+  if (!Number.isFinite(serverMs) || serverMs <= 0) return;
+  serverOffsetMs = serverMs - Date.now();
+  saveLastSeen(serverMs);
+}
+
+/** Hora usada nos cálculos de licença (servidor quando conhecida; nunca volta no tempo). */
+export function trustedNow(): number {
+  const now = serverOffsetMs !== null ? Date.now() + serverOffsetMs : Math.max(Date.now(), readLastSeen());
+  saveLastSeen(now);
+  return now;
+}
+
 /** Duração de cada plano pago, em dias. */
 export function licensePeriodDays(plano: string): number {
   return plano === 'Anual' ? 365 : 30;
@@ -60,10 +99,10 @@ export function computeLicenseDaysLeft(emp: any): number {
   const plano = emp?.tipoPlano || 'Teste';
   if (plano === 'Definitiva') return 99999;
   const validade = toJsDate(emp?.validadeLicenca);
-  if (validade) return Math.ceil((validade.getTime() - Date.now()) / DAY_MS);
+  if (validade) return Math.ceil((validade.getTime() - trustedNow()) / DAY_MS);
   const diasTeste = Number(emp?.diasTeste);
   const limitDays = plano === 'Teste' && Number.isFinite(diasTeste) && diasTeste > 0 ? diasTeste : licensePeriodDays(plano);
   const cadastro = toJsDate(emp?.dataCadastro);
   if (!cadastro) return limitDays;
-  return limitDays - Math.floor((Date.now() - cadastro.getTime()) / DAY_MS);
+  return limitDays - Math.floor((trustedNow() - cadastro.getTime()) / DAY_MS);
 }
