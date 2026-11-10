@@ -80,6 +80,9 @@ service cloud.firestore {
          request.resource.data.get('role', 'cliente') != 'admin' &&
          request.resource.data.get('status', 'Ativa') == 'Ativa' &&
          request.resource.data.get('diasTeste', 30) <= 30 &&
+         // A data de cadastro tem que ser a hora do servidor (serverTimestamp): sem isso dava
+         // para criar o cadastro com data no futuro e o teste quase não diminuía.
+         request.resource.data.get('dataCadastro', null) == request.time &&
          !('validadeLicenca' in request.resource.data));
       allow update: if isAdmin() ||
         (isCredOwner() && keepsOwner() &&
