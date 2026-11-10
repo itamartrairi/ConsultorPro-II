@@ -15,7 +15,6 @@ import {
   UserCheck,
   Star,
   Layers,
-  Sparkles,
   HelpCircle,
   Clock,
   Briefcase,
@@ -34,7 +33,6 @@ import {
   Mail,
   FileSpreadsheet,
   Printer,
-  Lightbulb
 } from 'lucide-react';
 import {
   collection,
@@ -1201,20 +1199,6 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                 />
               </div>
 
-              {/* Recomendações e Próximos Passos */}
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <Sparkles size={14} className="text-amber-500" />
-                  Recomendações Finais e Próximos Ciclos Estratégicos
-                </label>
-                <textarea
-                  rows={3}
-                  value={recomendacoesFuturas}
-                  onChange={(e) => setRecomendacoesFuturas(e.target.value)}
-                  placeholder="Orientações para manutenção dos resultados e sugestão de novos passos..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 focus:ring-2 focus:ring-sky-500 focus:bg-white focus:outline-none"
-                />
-              </div>
             </div>
 
             {/* Dados do Consultor e Responsável */}
@@ -1576,16 +1560,6 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                   {feedbackConsultor}
                 </p>
               </div>
-            </div>
-
-            {/* RECOMENDAÇÕES FINAIS */}
-            <div data-pdf-block="true" className="p-3.5 bg-sky-50/50 border border-sky-200 rounded-xl space-y-1.5 text-xs">
-              <div className="text-[10px] font-black uppercase text-amber-700 tracking-wider flex items-center gap-1.5">
-                <Lightbulb size={12} /> Recomendações Finais e Próximos Ciclos Estratégicos
-              </div>
-              <p className="text-slate-800 leading-relaxed text-[11px]">
-                {recomendacoesFuturas}
-              </p>
             </div>
 
             {/* BLOCO DE ASSINATURAS */}
