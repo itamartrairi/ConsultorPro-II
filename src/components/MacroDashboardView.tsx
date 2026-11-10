@@ -249,7 +249,7 @@ export const MacroDashboardView = ({
 
     const fetchTasksFromCloud = async () => {
       try {
-        const snap = await getDocs(query(collection(db, 'tarefas_plano'), ownerFilter()));
+        const snap = await getDocs(query(collection(db, 'tarefas_plano'), ownerFilter('tarefas_plano')));
         if (!snap.empty) {
           const list: TarefaPlanoAcao[] = [];
           snap.docs.forEach(docSnap => {
@@ -265,9 +265,10 @@ export const MacroDashboardView = ({
   }, [tarefas]);
 
   const activeTarefas = useMemo(() => {
-    if (tarefas && tarefas.length > 0) return tarefas;
-    return internalTasks;
-  }, [tarefas, internalTasks]);
+    const diagnosticoIds = new Set(diagnosticos.map(d => d.id));
+    const source = tarefas && tarefas.length > 0 ? tarefas : internalTasks;
+    return source.filter(t => diagnosticoIds.has(t.diagnosticoId));
+  }, [tarefas, internalTasks, diagnosticos]);
   
   // Local fallback for lastSyncSummary if not passed from parent
   const activeSummary = useMemo<SyncSummary | null>(() => {
@@ -304,7 +305,7 @@ export const MacroDashboardView = ({
         
         for (const chunk of chunks) {
           const ids = chunk.map(d => d.id);
-          const qRes = query(collection(db, 'respostas'), ownerFilter(), where('diagnosticoId', 'in', ids));
+          const qRes = query(collection(db, 'respostas'), ownerFilter('respostas'), where('diagnosticoId', 'in', ids));
           const snap = await getDocs(qRes);
           snap.docs.forEach(docSnap => {
             const data = docSnap.data();

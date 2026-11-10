@@ -50,6 +50,7 @@ interface RelatorioConsolidadoSgfViewProps {
   empresas: Empresa[];
   diagnosticos: Diagnostico[];
   respostas: Resposta[];
+  credenciadaId?: string;
   premissas?: Premissa[];
   problemas?: Problema[];
   user?: any;
@@ -66,6 +67,7 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
   empresas: propEmpresas,
   diagnosticos: propDiagnosticos,
   respostas: propRespostas,
+  credenciadaId,
   premissas: propPremissas = [],
   problemas: propProblemas = [],
   user,
@@ -84,12 +86,16 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
 
   // Dados reativos conectados diretamente às props (qualquer alteração no diagnóstico reflete em tempo real)
   const empresas = useMemo(() => {
-    return propEmpresas && propEmpresas.length > 0 ? propEmpresas : empresasCarregadas;
-  }, [propEmpresas, empresasCarregadas]);
+    const base = propEmpresas && propEmpresas.length > 0 ? propEmpresas : empresasCarregadas;
+    return credenciadaId ? base.filter(e => e.credenciadaId === credenciadaId) : base;
+  }, [propEmpresas, empresasCarregadas, credenciadaId]);
 
   const diagnosticos = useMemo(() => {
-    return propDiagnosticos && propDiagnosticos.length > 0 ? propDiagnosticos : diagnosticosCarregados;
-  }, [propDiagnosticos, diagnosticosCarregados]);
+    const base = propDiagnosticos && propDiagnosticos.length > 0 ? propDiagnosticos : diagnosticosCarregados;
+    if (!credenciadaId) return base;
+    const companyIds = new Set(empresas.map(e => e.id));
+    return base.filter(d => d.empresaCredenciadaId === credenciadaId || (d as any).credenciadaId === credenciadaId || companyIds.has(d.empresaId));
+  }, [propDiagnosticos, diagnosticosCarregados, credenciadaId, empresas]);
 
   const premissas = useMemo(() => {
     return propPremissas && propPremissas.length > 0 ? propPremissas : premissasCarregadas;
@@ -103,8 +109,9 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
   const respostas = useMemo(() => {
     const base = respostasCarregadas.length > 0 ? respostasCarregadas : loadAllLocalRespostas();
     const ativas = propRespostas || [];
-    return deduplicateRespostas([...base, ...ativas]);
-  }, [respostasCarregadas, propRespostas]);
+    const diagnosticoIds = new Set(diagnosticos.map(d => d.id));
+    return deduplicateRespostas([...base, ...ativas]).filter(r => diagnosticoIds.has(r.diagnosticoId));
+  }, [respostasCarregadas, propRespostas, diagnosticos]);
 
   // Estado dos filtros
   const [tipoNegocio, setTipoNegocio] = useState<string>('Todos');
@@ -135,7 +142,7 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
       }
       if (listaEmpresas.length === 0 && user) {
         try {
-          const snapE = await getDocs(query(collection(db, 'empresas'), ownerFilter()));
+          const snapE = await getDocs(query(collection(db, 'empresas'), ownerFilter('empresas')));
           if (!snapE.empty) {
             listaEmpresas = snapE.docs.map(d => ({ id: d.id, ...d.data() } as Empresa));
           }
@@ -156,7 +163,7 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
       }
       if (listaDiags.length === 0 && user) {
         try {
-          const snapD = await getDocs(query(collection(db, 'diagnosticos'), ownerFilter()));
+          const snapD = await getDocs(query(collection(db, 'diagnosticos'), ownerFilter('diagnosticos')));
           if (!snapD.empty) {
             listaDiags = snapD.docs.map(d => ({ id: d.id, ...d.data() } as Diagnostico));
           }
@@ -170,7 +177,7 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
       // A. Respostas da Nuvem (Firestore) carregadas PRIMEIRO (menor precedência)
       if (user) {
         try {
-          const snapResps = await getDocs(query(collection(db, 'respostas'), ownerFilter()));
+          const snapResps = await getDocs(query(collection(db, 'respostas'), ownerFilter('respostas')));
           snapResps.docs.forEach(docSnap => {
             mapaRespostas.set(docSnap.id, { id: docSnap.id, ...docSnap.data() } as Resposta);
           });
@@ -263,7 +270,7 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
 
   useEffect(() => {
     carregarTabelasDoSistema();
-  }, [propEmpresas, propDiagnosticos, user]);
+  }, [propEmpresas, propDiagnosticos, user, credenciadaId]);
 
   const filtrosAtivos: FiltrosRelatorioConsolidado = useMemo(() => ({
     tipoNegocio,

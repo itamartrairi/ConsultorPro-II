@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db, auth } from '../firebase';
-import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc, getDocs } from '../lib/firestoreOwned';
+import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc, getDocs, ownerFilter } from '../lib/firestoreOwned';
 import {
   TrendingUp,
   Award,
@@ -189,9 +189,10 @@ interface MaturityEvaluation {
 interface MaturidadeViewProps {
   empresas: { id: string; nome: string }[];
   setView: (view: string) => void;
+  activeCredenciadaId?: string;
 }
 
-export default function MaturidadeView({ empresas, setView }: MaturidadeViewProps) {
+export default function MaturidadeView({ empresas, setView, activeCredenciadaId }: MaturidadeViewProps) {
   const [activeTab, setActiveTab] = useState<'history' | 'new-assessment' | 'evolution'>('history');
   const [selectedEmpresaId, setSelectedEmpresaId] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
@@ -220,8 +221,10 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
 
   // Initialize selected company
   useEffect(() => {
-    if (empresas.length > 0 && !selectedEmpresaId) {
+    if (empresas.length > 0 && !empresas.some(e => e.id === selectedEmpresaId)) {
       setSelectedEmpresaId(empresas[0].id);
+    } else if (empresas.length === 0 && selectedEmpresaId) {
+      setSelectedEmpresaId('');
     }
   }, [empresas]);
 
@@ -232,8 +235,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
 
     setLoading(true);
     const qEvs = query(
-      collection(db, 'maturidade_avaliacoes'),
-      where('ownerId', '==', user.uid)
+      collection(db, 'maturidade_avaliacoes'), ownerFilter('maturidade_avaliacoes')
     );
 
     const unsubscribe = onSnapshot(qEvs, (snap) => {
@@ -254,7 +256,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
     });
 
     return () => unsubscribe();
-  }, [selectedEmpresaId]);
+  }, [selectedEmpresaId, activeCredenciadaId]);
 
   // Fetch Action Plan Tasks
   useEffect(() => {
@@ -262,8 +264,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
     if (!user || !selectedEmpresaId) return;
 
     const qTasks = query(
-      collection(db, 'tarefas_plano'),
-      where('ownerId', '==', user.uid),
+      collection(db, 'tarefas_plano'), ownerFilter('tarefas_plano'),
       where('empresaId', '==', selectedEmpresaId)
     );
 
@@ -275,7 +276,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
     });
 
     return () => unsubscribe();
-  }, [selectedEmpresaId]);
+  }, [selectedEmpresaId, activeCredenciadaId]);
 
   // Handle Select Evaluation
   const handleSelectEval = (ev: MaturityEvaluation) => {

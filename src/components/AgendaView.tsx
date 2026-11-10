@@ -28,7 +28,8 @@ import {
   updateDoc, 
   deleteDoc, 
   doc, 
-  orderBy 
+  orderBy,
+  ownerFilter
 } from '../lib/firestoreOwned';
 import { db } from '../firebase';
 import { Button } from './Button';
@@ -75,12 +76,14 @@ interface AgendaEvento {
 interface AgendaViewProps {
   empresas: Empresa[];
   diagnosticos: Diagnostico[];
+  activeCredenciadaId?: string;
   user: any;
 }
 
 export const AgendaView: React.FC<AgendaViewProps> = ({
   empresas,
   diagnosticos,
+  activeCredenciadaId,
   user
 }) => {
   const [eventos, setEventos] = useState<AgendaEvento[]>([]);
@@ -160,13 +163,11 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
   useEffect(() => {
     if (!user) return;
 
-    const q = query(
-      collection(db, 'agenda_eventos'), 
-      where('ownerId', '==', user.uid)
-    );
+    const q = query(collection(db, 'agenda_eventos'), ownerFilter('agenda_eventos'));
 
     const unsub = onSnapshot(q, (snap) => {
-      const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as AgendaEvento));
+      const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as AgendaEvento))
+        .filter(event => !activeCredenciadaId || (event as any).credenciadaId === activeCredenciadaId);
       // Sort events by date and starting time
       data.sort((a, b) => {
         const dateCompare = a.data.localeCompare(b.data);
@@ -181,7 +182,7 @@ export const AgendaView: React.FC<AgendaViewProps> = ({
     });
 
     return () => unsub();
-  }, [user]);
+  }, [user, activeCredenciadaId]);
 
   // Calendar Helpers
   const year = currentDate.getFullYear();

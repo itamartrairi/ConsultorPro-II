@@ -1652,7 +1652,7 @@ const DadosConsultoriaView = ({
                   setSelectedEmpresa(emp);
                   const diag = diagnosticos.find(d => d.empresaId === emp.id || d.nomeEmpresa === emp.nome);
                   if (diag) {
-                    setSelectedDiagnostico(diag);
+                    setSelectedDiagnostico(diag as Diagnostico);
                     if (diag.dadosConsultoria) setDadosConsultoria(diag.dadosConsultoria);
                   }
                 }
@@ -2269,7 +2269,7 @@ const CronogramaView = ({
         dadosConsultoria: sanitizeForFirestore(dados),
         updatedAt: new Date().toISOString()
       });
-      const snap = await getDocs(query(collection(db, 'tarefas_plano'), ownerFilter(), where('diagnosticoId', '==', diag.id)));
+      const snap = await getDocs(query(collection(db, 'tarefas_plano'), ownerFilter('tarefas_plano'), where('diagnosticoId', '==', diag.id)));
       const idsNovos = new Set(novas.map(t => t.id));
       const agora = new Date().toISOString();
       const batch = writeBatch(db);
@@ -3020,7 +3020,7 @@ const CronogramaView = ({
       try {
         await updateDoc(doc(db, 'diagnosticos', selectedDiagnostico.id), { cronograma: sanitizedAtv });
 
-        const qTask = query(collection(db, 'tarefas_plano'), ownerFilter(), where('diagnosticoId', '==', selectedDiagnostico.id));
+        const qTask = query(collection(db, 'tarefas_plano'), ownerFilter('tarefas_plano'), where('diagnosticoId', '==', selectedDiagnostico.id));
         const snap = await getDocs(qTask);
         const batch = writeBatch(db);
         snap.docs.forEach(docSnap => {
@@ -4870,7 +4870,7 @@ const CronogramaView = ({
               await updateDoc(doc(db, 'diagnosticos', selectedDiagnostico.id), { cronograma: sanitized });
               setSelectedDiagnostico({ ...selectedDiagnostico, cronograma: sanitized });
 
-              const qTask = query(collection(db, 'tarefas_plano'), ownerFilter(), where('diagnosticoId', '==', selectedDiagnostico.id));
+              const qTask = query(collection(db, 'tarefas_plano'), ownerFilter('tarefas_plano'), where('diagnosticoId', '==', selectedDiagnostico.id));
               const snap = await getDocs(qTask);
               const batch = writeBatch(db);
               snap.docs.forEach(docSnap => {
@@ -10331,6 +10331,10 @@ export default function App() {
       });
     } catch { return []; }
   });
+  const [activeCredenciadaId, setActiveCredenciadaId] = useState(() => {
+    try { return window.localStorage.getItem('active_credenciada_id') || ''; } catch { return ''; }
+  });
+  const [isInvitedConsultor, setIsInvitedConsultor] = useState(false);
   const [allSystemCredenciadas, setAllSystemCredenciadas] = useState<EmpresaCredenciada[]>([]);
   const [customConsultoriaAreas, setCustomConsultoriaAreas] = useState<string[]>(() => {
     try {
@@ -11635,6 +11639,24 @@ export default function App() {
     try {
       const userEmailClean = (u.email || '').toLowerCase().trim();
       const isUserAdminEmail = userEmailClean === 'itamartrairi@gmail.com';
+      if (userEmailClean && !isUserAdminEmail) {
+        const invitations = await getDocs(query(collection(db, 'empresas_credenciadas'), where('consultoresEmails', 'array-contains', userEmailClean)));
+        const invitedDoc = invitations.docs[0];
+        if (invitedDoc) {
+          const invitedCred = { id: invitedDoc.id, ...invitedDoc.data() } as EmpresaCredenciada;
+          setIsInvitedConsultor(true);
+          setActiveCredenciadaId(invitedCred.id);
+          try { window.localStorage.setItem('active_credenciada_id', invitedCred.id); } catch {}
+          setEmpresasCredenciadas(prev => prev.some(c => c.id === invitedCred.id) ? prev : [...prev, invitedCred]);
+          if (!u.providerData.some(provider => provider.providerId === 'google.com')) {
+            setLicenseRecord(null);
+            setLicenseCheck('missing');
+            alert('Este convite exige login com Google usando o e-mail convidado. Saia e entre novamente com Google.');
+          }
+          return;
+        }
+      }
+      setIsInvitedConsultor(false);
       
       // Check by ownerId first
       const qCred = query(collection(db, 'empresas_credenciadas'), where('ownerId', '==', u.uid));
@@ -11705,6 +11727,29 @@ export default function App() {
   // Se houver mais de um registro de licença, vale o MAIS ANTIGO (criar outro não renova o teste).
   const refreshLicenseRecord = async (u: User) => {
     syncServerClock();
+    const normalizedEmail = (u.email || '').toLowerCase().trim();
+    if (normalizedEmail && normalizedEmail !== 'itamartrairi@gmail.com') {
+      try {
+        const invitations = await getDocs(query(collection(db, 'empresas_credenciadas'), where('consultoresEmails', 'array-contains', normalizedEmail)));
+        if (!invitations.empty) {
+          const snap = invitations.docs[0];
+          if (!u.providerData.some(provider => provider.providerId === 'google.com')) {
+            setLicenseRecord(null);
+            setIsInvitedConsultor(true);
+            setLicenseCheck('missing');
+            return;
+          }
+          setLicenseRecord({ id: snap.id, ...snap.data() } as EmpresaCredenciada);
+          setIsInvitedConsultor(true);
+          setActiveCredenciadaId(snap.id);
+          try { window.localStorage.setItem('active_credenciada_id', snap.id); } catch {}
+          setLicenseCheck('ok');
+          return;
+        }
+      } catch (e) {
+        console.warn('Não foi possível verificar convites do consultor:', e);
+      }
+    }
     let falhou = false;
     for (let tentativa = 0; tentativa < 3; tentativa++) {
       try {
@@ -11840,12 +11885,31 @@ export default function App() {
     }
   }, [view, selectedDiagnostico?.id, respostas.length]);
 
+  useEffect(() => {
+    const availableCreds = user ? empresasCredenciadas.filter(c => c.ownerId === user.uid || c.consultoresEmails?.includes((user.email || '').toLowerCase().trim())) : [];
+    if (!availableCreds.length) return;
+    const current = availableCreds.find(c => c.id === activeCredenciadaId);
+    if (current) {
+      if (user && (isAdmin || current.ownerId === user.uid)) window.localStorage.setItem('active_credenciada_owner', user.uid);
+      else window.localStorage.removeItem('active_credenciada_owner');
+      return;
+    }
+    const timestamp = (value: any) => toJsDate(value)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+    const first = [...availableCreds].sort((a, b) => timestamp(a.dataCadastro) - timestamp(b.dataCadastro))[0];
+    if (first) {
+      setActiveCredenciadaId(first.id);
+      try { window.localStorage.setItem('active_credenciada_id', first.id); } catch {}
+      if (user && (isAdmin || first.ownerId === user.uid)) window.localStorage.setItem('active_credenciada_owner', user.uid);
+      else window.localStorage.removeItem('active_credenciada_owner');
+    }
+  }, [empresasCredenciadas, activeCredenciadaId, user?.uid, user?.email, isAdmin]);
+
   // Data Listeners
   useEffect(() => {
     if (!user) return;
 
-    // O workspace operacional do consultor SEMPRE é restrito ao seu próprio ownerId
-    const qEmpresas = query(collection(db, 'empresas'), where('ownerId', '==', user.uid));
+    // Consultores consultam seus próprios registros; o gestor consulta o workspace ativo.
+    const qEmpresas = query(collection(db, 'empresas'), ownerFilter('empresas'));
 
     const unsubEmpresas = onSnapshot(qEmpresas, (snap) => {
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Empresa));
@@ -11903,6 +11967,20 @@ export default function App() {
       });
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'empresas_credenciadas'));
 
+    let unsubInvitacoes: (() => void) | undefined;
+    if (user.email && !isAdmin) {
+      const invitedQuery = query(collection(db, 'empresas_credenciadas'), where('consultoresEmails', 'array-contains', user.email.toLowerCase().trim()));
+      unsubInvitacoes = onSnapshot(invitedQuery, (snap) => {
+        const invited = snap.docs.map(d => ({ id: d.id, ...d.data() } as EmpresaCredenciada));
+        setEmpresasCredenciadas(prev => {
+          const merged = new Map(prev.map(c => [c.id, c]));
+          invited.forEach(c => merged.set(c.id, c));
+          return Array.from(merged.values());
+        });
+        setIsInvitedConsultor(invited.length > 0);
+      }, (error) => handleFirestoreError(error, OperationType.LIST, 'empresas_credenciadas_convites'));
+    }
+
     // Se admin, escuta TODAS as credenciadas do sistema EXCLUSIVAMENTE para a tela de Gestão de Licenças
     let unsubAllCred: (() => void) | undefined;
     if (isAdmin) {
@@ -11915,7 +11993,7 @@ export default function App() {
     }
 
     // Biblioteca metodológica compartilhada (Premissas, Problemas, Soluções, Áreas, Segmentos)
-    const qPremissas = query(collection(db, 'premissas'), ownerFilter());
+    const qPremissas = query(collection(db, 'premissas'), ownerFilter('premissas'));
     const unsubPremissas = onSnapshot(qPremissas, (snap) => {
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Premissa));
       setPremissas(prev => {
@@ -11926,7 +12004,7 @@ export default function App() {
       });
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'premissas'));
 
-    const qProblemas = query(collection(db, 'problemas'), ownerFilter());
+    const qProblemas = query(collection(db, 'problemas'), ownerFilter('problemas'));
     const unsubProblemas = onSnapshot(qProblemas, (snap) => {
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Problema));
       setProblemas(prev => {
@@ -11936,7 +12014,7 @@ export default function App() {
       });
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'problemas'));
 
-    const qSolucoes = query(collection(db, 'solucoes'), ownerFilter());
+    const qSolucoes = query(collection(db, 'solucoes'), ownerFilter('solucoes'));
     const unsubSolucoes = onSnapshot(qSolucoes, (snap) => {
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Solucao));
       setSolucoes(prev => {
@@ -11947,7 +12025,7 @@ export default function App() {
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'solucoes'));
 
     // Tarefas do plano de ação restritas ao usuário
-    const qTarefas = query(collection(db, 'tarefas_plano'), where('ownerId', '==', user.uid));
+    const qTarefas = query(collection(db, 'tarefas_plano'), ownerFilter('tarefas_plano'));
     const unsubTarefas = onSnapshot(qTarefas, (snap) => {
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as TarefaPlanoAcao));
       setTarefasPlano(prev => {
@@ -11974,13 +12052,13 @@ export default function App() {
       }
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'tarefas_plano'));
 
-    const qAreas = query(collection(db, 'areas'), ownerFilter());
+    const qAreas = query(collection(db, 'areas'), ownerFilter('areas'));
     const unsubAreas = onSnapshot(qAreas, (snap) => {
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as { id: string, nome: string }));
       setDbAreas(docs);
     }, (error) => handleFirestoreError(error, OperationType.LIST, 'areas'));
 
-    const qSegmentos = query(collection(db, 'segmentos'), ownerFilter());
+    const qSegmentos = query(collection(db, 'segmentos'), ownerFilter('segmentos'));
     const unsubSegmentos = onSnapshot(qSegmentos, (snap) => {
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as { id: string, nome: string }));
       setDbSegmentos(docs);
@@ -11989,6 +12067,7 @@ export default function App() {
     return () => {
       unsubEmpresas();
       unsubCredenciadas();
+      unsubInvitacoes?.();
       unsubAllCred?.();
       unsubPremissas();
       unsubProblemas();
@@ -11997,7 +12076,7 @@ export default function App() {
       unsubAreas();
       unsubSegmentos();
     };
-  }, [user, isAdmin]);
+  }, [user, isAdmin, activeCredenciadaId]);
 
   // Auto-sync local items to cloud when user logs in so data created locally or offline is uploaded
   useEffect(() => {
@@ -12094,7 +12173,7 @@ export default function App() {
     if (!user) {
       return;
     }
-    const q = query(collection(db, 'diagnosticos'), where('ownerId', '==', user.uid));
+    const q = query(collection(db, 'diagnosticos'), ownerFilter('diagnosticos'));
 
     return onSnapshot(q, (snap) => {
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Diagnostico));
@@ -12119,7 +12198,7 @@ export default function App() {
         });
       }
     }, (error) => console.error("Erro ao escutar diagnósticos:", error));
-  }, [user, isAdmin]);
+  }, [user, isAdmin, activeCredenciadaId]);
 
   // Listen to Respostas for selected Diagnostico with persistent local-first hydration
   useEffect(() => {
@@ -12144,7 +12223,7 @@ export default function App() {
     }
 
     // 2. Real-time Firestore sync (merges cloud docs into local state without discarding unanswered questions)
-    const q = query(collection(db, 'respostas'), ownerFilter(), where('diagnosticoId', '==', selectedDiagnostico.id));
+    const q = query(collection(db, 'respostas'), ownerFilter('respostas'), where('diagnosticoId', '==', selectedDiagnostico.id));
     return onSnapshot(q, (snap) => {
       const cloudDocs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Resposta));
       setCloudRespostasDiagId(selectedDiagnostico.id);
@@ -12296,7 +12375,7 @@ export default function App() {
           const lastDiags = [...companyDiags].reverse().slice(-5); // Last 5, ordered by date
           
           for (const diag of lastDiags) {
-            const qRes = query(collection(db, 'respostas'), ownerFilter(), where('diagnosticoId', '==', diag.id));
+            const qRes = query(collection(db, 'respostas'), ownerFilter('respostas'), where('diagnosticoId', '==', diag.id));
             const snap = await getDocs(qRes);
             const resps = snap.docs.map(d => d.data());
             const totalScore = resps.reduce((acc, r) => acc + (r.score || 0), 0);
@@ -13573,7 +13652,7 @@ export default function App() {
           console.warn("Direct delete of premissa by id failed:", e);
         }
         try {
-          const snap = await getDocs(query(collection(db, 'premissas'), ownerFilter()));
+          const snap = await getDocs(query(collection(db, 'premissas'), ownerFilter('premissas')));
           for (const d of snap.docs) {
             const data = d.data();
             const matchesOwner = !data.ownerId || data.ownerId === 'local' || data.ownerId === user.uid || isAdmin;
@@ -13673,7 +13752,7 @@ export default function App() {
           console.warn("Direct delete of problema by id failed:", e);
         }
         try {
-          const snap = await getDocs(query(collection(db, 'problemas'), ownerFilter()));
+          const snap = await getDocs(query(collection(db, 'problemas'), ownerFilter('problemas')));
           for (const d of snap.docs) {
             const data = d.data();
             const matchesOwner = !data.ownerId || data.ownerId === 'local' || data.ownerId === user.uid || isAdmin;
@@ -13855,7 +13934,7 @@ export default function App() {
           console.warn("Direct delete of solucao by id failed:", e);
         }
         try {
-          const snap = await getDocs(query(collection(db, 'solucoes'), ownerFilter()));
+          const snap = await getDocs(query(collection(db, 'solucoes'), ownerFilter('solucoes')));
           for (const d of snap.docs) {
             const data = d.data();
             const matchesOwner = !data.ownerId || data.ownerId === 'local' || data.ownerId === user.uid || isAdmin;
@@ -13998,28 +14077,28 @@ export default function App() {
 
     (async () => {
       try {
-        const areaSnap = await getDocs(query(collection(db, 'areas'), ownerFilter()));
+        const areaSnap = await getDocs(query(collection(db, 'areas'), ownerFilter('areas')));
         for (const d of areaSnap.docs) {
           if (normalizeAndFormatArea(d.data().nome).toLowerCase() === normTarget) {
             await deleteDoc(d.ref);
           }
         }
 
-        const probSnap = await getDocs(query(collection(db, 'problemas'), ownerFilter()));
+        const probSnap = await getDocs(query(collection(db, 'problemas'), ownerFilter('problemas')));
         for (const d of probSnap.docs) {
           if (normalizeAndFormatArea(d.data().area).toLowerCase() === normTarget) {
             await deleteDoc(d.ref);
           }
         }
 
-        const solSnap = await getDocs(query(collection(db, 'solucoes'), ownerFilter()));
+        const solSnap = await getDocs(query(collection(db, 'solucoes'), ownerFilter('solucoes')));
         for (const d of solSnap.docs) {
           if (normalizeAndFormatArea(d.data().area).toLowerCase() === normTarget) {
             await deleteDoc(d.ref);
           }
         }
 
-        const premSnap = await getDocs(query(collection(db, 'premissas'), ownerFilter()));
+        const premSnap = await getDocs(query(collection(db, 'premissas'), ownerFilter('premissas')));
         for (const d of premSnap.docs) {
           const pData = d.data();
           if (
@@ -14073,7 +14152,7 @@ export default function App() {
 
     (async () => {
       try {
-        const areaSnap = await getDocs(query(collection(db, 'areas'), ownerFilter()));
+        const areaSnap = await getDocs(query(collection(db, 'areas'), ownerFilter('areas')));
         let foundInDb = false;
         for (const d of areaSnap.docs) {
           if (normalizeAndFormatArea(d.data().nome).toLowerCase() === normOld) {
@@ -14085,21 +14164,21 @@ export default function App() {
           await addDoc(collection(db, 'areas'), { nome: formattedNew, createdAt: new Date().toISOString() });
         }
 
-        const probSnap = await getDocs(query(collection(db, 'problemas'), ownerFilter()));
+        const probSnap = await getDocs(query(collection(db, 'problemas'), ownerFilter('problemas')));
         for (const d of probSnap.docs) {
           if (normalizeAndFormatArea(d.data().area).toLowerCase() === normOld) {
             await updateDoc(d.ref, { area: formattedNew });
           }
         }
 
-        const solSnap = await getDocs(query(collection(db, 'solucoes'), ownerFilter()));
+        const solSnap = await getDocs(query(collection(db, 'solucoes'), ownerFilter('solucoes')));
         for (const d of solSnap.docs) {
           if (normalizeAndFormatArea(d.data().area).toLowerCase() === normOld) {
             await updateDoc(d.ref, { area: formattedNew });
           }
         }
 
-        const resSnap = await getDocs(query(collection(db, 'respostas'), ownerFilter()));
+        const resSnap = await getDocs(query(collection(db, 'respostas'), ownerFilter('respostas')));
         for (const d of resSnap.docs) {
           if (d.data().area && normalizeAndFormatArea(d.data().area).toLowerCase() === normOld) {
             await updateDoc(d.ref, { area: formattedNew });
@@ -14182,7 +14261,7 @@ export default function App() {
 
     (async () => {
       try {
-        const segSnap = await getDocs(query(collection(db, 'segmentos'), ownerFilter()));
+        const segSnap = await getDocs(query(collection(db, 'segmentos'), ownerFilter('segmentos')));
         for (const d of segSnap.docs) {
           if (d.data().nome && d.data().nome.trim().toLowerCase() === normTarget) {
             await deleteDoc(d.ref);
@@ -14215,7 +14294,7 @@ export default function App() {
 
     (async () => {
       try {
-        const segSnap = await getDocs(query(collection(db, 'segmentos'), ownerFilter()));
+        const segSnap = await getDocs(query(collection(db, 'segmentos'), ownerFilter('segmentos')));
         let foundInDb = false;
         for (const d of segSnap.docs) {
           if (d.data().nome && d.data().nome.trim().toLowerCase() === normOld) {
@@ -14280,7 +14359,7 @@ export default function App() {
     if (user) {
       (async () => {
         try {
-          const q = query(collection(db, 'tarefas_plano'), ownerFilter(), where('diagnosticoId', '==', diagId));
+          const q = query(collection(db, 'tarefas_plano'), ownerFilter('tarefas_plano'), where('diagnosticoId', '==', diagId));
           const snap = await getDocs(q);
           const batch = writeBatch(db);
           snap.docs.forEach(d => batch.delete(d.ref));
@@ -14349,11 +14428,11 @@ export default function App() {
 
             // Delete child docs in batch
             const [snapRes, snapTasks1, snapTasks2, snapAgenda, snapMat] = await Promise.all([
-              getDocs(query(collection(db, 'respostas'), ownerFilter(), where('diagnosticoId', '==', dupId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'tarefas_plano'), ownerFilter(), where('diagnosticoId', '==', dupId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'tarefas_plano'), ownerFilter(), where('projetoId', '==', dupId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'agenda_eventos'), ownerFilter(), where('diagnosticoId', '==', dupId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'maturidade_avaliacoes'), ownerFilter(), where('diagnosticoId', '==', dupId))).catch(() => ({ docs: [] as any[] }))
+              getDocs(query(collection(db, 'respostas'), ownerFilter('respostas'), where('diagnosticoId', '==', dupId))).catch(() => ({ docs: [] as any[] })),
+              getDocs(query(collection(db, 'tarefas_plano'), ownerFilter('tarefas_plano'), where('diagnosticoId', '==', dupId))).catch(() => ({ docs: [] as any[] })),
+              getDocs(query(collection(db, 'tarefas_plano'), ownerFilter('tarefas_plano'), where('projetoId', '==', dupId))).catch(() => ({ docs: [] as any[] })),
+              getDocs(query(collection(db, 'agenda_eventos'), ownerFilter('agenda_eventos'), where('diagnosticoId', '==', dupId))).catch(() => ({ docs: [] as any[] })),
+              getDocs(query(collection(db, 'maturidade_avaliacoes'), ownerFilter('maturidade_avaliacoes'), where('diagnosticoId', '==', dupId))).catch(() => ({ docs: [] as any[] }))
             ]);
 
             const allDocs = [...snapRes.docs, ...snapTasks1.docs, ...snapTasks2.docs, ...snapAgenda.docs, ...snapMat.docs];
@@ -14441,11 +14520,11 @@ export default function App() {
 
             // Fetch and delete dependent documents across collections in parallel
             const [snapRes, snapTasks1, snapTasks2, snapAgenda, snapMat] = await Promise.all([
-              getDocs(query(collection(db, 'respostas'), ownerFilter(), where('diagnosticoId', '==', diagId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'tarefas_plano'), ownerFilter(), where('diagnosticoId', '==', diagId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'tarefas_plano'), ownerFilter(), where('projetoId', '==', diagId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'agenda_eventos'), ownerFilter(), where('diagnosticoId', '==', diagId))).catch(() => ({ docs: [] as any[] })),
-              getDocs(query(collection(db, 'maturidade_avaliacoes'), ownerFilter(), where('diagnosticoId', '==', diagId))).catch(() => ({ docs: [] as any[] }))
+              getDocs(query(collection(db, 'respostas'), ownerFilter('respostas'), where('diagnosticoId', '==', diagId))).catch(() => ({ docs: [] as any[] })),
+              getDocs(query(collection(db, 'tarefas_plano'), ownerFilter('tarefas_plano'), where('diagnosticoId', '==', diagId))).catch(() => ({ docs: [] as any[] })),
+              getDocs(query(collection(db, 'tarefas_plano'), ownerFilter('tarefas_plano'), where('projetoId', '==', diagId))).catch(() => ({ docs: [] as any[] })),
+              getDocs(query(collection(db, 'agenda_eventos'), ownerFilter('agenda_eventos'), where('diagnosticoId', '==', diagId))).catch(() => ({ docs: [] as any[] })),
+              getDocs(query(collection(db, 'maturidade_avaliacoes'), ownerFilter('maturidade_avaliacoes'), where('diagnosticoId', '==', diagId))).catch(() => ({ docs: [] as any[] }))
             ]);
 
             const allDocsToDelete = [
@@ -14526,7 +14605,7 @@ export default function App() {
           try {
             // Delete all respostas of the associated diagnostics
             for (const dId of diagIds) {
-              const qRes = query(collection(db, 'respostas'), ownerFilter(), where('diagnosticoId', '==', dId));
+              const qRes = query(collection(db, 'respostas'), ownerFilter('respostas'), where('diagnosticoId', '==', dId));
               const snapRes = await getDocs(qRes);
               for (let i = 0; i < snapRes.docs.length; i += 400) {
                 const batch = writeBatch(db);
@@ -14536,7 +14615,7 @@ export default function App() {
             }
 
             // Delete all tarefas_plano for this empresa
-            const qTasks = query(collection(db, 'tarefas_plano'), ownerFilter(), where('empresaId', '==', empresaId));
+            const qTasks = query(collection(db, 'tarefas_plano'), ownerFilter('tarefas_plano'), where('empresaId', '==', empresaId));
             const snapTasks = await getDocs(qTasks);
             for (let i = 0; i < snapTasks.docs.length; i += 400) {
               const batch = writeBatch(db);
@@ -14546,7 +14625,7 @@ export default function App() {
 
             // Delete all agenda_eventos for this empresa
             try {
-              const qAgenda = query(collection(db, 'agenda_eventos'), ownerFilter(), where('empresaId', '==', empresaId));
+              const qAgenda = query(collection(db, 'agenda_eventos'), ownerFilter('agenda_eventos'), where('empresaId', '==', empresaId));
               const snapAgenda = await getDocs(qAgenda);
               for (let i = 0; i < snapAgenda.docs.length; i += 400) {
                 const batch = writeBatch(db);
@@ -14557,7 +14636,7 @@ export default function App() {
 
             // Delete maturidade_avaliacoes for this empresa
             try {
-              const qMat = query(collection(db, 'maturidade_avaliacoes'), ownerFilter(), where('empresaId', '==', empresaId));
+              const qMat = query(collection(db, 'maturidade_avaliacoes'), ownerFilter('maturidade_avaliacoes'), where('empresaId', '==', empresaId));
               const snapMat = await getDocs(qMat);
               for (let i = 0; i < snapMat.docs.length; i += 400) {
                 const batch = writeBatch(db);
@@ -14568,7 +14647,7 @@ export default function App() {
 
             // Delete disc_avaliacoes for this empresa
             try {
-              const qDisc = query(collection(db, 'disc_avaliacoes'), ownerFilter(), where('empresaId', '==', empresaId));
+              const qDisc = query(collection(db, 'disc_avaliacoes'), ownerFilter('disc_avaliacoes'), where('empresaId', '==', empresaId));
               const snapDisc = await getDocs(qDisc);
               for (let i = 0; i < snapDisc.docs.length; i += 400) {
                 const batch = writeBatch(db);
@@ -14578,7 +14657,7 @@ export default function App() {
             } catch (e) {}
 
             // Delete all diagnosticos for this empresa
-            const qDiags = query(collection(db, 'diagnosticos'), ownerFilter(), where('empresaId', '==', empresaId));
+            const qDiags = query(collection(db, 'diagnosticos'), ownerFilter('diagnosticos'), where('empresaId', '==', empresaId));
             const snapDiags = await getDocs(qDiags);
             for (let i = 0; i < snapDiags.docs.length; i += 400) {
               const batch = writeBatch(db);
@@ -14647,7 +14726,7 @@ export default function App() {
       }
       if (sourceAnswers.length === 0 && user) {
         try {
-          const qSnap = await getDocs(query(collection(db, 'respostas'), ownerFilter(), where('diagnosticoId', '==', sourceDiagId)));
+          const qSnap = await getDocs(query(collection(db, 'respostas'), ownerFilter('respostas'), where('diagnosticoId', '==', sourceDiagId)));
           sourceAnswers = qSnap.docs.map(d => ({ id: d.id, ...d.data() } as Resposta));
         } catch (e) {
           console.warn("Could not query source answers from cloud:", e);
@@ -14832,7 +14911,7 @@ export default function App() {
       respostas.forEach(r => { if (r?.id) mapa.set(r.id, r); });
       if (user) {
         try {
-          const snap = await getDocs(query(collection(db, 'respostas'), ownerFilter()));
+          const snap = await getDocs(query(collection(db, 'respostas'), ownerFilter('respostas')));
           snap.docs.forEach(d => mapa.set(d.id, { id: d.id, ...d.data() } as Resposta));
         } catch (e) {
           console.warn('[Relatório por segmento] Respostas da nuvem indisponíveis; usando as locais.', e);
@@ -14870,7 +14949,7 @@ export default function App() {
     respostas.filter(r => r.diagnosticoId === diag.id).forEach(r => mapa.set(r.id, r));
     if (user) {
       try {
-        const snap = await getDocs(query(collection(db, 'respostas'), ownerFilter(), where('diagnosticoId', '==', diag.id)));
+        const snap = await getDocs(query(collection(db, 'respostas'), ownerFilter('respostas'), where('diagnosticoId', '==', diag.id)));
         snap.docs.forEach(d => mapa.set(d.id, { id: d.id, ...d.data() } as Resposta));
       } catch (e) {
         console.warn('[Plano] Não foi possível ler as respostas da nuvem; usando as locais.', e);
@@ -14905,7 +14984,7 @@ export default function App() {
     } catch { /* cópia local é opcional */ }
 
     if (!user) return;
-    const existentes = await getDocs(query(collection(db, 'tarefas_plano'), ownerFilter(), where('diagnosticoId', '==', diag.id)));
+    const existentes = await getDocs(query(collection(db, 'tarefas_plano'), ownerFilter('tarefas_plano'), where('diagnosticoId', '==', diag.id)));
     const ops: { tipo: 'del' | 'set' | 'upd'; ref: any; data?: any }[] = [
       ...existentes.docs.map(d => ({ tipo: 'del' as const, ref: d.ref })),
       ...tarefasNovas.map(({ id, ...t }) => ({
@@ -15111,7 +15190,7 @@ export default function App() {
       });
 
       // 3. Clear existing tasks for current diagnostic
-      const currentTasksQ = query(collection(db, 'tarefas_plano'), ownerFilter(), where('diagnosticoId', '==', selectedDiagnostico.id));
+      const currentTasksQ = query(collection(db, 'tarefas_plano'), ownerFilter('tarefas_plano'), where('diagnosticoId', '==', selectedDiagnostico.id));
       const currentTasksSnap = await getDocs(currentTasksQ);
       const ops: { type: 'set' | 'update' | 'delete', ref: any, data?: any }[] = [];
       
@@ -18039,6 +18118,60 @@ export default function App() {
   const isPlanExpired = subStatus.expired;
   const isLicenseBlocked = !isAdmin && !!user && licenseRecord?.status === 'Bloqueada';
 
+  const legacyMigrationStarted = useRef(false);
+  useEffect(() => {
+    if (!user || legacyMigrationStarted.current || !empresasCredenciadas.length) return;
+    const ownedCreds = empresasCredenciadas.filter(c => c.ownerId === user.uid);
+    if (!ownedCreds.length) return;
+    legacyMigrationStarted.current = true;
+    const timestamp = (value: any) => toJsDate(value)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+    const oldestCred = [...ownedCreds].sort((a, b) => timestamp(a.dataCadastro) - timestamp(b.dataCadastro))[0];
+    (async () => {
+      const collectionsToMigrate = ['empresas','diagnosticos','respostas','tarefas_plano','agenda_eventos','disc_avaliacoes','maturidade_avaliacoes','analises_resultado'];
+      for (const collectionName of collectionsToMigrate) {
+        try {
+          const snapshot = await getDocs(query(collection(db, collectionName), where('ownerId', '==', user.uid)));
+          const legacyDocs = snapshot.docs.filter(item => !(item.data() as any).credenciadaId);
+          for (let index = 0; index < legacyDocs.length; index += 400) {
+            const batch = writeBatch(db);
+            legacyDocs.slice(index, index + 400).forEach(item => {
+              const data = item.data() as any;
+              const update: any = { credenciadaId: oldestCred.id };
+              if (collectionName === 'diagnosticos' && !data.empresaCredenciadaId) update.empresaCredenciadaId = oldestCred.id;
+              batch.update(item.ref, update);
+            });
+            await batch.commit();
+          }
+        } catch (error) {
+          console.warn(`Migração legada de ${collectionName} para a credenciada mais antiga falhou:`, error);
+        }
+      }
+    })();
+  }, [user, empresasCredenciadas]);
+
+  const accessibleCredenciadas = user
+    ? empresasCredenciadas.filter(c => c.ownerId === user.uid || c.consultoresEmails?.includes((user.email || '').toLowerCase().trim()))
+    : [];
+  const activeCredenciada = accessibleCredenciadas.find(c => c.id === activeCredenciadaId) || null;
+  const workspaceEmpresas = activeCredenciada
+    ? empresas.filter(e => e.credenciadaId === activeCredenciadaId)
+    : user ? [] : empresas;
+  const workspaceEmpresaIds = new Set(workspaceEmpresas.map(e => e.id));
+  const workspaceDiagnosticos = activeCredenciada
+    ? diagnosticos.filter(d => d.empresaCredenciadaId === activeCredenciadaId || d.credenciadaId === activeCredenciadaId || workspaceEmpresaIds.has(d.empresaId))
+    : user ? [] : diagnosticos;
+  const workspaceDiagnosticoIds = new Set(workspaceDiagnosticos.map(d => d.id));
+  const workspaceTarefas = activeCredenciada
+    ? tarefasPlano.filter(t => workspaceDiagnosticoIds.has(t.diagnosticoId) || t.credenciadaId === activeCredenciadaId)
+    : user ? [] : tarefasPlano;
+  const workspaceRespostas = activeCredenciada
+    ? respostas.filter(r => workspaceDiagnosticoIds.has(r.diagnosticoId) || (r as any).credenciadaId === activeCredenciadaId)
+    : user ? [] : respostas;
+  useEffect(() => {
+    if (selectedDiagnostico && !workspaceDiagnosticoIds.has(selectedDiagnostico.id)) setSelectedDiagnostico(null);
+    if (selectedEmpresa && !workspaceEmpresaIds.has(selectedEmpresa.id)) setSelectedEmpresa(null);
+  }, [activeCredenciadaId, diagnosticos, empresas]);
+
   if (user && !isAdmin && licenseCheck === 'pending') {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-center text-slate-500 font-medium">
@@ -18059,13 +18192,13 @@ export default function App() {
           </h1>
           <p className="text-slate-500 mb-8 leading-relaxed">
             {subStatus.missing 
-              ? (subStatus.missing === 'error' ? 'Não foi possível verificar sua licença. Confira sua conexão com a internet e tente novamente.' : 'Não encontramos o cadastro da sua licença. Tente novamente ou entre em contato com o suporte.') 
+              ? (isInvitedConsultor ? 'Este convite requer que você entre com Google usando o mesmo e-mail convidado. Saia e autentique-se com Google para usar a licença da credenciada.' : subStatus.missing === 'error' ? 'Não foi possível verificar sua licença. Confira sua conexão com a internet e tente novamente.' : 'Não encontramos o cadastro da sua licença. Tente novamente ou entre em contato com o suporte.')
               : isPlanExpired 
-              ? `Seu plano ${subStatus.plan} expirou. Para continuar utilizando todas as funcionalidades, por favor, realize a renovação ou assine um novo plano.`
+              ? (isInvitedConsultor ? `A licença da credenciada ${licenseRecord?.razaoSocial || ''} expirou. Peça ao gestor da credenciada para renovar o plano.` : `Seu plano ${subStatus.plan} expirou. Para continuar utilizando todas as funcionalidades, por favor, realize a renovação ou assine um novo plano.`)
               : "Sua licença de uso está temporariamente suspensa pelo administrador. Entre em contato com o suporte para regularizar sua situação."}
           </p>
           <div className="space-y-4">
-            {isPlanExpired && !subStatus.missing && (
+            {isPlanExpired && !subStatus.missing && !isInvitedConsultor && (
               <Button 
                 onClick={() => setView('checkout')}
                 className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 font-bold shadow-lg shadow-emerald-200"
@@ -18147,6 +18280,31 @@ export default function App() {
             {/* Top Bar - Modo de Salvamento (Nuvem vs. Local) - Fixada no Topo (Sticky) */}
             <div className="sticky top-0 z-30 bg-slate-50/95 backdrop-blur-md -mt-6 lg:-mt-10 pt-6 lg:pt-8 mb-6 pb-4 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-4 print:hidden transition-all shadow-xs">
               <div className="flex flex-wrap items-center gap-3">
+                {user && accessibleCredenciadas.length > 0 && (
+                  <label className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm">
+                    <Building2 size={14} className="text-emerald-600" />
+                    <span>Credenciada ativa</span>
+                    <select
+                      aria-label="Selecionar empresa credenciada ativa"
+                      value={activeCredenciadaId}
+                      onChange={e => {
+                        const id = e.target.value;
+                        setActiveCredenciadaId(id);
+                        try { window.localStorage.setItem('active_credenciada_id', id); } catch {}
+                        const selectedCred = empresasCredenciadas.find(c => c.id === id);
+                        if (user && selectedCred && (isAdmin || selectedCred.ownerId === user.uid)) window.localStorage.setItem('active_credenciada_owner', user.uid);
+                        else window.localStorage.removeItem('active_credenciada_owner');
+                        setSelectedEmpresa(null);
+                        setSelectedDiagnostico(null);
+                      }}
+                      className="max-w-[220px] rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-semibold text-slate-800 outline-none focus:border-emerald-400"
+                    >
+                      {accessibleCredenciadas.map(c => (
+                        <option key={c.id} value={c.id}>{c.razaoSocial}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
                 <div className="flex items-center gap-1.5 bg-slate-200/70 p-1 rounded-xl text-xs font-bold">
                   <button
                     onClick={() => handleSetStorageMode('cloud')}
@@ -18224,7 +18382,7 @@ export default function App() {
             {/* Warning Banner for Client — card de compra só aparece no período de TESTE.
                 Quem já comprou (Mensal/Anual) não vê este card; ao vencer, aparece a tela
                 "Plano Expirado" com o botão "Renovar Assinatura". */}
-            {!isAdmin && !isPaidPlan(subStatus.plan) && subStatus.daysLeft <= 3 && subStatus.daysLeft >= 0 && (
+            {!isAdmin && !isInvitedConsultor && !isPaidPlan(subStatus.plan) && subStatus.daysLeft <= 3 && subStatus.daysLeft >= 0 && (
               <motion.div 
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -18328,7 +18486,7 @@ export default function App() {
                   exit={{ opacity: 0, scale: 0.98 }}
                 >
                   <GestaoPlanoView 
-                    tarefas={deduplicateTarefasPlano(tarefasPlano.filter(t => selectedDiagnostico && t.diagnosticoId === selectedDiagnostico.id))}
+                    tarefas={deduplicateTarefasPlano(workspaceTarefas.filter(t => selectedDiagnostico && t.diagnosticoId === selectedDiagnostico.id))}
                     empresas={empresas}
                     onEdit={(t) => {
                       setModalType('editTarefa');
@@ -18369,9 +18527,9 @@ export default function App() {
                     exit={{ opacity: 0, y: -10 }}
                   >
                     <HomeView 
-                      empresas={empresas} 
-                      diagnosticos={diagnosticos} 
-                      tarefas={tarefasPlano}
+                      empresas={workspaceEmpresas}
+                      diagnosticos={workspaceDiagnosticos}
+                      tarefas={workspaceTarefas}
                       problemas={problemas}
                       setView={setView} 
                       isAdmin={isAdmin}
@@ -18388,10 +18546,10 @@ export default function App() {
                   exit={{ opacity: 0, y: -10 }}
                 >
                   <ProjectsView 
-                    empresas={empresas} 
-                    diagnosticos={diagnosticos} 
-                    tarefas={tarefasPlano}
-                    respostas={respostas}
+                    empresas={workspaceEmpresas}
+                    diagnosticos={workspaceDiagnosticos}
+                    tarefas={workspaceTarefas}
+                    respostas={workspaceRespostas}
                     user={user}
                     onCreateDiagnostico={createDiagnostico}
                     onDeleteDiagnostico={deleteDiagnostico}
@@ -18411,8 +18569,9 @@ export default function App() {
                   exit={{ opacity: 0, y: -10 }}
                 >
                   <AgendaView 
-                    empresas={empresas} 
-                    diagnosticos={diagnosticos} 
+                    empresas={workspaceEmpresas}
+                    diagnosticos={workspaceDiagnosticos}
+                    activeCredenciadaId={activeCredenciadaId}
                     user={user}
                   />
                 </motion.div>
@@ -18425,9 +18584,9 @@ export default function App() {
                   exit={{ opacity: 0, y: -10 }}
                 >
                   <MacroDashboardView 
-                    empresas={empresas} 
-                    diagnosticos={diagnosticos} 
-                    tarefas={tarefasPlano}
+                    empresas={workspaceEmpresas}
+                    diagnosticos={workspaceDiagnosticos}
+                    tarefas={workspaceTarefas}
                     lastSyncSummary={lastSyncSummary}
                     isSyncingCloud={isSyncingCloud}
                     onOpenSmartSync={() => setIsSmartSyncModalOpen(true)}
@@ -18438,16 +18597,16 @@ export default function App() {
                     gerandoRelatorioSegmentos={gerandoRelatorioSegmentos}
                     onOpenRelatorioConsolidadoSgf={() => setView('relatorio-consolidado-sgf')}
                     onNavigateToDiagnosis={(diag) => {
-                      setSelectedDiagnostico(diag);
-                      const emp = empresas.find(e => e.id === diag.empresaId);
+                      setSelectedDiagnostico(diag as Diagnostico);
+                      const emp = workspaceEmpresas.find(e => e.id === diag.empresaId);
                       if (emp) setSelectedEmpresa(emp);
                       setView('projects');
                     }}
                     onNavigateToKanban={(diagId) => {
-                      const diag = diagnosticos.find(d => d.id === diagId);
+                      const diag = workspaceDiagnosticos.find(d => d.id === diagId);
                       if (diag) {
-                        setSelectedDiagnostico(diag);
-                        const emp = empresas.find(e => e.id === diag.empresaId);
+                        setSelectedDiagnostico(diag as Diagnostico);
+                        const emp = workspaceEmpresas.find(e => e.id === diag.empresaId);
                         if (emp) setSelectedEmpresa(emp);
                       }
                       setView('kanban');
@@ -18463,7 +18622,8 @@ export default function App() {
                   exit={{ opacity: 0, y: -10 }}
                 >
                   <MaturidadeView 
-                    empresas={empresas} 
+                    empresas={workspaceEmpresas}
+                    activeCredenciadaId={activeCredenciadaId}
                     setView={setView}
                   />
                 </motion.div>
@@ -18476,11 +18636,12 @@ export default function App() {
                   exit={{ opacity: 0, y: -10 }}
                 >
                   <ResultadoConsultoriaView 
-                    empresas={empresas}
-                    diagnosticos={diagnosticos}
-                    respostas={respostas}
-                    tarefas={tarefasPlano}
+                    empresas={workspaceEmpresas}
+                    diagnosticos={workspaceDiagnosticos}
+                    respostas={workspaceRespostas}
+                    tarefas={workspaceTarefas}
                     user={user}
+                    activeCredenciadaId={activeCredenciadaId}
                     selectedEmpresa={selectedEmpresa}
                     selectedDiagnostico={selectedDiagnostico}
                     setView={setView}
@@ -18498,9 +18659,10 @@ export default function App() {
                   exit={{ opacity: 0, y: -10 }}
                 >
                   <RelatorioConsolidadoSgfView 
-                    empresas={empresas}
-                    diagnosticos={diagnosticos}
-                    respostas={respostas}
+                    empresas={workspaceEmpresas}
+                    diagnosticos={workspaceDiagnosticos}
+                    respostas={workspaceRespostas}
+                    credenciadaId={activeCredenciadaId}
                     premissas={premissas}
                     problemas={problemas}
                     user={user}
@@ -18509,8 +18671,8 @@ export default function App() {
                     logoChoice={logoChoice}
                     setPdfUrl={setPdfUrl}
                     onNavigateToDiagnosis={(diag) => {
-                      setSelectedDiagnostico(diag);
-                      const emp = empresas.find(e => e.id === diag.empresaId);
+                      setSelectedDiagnostico(diag as Diagnostico);
+                      const emp = workspaceEmpresas.find(e => e.id === diag.empresaId);
                       if (emp) setSelectedEmpresa(emp);
                       setView('projects');
                     }}
@@ -18668,6 +18830,40 @@ export default function App() {
                           <p className="text-xs text-slate-400 mb-4">
                             Cadastrada em {formatFirestoreDate(emp.dataCadastro)}
                           </p>
+                          {(isAdmin || emp.ownerId === user?.uid) && (
+                            <div className="border-t border-slate-100 pt-3">
+                              <div className="mb-2 flex items-center justify-between gap-2">
+                                <span className="text-xs font-bold text-slate-600">Consultores</span>
+                                <span className="text-[10px] text-slate-400">{emp.consultoresEmails?.length || 0} convidados</span>
+                              </div>
+                              {(emp.consultoresEmails || []).map(email => (
+                                <div key={email} className="mb-1 flex items-center justify-between rounded-lg bg-slate-50 px-2 py-1 text-[11px] text-slate-600">
+                                  <span className="truncate">{email}</span>
+                                  <button className="ml-2 text-rose-500 hover:text-rose-700" title="Remover acesso" onClick={async e => {
+                                    e.stopPropagation();
+                                    const next = (emp.consultoresEmails || []).filter(item => item !== email);
+                                    try {
+                                      await updateDoc(doc(db, 'empresas_credenciadas', emp.id), { consultoresEmails: next });
+                                      setEmpresasCredenciadas(prev => prev.map(c => c.id === emp.id ? { ...c, consultoresEmails: next } : c));
+                                    } catch (error) { alert('Não foi possível remover o acesso: ' + String(error)); }
+                                  }}>Remover</button>
+                                </div>
+                              ))}
+                              <Button variant="outline" className="mt-2 w-full text-xs" onClick={async e => {
+                                e.stopPropagation();
+                                const entered = window.prompt('Digite o e-mail Google do consultor que deseja convidar:');
+                                const email = (entered || '').toLowerCase().trim();
+                                if (!email) return;
+                                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('Informe um e-mail válido.'); return; }
+                                const next = Array.from(new Set([...(emp.consultoresEmails || []), email]));
+                                try {
+                                  await updateDoc(doc(db, 'empresas_credenciadas', emp.id), { consultoresEmails: next });
+                                  setEmpresasCredenciadas(prev => prev.map(c => c.id === emp.id ? { ...c, consultoresEmails: next } : c));
+                                  alert(`Convite registrado para ${email}. O consultor deve entrar com essa conta Google; ele usará a licença desta credenciada.`);
+                                } catch (error) { alert('Não foi possível registrar o convite: ' + String(error)); }
+                              }}><Users size={14} className="mr-1" /> Convidar por e-mail</Button>
+                            </div>
+                          )}
                         </div>
                       </Card>
                     ))}
@@ -18689,7 +18885,7 @@ export default function App() {
                 >
                   {(() => {
                     const seenEmpIds = new Set<string>();
-                    const filteredEmpresas = empresas.filter(emp => {
+                    const filteredEmpresas = workspaceEmpresas.filter(emp => {
                       if (!emp || !emp.id || seenEmpIds.has(emp.id)) return false;
                       seenEmpIds.add(emp.id);
                       if (empresaTipoFilter) {
@@ -19020,7 +19216,7 @@ export default function App() {
                             transition={{ type: "spring", stiffness: 400, damping: 25 }}
                             className="rounded-xl overflow-hidden"
                           >
-                            <Card className="flex items-center justify-between p-4 hover:bg-slate-50 cursor-pointer transition-colors hover:border-emerald-200" onClick={() => { setSelectedDiagnostico(diag); setView('diagnosis'); }}>
+                            <Card className="flex items-center justify-between p-4 hover:bg-slate-50 cursor-pointer transition-colors hover:border-emerald-200" onClick={() => { setSelectedDiagnostico(diag as Diagnostico); setView('diagnosis'); }}>
                               <div className="flex items-center gap-4">
                                 <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center shrink-0">
                                   <History size={18} />
@@ -19057,7 +19253,7 @@ export default function App() {
                                   className="text-emerald-600 border-emerald-100 hover:bg-emerald-50"
                                   onClick={(e: any) => {
                                     e.stopPropagation();
-                                    setSelectedDiagnostico(diag);
+                                    setSelectedDiagnostico(diag as Diagnostico);
                                     setView('dashboard');
                                   }}
                                 >
@@ -19065,7 +19261,7 @@ export default function App() {
                                 </Button>
                                 <Button variant="ghost" size="sm" onClick={(e: any) => {
                                   e.stopPropagation();
-                                  setSelectedDiagnostico(diag);
+                                  setSelectedDiagnostico(diag as Diagnostico);
                                   setView('dashboard');
                                 }}>
                                   <BarChart3 size={16} /> Dashboard
@@ -20401,7 +20597,7 @@ export default function App() {
               exit={{ opacity: 0, scale: 0.98 }}
             >
               <GestaoPlanoView 
-                tarefas={deduplicateTarefasPlano(tarefasPlano.filter(t => selectedDiagnostico && t.diagnosticoId === selectedDiagnostico.id))}
+                tarefas={deduplicateTarefasPlano(workspaceTarefas.filter(t => selectedDiagnostico && t.diagnosticoId === selectedDiagnostico.id))}
                 empresas={empresas}
                 onEdit={(t) => { setModalData(t); setModalType('editTarefa'); setTarefaForm({ ...t, acoes: limparEvidenciasAcoes(t.acoes) }); setIsModalOpen(true); }}
                 onDelete={(t) => { setModalData(t); setModalType('deleteTarefa'); setIsModalOpen(true); }}
@@ -21883,7 +22079,7 @@ export default function App() {
                       onChange={(e) => setTarefaForm({...tarefaForm, empresaId: e.target.value})}
                     >
                       <option value="">Selecione...</option>
-                      {empresas.map(emp => (
+                      {workspaceEmpresas.map(emp => (
                         <option key={emp.id} value={emp.id}>{emp.nome}</option>
                       ))}
                     </select>

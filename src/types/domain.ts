@@ -22,6 +22,8 @@ export interface EmpresaCredenciada {
   tipoPlano?: 'Teste' | 'Mensal' | 'Anual' | 'Definitiva';
   diasTeste?: number;
   role?: 'admin' | 'cliente';
+  /** E-mails autorizados a entrar como consultores desta credenciada. */
+  consultoresEmails?: string[];
 }
 
 export interface Empresa {
@@ -39,6 +41,8 @@ export interface Empresa {
   cpfRepresentante?: string;
   dataCadastro: any;
   ownerId: string;
+  credenciadaId?: string;
+  consultorId?: string;
   anexoUrl?: string;
   tipoEmpresa?: string;
   ramoAtividade?: string;
@@ -152,6 +156,7 @@ export interface Diagnostico {
   areasDiagnostico?: string[];
   dadosConsultoria?: DadosConsultoria;
   consultorId?: string;
+  credenciadaId?: string;
   empresaCredenciadaId?: string;
   status?: 'Rascunho' | 'Finalizado' | 'Planejamento';
   tipoEmpresa?: string;
@@ -201,6 +206,7 @@ export interface TarefaPlanoAcao {
   dataVencimento?: any;
   responsavel: string;
   ownerId: string;
+  credenciadaId?: string;
   ordem?: number;
   cargaHoraria?: string;
   resultadoEsperado?: string;
@@ -236,5 +242,6 @@ export interface Resposta {
   evidenciaUrl?: string;
   evidenciaNome?: string;
   ownerId?: string;
+  credenciadaId?: string;
   updatedAt?: number; // epoch ms da última alteração (resolve conflito local x nuvem)
 }

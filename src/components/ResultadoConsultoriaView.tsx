@@ -44,7 +44,8 @@ import {
   doc,
   deleteDoc,
   getDocs,
-  serverTimestamp
+  serverTimestamp,
+  ownerFilter
 } from '../lib/firestoreOwned';
 import { db } from '../firebase';
 import { Button } from './Button';
@@ -168,7 +169,8 @@ interface ResultadoConsultoriaViewProps {
   diagnosticos: Diagnostico[];
   respostas?: Resposta[];
   tarefas?: TarefaPlanoAcao[];
-  user?: any;
+  user: any;
+  activeCredenciadaId?: string;
   selectedEmpresa?: Empresa | null;
   selectedDiagnostico?: Diagnostico | null;
   setView?: (view: any) => void;
@@ -197,6 +199,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
   respostas = [],
   tarefas = [],
   user,
+  activeCredenciadaId,
   selectedEmpresa: initialEmpresa,
   selectedDiagnostico: initialDiagnostico,
   customLogo,
@@ -302,12 +305,13 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
     try {
       const q = query(
         collection(db, 'analises_resultado'),
-        where('ownerId', '==', user?.uid || 'local_user')
+        ownerFilter('analises_resultado')
       );
       unsubscribe = onSnapshot(q, (snapshot) => {
         const list: AnaliseResultado[] = [];
         snapshot.forEach((docSnap) => {
-          list.push({ id: docSnap.id, ...(docSnap.data() as any) });
+          const item = { id: docSnap.id, ...(docSnap.data() as any) };
+          if (!activeCredenciadaId || item.credenciadaId === activeCredenciadaId) list.push(item);
         });
         setSavedAnalyses(list);
       }, (err) => {
@@ -319,13 +323,16 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
     }
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, activeCredenciadaId]);
 
   const loadLocalAnalyses = () => {
     try {
       const local = localStorage.getItem('analises_resultado_local');
       if (local) {
-        setSavedAnalyses(JSON.parse(local));
+        const parsed = JSON.parse(local);
+        setSavedAnalyses(Array.isArray(parsed)
+          ? parsed.filter((item: any) => !activeCredenciadaId || item.credenciadaId === activeCredenciadaId)
+          : []);
       }
     } catch {}
   };

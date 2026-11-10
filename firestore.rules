@@ -1,117 +1,95 @@
 rules_version = '2';
 
-// =====================================================================================
-//  Consultor Pro — Regras do Firestore
-//  Cada consultor só enxerga e altera os PRÓPRIOS dados (campo ownerId = uid do login).
-//  O app filtra todas as consultas por ownerId (src/lib/firestoreOwned.ts) e preenche
-//  ownerId em toda gravação, então estas regras não bloqueiam o uso normal.
-//
-//  Publicar: Console do Firebase → Firestore Database → (banco do app) → Regras → Publicar.
-// =====================================================================================
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    // Admin é definido apenas pelo e-mail verificado do login.
-    // (O app e o servidor usam itamartrairi@gmail.com; as regras só tinham ithamar1307.)
+    function signedIn() { return request.auth != null; }
     function isAdmin() {
-      return isAuthenticated() &&
-        request.auth.token.email in ["itamartrairi@gmail.com", "ithamar1307@gmail.com"] &&
-        request.auth.token.email_verified == true;
+      return signedIn() && request.auth.token.email_verified == true &&
+        request.auth.token.email in ['itamartrairi@gmail.com', 'ithamar1307@gmail.com'];
     }
-
-    // --- Dono do documento ---------------------------------------------------------
-    function ownsExisting() {
-      return isAuthenticated() && resource.data.ownerId == request.auth.uid;
+    function owns() { return signedIn() && resource.data.ownerId == request.auth.uid; }
+    function createsOwn() { return signedIn() && request.resource.data.ownerId == request.auth.uid; }
+    function credExists(credId) { return exists(/databases/$(database)/documents/empresas_credenciadas/$(credId)); }
+    function credData(credId) { return get(/databases/$(database)/documents/empresas_credenciadas/$(credId)).data; }
+    function managesCred(credId) {
+      return signedIn() && credExists(credId) &&
+        (isAdmin() || credData(credId).ownerId == request.auth.uid);
     }
-    function createsOwn() {
-      return isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
+    function isInvitedToCred(credId) {
+      return signedIn() && credExists(credId) && request.auth.token.email != null &&
+        request.auth.token.email.lower() in credData(credId).get('consultoresEmails', []);
     }
-    function keepsOwner() {
-      return request.resource.data.ownerId == request.auth.uid;
+    function canReadWork() {
+      return isAdmin() || owns() ||
+        (resource.data.get('credenciadaId', '') != '' && managesCred(resource.data.credenciadaId)) ||
+        (resource.data.get('credenciadaId', '') != '' && isInvitedToCred(resource.data.credenciadaId) && owns());
     }
-
-    // Coleções isoladas por usuário (dados de trabalho e biblioteca de cada consultor).
-    function isOwnedCollection(col) {
-      return col in [
-        'empresas', 'diagnosticos', 'respostas', 'tarefas_plano',
-        'agenda_eventos', 'disc_avaliacoes', 'maturidade_avaliacoes', 'analises_resultado',
-        'premissas', 'problemas', 'solucoes', 'areas', 'segmentos'
-      ];
+    function canCreateWork() {
+      return createsOwn() && (request.resource.data.get('credenciadaId', '') == '' ||
+        managesCred(request.resource.data.credenciadaId) || isInvitedToCred(request.resource.data.credenciadaId));
     }
-
+    function canUpdateWork() {
+      return owns() && request.resource.data.ownerId == resource.data.ownerId &&
+        (resource.data.get('credenciadaId', '') == '' || managesCred(resource.data.credenciadaId) || isInvitedToCred(resource.data.credenciadaId));
+    }
+    function isWorkCollection(col) {
+      return col in ['empresas','diagnosticos','respostas','tarefas_plano','agenda_eventos',
+        'disc_avaliacoes','maturidade_avaliacoes','analises_resultado'];
+    }
     match /{col}/{docId} {
-      // resource == null: leitura/exclusão de um documento que não existe (não vaza nada).
-      allow read:   if isOwnedCollection(col) && (resource == null || ownsExisting());
-      allow create: if isOwnedCollection(col) && createsOwn();
-      allow update: if isOwnedCollection(col) && ownsExisting() && keepsOwner();
-      allow delete: if isOwnedCollection(col) && (resource == null || ownsExisting());
+      allow read: if isWorkCollection(col) && canReadWork();
+      allow create: if isWorkCollection(col) && canCreateWork();
+      allow update: if isWorkCollection(col) && canUpdateWork();
+      allow delete: if isWorkCollection(col) && (isAdmin() || owns() ||
+        (resource.data.get('credenciadaId', '') != '' && managesCred(resource.data.credenciadaId)));
     }
-
-    // --- Licenças -------------------------------------------------------------------
-    // O consultor lê e edita o próprio cadastro, mas não altera status, plano, dias de
-    // teste ou validade — isso é feito pelo admin ou pelo webhook da Kiwify (Firebase
-    // Admin SDK, que não passa por estas regras).
     function licenseFields() {
-      return ['status', 'tipoPlano', 'diasTeste', 'validadeLicenca', 'role', 'dataCadastro',
-              'kiwifyOrderId', 'dataAtivacaoKiwify', 'dataCancelamentoKiwify'];
+      return ['status','tipoPlano','diasTeste','validadeLicenca','role','dataCadastro',
+        'kiwifyOrderId','dataAtivacaoKiwify','dataCancelamentoKiwify'];
     }
     function isCredOwner() {
-      return isAuthenticated() &&
-        (resource.data.ownerId == request.auth.uid ||
-         (request.auth.token.email != null && resource.data.email == request.auth.token.email));
+      return signedIn() && (resource.data.get('ownerId', '') == request.auth.uid ||
+        (request.auth.token.email != null && resource.data.get('email', '') == request.auth.token.email));
     }
-
-    // Cadastro de LICENÇA do próprio consultor (criado no primeiro login): tem providerId
-    // ou o mesmo e-mail do login. Os demais documentos são empresas que ele cadastrou.
+    function keepsCredOwner() {
+      return request.resource.data.ownerId == request.auth.uid &&
+        (resource.data.get('ownerId', '') == request.auth.uid ||
+          (request.auth.token.email != null && resource.data.get('email', '') == request.auth.token.email));
+    }
     function isOwnLicenseRecord() {
       return ('providerId' in resource.data) ||
         (request.auth.token.email != null && resource.data.get('email', '') == request.auth.token.email);
     }
-
     match /empresas_credenciadas/{credId} {
-      allow read: if isAdmin() || resource == null || isCredOwner();
-      allow create: if isAdmin() ||
-        (createsOwn() &&
-         request.resource.data.get('tipoPlano', 'Teste') == 'Teste' &&
-         request.resource.data.get('role', 'cliente') != 'admin' &&
-         request.resource.data.get('status', 'Ativa') == 'Ativa' &&
-         request.resource.data.get('diasTeste', 30) <= 30 &&
-         // A data de cadastro tem que ser a hora do servidor (serverTimestamp): sem isso dava
-         // para criar o cadastro com data no futuro e o teste quase não diminuía.
-         request.resource.data.get('dataCadastro', null) == request.time &&
-         !('validadeLicenca' in request.resource.data));
-      allow update: if isAdmin() ||
-        (isCredOwner() && keepsOwner() &&
-         !request.resource.data.diff(resource.data).affectedKeys().hasAny(licenseFields()));
-      // O consultor pode excluir empresas que cadastrou, mas NÃO o próprio cadastro de
-      // licença: apagá-lo fazia o app criar um novo com mais 30 dias de teste no próximo
-      // login (e desbloqueava quem estava bloqueado ou vencido).
-      allow delete: if isAdmin() || resource == null || (ownsExisting() && !isOwnLicenseRecord());
+      allow read: if isAdmin() || resource == null || isCredOwner() ||
+        (signedIn() && request.auth.token.email != null &&
+          request.auth.token.email.lower() in resource.data.get('consultoresEmails', []));
+      allow create: if isAdmin() || (createsOwn() &&
+        request.resource.data.get('tipoPlano','Teste') == 'Teste' &&
+        request.resource.data.get('role','cliente') != 'admin' &&
+        request.resource.data.get('status','Ativa') == 'Ativa' &&
+        request.resource.data.get('diasTeste',30) <= 30 &&
+        request.resource.data.get('dataCadastro',null) == request.time &&
+        !('validadeLicenca' in request.resource.data));
+      allow update: if isAdmin() || (isCredOwner() && keepsCredOwner() &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(licenseFields()));
+      allow delete: if isAdmin() || (owns() && !isOwnLicenseRecord());
     }
-
-    // --- Perfil de usuário ------------------------------------------------------------
     match /users/{userId} {
-      allow read: if isAdmin() || (isAuthenticated() && request.auth.uid == userId);
-      allow create: if isAdmin() ||
-        (isAuthenticated() && request.auth.uid == userId && !('role' in request.resource.data));
-      allow update: if isAdmin() ||
-        (isAuthenticated() && request.auth.uid == userId &&
-         !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == userId);
+      allow create: if isAdmin() || (signedIn() && request.auth.uid == userId && !('role' in request.resource.data));
+      allow update: if isAdmin() || (signedIn() && request.auth.uid == userId &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role']));
       allow delete: if isAdmin();
     }
-
-    // --- Teste de conexão do app ------------------------------------------------------
-    match /system_health/connection_probe {
-      allow read, write: if isAuthenticated();
+    match /{col}/{docId} {
+      allow read: if col in ['premissas','problemas','solucoes','areas','segmentos'] && (isAdmin() || owns());
+      allow create: if col in ['premissas','problemas','solucoes','areas','segmentos'] && (isAdmin() || createsOwn());
+      allow update: if col in ['premissas','problemas','solucoes','areas','segmentos'] &&
+        (isAdmin() || (owns() && request.resource.data.ownerId == resource.data.ownerId));
+      allow delete: if col in ['premissas','problemas','solucoes','areas','segmentos'] && (isAdmin() || owns());
     }
-    match /test/connection {
-      allow read: if isAuthenticated();
-    }
-
-    // Qualquer outra coleção fica fechada.
+    match /system_health/connection_probe { allow read, write: if signedIn(); }
+    match /test/connection { allow read: if signedIn(); }
   }
 }

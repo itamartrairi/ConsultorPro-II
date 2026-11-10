@@ -5,8 +5,8 @@
  * `ownerId` é o uid do usuário logado. Este módulo:
  *   - completa `ownerId` em toda gravação (addDoc / setDoc / batch.set) que não o tenha
  *     ou que ainda esteja como 'local' / 'local_user' (dados criados offline);
- *   - oferece `ownerFilter()` para acrescentar `where('ownerId', '==', uid)` às consultas
- *     (o Firestore recusa consultas que possam retornar documentos de outros usuários).
+ *   - oferece `ownerFilter(collectionName)` para limitar consultas de consultores ao ownerId
+ *     e consultas de gestores, nas coleções de trabalho, à credenciada ativa.
  *
  * Use sempre `import { ... } from './lib/firestoreOwned'` no lugar de 'firebase/firestore'.
  */
@@ -53,13 +53,29 @@ function withOwner<T>(collectionPath: string, data: T): T {
   const uid = currentUid();
   if (!uid) return data;
   const current = (data as any).ownerId;
-  if (typeof current === 'string' && !PLACEHOLDER_OWNERS.has(current)) return data;
-  return { ...(data as any), ownerId: uid };
+  const payload: any = { ...(data as any) };
+  if (!(typeof current === 'string' && !PLACEHOLDER_OWNERS.has(current))) payload.ownerId = uid;
+  const collection = rootCollectionOf(collectionPath);
+  const tenantCollections = new Set(['empresas', 'diagnosticos', 'respostas', 'tarefas_plano', 'agenda_eventos', 'disc_avaliacoes', 'maturidade_avaliacoes', 'analises_resultado']);
+  const credenciadaId = typeof localStorage !== 'undefined' ? localStorage.getItem('active_credenciada_id') : null;
+  if (tenantCollections.has(collection) && credenciadaId && !payload.credenciadaId) payload.credenciadaId = credenciadaId;
+  if (tenantCollections.has(collection) && !payload.consultorId) payload.consultorId = uid;
+  return payload;
 }
 
 /** Filtro obrigatório nas consultas às coleções isoladas por usuário. */
-export function ownerFilter(): fs.QueryFieldFilterConstraint {
-  return fs.where('ownerId', '==', currentUid() ?? '__sem_login__');
+export function ownerFilter(collectionName?: string): fs.QueryFieldFilterConstraint {
+  const uid = currentUid() ?? '__sem_login__';
+  const adminEmails = new Set(['itamartrairi@gmail.com', 'ithamar1307@gmail.com']);
+  const tenantCollections = new Set(['empresas', 'diagnosticos', 'respostas', 'tarefas_plano', 'agenda_eventos', 'disc_avaliacoes', 'maturidade_avaliacoes', 'analises_resultado']);
+  let email = '';
+  try { email = getAuth().currentUser?.email?.toLowerCase() ?? ''; } catch {}
+  const credenciadaId = typeof localStorage !== 'undefined' ? localStorage.getItem('active_credenciada_id') : null;
+  const managerUid = typeof localStorage !== 'undefined' ? localStorage.getItem('active_credenciada_owner') : null;
+  if (credenciadaId && tenantCollections.has(collectionName || '') && (adminEmails.has(email) || managerUid === uid)) {
+    return fs.where('credenciadaId', '==', credenciadaId);
+  }
+  return fs.where('ownerId', '==', uid);
 }
 
 export function addDoc<A, D extends fs.DocumentData>(

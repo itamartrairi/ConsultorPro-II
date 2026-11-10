@@ -307,7 +307,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
       } else {
         // Fallback cascading delete
         try {
-          const qRes = query(collection(db, 'respostas'), ownerFilter(), where('diagnosticoId', '==', diagId));
+          const qRes = query(collection(db, 'respostas'), ownerFilter('respostas'), where('diagnosticoId', '==', diagId));
           const snapRes = await getDocs(qRes);
           for (let i = 0; i < snapRes.docs.length; i += 400) {
             const batch = writeBatch(db);
@@ -315,7 +315,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
             await batch.commit();
           }
 
-          const qTasks = query(collection(db, 'tarefas_plano'), ownerFilter(), where('diagnosticoId', '==', diagId));
+          const qTasks = query(collection(db, 'tarefas_plano'), ownerFilter('tarefas_plano'), where('diagnosticoId', '==', diagId));
           const snapTasks = await getDocs(qTasks);
           for (let i = 0; i < snapTasks.docs.length; i += 400) {
             const batch = writeBatch(db);
@@ -323,7 +323,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
             await batch.commit();
           }
 
-          const qTasksProj = query(collection(db, 'tarefas_plano'), ownerFilter(), where('projetoId', '==', diagId));
+          const qTasksProj = query(collection(db, 'tarefas_plano'), ownerFilter('tarefas_plano'), where('projetoId', '==', diagId));
           const snapTasksProj = await getDocs(qTasksProj);
           for (let i = 0; i < snapTasksProj.docs.length; i += 400) {
             const batch = writeBatch(db);
@@ -332,7 +332,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
           }
 
           try {
-            const qAgenda = query(collection(db, 'agenda_eventos'), ownerFilter(), where('diagnosticoId', '==', diagId));
+            const qAgenda = query(collection(db, 'agenda_eventos'), ownerFilter('agenda_eventos'), where('diagnosticoId', '==', diagId));
             const snapAgenda = await getDocs(qAgenda);
             for (let i = 0; i < snapAgenda.docs.length; i += 400) {
               const batch = writeBatch(db);
