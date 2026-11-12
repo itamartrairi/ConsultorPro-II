@@ -9834,6 +9834,7 @@ import {
   type ConsultorAcesso,
 } from './lib/consultorAccess';
 import { ConsultoresEditor } from './components/ConsultoresEditor';
+import { HelpView } from './components/HelpView';
 import { LoginView } from './features/auth/components/LoginView';
 
 export {
@@ -10280,7 +10281,7 @@ export default function App() {
   const isSubmittingCredenciadaRef = useRef(false);
   const [calculatingMaturity, setCalculatingMaturity] = useState(false);
   const [generatingPlan, setGeneratingPlan] = useState(false);
-  const [view, setViewInternal] = useState<'home' | 'companies' | 'credenciadas' | 'licenses' | 'diagnosis' | 'dashboard' | 'premises' | 'cronograma' | 'relatorio' | 'kanban' | 'settings' | 'landing' | 'checkout' | 'licensing' | 'dados-consultoria' | 'agenda' | 'macro-dashboard' | 'maturity-assessment' | 'projects' | 'plan' | 'resultado-consultoria' | 'relatorio-consolidado-sgf'>('landing');
+  const [view, setViewInternal] = useState<'home' | 'companies' | 'credenciadas' | 'licenses' | 'diagnosis' | 'dashboard' | 'premises' | 'cronograma' | 'relatorio' | 'kanban' | 'settings' | 'landing' | 'checkout' | 'licensing' | 'dados-consultoria' | 'agenda' | 'macro-dashboard' | 'maturity-assessment' | 'projects' | 'plan' | 'resultado-consultoria' | 'relatorio-consolidado-sgf' | 'help'>('landing');
   const setView = (v: any) => {
     if (pendingResponsesBuffer.current.size > 0 && flushPendingResponsesRef.current) {
       try {
@@ -13212,6 +13213,12 @@ export default function App() {
               onClick={() => openNavSection('licencas')}
             />
           )}
+          <NavItem
+            icon={HelpCircle}
+            label="Help"
+            active={view === 'help'}
+            onClick={() => setView('help')}
+          />
         </nav>
 
         <div className="pt-6 border-t border-slate-100 space-y-4 shrink-0">
@@ -18842,6 +18849,16 @@ export default function App() {
                       setView('projects');
                     }}
                   />
+                </motion.div>
+              )}
+              {view === 'help' && (
+                <motion.div
+                  key="help"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  <HelpView />
                 </motion.div>
               )}
               {view === 'settings' && (
