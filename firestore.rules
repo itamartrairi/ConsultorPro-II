@@ -3,6 +3,8 @@ rules_version = '2';
 // =====================================================================================
 //  Consultor Pro — Regras do Firestore
 //  Cada consultor só enxerga e altera os PRÓPRIOS dados (campo ownerId = uid do login).
+//  Consultores cadastrados numa credenciada (consultores_acesso) trabalham nos dados do
+//  dono dessa credenciada.
 //  O app filtra todas as consultas por ownerId (src/lib/firestoreOwned.ts) e preenche
 //  ownerId em toda gravação, então estas regras não bloqueiam o uso normal.
 //
@@ -23,14 +25,48 @@ service cloud.firestore {
         request.auth.token.email_verified == true;
     }
 
+    // --- Consultores de credenciada ----------------------------------------------------
+    // Um consultor cadastrado na credenciada (com e-mail Google) tem um documento em
+    // consultores_acesso/{email}. Enquanto estiver ativo, ele trabalha nos dados do dono
+    // da credenciada (mesmo ownerId).
+    function loginEmail() {
+      return request.auth.token.email != null ? request.auth.token.email.lower() : '';
+    }
+    function acessoPath() {
+      return /databases/$(database)/documents/consultores_acesso/$(loginEmail());
+    }
+    function isConsultorAtivo() {
+      return isAuthenticated() && loginEmail() != '' &&
+        request.auth.token.email_verified == true &&
+        exists(acessoPath()) && get(acessoPath()).data.ativo == true;
+    }
+    function workspaceOwner() {
+      return get(acessoPath()).data.ownerId;
+    }
+    // uid é o próprio usuário ou o dono da credenciada do consultor logado.
+    function isWorkspace(uid) {
+      return isAuthenticated() &&
+        (uid == request.auth.uid || (isConsultorAtivo() && uid == workspaceOwner()));
+    }
+
     // --- Dono do documento ---------------------------------------------------------
     function ownsExisting() {
-      return isAuthenticated() && resource.data.ownerId == request.auth.uid;
+      return isWorkspace(resource.data.ownerId);
     }
     function createsOwn() {
-      return isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
+      return isWorkspace(request.resource.data.ownerId);
     }
     function keepsOwner() {
+      return request.resource.data.ownerId == resource.data.ownerId;
+    }
+    // Somente o próprio usuário (sem considerar consultores).
+    function ownsExistingSelf() {
+      return isAuthenticated() && resource.data.ownerId == request.auth.uid;
+    }
+    function createsOwnSelf() {
+      return isAuthenticated() && request.resource.data.ownerId == request.auth.uid;
+    }
+    function keepsOwnerSelf() {
       return request.resource.data.ownerId == request.auth.uid;
     }
 
@@ -73,9 +109,13 @@ service cloud.firestore {
     }
 
     match /empresas_credenciadas/{credId} {
-      allow read: if isAdmin() || resource == null || isCredOwner();
+      // Consultores leem as credenciadas do dono (dados para relatórios e licença).
+      allow read: if isAdmin() || resource == null || isCredOwner() || ownsExisting();
+      // Só o administrador cadastra credenciadas. Os demais usuários só criam o próprio
+      // cadastro de licença no primeiro login (tem providerId) — uma credenciada por usuário.
       allow create: if isAdmin() ||
-        (createsOwn() &&
+        (createsOwnSelf() &&
+         ('providerId' in request.resource.data) &&
          request.resource.data.get('tipoPlano', 'Teste') == 'Teste' &&
          request.resource.data.get('role', 'cliente') != 'admin' &&
          request.resource.data.get('status', 'Ativa') == 'Ativa' &&
@@ -84,13 +124,40 @@ service cloud.firestore {
          // para criar o cadastro com data no futuro e o teste quase não diminuía.
          request.resource.data.get('dataCadastro', null) == request.time &&
          !('validadeLicenca' in request.resource.data));
+      // O dono edita o cadastro (inclusive a lista de consultores), mas não os campos de
+      // licença. Consultores não alteram a credenciada.
       allow update: if isAdmin() ||
-        (isCredOwner() && keepsOwner() &&
+        (isCredOwner() && keepsOwnerSelf() &&
          !request.resource.data.diff(resource.data).affectedKeys().hasAny(licenseFields()));
       // O consultor pode excluir empresas que cadastrou, mas NÃO o próprio cadastro de
       // licença: apagá-lo fazia o app criar um novo com mais 30 dias de teste no próximo
       // login (e desbloqueava quem estava bloqueado ou vencido).
-      allow delete: if isAdmin() || resource == null || (ownsExisting() && !isOwnLicenseRecord());
+      allow delete: if isAdmin() || resource == null || (ownsExistingSelf() && !isOwnLicenseRecord());
+    }
+
+    // --- Acesso de consultores ----------------------------------------------------------
+    // Documento id = e-mail (minúsculo) do consultor. Gravado pelo dono da credenciada
+    // (ownerId tem que ser o dono atual da credenciada indicada) ou pelo admin.
+    function credenciadaDono(credId) {
+      return get(/databases/$(database)/documents/empresas_credenciadas/$(credId)).data.ownerId;
+    }
+    function gravaAcessoValido(consultorId) {
+      return request.resource.data.keys().hasAll(['ownerId', 'credenciadaId', 'ativo', 'email']) &&
+        request.resource.data.email == consultorId &&
+        request.resource.data.ativo is bool &&
+        exists(/databases/$(database)/documents/empresas_credenciadas/$(request.resource.data.credenciadaId)) &&
+        request.resource.data.ownerId == credenciadaDono(request.resource.data.credenciadaId) &&
+        (isAdmin() || request.resource.data.ownerId == request.auth.uid);
+    }
+    match /consultores_acesso/{consultorId} {
+      allow read: if isAdmin() || resource == null ||
+        (isAuthenticated() && (resource.data.ownerId == request.auth.uid || consultorId == loginEmail()));
+      allow create: if isAuthenticated() && gravaAcessoValido(consultorId);
+      // Atualiza: quem já controla o acesso, ou o novo dono da mesma credenciada.
+      allow update: if isAuthenticated() && gravaAcessoValido(consultorId) &&
+        (isAdmin() || resource.data.ownerId == request.auth.uid ||
+         resource.data.credenciadaId == request.resource.data.credenciadaId);
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.ownerId == request.auth.uid);
     }
 
     // --- Perfil de usuário ------------------------------------------------------------
