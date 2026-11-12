@@ -3,6 +3,16 @@
  * Extraídos do App.tsx (Fase 1 da refatoração).
  */
 
+/** Consultor que atende pela credenciada. Pode entrar no app com o e-mail Google informado. */
+export interface ConsultorCredenciada {
+  id: string;
+  nome: string;
+  /** E-mail Google usado no login (opcional: sem e-mail o consultor só aparece na seleção). */
+  email?: string;
+  cpf?: string;
+  ativo: boolean;
+}
+
 export interface EmpresaCredenciada {
   id: string;
   razaoSocial: string;
@@ -22,6 +32,8 @@ export interface EmpresaCredenciada {
   tipoPlano?: 'Teste' | 'Mensal' | 'Anual' | 'Definitiva';
   diasTeste?: number;
   role?: 'admin' | 'cliente';
+  /** Consultores adicionais da credenciada (o consultor principal continua em `consultor`). */
+  consultores?: ConsultorCredenciada[];
 }
 
 export interface Empresa {
@@ -127,6 +139,11 @@ export interface DadosConsultoria {
   razaoSocial?: string;
   cnpj?: string;
   consultor?: string;
+  /** Credenciada e consultor escolhidos no atendimento. */
+  credenciadaId?: string;
+  consultorId?: string;
+  consultorEmail?: string;
+  cpfConsultor?: string;
   telefoneFixo?: string;
   celular?: string;
   email?: string;
