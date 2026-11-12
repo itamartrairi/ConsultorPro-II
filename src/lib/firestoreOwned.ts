@@ -35,9 +35,44 @@ const OWNED_COLLECTIONS = new Set([
 
 const PLACEHOLDER_OWNERS = new Set(['', 'local', 'local_user']);
 
+// Conta de trabalho (workspace). Quando um consultor entra com o próprio e-mail Google,
+// ele trabalha nos dados da credenciada: o ownerId passa a ser o uid do DONO da credenciada.
+let workspaceOwnerUid: string | null = null;
+
+/** Define o dono dos dados em uso (null = o próprio usuário logado). */
+export function setWorkspaceOwnerUid(uid: string | null): void {
+  workspaceOwnerUid = uid && uid.trim() ? uid : null;
+}
+
 function currentUid(): string | null {
+  if (workspaceOwnerUid && getAuth().currentUser) return workspaceOwnerUid;
   try {
     return getAuth().currentUser?.uid ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** uid usado como ownerId nas consultas e gravações (dono da credenciada, para consultores). */
+export function getWorkspaceUid(): string | null {
+  return currentUid();
+}
+
+/**
+ * Usuário logado com o `uid` trocado pelo do dono dos dados. Mantém e-mail, nome, foto e os
+ * métodos do Firebase (getIdToken etc.), porque herda do objeto original.
+ */
+export function workspaceUser<T extends { uid: string }>(u: T | null | undefined): T | null {
+  if (!u) return null;
+  const uid = currentUid();
+  if (!uid || uid === u.uid) return u;
+  return Object.create(u, { uid: { value: uid, enumerable: true } }) as T;
+}
+
+/** Atalho: usuário do Firebase Auth já ajustado para a conta de trabalho. */
+export function currentWorkspaceUser() {
+  try {
+    return workspaceUser(getAuth().currentUser);
   } catch {
     return null;
   }
