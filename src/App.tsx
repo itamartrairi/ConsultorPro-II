@@ -19,7 +19,7 @@ import {
   setDoc,
   getDocFromServer,
   deleteField,
-  runTransaction, ownerFilter } from './lib/firestoreOwned';
+  runTransaction, getDoc, ownerFilter, setWorkspaceOwnerUid, currentWorkspaceUser, workspaceUser } from './lib/firestoreOwned';
 import { 
   signInWithPopup, 
   GoogleAuthProvider, 
@@ -47,7 +47,7 @@ import { GeminiApiKeyTutorialModal } from './components/GeminiApiKeyTutorialModa
 import { getCachedAI, setCachedAI, generateAICacheKey } from './lib/aiCache';
 
 import { 
-  Plus, 
+  Plus, UserCheck,
   Award,
   FileText, 
   Building2, 
@@ -2086,8 +2086,12 @@ const CronogramaView = ({
   onReplicateActionPlan,
   tarefasPlano,
   setTarefasPlano,
-  setView
+  setView,
+  podeCriarCredenciada = false,
+  loginEmail = null
 }: { 
+  podeCriarCredenciada?: boolean,
+  loginEmail?: string | null,
   selectedDiagnostico: Diagnostico, 
   selectedEmpresa: Empresa | null,
   respostas: Resposta[], 
@@ -2218,7 +2222,7 @@ const CronogramaView = ({
       'atv|' + norm(t.atividade) + '|' + norm(t.problema),
       norm(t.idProblema) + '|' + norm(t.problema)
     ];
-    const currentUser = auth.currentUser;
+    const currentUser = currentWorkspaceUser();
     const existentes = deduplicateTarefasPlano((tarefasPlanoRef.current || []).filter(t => t.diagnosticoId === diag.id));
     const geradas = montarTarefasDoPlano(validas, diag, empresaId, currentUser?.uid || 'local', existentes);
     const porChave = new Map<string, TarefaPlanoAcao[]>();
@@ -2509,7 +2513,7 @@ const CronogramaView = ({
     saveLocalDiagnosticoReport(selectedDiagnostico.id, sanitizedAtv, sanitizedDados);
 
     // 4. Persist to Firestore asynchronously
-    const currentUser = auth.currentUser;
+    const currentUser = currentWorkspaceUser();
     if (currentUser && selectedDiagnostico.id) {
       updateDoc(doc(db, 'diagnosticos', selectedDiagnostico.id), {
         cronograma: sanitizedAtv,
@@ -3778,7 +3782,7 @@ const CronogramaView = ({
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="block text-[10px] font-bold text-slate-400 uppercase">Nome da Empresa Credenciada</label>
-                <button 
+                {podeCriarCredenciada && <button 
                   onClick={() => {
                     setCredenciadaForm({});
                     setModalType('createCredenciada');
@@ -3787,22 +3791,27 @@ const CronogramaView = ({
                   className="text-[10px] font-bold text-emerald-600 hover:text-emerald-700 uppercase flex items-center gap-1"
                 >
                   <Plus size={10} /> Nova Credenciada
-                </button>
+                </button>}
               </div>
               <select 
                 className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
-                value={empresasCredenciadas.find(c => c.razaoSocial === dadosConsultoria.razaoSocial)?.id || ''}
+                value={(empresasCredenciadas.find(c => c.id === dadosConsultoria.credenciadaId) || empresasCredenciadas.find(c => c.razaoSocial === dadosConsultoria.razaoSocial))?.id || ''}
                 onChange={(e) => {
                   const cred = empresasCredenciadas.find(c => c.id === e.target.value);
                   if (cred) {
+                    const cons = consultorPadrao(cred, loginEmail);
                     setDadosConsultoria({
                       ...dadosConsultoria,
+                      credenciadaId: cred.id,
                       razaoSocial: cred.razaoSocial,
                       cnpj: cred.cnpj,
                       telefoneFixo: cred.telefoneFixo,
                       celular: cred.celular,
                       email: cred.email,
-                      consultor: cred.consultor
+                      consultor: cons?.nome || cred.consultor,
+                      consultorId: cons?.id,
+                      consultorEmail: cons?.email,
+                      cpfConsultor: cons?.cpf
                     });
                   }
                 }}
@@ -3812,6 +3821,40 @@ const CronogramaView = ({
                   <option key={cred.id} value={cred.id}>{cred.razaoSocial}</option>
                 ))}
               </select>
+
+              {(() => {
+                const credSel = empresasCredenciadas.find(c => c.id === dadosConsultoria.credenciadaId) || empresasCredenciadas.find(c => c.razaoSocial === dadosConsultoria.razaoSocial);
+                const opcoes = consultoresDaCredenciada(credSel);
+                if (!credSel || opcoes.length === 0) return null;
+                const atual = opcoes.find(o => o.id === dadosConsultoria.consultorId) || opcoes.find(o => o.nome === dadosConsultoria.consultor);
+                return (
+                  <div className="mt-3">
+                    <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Consultor que atende o cliente</label>
+                    <select
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                      value={atual?.id || ''}
+                      onChange={(e) => {
+                        const o = opcoes.find(x => x.id === e.target.value);
+                        if (o) {
+                          setDadosConsultoria({
+                            ...dadosConsultoria,
+                            credenciadaId: credSel.id,
+                            consultor: o.nome,
+                            consultorId: o.id,
+                            consultorEmail: o.email,
+                            cpfConsultor: o.cpf
+                          });
+                        }
+                      }}
+                    >
+                      {!atual && <option value="">Selecionar consultor...</option>}
+                      {opcoes.map(o => (
+                        <option key={o.id} value={o.id}>{o.nome}{o.id === CONSULTOR_PRINCIPAL_ID ? ' (principal)' : ''}</option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              })()}
             </div>
 
             {dadosConsultoria.razaoSocial ? (
@@ -6816,7 +6859,7 @@ const GestaoPlanoView = ({
       saveLocalDiagnosticoReport(selectedDiagnostico.id, sanitizeForFirestore(synchronizedCronograma), sanitizeForFirestore(synchronizedDados)).catch(() => {});
 
       // 3. Background cloud sync without blocking
-      const currentUser = auth.currentUser;
+      const currentUser = currentWorkspaceUser();
       if (currentUser && selectedDiagnostico.id) {
         const diagId = selectedDiagnostico.id;
         (async () => {
@@ -9504,7 +9547,10 @@ const HomeView = ({
   setView, 
   isAdmin,
   empresasCredenciadas = [],
-  user
+  user,
+  credenciadaAtiva = null,
+  onSelectCredenciadaAtiva,
+  consultorLogado = null
 }: { 
   empresas: Empresa[], 
   diagnosticos: Diagnostico[], 
@@ -9513,14 +9559,22 @@ const HomeView = ({
   setView: (view: any) => void, 
   isAdmin: boolean,
   empresasCredenciadas?: EmpresaCredenciada[],
-  user?: any
+  user?: any,
+  credenciadaAtiva?: EmpresaCredenciada | null,
+  onSelectCredenciadaAtiva?: (id: string) => void,
+  consultorLogado?: string | null
 }) => {
   const pendingTasks = tarefas.filter(t => t.status !== 'Concluído');
   
-  // Identifica a credenciada ativa do usuário logado ou a primeira cadastrada
-  const currentCredenciada = (user ? empresasCredenciadas.find(c => c.ownerId === user.uid || (user.email && c.email?.toLowerCase() === user.email.toLowerCase())) : null) 
+  // Credenciada ativa (escolhida pelo admin) ou a do usuário logado / a primeira cadastrada
+  const currentCredenciada = credenciadaAtiva
+    || (user ? empresasCredenciadas.find(c => c.ownerId === user.uid || (user.email && c.email?.toLowerCase() === user.email.toLowerCase())) : null) 
     || empresasCredenciadas[0] 
     || null;
+  const opcoesCredenciadas = (() => {
+    const seen = new Set<string>();
+    return empresasCredenciadas.filter(c => c && c.id && !seen.has(c.id) && seen.add(c.id));
+  })();
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto pb-12">
@@ -9571,7 +9625,26 @@ const HomeView = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-end md:self-center">
+          <div className="flex items-center gap-2 self-end md:self-center flex-wrap justify-end">
+            {consultorLogado && (
+              <span className="text-[11px] font-bold text-sky-700 bg-sky-50 border border-sky-100 px-2.5 py-1 rounded-lg">
+                Você: {consultorLogado}
+              </span>
+            )}
+            {isAdmin && onSelectCredenciadaAtiva && opcoesCredenciadas.length > 1 && (
+              <label className="flex items-center gap-2 text-[11px] font-bold text-slate-500 uppercase">
+                Credenciada ativa
+                <select
+                  className="h-9 px-2 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 normal-case focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                  value={currentCredenciada.id}
+                  onChange={(e) => onSelectCredenciadaAtiva(e.target.value)}
+                >
+                  {opcoesCredenciadas.map(c => (
+                    <option key={c.id} value={c.id}>{c.razaoSocial}</option>
+                  ))}
+                </select>
+              </label>
+            )}
             {isAdmin && (
               <Button
                 variant="outline"
@@ -9751,6 +9824,16 @@ import { isValidLogoSource } from './lib/media/logo';
 import { Type } from './lib/ai/schemaTypes';
 import { extractAndParseJSON } from './lib/ai/parseJson';
 import { useAuth } from './features/auth/hooks/useAuth';
+import {
+  fetchConsultorAcesso,
+  syncConsultoresAcesso,
+  consultoresDaCredenciada,
+  consultorPadrao,
+  normalizeEmail,
+  CONSULTOR_PRINCIPAL_ID,
+  type ConsultorAcesso,
+} from './lib/consultorAccess';
+import { ConsultoresEditor } from './components/ConsultoresEditor';
 import { LoginView } from './features/auth/components/LoginView';
 
 export {
@@ -10060,8 +10143,22 @@ export default function App() {
   const saveErrorNotifiedRef = useRef(false);
   // Diagnóstico cujas respostas da nuvem já chegaram (evita criar perguntas duplicadas antes do 1º snapshot)
   const [cloudRespostasDiagId, setCloudRespostasDiagId] = useState<string | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [rawUser, setUser] = useState<User | null>(null);
+  const [loadingRaw, setLoading] = useState(true);
+  // Consultor que entrou com o próprio e-mail Google trabalha na conta da credenciada.
+  const [consultorAcesso, setConsultorAcesso] = useState<ConsultorAcesso | null>(null);
+  // Também tem cadastro próprio (pode alternar entre a credenciada e a própria conta).
+  const [temContaPropria, setTemContaPropria] = useState(false);
+  const [acessoDisponivel, setAcessoDisponivel] = useState<ConsultorAcesso | null>(null);
+  const [workspaceResolvidoPara, setWorkspaceResolvidoPara] = useState<string | null>(null);
+  // `user` é o usuário logado com o uid da conta de trabalho (dono da credenciada, no caso
+  // de consultores). Todas as consultas e gravações usam user.uid como ownerId.
+  const user = useMemo<User | null>(() => {
+    if (!rawUser || workspaceResolvidoPara !== rawUser.uid) return null;
+    return workspaceUser(rawUser);
+  }, [rawUser, workspaceResolvidoPara, consultorAcesso]);
+  const loading = loadingRaw || (!!rawUser && workspaceResolvidoPara !== rawUser.uid);
+  const isConsultorMembro = !!consultorAcesso && !!rawUser;
 
   // Sync Firebase user from AuthProvider (single source of truth)
   useEffect(() => {
@@ -10265,6 +10362,7 @@ export default function App() {
   const [customImportCompanyType, setCustomImportCompanyType] = useState('');
   const [diagnosisCompanyType, setDiagnosisCompanyType] = useState('Geral');
   const [diagnosisProjectName, setDiagnosisProjectName] = useState('');
+  const [diagnosisConsultorId, setDiagnosisConsultorId] = useState('');
   const [activeDiagArea, setActiveDiagArea] = useState<string>('');
   const [customProblemaEmpresaType, setCustomProblemaEmpresaType] = useState('');
   const [customEmpresaType, setCustomEmpresaType] = useState('');
@@ -11653,6 +11751,14 @@ export default function App() {
 
       const providerId = u.providerData?.[0]?.providerId || (u.email ? 'password' : 'google.com');
 
+      if (!existingDoc && !isUserAdminEmail) {
+        // Consultor de uma credenciada não ganha licença própria (usa a da credenciada).
+        try {
+          const acesso = await fetchConsultorAcesso(u.email);
+          if (acesso && acesso.ownerId !== u.uid) return;
+        } catch { /* segue o cadastro normal */ }
+      }
+
       if (!existingDoc) {
         const defaultName = isUserAdminEmail 
           ? (u.displayName ? `${u.displayName} (Admin)` : 'Itamar Trairi Consultoria (Admin)')
@@ -11695,6 +11801,16 @@ export default function App() {
           updates.role = 'admin';
         }
         await updateDoc(doc(db, 'empresas_credenciadas', existingDoc.id), sanitizeForFirestore(updates));
+
+        // A credenciada passou para este login (ex.: cadastrada pelo admin): o acesso dos
+        // consultores dela passa a apontar para os dados do novo dono.
+        if (data.ownerId !== u.uid && Array.isArray(data.consultores) && data.consultores.length > 0) {
+          await syncConsultoresAcesso(
+            { id: existingDoc.id, razaoSocial: data.razaoSocial || '', ownerId: u.uid },
+            data.consultores,
+            []
+          );
+        }
       }
     } catch (e) {
       console.error("Erro na sincronização do usuário autenticado com empresas_credenciadas:", e);
@@ -11703,14 +11819,20 @@ export default function App() {
 
   // Busca o cadastro de licença do usuário no Firestore e sincroniza o relógio com o servidor.
   // Se houver mais de um registro de licença, vale o MAIS ANTIGO (criar outro não renova o teste).
-  const refreshLicenseRecord = async (u: User) => {
+  const refreshLicenseRecord = async (u: User, ownerUid: string = u.uid, credenciadaId?: string) => {
     syncServerClock();
     let falhou = false;
+    const daCredenciada = ownerUid !== u.uid;
     for (let tentativa = 0; tentativa < 3; tentativa++) {
       try {
-        const snap = await getDocs(query(collection(db, 'empresas_credenciadas'), where('ownerId', '==', u.uid)));
+        const snap = await getDocs(query(collection(db, 'empresas_credenciadas'), where('ownerId', '==', ownerUid)));
         const docs = snap.docs.map(d => ({ id: d.id, ...d.data() } as any));
-        const candidatos = docs.filter(d => 'providerId' in d || (!!u.email && d.email === u.email));
+        // Consultor de credenciada: vale o cadastro de licença do dono (criado no login dele).
+        let candidatos = docs.filter(d => 'providerId' in d || (!daCredenciada && !!u.email && d.email === u.email));
+        if (daCredenciada && candidatos.length === 0) candidatos = docs;
+        // Vale a licença da credenciada à qual o consultor pertence.
+        const daPropriaCred = credenciadaId ? docs.find(d => d.id === credenciadaId) : null;
+        if (daCredenciada && daPropriaCred) candidatos = [daPropriaCred];
         const ts = (d: any) => toJsDate(d.dataCadastro)?.getTime() ?? Number.MAX_SAFE_INTEGER;
         const rec = candidatos.sort((a, b) => ts(a) - ts(b))[0];
         if (rec) {
@@ -11746,6 +11868,137 @@ export default function App() {
     });
   }, [isAdmin, user, empresasCredenciadas]);
 
+  // --- Credenciada ativa na tela inicial -------------------------------------------
+  // Admin escolhe qual das suas credenciadas fica ativa; consultor usa a credenciada dele;
+  // demais usuários têm uma única credenciada (o próprio cadastro).
+  const [activeCredenciadaId, setActiveCredenciadaId] = useState<string | null>(() => {
+    try { return localStorage.getItem('cp_credenciada_ativa'); } catch { return null; }
+  });
+
+  useEffect(() => {
+    if (!rawUser || !isAdmin) return;
+    getDoc(doc(db, 'users', rawUser.uid))
+      .then(snap => {
+        const id = snap.exists() ? (snap.data() as any)?.credenciadaAtivaId : null;
+        if (id) {
+          setActiveCredenciadaId(id);
+          try { localStorage.setItem('cp_credenciada_ativa', id); } catch {}
+        }
+      })
+      .catch(e => console.warn('Não foi possível ler a credenciada ativa:', e));
+  }, [rawUser?.uid, isAdmin]);
+
+  const credenciadaAtiva = useMemo<EmpresaCredenciada | null>(() => {
+    const lista = empresasCredenciadas.filter(Boolean);
+    if (consultorAcesso) {
+      return lista.find(c => c.id === consultorAcesso.credenciadaId) || licenseRecord || lista[0] || null;
+    }
+    if (isAdmin && activeCredenciadaId) {
+      const escolhida = lista.find(c => c.id === activeCredenciadaId);
+      if (escolhida) return escolhida;
+    }
+    const email = normalizeEmail(user?.email);
+    return (user ? lista.find(c => c.ownerId === user.uid && ('providerId' in c || normalizeEmail(c.email) === email)) : null)
+      || licenseRecord
+      || lista[0]
+      || null;
+  }, [empresasCredenciadas, consultorAcesso, isAdmin, activeCredenciadaId, user, licenseRecord]);
+
+  const definirCredenciadaAtiva = async (id: string) => {
+    if (!isAdmin || !rawUser) return;
+    setActiveCredenciadaId(id);
+    try { localStorage.setItem('cp_credenciada_ativa', id); } catch {}
+    try {
+      await setDoc(doc(db, 'users', rawUser.uid), { credenciadaAtivaId: id, updatedAt: serverTimestamp() }, { merge: true });
+      const nome = empresasCredenciadas.find(c => c.id === id)?.razaoSocial;
+      showToast(nome ? `"${nome}" agora é a credenciada ativa.` : 'Credenciada ativa atualizada.', 'success');
+    } catch (e) {
+      console.error('Erro ao salvar a credenciada ativa:', e);
+    }
+  };
+
+  // Consultor sugerido ao abrir um novo atendimento: o próprio consultor logado, senão o principal.
+  useEffect(() => {
+    if (isModalOpen && modalType === 'selectAreas') {
+      setDiagnosisConsultorId(consultorPadrao(credenciadaAtiva, rawUser?.email)?.id || '');
+    }
+  }, [isModalOpen, modalType, credenciadaAtiva?.id]);
+
+  // Só o administrador cadastra mais de uma credenciada.
+  const podeCriarCredenciada = isAdmin || (!consultorAcesso && !empresasCredenciadas.some(c => c && user && c.ownerId === user.uid));
+
+  // Preferência de conta (consultor que também tem cadastro próprio).
+  const prefContaKey = (uid: string) => `cp_conta_trabalho_${uid}`;
+
+  const resolverContaDeTrabalho = async (u: User, isUserAdminEmail: boolean) => {
+    let encontrado: ConsultorAcesso | null = null;
+    let propria = false;
+    if (!isUserAdminEmail && u.email) {
+      try {
+        encontrado = await fetchConsultorAcesso(u.email);
+      } catch (e) {
+        console.warn('Não foi possível verificar o acesso de consultor:', e);
+      }
+      // O dono da credenciada que cadastrou o próprio e-mail continua na própria conta.
+      if (encontrado && encontrado.ownerId === u.uid) encontrado = null;
+      if (encontrado) {
+        try {
+          setWorkspaceOwnerUid(null);
+          const snap = await getDocs(query(collection(db, 'empresas_credenciadas'), where('ownerId', '==', u.uid), limit(1)));
+          propria = !snap.empty;
+        } catch { /* sem cadastro próprio */ }
+      }
+    }
+    let preferePropria = false;
+    try { preferePropria = propria && localStorage.getItem(prefContaKey(u.uid)) === 'propria'; } catch {}
+    const acesso = encontrado && !preferePropria ? encontrado : null;
+    const dono = acesso ? acesso.ownerId : u.uid;
+
+    setWorkspaceOwnerUid(acesso ? acesso.ownerId : null);
+    setConsultorAcesso(acesso);
+    setAcessoDisponivel(encontrado);
+    setTemContaPropria(propria);
+
+    // Sanitização automática: expurga do cache local registros de outras contas
+        // Sanitização automática: expurga do cache local registros com ownerId de terceiros
+        setEmpresasCredenciadas(prev => {
+          const filtered = prev.filter(c => !c.ownerId || c.ownerId === 'local' || c.ownerId === dono);
+          try { localStorage.setItem('local_empresas_credenciadas', JSON.stringify(filtered)); } catch {}
+          return filtered;
+        });
+        setEmpresas(prev => {
+          const filtered = prev.filter(e => !e.ownerId || e.ownerId === 'local' || e.ownerId === dono);
+          try { localStorage.setItem('local_empresas', JSON.stringify(filtered)); } catch {}
+          return filtered;
+        });
+        setDiagnosticos(prev => {
+          const filtered = prev.filter(d => !d.ownerId || d.ownerId === 'local' || d.ownerId === dono);
+          try { localStorage.setItem('local_diagnosticos', JSON.stringify(filtered)); } catch {}
+          return filtered;
+        });
+        setTarefasPlano(prev => {
+          const filtered = prev.filter(t => !t.ownerId || t.ownerId === 'local' || t.ownerId === dono);
+          try { localStorage.setItem('local_tarefas_plano', JSON.stringify(filtered)); } catch {}
+          return filtered;
+        });
+
+
+    setWorkspaceResolvidoPara(u.uid);
+
+    if (acesso) {
+      // Consultor: não cria licença própria; vale a licença da credenciada.
+      await refreshLicenseRecord(u, acesso.ownerId, acesso.credenciadaId);
+    } else {
+      await syncUserWithCredenciada(u).finally(() => refreshLicenseRecord(u));
+    }
+  };
+
+  const alternarContaDeTrabalho = (paraPropria: boolean) => {
+    if (!rawUser) return;
+    try { localStorage.setItem(prefContaKey(rawUser.uid), paraPropria ? 'propria' : 'consultor'); } catch {}
+    window.location.reload();
+  };
+
   // Auth Listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (u) => {
@@ -11768,28 +12021,6 @@ export default function App() {
       } catch {}
 
       if (u) {
-        // Sanitização automática: expurga do cache local registros com ownerId de terceiros
-        setEmpresasCredenciadas(prev => {
-          const filtered = prev.filter(c => !c.ownerId || c.ownerId === 'local' || c.ownerId === u.uid);
-          try { localStorage.setItem('local_empresas_credenciadas', JSON.stringify(filtered)); } catch {}
-          return filtered;
-        });
-        setEmpresas(prev => {
-          const filtered = prev.filter(e => !e.ownerId || e.ownerId === 'local' || e.ownerId === u.uid);
-          try { localStorage.setItem('local_empresas', JSON.stringify(filtered)); } catch {}
-          return filtered;
-        });
-        setDiagnosticos(prev => {
-          const filtered = prev.filter(d => !d.ownerId || d.ownerId === 'local' || d.ownerId === u.uid);
-          try { localStorage.setItem('local_diagnosticos', JSON.stringify(filtered)); } catch {}
-          return filtered;
-        });
-        setTarefasPlano(prev => {
-          const filtered = prev.filter(t => !t.ownerId || t.ownerId === 'local' || t.ownerId === u.uid);
-          try { localStorage.setItem('local_tarefas_plano', JSON.stringify(filtered)); } catch {}
-          return filtered;
-        });
-
         // Check if user is admin based on email (case-insensitive)
         const userEmailClean = (u.email || '').toLowerCase().trim();
         const isUserAdminEmail = userEmailClean === 'itamartrairi@gmail.com';
@@ -11799,12 +12030,18 @@ export default function App() {
           console.warn("Usuário administrador detectado (itamartrairi@gmail.com). Acesso irrestrito concedido.");
         }
 
-        // Auto-check and register credenciada record if not existing yet
+        // Define a conta de trabalho (própria ou da credenciada, para consultores) e então
+        // verifica/cria o cadastro de licença.
         setLicenseRecord(null);
         setLicenseCheck('pending');
-        syncUserWithCredenciada(u).finally(() => refreshLicenseRecord(u));
+        resolverContaDeTrabalho(u, isUserAdminEmail);
       } else {
         setIsAdmin(false);
+        setWorkspaceOwnerUid(null);
+        setConsultorAcesso(null);
+        setAcessoDisponivel(null);
+        setTemContaPropria(false);
+        setWorkspaceResolvidoPara(null);
       }
     });
     return unsubscribe;
@@ -12029,7 +12266,8 @@ export default function App() {
         }
 
         // Sync local credenciadas
-        const localCreds = empresasCredenciadas.filter(c => !c.ownerId || c.ownerId === 'local');
+        // Credenciadas extras só podem ser criadas pelo admin (as regras recusam as demais).
+        const localCreds = isAdmin ? empresasCredenciadas.filter(c => !c.ownerId || c.ownerId === 'local') : [];
         for (const cred of localCreds) {
           const sanitized = sanitizeForFirestore({ ...cred, ownerId: user.uid });
           const ref = await addDoc(collection(db, 'empresas_credenciadas'), sanitized);
@@ -12323,10 +12561,15 @@ export default function App() {
   useEffect(() => {
     if (selectedDiagnostico?.dadosConsultoria?.razaoSocial && empresasCredenciadas.length > 0) {
       const currentDados = selectedDiagnostico.dadosConsultoria;
-      const matched = empresasCredenciadas.find(c => c.razaoSocial === currentDados.razaoSocial || c.id === (currentDados as any).credenciadaId);
+      const matched = empresasCredenciadas.find(c => c.id === currentDados.credenciadaId) || empresasCredenciadas.find(c => c.razaoSocial === currentDados.razaoSocial);
       if (matched) {
+        // Mantém o consultor escolhido no atendimento, se ele ainda pertence à credenciada.
+        const opcoesCons = consultoresDaCredenciada(matched);
+        const consEscolhido = opcoesCons.find(o => o.id === currentDados.consultorId)
+          || opcoesCons.find(o => o.nome === currentDados.consultor);
+        const consultorFinal = consEscolhido?.nome || matched.consultor || '';
         const hasChange =
-          (currentDados.consultor || '') !== (matched.consultor || '') ||
+          (currentDados.consultor || '') !== consultorFinal ||
           (currentDados.cnpj || '') !== (matched.cnpj || '') ||
           (currentDados.email || '') !== (matched.email || '') ||
           (currentDados.celular || '') !== (matched.celular || '') ||
@@ -12337,7 +12580,11 @@ export default function App() {
           const updated = {
             ...currentDados,
             razaoSocial: matched.razaoSocial || currentDados.razaoSocial || '',
-            consultor: matched.consultor || '',
+            credenciadaId: matched.id,
+            consultor: consultorFinal,
+            consultorId: consEscolhido?.id || CONSULTOR_PRINCIPAL_ID,
+            consultorEmail: consEscolhido?.email || matched.email || '',
+            cpfConsultor: consEscolhido?.cpf || matched.cpfConsultor || '',
             cnpj: matched.cnpj || '',
             email: matched.email || '',
             celular: matched.celular || '',
@@ -13225,6 +13472,10 @@ export default function App() {
 
   const createCredenciada = async () => {
     if (isSubmittingCredenciadaRef.current) return;
+    if (!podeCriarCredenciada) {
+      showToast("Apenas o administrador pode cadastrar mais de uma empresa credenciada. Para incluir quem atende pela sua credenciada, adicione consultores no cadastro dela.", "error");
+      return;
+    }
     if (!credenciadaForm.razaoSocial?.trim()) {
       showToast("Por favor, preencha a Razão Social da empresa credenciada.", "error");
       return;
@@ -13310,6 +13561,13 @@ export default function App() {
             tipoPlano: 'Teste'
           });
           await setDoc(doc(db, 'empresas_credenciadas', newCredId), sanitized);
+          const novosConsultores = ((dataToCreate as any).consultores || []) as any[];
+          if (novosConsultores.length > 0) {
+            const falhas = await syncConsultoresAcesso({ id: newCredId, razaoSocial: razaoSocialTrimmed, ownerId: user.uid }, novosConsultores, []);
+            if (falhas.length > 0) {
+              showToast(`Não foi possível liberar o login de: ${falhas.join(', ')}. O e-mail pode já estar vinculado a outra credenciada.`, "error");
+            }
+          }
         } catch (error) {
           console.error("Error creating credenciada in cloud:", error);
           handleFirestoreError(error, OperationType.WRITE, 'empresas_credenciadas');
@@ -13360,6 +13618,20 @@ export default function App() {
       const razaoSocialTrimmed = (dataToUpdate.razaoSocial || '').trim();
       const oldRazaoSocial = initialModalData.razaoSocial;
       const newConsultor = dataToUpdate.consultor || '';
+      const oldConsultor = (initialModalData as any).consultor || '';
+      const consultoresAntigos = ((initialModalData as any).consultores || []) as any[];
+      const consultoresNovos = ((dataToUpdate as any).consultores || []) as any[];
+      // Atendimentos feitos por um consultor adicional mantêm esse consultor (com o nome atualizado);
+      // os do consultor principal acompanham a alteração do cadastro.
+      const consultorDoDiag = (dados: any) => {
+        const adicional = consultoresNovos.find(c => c.id === dados?.consultorId)
+          || consultoresAntigos.find(c => c.id === dados?.consultorId && consultoresNovos.some(n => n.id === c.id));
+        if (adicional) return adicional.nome;
+        if (!dados?.consultor || dados.consultor === oldConsultor || dados?.consultorId === CONSULTOR_PRINCIPAL_ID) {
+          return newConsultor || dados?.consultor || '';
+        }
+        return dados.consultor;
+      };
       const newCnpj = dataToUpdate.cnpj ? formatCNPJ(dataToUpdate.cnpj) : '';
       const newCpfConsultor = dataToUpdate.cpfConsultor ? formatCPF(dataToUpdate.cpfConsultor) : '';
       const newEmail = dataToUpdate.email || '';
@@ -13385,7 +13657,7 @@ export default function App() {
           const updatedDados = {
             ...diag.dadosConsultoria,
             razaoSocial: razaoSocialTrimmed,
-            consultor: newConsultor || diag.dadosConsultoria?.consultor || '',
+            consultor: consultorDoDiag(diag.dadosConsultoria),
             cnpj: newCnpj || diag.dadosConsultoria?.cnpj || '',
             email: newEmail || diag.dadosConsultoria?.email || '',
             celular: newCelular || diag.dadosConsultoria?.celular || '',
@@ -13444,7 +13716,7 @@ export default function App() {
               const updatedDados = sanitizeForFirestore({
                 ...diag.dadosConsultoria,
                 razaoSocial: razaoSocialTrimmed,
-                consultor: newConsultor || diag.dadosConsultoria?.consultor || '',
+                consultor: consultorDoDiag(diag.dadosConsultoria),
                 cnpj: newCnpj || diag.dadosConsultoria?.cnpj || '',
                 email: newEmail || diag.dadosConsultoria?.email || '',
                 celular: newCelular || diag.dadosConsultoria?.celular || '',
@@ -13458,6 +13730,19 @@ export default function App() {
           });
 
           await batch.commit();
+
+          // Libera/remove o login Google dos consultores desta credenciada.
+          const donoCred = (payload as any).ownerId || user.uid;
+          if (donoCred === user.uid || isAdmin) {
+            const falhas = await syncConsultoresAcesso(
+              { id: targetId, razaoSocial: razaoSocialTrimmed, ownerId: donoCred },
+              consultoresNovos,
+              consultoresAntigos
+            );
+            if (falhas.length > 0) {
+              showToast(`Não foi possível liberar o login de: ${falhas.join(', ')}. O e-mail pode já estar vinculado a outra credenciada.`, "error");
+            }
+          }
         } catch (error) {
           console.error("Error updating credenciada in cloud:", error);
           handleFirestoreError(error, OperationType.WRITE, `empresas_credenciadas/${targetId}`);
@@ -16255,6 +16540,26 @@ export default function App() {
         nome: finalProjName
       };
 
+      // Vincula a credenciada ativa e o consultor escolhido para este atendimento.
+      if (credenciadaAtiva) {
+        const consDiag = consultoresDaCredenciada(credenciadaAtiva).find(o => o.id === diagnosisConsultorId)
+          || consultorPadrao(credenciadaAtiva, rawUser?.email);
+        newDiagObj.empresaCredenciadaId = credenciadaAtiva.id;
+        if (consDiag) newDiagObj.consultorId = consDiag.id;
+        newDiagObj.dadosConsultoria = {
+          credenciadaId: credenciadaAtiva.id,
+          razaoSocial: credenciadaAtiva.razaoSocial || '',
+          cnpj: credenciadaAtiva.cnpj || '',
+          telefoneFixo: credenciadaAtiva.telefoneFixo || '',
+          celular: credenciadaAtiva.celular || '',
+          email: credenciadaAtiva.email || '',
+          consultor: consDiag?.nome || credenciadaAtiva.consultor || '',
+          consultorId: consDiag?.id || '',
+          consultorEmail: consDiag?.email || '',
+          cpfConsultor: consDiag?.cpf || ''
+        };
+      }
+
       // Generate local Respostas for Premissas in selected areas (or all if none selected)
       const localRespostasToInsert: Resposta[] = [];
       const respostasToInsertCloud: { ref: any, data: any }[] = [];
@@ -18221,10 +18526,29 @@ export default function App() {
                 </label>
               </div>
             </div>
+            {/* Consultor de credenciada (login Google próprio) */}
+            {rawUser && (consultorAcesso || (acessoDisponivel && temContaPropria)) && (
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-sky-100 bg-sky-50 px-4 py-2.5 text-xs text-sky-800">
+                <span>
+                  {consultorAcesso
+                    ? <>Você está atendendo como consultor de <strong>{consultorAcesso.credenciadaNome || 'sua credenciada'}</strong>.</>
+                    : <>Você também é consultor de <strong>{acessoDisponivel?.credenciadaNome || 'uma credenciada'}</strong>.</>}
+                </span>
+                {temContaPropria && (
+                  <button
+                    type="button"
+                    onClick={() => alternarContaDeTrabalho(!!consultorAcesso)}
+                    className="font-bold text-sky-700 underline underline-offset-2 hover:text-sky-900"
+                  >
+                    {consultorAcesso ? 'Usar minha própria conta' : 'Entrar como consultor'}
+                  </button>
+                )}
+              </div>
+            )}
             {/* Warning Banner for Client — card de compra só aparece no período de TESTE.
                 Quem já comprou (Mensal/Anual) não vê este card; ao vencer, aparece a tela
                 "Plano Expirado" com o botão "Renovar Assinatura". */}
-            {!isAdmin && !isPaidPlan(subStatus.plan) && subStatus.daysLeft <= 3 && subStatus.daysLeft >= 0 && (
+            {!isAdmin && !isConsultorMembro && !isPaidPlan(subStatus.plan) && subStatus.daysLeft <= 3 && subStatus.daysLeft >= 0 && (
               <motion.div 
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -18377,6 +18701,9 @@ export default function App() {
                       isAdmin={isAdmin}
                       empresasCredenciadas={empresasCredenciadas}
                       user={user}
+                      credenciadaAtiva={credenciadaAtiva}
+                      onSelectCredenciadaAtiva={definirCredenciadaAtiva}
+                      consultorLogado={consultorAcesso ? (consultorAcesso.nome || rawUser?.email || null) : null}
                     />
                   </motion.div>
                 )}
@@ -18612,6 +18939,7 @@ export default function App() {
                       <h2 className="text-2xl font-bold">Empresas Credenciadas</h2>
                       <p className="text-slate-500">Gerencie as empresas credenciadas para consultoria</p>
                     </div>
+                    {podeCriarCredenciada && (
                     <Button onClick={() => {
                       setInputValue('');
                       setCredenciadaForm({});
@@ -18620,6 +18948,7 @@ export default function App() {
                     }}>
                       <Plus size={18} /> Nova Credenciada
                     </Button>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -18637,8 +18966,8 @@ export default function App() {
                             <div className="w-10 h-10 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
                               <Building2 size={20} />
                             </div>
-                            <div className="flex gap-1">
-                              <Button variant="ghost" className="p-1 text-slate-400 hover:text-emerald-500" onClick={(e: any) => {
+                            {!isConsultorMembro && <div className="flex gap-1">
+                              <Button variant="ghost" className="p-1 text-slate-400 hover:text-emerald-500" title="Editar credenciada e consultores" onClick={(e: any) => {
                                 e.stopPropagation();
                                 setModalType('editCredenciada');
                                 setModalData(emp);
@@ -18655,7 +18984,7 @@ export default function App() {
                               }}>
                                 <Trash2 size={16} />
                               </Button>
-                            </div>
+                            </div>}
                           </div>
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="font-bold text-lg">{emp.razaoSocial}</h3>
@@ -18665,9 +18994,28 @@ export default function App() {
                               {emp.status || 'Ativa'}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-400 mb-4">
+                          <p className="text-xs text-slate-400 mb-3">
                             Cadastrada em {formatFirestoreDate(emp.dataCadastro)}
                           </p>
+                          <p className="text-xs text-slate-500 mb-3">
+                            {(() => {
+                              const n = consultoresDaCredenciada(emp).length;
+                              return n === 0 ? 'Nenhum consultor cadastrado' : n === 1 ? '1 consultor' : `${n} consultores`;
+                            })()}
+                          </p>
+                          {credenciadaAtiva?.id === emp.id ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-1 rounded-md">
+                              <CheckCircle2 size={12} /> Ativa na tela inicial
+                            </span>
+                          ) : isAdmin ? (
+                            <button
+                              type="button"
+                              onClick={() => definirCredenciadaAtiva(emp.id)}
+                              className="text-[11px] font-bold text-emerald-700 border border-emerald-200 hover:bg-emerald-50 px-2.5 py-1 rounded-md"
+                            >
+                              Definir como ativa
+                            </button>
+                          ) : null}
                         </div>
                       </Card>
                     ))}
@@ -20306,6 +20654,8 @@ export default function App() {
                 playSuccessSound={playSuccessSound}
                 setPdfUrl={setPdfUrl}
                 empresasCredenciadas={empresasCredenciadas}
+                podeCriarCredenciada={podeCriarCredenciada}
+                loginEmail={rawUser?.email || null}
                 setCredenciadaForm={setCredenciadaForm}
                 setModalType={setModalType}
                 setIsModalOpen={setIsModalOpen}
@@ -20574,6 +20924,25 @@ export default function App() {
                 required
               />
             </div>
+
+            {consultoresDaCredenciada(credenciadaAtiva).length > 0 && (
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
+                  <UserCheck size={16} className="text-emerald-600" />
+                  Consultor que vai atender
+                </label>
+                <select
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium"
+                  value={diagnosisConsultorId}
+                  onChange={(e) => setDiagnosisConsultorId(e.target.value)}
+                >
+                  {consultoresDaCredenciada(credenciadaAtiva).map(o => (
+                    <option key={o.id} value={o.id}>{o.nome}{o.id === CONSULTOR_PRINCIPAL_ID ? ' (principal)' : ''}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-slate-500 mt-1.5">Credenciada: <span className="font-semibold">{credenciadaAtiva?.razaoSocial}</span></p>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-bold text-slate-700 mb-2 flex items-center gap-2">
@@ -21184,6 +21553,12 @@ export default function App() {
                   onChange={(e) => setCredenciadaForm({...credenciadaForm, cpfConsultor: formatCPF(e.target.value)})}
                 />
               </div>
+              <ConsultoresEditor
+                value={(credenciadaForm as any).consultores || []}
+                onChange={(lista) => setCredenciadaForm({ ...credenciadaForm, consultores: lista } as any)}
+                readOnly={isConsultorMembro}
+              />
+              {isAdmin && (<>
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1">Tipo de Plano</label>
                 <select 
@@ -21220,6 +21595,7 @@ export default function App() {
                   <option value="Bloqueada">Bloqueada (Acesso Suspenso)</option>
                 </select>
               </div>
+              </>)}
             </div>
           </div>
         </Modal>
