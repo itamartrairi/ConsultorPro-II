@@ -9660,64 +9660,74 @@ const HomeView = ({
       )}
 
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <Card className="p-8 hover:shadow-2xl transition-all cursor-pointer border-slate-100 group rounded-[2rem] bg-white relative overflow-hidden" onClick={() => setView('companies')}>
-          <div className="w-16 h-16 bg-sky-50 text-sky-600 rounded-3xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 shadow-sm border border-sky-100/50">
-            <Building2 size={32} />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <Card className="p-5 hover:shadow-2xl transition-all cursor-pointer border-slate-100 group rounded-2xl bg-white relative overflow-hidden" onClick={() => setView('companies')}>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 shrink-0 bg-sky-50 text-sky-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-sm border border-sky-100/50">
+              <Building2 size={20} />
+            </div>
+            <h3 className="text-lg font-black text-slate-800 tracking-tight uppercase leading-tight">Clientes</h3>
           </div>
-          <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight uppercase">Clientes</h3>
-          <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">Gestão completa da base de clientes e históricos de atendimento.</p>
-          <div className="pt-6 border-t border-slate-50 flex justify-between items-center">
-            <span className="text-[10px] font-black text-sky-600 bg-sky-50 px-3 py-1.5 rounded-full uppercase tracking-widest">{empresas.length} cadastrados</span>
-            <ChevronRight size={20} className="text-slate-300 group-hover:text-sky-600 transform group-hover:translate-x-1 transition-all" />
-          </div>
-        </Card>
-
-        <Card className="p-8 hover:shadow-2xl transition-all cursor-pointer border-slate-100 group rounded-[2rem] bg-white relative overflow-hidden" onClick={() => setView('kanban')}>
-          <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 shadow-sm border border-emerald-100/50">
-            <Layout size={32} />
-          </div>
-          <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight uppercase">Plano de Ação</h3>
-          <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">Quadro Kanban para monitorar a execução das tarefas e prazos.</p>
-          <div className="pt-6 border-t border-slate-50 flex justify-between items-center">
-            <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full uppercase tracking-widest">{tarefas.length} Tarefas Ativas</span>
-            <ChevronRight size={20} className="text-slate-300 group-hover:text-emerald-600 transform group-hover:translate-x-1 transition-all" />
+          <p className="text-slate-500 text-xs mb-3 font-medium leading-snug">Gestão completa da base de clientes e históricos de atendimento.</p>
+          <div className="pt-3 border-t border-slate-50 flex justify-between items-center">
+            <span className="text-[10px] font-black text-sky-600 bg-sky-50 px-2.5 py-1 rounded-full uppercase tracking-widest">{empresas.length} cadastrados</span>
+            <ChevronRight size={16} className="text-slate-300 group-hover:text-sky-600 transform group-hover:translate-x-1 transition-all" />
           </div>
         </Card>
 
-        <Card className="p-8 hover:shadow-2xl transition-all cursor-pointer border-slate-100 group rounded-[2rem] bg-white relative overflow-hidden" onClick={() => setView('macro-dashboard')}>
-          <div className="w-16 h-16 bg-violet-50 text-violet-600 rounded-3xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 shadow-sm border border-violet-100/50">
-            <BarChart3 size={32} />
+        <Card className="p-5 hover:shadow-2xl transition-all cursor-pointer border-slate-100 group rounded-2xl bg-white relative overflow-hidden" onClick={() => setView('kanban')}>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 shrink-0 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-sm border border-emerald-100/50">
+              <Layout size={20} />
+            </div>
+            <h3 className="text-lg font-black text-slate-800 tracking-tight uppercase leading-tight">Plano de Ação</h3>
           </div>
-          <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight uppercase">Evolução Macro</h3>
-          <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">Dashboard consolidado com a evolução histórica de todos os clientes.</p>
-          <div className="pt-6 border-t border-slate-50 flex justify-between items-center">
-            <span className="text-[10px] font-black text-violet-600 bg-violet-50 px-3 py-1.5 rounded-full uppercase tracking-widest">Dashboard Macro</span>
-            <ChevronRight size={20} className="text-slate-300 group-hover:text-violet-600 transform group-hover:translate-x-1 transition-all" />
-          </div>
-        </Card>
-
-        <Card className="p-8 hover:shadow-2xl transition-all cursor-pointer border-slate-100 group rounded-[2rem] bg-white relative overflow-hidden" onClick={() => setView('companies')}>
-           <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-3xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 shadow-sm border border-amber-100/50">
-            <HistoryIcon size={32} />
-          </div>
-          <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight uppercase">Diagnósticos</h3>
-          <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">Execute novos diagnósticos e visualize a evolução da maturidade.</p>
-          <div className="pt-6 border-t border-slate-50 flex justify-between items-center">
-            <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-3 py-1.5 rounded-full uppercase tracking-widest">{diagnosticos.filter(d => !d.status || d.status === 'Finalizado').length} Realizados</span>
-            <ChevronRight size={20} className="text-slate-300 group-hover:text-amber-600 transform group-hover:translate-x-1 transition-all" />
+          <p className="text-slate-500 text-xs mb-3 font-medium leading-snug">Quadro Kanban para monitorar a execução das tarefas e prazos.</p>
+          <div className="pt-3 border-t border-slate-50 flex justify-between items-center">
+            <span className="text-[10px] font-black text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full uppercase tracking-widest">{tarefas.length} Tarefas Ativas</span>
+            <ChevronRight size={16} className="text-slate-300 group-hover:text-emerald-600 transform group-hover:translate-x-1 transition-all" />
           </div>
         </Card>
 
-        <Card className="p-8 hover:shadow-2xl transition-all cursor-pointer border-slate-100 group rounded-[2rem] bg-white relative overflow-hidden" onClick={() => setView('premises')}>
-           <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500 shadow-sm border border-blue-100/50">
-            <FileText size={32} />
+        <Card className="p-5 hover:shadow-2xl transition-all cursor-pointer border-slate-100 group rounded-2xl bg-white relative overflow-hidden" onClick={() => setView('macro-dashboard')}>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 shrink-0 bg-violet-50 text-violet-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-sm border border-violet-100/50">
+              <BarChart3 size={20} />
+            </div>
+            <h3 className="text-lg font-black text-slate-800 tracking-tight uppercase leading-tight">Evolução Macro</h3>
           </div>
-          <h3 className="text-2xl font-black text-slate-800 mb-3 tracking-tight uppercase">Biblioteca</h3>
-          <p className="text-slate-500 text-sm mb-8 font-medium leading-relaxed">Biblioteca de conhecimento com base de problemas, premissas de perguntas e soluções.</p>
-          <div className="pt-6 border-t border-slate-50 flex justify-between items-center">
-            <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full uppercase tracking-widest">{problemas.length} Registrados</span>
-            <ChevronRight size={20} className="text-slate-300 group-hover:text-blue-600 transform group-hover:translate-x-1 transition-all" />
+          <p className="text-slate-500 text-xs mb-3 font-medium leading-snug">Dashboard consolidado com a evolução histórica de todos os clientes.</p>
+          <div className="pt-3 border-t border-slate-50 flex justify-between items-center">
+            <span className="text-[10px] font-black text-violet-600 bg-violet-50 px-2.5 py-1 rounded-full uppercase tracking-widest">Dashboard Macro</span>
+            <ChevronRight size={16} className="text-slate-300 group-hover:text-violet-600 transform group-hover:translate-x-1 transition-all" />
+          </div>
+        </Card>
+
+        <Card className="p-5 hover:shadow-2xl transition-all cursor-pointer border-slate-100 group rounded-2xl bg-white relative overflow-hidden" onClick={() => setView('companies')}>
+           <div className="flex items-center gap-3 mb-2">
+             <div className="w-10 h-10 shrink-0 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-sm border border-amber-100/50">
+               <HistoryIcon size={20} />
+             </div>
+             <h3 className="text-lg font-black text-slate-800 tracking-tight uppercase leading-tight">Diagnósticos</h3>
+           </div>
+          <p className="text-slate-500 text-xs mb-3 font-medium leading-snug">Execute novos diagnósticos e visualize a evolução da maturidade.</p>
+          <div className="pt-3 border-t border-slate-50 flex justify-between items-center">
+            <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full uppercase tracking-widest">{diagnosticos.filter(d => !d.status || d.status === 'Finalizado').length} Realizados</span>
+            <ChevronRight size={16} className="text-slate-300 group-hover:text-amber-600 transform group-hover:translate-x-1 transition-all" />
+          </div>
+        </Card>
+
+        <Card className="p-5 hover:shadow-2xl transition-all cursor-pointer border-slate-100 group rounded-2xl bg-white relative overflow-hidden" onClick={() => setView('premises')}>
+           <div className="flex items-center gap-3 mb-2">
+             <div className="w-10 h-10 shrink-0 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-sm border border-blue-100/50">
+               <FileText size={20} />
+             </div>
+             <h3 className="text-lg font-black text-slate-800 tracking-tight uppercase leading-tight">Biblioteca</h3>
+           </div>
+          <p className="text-slate-500 text-xs mb-3 font-medium leading-snug">Biblioteca de conhecimento com base de problemas, premissas de perguntas e soluções.</p>
+          <div className="pt-3 border-t border-slate-50 flex justify-between items-center">
+            <span className="text-[10px] font-black text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full uppercase tracking-widest">{problemas.length} Registrados</span>
+            <ChevronRight size={16} className="text-slate-300 group-hover:text-blue-600 transform group-hover:translate-x-1 transition-all" />
           </div>
         </Card>
       </div>
