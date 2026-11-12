@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { db, auth } from '../firebase';
 import { callGemini } from '../lib/gemini';
 
-import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc, updateDoc } from '../lib/firestoreOwned';
+import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc, updateDoc, currentWorkspaceUser } from '../lib/firestoreOwned';
 import {
   User,
   FileText,
@@ -380,7 +380,7 @@ export default function DiscAvaliacaoView({ empresas, setView }: DiscEvaluationV
 
   // Fetch Saved Evaluations
   useEffect(() => {
-    const user = auth.currentUser;
+    const user = currentWorkspaceUser();
     if (!user) return;
 
     const qEvs = query(
@@ -444,7 +444,7 @@ export default function DiscAvaliacaoView({ empresas, setView }: DiscEvaluationV
 
   // Create & Save Local Baseline Assessment
   const handleSaveAssessment = async () => {
-    const user = auth.currentUser;
+    const user = currentWorkspaceUser();
     if (!user) return;
 
     const { scoreD, scoreI, scoreS, scoreC, percentD, percentI, percentS, percentC } = computePercentages(answers);

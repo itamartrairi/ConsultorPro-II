@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { db, auth } from '../firebase';
-import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc, getDocs } from '../lib/firestoreOwned';
+import { collection, query, where, onSnapshot, addDoc, doc, deleteDoc, getDocs, currentWorkspaceUser } from '../lib/firestoreOwned';
 import {
   TrendingUp,
   Award,
@@ -227,7 +227,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
 
   // Fetch Evaluations from Firestore
   useEffect(() => {
-    const user = auth.currentUser;
+    const user = currentWorkspaceUser();
     if (!user) return;
 
     setLoading(true);
@@ -258,7 +258,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
 
   // Fetch Action Plan Tasks
   useEffect(() => {
-    const user = auth.currentUser;
+    const user = currentWorkspaceUser();
     if (!user || !selectedEmpresaId) return;
 
     const qTasks = query(
@@ -322,7 +322,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
 
   // Add Recommended Action to Action Plan in Firestore
   const handleAddRecommendation = async (compName: string, recommendationText: string, key: string) => {
-    const user = auth.currentUser;
+    const user = currentWorkspaceUser();
     if (!user || !selectedEmpresaId) return;
 
     try {
@@ -364,7 +364,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
 
   // Submit New Assessment
   const handleSubmitAssessment = async () => {
-    const user = auth.currentUser;
+    const user = currentWorkspaceUser();
     if (!user || !selectedEmpresaId) {
       alert("Por favor, selecione uma empresa para salvar o diagnóstico.");
       return;
