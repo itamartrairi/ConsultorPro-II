@@ -13165,6 +13165,12 @@ export default function App() {
           <div className="pt-2" />
 
           <NavItem
+            icon={FileText}
+            label="Biblioteca de Perguntas"
+            active={view === 'premises'}
+            onClick={() => setView('premises')}
+          />
+          <NavItem
             icon={Briefcase}
             label="Gestão & Atendimento"
             active={isNavSectionActive('gestao')}
@@ -13176,24 +13182,18 @@ export default function App() {
             active={isNavSectionActive('diagnosticos')}
             onClick={() => openNavSection('diagnosticos')}
           />
-          <NavItem
-            icon={Gauge}
-            label="Maturidade Empresarial"
-            active={view === 'maturity-assessment'}
-            onClick={() => { setView('maturity-assessment'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }}
-          />
-          <NavItem
-            icon={FileText}
-            label="Biblioteca de Perguntas"
-            active={view === 'premises'}
-            onClick={() => setView('premises')}
-          />
 
           <NavItem
             icon={BarChart3}
             label="Dashboard Macro"
             active={view === 'macro-dashboard'}
             onClick={() => { setView('macro-dashboard'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }}
+          />
+          <NavItem
+            icon={Gauge}
+            label="Maturidade Empresarial"
+            active={view === 'maturity-assessment'}
+            onClick={() => { setView('maturity-assessment'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }}
           />
 
           {!!selectedDiagnostico && (
