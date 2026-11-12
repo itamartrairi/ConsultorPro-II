@@ -19198,7 +19198,7 @@ export default function App() {
                                       <Building2 size={18} />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                  <h3 className="font-bold text-[15px] leading-tight truncate" title={emp.nome}>{emp.nome}</h3>
+                                  <h3 className="font-bold text-[15px] leading-tight line-clamp-2" title={emp.nome}>{emp.nome}</h3>
                                   <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                                     <p className="text-[10px] text-slate-400">
                                       Cadastrada em {formatFirestoreDate(emp.dataCadastro)}
@@ -19223,30 +19223,6 @@ export default function App() {
                                       </button>
                                     </span>
                                   </div>
-                                    </div>
-                                    <div className="flex gap-0.5 shrink-0">
-                                      <Button variant="ghost" className="p-1 text-slate-400 hover:text-emerald-500" onClick={(e: any) => {
-                                        e.stopPropagation();
-                                        setModalType('edit');
-                                        setModalData(emp);
-                                        setEmpresaForm({ ...emp, razaoSocial: emp.razaoSocial || emp.nome, tipoEmpresa: emp.tipoEmpresa || 'Geral', cafNumero: emp.cafNumero || '' });
-                                        if (emp.tipoEmpresa && !TIPOS_EMPRESA.includes(emp.tipoEmpresa)) {
-                                          setCustomEmpresaType(emp.tipoEmpresa);
-                                        } else {
-                                          setCustomEmpresaType('');
-                                        }
-                                        setIsModalOpen(true);
-                                      }}>
-                                        <FileText size={16} />
-                                      </Button>
-                                      <Button variant="ghost" className="p-1 text-slate-400 hover:text-rose-500" onClick={(e: any) => {
-                                        e.stopPropagation();
-                                        setModalType('delete');
-                                        setModalData(emp);
-                                        setIsModalOpen(true);
-                                      }}>
-                                        <Trash2 size={16} />
-                                      </Button>
                                     </div>
                                   </div>
                                   <div className="space-y-0.5 mb-2 pl-[46px]">
@@ -19302,7 +19278,31 @@ export default function App() {
                                     }}>
                                       Novo Diagnóstico
                                     </Button>
-                                    <ChevronRight size={16} className="text-slate-300 group-hover:text-emerald-500 transition-colors" />
+                                    <div className="flex items-center gap-0.5">
+                                      <Button variant="ghost" className="p-1 text-slate-400 hover:text-emerald-500" onClick={(e: any) => {
+                                        e.stopPropagation();
+                                        setModalType('edit');
+                                        setModalData(emp);
+                                        setEmpresaForm({ ...emp, razaoSocial: emp.razaoSocial || emp.nome, tipoEmpresa: emp.tipoEmpresa || 'Geral', cafNumero: emp.cafNumero || '' });
+                                        if (emp.tipoEmpresa && !TIPOS_EMPRESA.includes(emp.tipoEmpresa)) {
+                                          setCustomEmpresaType(emp.tipoEmpresa);
+                                        } else {
+                                          setCustomEmpresaType('');
+                                        }
+                                        setIsModalOpen(true);
+                                      }}>
+                                        <FileText size={16} />
+                                      </Button>
+                                      <Button variant="ghost" className="p-1 text-slate-400 hover:text-rose-500" onClick={(e: any) => {
+                                        e.stopPropagation();
+                                        setModalType('delete');
+                                        setModalData(emp);
+                                        setIsModalOpen(true);
+                                      }}>
+                                        <Trash2 size={16} />
+                                      </Button>
+                                      <ChevronRight size={16} className="text-slate-300 group-hover:text-emerald-500 transition-colors ml-1" />
+                                    </div>
                                   </div>
                                 </div>
                               </Card>
