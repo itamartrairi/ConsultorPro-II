@@ -19192,12 +19192,39 @@ export default function App() {
                               className="rounded-2xl h-full flex flex-col"
                             >
                               <Card className="hover:border-emerald-200 transition-colors cursor-pointer group h-full flex flex-col justify-between" onClick={() => { setSelectedEmpresa(emp); }}>
-                                <div className="p-5">
-                                  <div className="flex items-start justify-between mb-4">
-                                    <div className="w-10 h-10 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
-                                      <Building2 size={20} />
+                                <div className="p-3.5">
+                                  <div className="flex items-start gap-2.5 mb-2">
+                                    <div className="w-9 h-9 shrink-0 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
+                                      <Building2 size={18} />
                                     </div>
-                                    <div className="flex gap-1">
+                                    <div className="flex-1 min-w-0">
+                                  <h3 className="font-bold text-[15px] leading-tight truncate" title={emp.nome}>{emp.nome}</h3>
+                                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                                    <p className="text-[10px] text-slate-400">
+                                      Cadastrada em {formatFirestoreDate(emp.dataCadastro)}
+                                    </p>
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0 bg-slate-50 text-slate-500 rounded text-[9px] font-bold uppercase tracking-wider border border-slate-150">
+                                      {emp.tipoEmpresa || 'Geral'}
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setModalData(emp);
+                                          setSelectedEmpresa(emp);
+                                          const seg = emp.tipoEmpresa || 'Geral';
+                                          setSelectedSegmentForEdit(seg);
+                                          setCustomSegmentForEdit(!TIPOS_EMPRESA.includes(seg) ? seg : '');
+                                          setEditSegmentTarget('empresa');
+                                          setIsEditSegmentModalOpen(true);
+                                        }}
+                                        className="hover:text-emerald-600 hover:bg-slate-250/30 p-0.5 rounded cursor-pointer border-none flex items-center justify-center transition-all"
+                                        title="Editar Tipo de Negócio"
+                                      >
+                                        <Edit2 size={9} />
+                                      </button>
+                                    </span>
+                                  </div>
+                                    </div>
+                                    <div className="flex gap-0.5 shrink-0">
                                       <Button variant="ghost" className="p-1 text-slate-400 hover:text-emerald-500" onClick={(e: any) => {
                                         e.stopPropagation();
                                         setModalType('edit');
@@ -19222,33 +19249,7 @@ export default function App() {
                                       </Button>
                                     </div>
                                   </div>
-                                  <h3 className="font-bold text-lg mb-1">{emp.nome}</h3>
-                                  <div className="flex items-center gap-2 mb-4 flex-wrap">
-                                    <p className="text-xs text-slate-400">
-                                      Cadastrada em {formatFirestoreDate(emp.dataCadastro)}
-                                    </p>
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-50 text-slate-500 rounded text-[10px] font-bold uppercase tracking-wider border border-slate-150">
-                                      {emp.tipoEmpresa || 'Geral'}
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setModalData(emp);
-                                          setSelectedEmpresa(emp);
-                                          const seg = emp.tipoEmpresa || 'Geral';
-                                          setSelectedSegmentForEdit(seg);
-                                          setCustomSegmentForEdit(!TIPOS_EMPRESA.includes(seg) ? seg : '');
-                                          setEditSegmentTarget('empresa');
-                                          setIsEditSegmentModalOpen(true);
-                                        }}
-                                        className="hover:text-emerald-600 hover:bg-slate-250/30 p-0.5 rounded cursor-pointer border-none flex items-center justify-center transition-all"
-                                        title="Editar Tipo de Negócio"
-                                      >
-                                        <Edit2 size={10} />
-                                      </button>
-                                    </span>
-                                  </div>
-
-                                  <div className="space-y-1 mb-2">
+                                  <div className="space-y-0.5 mb-2 pl-[46px]">
                                     {emp.cnpj && (
                                       <p className="text-xs font-medium text-slate-500 flex items-center gap-1 flex-wrap">
                                         <span className="font-bold text-slate-400 uppercase text-[9px]">CNPJ:</span> {emp.cnpj}
@@ -19288,8 +19289,8 @@ export default function App() {
                                     })()}
                                   </div>
                                   
-                                  <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                                    <Button variant="secondary" size="sm" onClick={(e: any) => {
+                                  <div className="flex items-center justify-between pt-2 border-t border-slate-50">
+                                    <Button variant="secondary" size="sm" className="h-7 px-2.5 text-xs" onClick={(e: any) => {
                                       e.stopPropagation();
                                       setSelectedEmpresa(emp);
                                       setModalType('selectAreas');
@@ -19301,7 +19302,7 @@ export default function App() {
                                     }}>
                                       Novo Diagnóstico
                                     </Button>
-                                    <ChevronRight size={18} className="text-slate-300 group-hover:text-emerald-500 transition-colors" />
+                                    <ChevronRight size={16} className="text-slate-300 group-hover:text-emerald-500 transition-colors" />
                                   </div>
                                 </div>
                               </Card>
