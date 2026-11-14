@@ -18514,7 +18514,7 @@ export default function App() {
 
           <div className="max-w-7xl mx-auto p-6 lg:p-10 print:p-0 print:max-w-none">
             {/* Top Bar - Modo de Salvamento (Nuvem vs. Local) - Fixada no Topo (Sticky) */}
-            <div ref={registrarBarraFixa} data-fixo="topo" className="sticky top-0 z-30 bg-slate-50/95 backdrop-blur-md -mt-6 lg:-mt-10 pt-6 lg:pt-8 mb-6 pb-4 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-4 print:hidden transition-all shadow-xs">
+            <div ref={registrarBarraFixa} data-fixo="topo" className="sticky top-0 z-30 bg-slate-50/95 backdrop-blur-md -mt-6 lg:-mt-10 pt-3 mb-3 pb-3 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-4 print:hidden transition-all shadow-xs">
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-1.5 bg-slate-200/70 p-1 rounded-xl text-xs font-bold">
                   <button
@@ -18682,10 +18682,10 @@ export default function App() {
                   ref={registrarBarraFixa}
                   data-fixo="abas"
                   style={{ top: 'var(--topbar-h, 0px)' }}
-                  className="sticky z-[25] -mt-6 pt-3 pb-2 mb-6 -mx-2 px-2 bg-slate-50/95 backdrop-blur-md print:hidden print:static"
+                  className="sticky z-[25] -mt-3 pt-2 pb-2 mb-6 -mx-2 px-2 bg-slate-50/95 backdrop-blur-md print:hidden print:static"
                 >
-                  <div className="flex items-center gap-2 mb-2 px-1 text-xs font-black uppercase tracking-widest text-slate-400">
-                    <SectionIcon size={14} />
+                  <div className="flex items-center gap-2 mb-1.5 px-1 text-[11px] font-black uppercase tracking-widest text-slate-400">
+                    <SectionIcon size={13} />
                     <span>{section.label}</span>
                   </div>
                   <div className="flex gap-1 overflow-x-auto bg-white border border-slate-100 rounded-2xl p-1.5 shadow-sm">
