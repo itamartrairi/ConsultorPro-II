@@ -3944,8 +3944,26 @@ const CronogramaView = ({
             </div>
           </div>
 
+          {(() => {
+            const normSeg = (v: unknown) => String(v ?? '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+            const segmentoCliente = (selectedDiagnostico?.tipoEmpresa || '').trim();
+            const alvoSeg = normSeg(segmentoCliente);
+            const listaModelos = Array.isArray(modelosRelatorio) ? modelosRelatorio : [];
+            const modelosDoCliente = alvoSeg && alvoSeg !== 'geral'
+              ? listaModelos.filter(m => normSeg(m?.categoria) === alvoSeg || ((m as any)?.padraoAutomatico && normSeg(m?.nome).includes(alvoSeg)))
+              : [];
+            if (modelosDoCliente.length === 0) {
+              return (
+                <div className="p-5 rounded-xl border border-dashed border-slate-700 bg-slate-800/50 text-sm text-slate-300">
+                  {alvoSeg && alvoSeg !== 'geral'
+                    ? <>Ainda não há modelo de relatório para a atividade <strong className="text-emerald-300">{segmentoCliente}</strong>. Use “Atualizar Modelo Conforme Relatório” para criar o modelo a partir deste relatório.</>
+                    : <>Este cliente não tem a atividade (segmento) informada no diagnóstico, por isso nenhum modelo é exibido.</>}
+                </div>
+              );
+            }
+            return (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {modelosRelatorio.map((modelo) => {
+            {modelosDoCliente.map((modelo) => {
               const isSelected = selectedModeloId === modelo.id;
               const totalHoras = modelo.atividades.reduce((acc, a) => acc + (parseInt(a.cargaHoraria?.replace(/\D/g, '') || '0', 10) || 0), 0);
               return (
@@ -4109,6 +4127,8 @@ const CronogramaView = ({
               );
             })}
           </div>
+            );
+          })()}
         </Card>
 
         {/* Modal para Criação/Edição do Modelo de Relatório */}
