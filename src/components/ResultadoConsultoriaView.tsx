@@ -696,14 +696,14 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
   const activeLogoSrc = logoChoice === 'sebrae' ? (customLogo || sebraeLogoBase64) : logoChoice === 'consultora' ? customConsultoraLogo : null;
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="space-y-6 max-w-7xl mx-auto pb-6">
       {/* Top Header & Selectors Bar - Fixados no Topo (Sticky) */}
-      <div className="sticky top-[var(--sticky-offset,72px)] z-20 bg-slate-50/95 backdrop-blur-md pt-2 pb-1 space-y-4 -mx-2 px-2 rounded-2xl border-b border-slate-200/80 shadow-xs transition-all">
+      <div className="sticky top-[var(--sticky-offset,72px)] z-20 bg-slate-50/95 backdrop-blur-md pb-2 space-y-2 -mx-2 px-2 rounded-b-2xl border-b border-slate-200/80 shadow-xs transition-all">
         {/* Top Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-200/60 pb-3 gap-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-200/60 pb-2 gap-3">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200">
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-semibold bg-sky-50 text-sky-700 border border-sky-200">
                 <Award size={13} className="text-sky-600" />
                 Módulo de Avaliação & Impacto
               </span>
@@ -711,11 +711,11 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                 Escala 0 a 10 Pontos
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-              <BarChart3 className="h-7 w-7 text-sky-600" />
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2 leading-tight">
+              <BarChart3 className="h-6 w-6 text-sky-600" />
               Análise do Resultado da Consultoria
             </h1>
-            <p className="mt-0.5 text-xs sm:text-sm text-slate-500 max-w-3xl">
+            <p className="mt-0.5 text-xs text-slate-500 max-w-3xl line-clamp-1">
               Avalie os problemas diagnosticados, a efetividade das soluções implementadas, o impacto real na gestão e a satisfação do cliente e com o consultor.
             </p>
           </div>
@@ -795,8 +795,8 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
         )}
 
         {/* Selectors Bar: Empresa & Diagnóstico */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white px-4 py-3 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Select Empresa */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
@@ -878,7 +878,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
 
           {/* Quick Diagnostic Metadata Banner */}
           {currentEmpresa && (
-            <div className="pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
+            <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
               <div className="flex items-center gap-4 flex-wrap">
                 <span className="font-semibold text-slate-900">
                   Razão Social: <span className="font-normal text-slate-600">{currentEmpresa.razaoSocial || currentEmpresa.nome}</span>
