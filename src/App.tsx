@@ -17518,7 +17518,7 @@ export default function App() {
         </div>
 
         {/* Abas e Painel de Filtros Fixados (Sticky) */}
-        <div className="sticky top-[72px] z-20 bg-slate-50/95 backdrop-blur-md pt-2 pb-1 mb-6 -mx-2 px-2 rounded-2xl transition-all">
+        <div className="sticky top-[var(--sticky-offset,72px)] z-20 bg-slate-50/95 backdrop-blur-md pt-2 pb-1 mb-6 -mx-2 px-2 rounded-2xl transition-all">
           <div className="flex border-b border-slate-200 mb-4 overflow-x-auto bg-white/60 p-1 rounded-xl">
             <button 
               onClick={() => setLibraryTab('problemas')}
@@ -18453,6 +18453,33 @@ export default function App() {
   }
 
 
+  /**
+   * Mede a barra superior e a barra de abas (fixas no topo) e grava as alturas em
+   * variáveis CSS no <main>, para que outras barras fixas fiquem logo abaixo delas.
+   */
+  const atualizarAlturasFixas = () => {
+    const main = document.getElementById('main-scroll');
+    if (!main) return;
+    const topo = main.querySelector<HTMLElement>('[data-fixo="topo"]');
+    const abas = main.querySelector<HTMLElement>('[data-fixo="abas"]');
+    const hTopo = topo ? Math.round(topo.getBoundingClientRect().height) : 0;
+    const hAbas = abas ? Math.round(abas.getBoundingClientRect().height) : 0;
+    main.style.setProperty('--topbar-h', `${hTopo}px`);
+    main.style.setProperty('--sticky-offset', `${hTopo + hAbas + (hAbas ? 8 : 0) || 72}px`);
+  };
+  const registrarBarraFixa = (el: HTMLElement | null) => {
+    if (!el) {
+      requestAnimationFrame(atualizarAlturasFixas);
+      return;
+    }
+    const marcado = el as HTMLElement & { __obsFixo?: ResizeObserver };
+    if (!marcado.__obsFixo && typeof ResizeObserver !== 'undefined') {
+      marcado.__obsFixo = new ResizeObserver(() => atualizarAlturasFixas());
+      marcado.__obsFixo.observe(el);
+    }
+    requestAnimationFrame(atualizarAlturasFixas);
+  };
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50 font-sans text-slate-900 print:bg-white print:overflow-visible print:block print:h-auto print:min-h-0">
         {/* Sidebar Overlay */}
@@ -18465,7 +18492,7 @@ export default function App() {
 
         <Sidebar />
 
-        <main className="flex-1 h-screen overflow-y-auto relative print:h-auto print:overflow-visible print:block print:static">
+        <main id="main-scroll" className="flex-1 h-screen overflow-y-auto relative print:h-auto print:overflow-visible print:block print:static">
           {/* Mobile Header */}
           <header className="lg:hidden sticky top-0 z-40 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between print:hidden">
             <div className="flex items-center gap-3">
@@ -18487,7 +18514,7 @@ export default function App() {
 
           <div className="max-w-7xl mx-auto p-6 lg:p-10 print:p-0 print:max-w-none">
             {/* Top Bar - Modo de Salvamento (Nuvem vs. Local) - Fixada no Topo (Sticky) */}
-            <div className="sticky top-0 z-30 bg-slate-50/95 backdrop-blur-md -mt-6 lg:-mt-10 pt-6 lg:pt-8 mb-6 pb-4 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-4 print:hidden transition-all shadow-xs">
+            <div ref={registrarBarraFixa} data-fixo="topo" className="sticky top-0 z-30 bg-slate-50/95 backdrop-blur-md -mt-6 lg:-mt-10 pt-6 lg:pt-8 mb-6 pb-4 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-4 print:hidden transition-all shadow-xs">
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-1.5 bg-slate-200/70 p-1 rounded-xl text-xs font-bold">
                   <button
@@ -18651,8 +18678,13 @@ export default function App() {
               if (!section) return null;
               const SectionIcon = section.icon;
               return (
-                <div className="mb-6 print:hidden">
-                  <div className="flex items-center gap-2 mb-3 px-1 text-xs font-black uppercase tracking-widest text-slate-400">
+                <div
+                  ref={registrarBarraFixa}
+                  data-fixo="abas"
+                  style={{ top: 'var(--topbar-h, 0px)' }}
+                  className="sticky z-[25] -mt-6 pt-3 pb-2 mb-6 -mx-2 px-2 bg-slate-50/95 backdrop-blur-md print:hidden print:static"
+                >
+                  <div className="flex items-center gap-2 mb-2 px-1 text-xs font-black uppercase tracking-widest text-slate-400">
                     <SectionIcon size={14} />
                     <span>{section.label}</span>
                   </div>
@@ -19112,7 +19144,7 @@ export default function App() {
                     return (
                       <>
                         {/* Cabeçalho e Painel de Filtros Fixados (Sticky) */}
-                        <div className="sticky top-[72px] z-20 bg-slate-50/95 backdrop-blur-md pt-2 pb-1 mb-6 -mx-2 px-2 rounded-2xl transition-all">
+                        <div className="sticky top-[var(--sticky-offset,72px)] z-20 bg-slate-50/95 backdrop-blur-md pt-2 pb-1 mb-6 -mx-2 px-2 rounded-2xl transition-all">
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
                             <div>
                               <h2 className="text-2xl font-bold">Empresas</h2>
