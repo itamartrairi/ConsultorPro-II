@@ -698,7 +698,7 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-6">
       {/* Top Header & Selectors Bar - Fixados no Topo (Sticky) */}
-      <div className="sticky top-[var(--sticky-offset,72px)] z-20 bg-slate-50/95 backdrop-blur-md pb-2 space-y-2 -mx-2 px-2 rounded-b-2xl border-b border-slate-200/80 shadow-xs transition-all">
+      <div className="sticky top-[var(--sticky-offset,72px)] z-20 bg-slate-50 pb-2 space-y-2 -mx-2 px-2 rounded-b-2xl border-b border-slate-200/80 shadow-xs transition-all">
         {/* Top Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between border-b border-slate-200/60 pb-2 gap-3">
           <div>

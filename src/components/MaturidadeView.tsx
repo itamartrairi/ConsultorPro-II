@@ -626,7 +626,7 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
   return (
     <div className="space-y-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       {/* Header and Company Selector Row - Fixado no Topo (Sticky) */}
-      <div className="sticky top-[var(--sticky-offset,72px)] z-20 bg-slate-50/95 backdrop-blur-md p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4 transition-all">
+      <div className="sticky top-[var(--sticky-offset,72px)] z-20 bg-slate-50 p-4 rounded-b-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4 transition-all">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
             <TrendingUp className="h-7 w-7 text-sky-600" />

@@ -955,7 +955,20 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
   return (
     <div className="space-y-8" id="projects-view-root">
       {/* Header and Tab Menu - Fixado no Topo (Sticky) */}
-      <div className="sticky top-[var(--sticky-offset,72px)] z-20 flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white/95 backdrop-blur-md p-5 rounded-3xl border border-slate-200/80 shadow-sm transition-all">
+      <div
+        ref={(el) => {
+          // Mede a altura desta barra fixa para a segunda barra fixa ficar logo abaixo (sem vão).
+          if (!el) return;
+          const raiz = document.getElementById('projects-view-root');
+          const medir = () => raiz?.style.setProperty('--proj-bar-h', `${Math.round(el.getBoundingClientRect().height)}px`);
+          const marcado = el as HTMLDivElement & { __obsProj?: ResizeObserver };
+          if (!marcado.__obsProj && typeof ResizeObserver !== 'undefined') {
+            marcado.__obsProj = new ResizeObserver(medir);
+            marcado.__obsProj.observe(el);
+          }
+          medir();
+        }}
+        className="sticky top-[var(--sticky-offset,72px)] z-20 flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white p-5 rounded-b-3xl border border-slate-200/80 shadow-sm transition-all">
         <div>
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
@@ -1057,7 +1070,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
       {activeTab === 'gantt' && (
         <div className="space-y-6">
           {/* Dynamic Filter Panel - Fixado no Topo (Sticky) */}
-          <div className="sticky top-[calc(var(--sticky-offset,72px)_+_76px)] z-10 bg-white/95 backdrop-blur-md p-4 rounded-3xl border border-slate-200/80 shadow-xs space-y-4 transition-all">
+          <div className="sticky top-[calc(var(--sticky-offset,72px)_+_var(--proj-bar-h,76px))] z-10 bg-white p-4 rounded-b-3xl border border-slate-200/80 shadow-xs space-y-4 transition-all">
             <div className="flex items-center justify-between pb-2 border-b border-slate-50">
               <div className="flex items-center gap-2">
                 <Sliders className="text-emerald-600 animate-pulse" size={16} />
@@ -1606,7 +1619,7 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
       {activeTab === 'list' && (
         <div className="space-y-6">
           {/* Dynamic Filter Panel - Fixado no Topo (Sticky) */}
-          <div className="sticky top-[calc(var(--sticky-offset,72px)_+_76px)] z-10 bg-white/95 backdrop-blur-md p-4 rounded-3xl border border-slate-200/80 shadow-xs space-y-4 transition-all">
+          <div className="sticky top-[calc(var(--sticky-offset,72px)_+_var(--proj-bar-h,76px))] z-10 bg-white p-4 rounded-b-3xl border border-slate-200/80 shadow-xs space-y-4 transition-all">
             <div className="flex items-center justify-between pb-2 border-b border-slate-50">
               <div className="flex items-center gap-2">
                 <Sliders className="text-emerald-600 animate-pulse" size={16} />
