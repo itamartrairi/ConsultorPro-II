@@ -624,15 +624,15 @@ export default function MaturidadeView({ empresas, setView }: MaturidadeViewProp
   const currentEmpresaName = empresas.find(e => e.id === selectedEmpresaId)?.nome || "Não selecionada";
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div className="space-y-6 max-w-7xl mx-auto pb-6">
       {/* Header and Company Selector Row - Fixado no Topo (Sticky) */}
-      <div className="sticky top-[var(--sticky-offset,72px)] z-20 bg-slate-50 p-4 rounded-b-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4 transition-all">
+      <div className="sticky top-[var(--sticky-offset,72px)] z-20 bg-slate-50 -mt-3 px-4 py-2.5 rounded-b-2xl border border-t-0 border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-3 transition-all print:static">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-            <TrendingUp className="h-7 w-7 text-sky-600" />
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2 leading-tight">
+            <TrendingUp className="h-6 w-6 text-sky-600" />
             Maturidade do Empresário
           </h1>
-          <p className="mt-0.5 text-xs sm:text-sm text-slate-500">
+          <p className="mt-0.5 text-xs text-slate-500 line-clamp-1">
             Avalie as 10 competências de gestão vitais e acompanhe a evolução conforme o plano de ação avança.
           </p>
         </div>
