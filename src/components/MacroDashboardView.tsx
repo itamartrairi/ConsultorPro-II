@@ -967,7 +967,7 @@ export const MacroDashboardView = ({
           }
           medir();
         }}
-        className="sticky top-[var(--sticky-offset,72px)] z-[21] bg-slate-50 -mt-3 pt-2 pb-3 -mx-2 px-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 print:static"
+        className="!mb-0 sticky top-[var(--sticky-offset,72px)] z-[21] bg-slate-50 -mt-3 pt-2 pb-3 -mx-2 px-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 print:static"
       >
         <div>
           <div className="flex items-center gap-2">
