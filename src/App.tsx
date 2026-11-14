@@ -37,6 +37,7 @@ import { EditDiagnosisDateModal } from './components/EditDiagnosisDateModal';
 import { CopySgfConsultoriaModal } from './components/CopySgfConsultoriaModal';
 import { AgendaView } from './components/AgendaView';
 import { MacroDashboardView } from './components/MacroDashboardView';
+import { SyncStatusPanel } from './components/SyncStatusPanel';
 import MaturidadeView from './components/MaturidadeView';
 import { ResultadoConsultoriaView } from './components/ResultadoConsultoriaView';
 import { RelatorioConsolidadoSgfView } from './components/RelatorioConsolidadoSgfView';
@@ -8358,7 +8359,11 @@ const SettingsView = ({
   onOpenSmartSync,
   isSyncingCloud,
   lastSyncSummary,
-  userEmail
+  userEmail,
+  onStartSync,
+  totalEmpresas,
+  totalDiagnosticos,
+  totalRespostas
 }: { 
   customLogo: string | null, 
   setCustomLogo: (logo: string | null) => void,
@@ -8372,7 +8377,11 @@ const SettingsView = ({
   onOpenSmartSync?: () => void,
   isSyncingCloud?: boolean,
   lastSyncSummary?: SyncSummary | null,
-  userEmail?: string | null
+  userEmail?: string | null,
+  onStartSync?: () => Promise<void>,
+  totalEmpresas?: number,
+  totalDiagnosticos?: number,
+  totalRespostas?: number
 }) => {
   const [dailyReminderEnabled, setDailyReminderEnabled] = React.useState(() => localStorage.getItem('daily_reminder_enabled') === 'true');
   const [dailyReminderTime, setDailyReminderTime] = React.useState(() => localStorage.getItem('daily_reminder_time') || '09:00');
@@ -8870,6 +8879,19 @@ const SettingsView = ({
             </Button>
           </div>
         </div>
+
+        {/* Transparência de Sincronização com Firestore (oculto até clicar em "Mostrar") */}
+        <SyncStatusPanel
+          lastSyncSummary={lastSyncSummary}
+          isSyncingCloud={isSyncingCloud}
+          onOpenSmartSync={onOpenSmartSync}
+          onStartSync={onStartSync}
+          userEmail={userEmail}
+          storageMode={storageMode}
+          totalEmpresas={totalEmpresas}
+          totalDiagnosticos={totalDiagnosticos}
+          totalRespostas={totalRespostas}
+        />
 
         <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200/80 flex flex-wrap items-center justify-between gap-4">
           <div className="space-y-1">
@@ -18956,6 +18978,10 @@ export default function App() {
                     isSyncingCloud={isSyncingCloud}
                     lastSyncSummary={lastSyncSummary}
                     userEmail={user?.email}
+                    onStartSync={performSmartCloudSync}
+                    totalEmpresas={empresas.length}
+                    totalDiagnosticos={diagnosticos.length}
+                    totalRespostas={respostas?.length || 0}
                   />
                 </motion.div>
               )}
