@@ -18467,8 +18467,11 @@ export default function App() {
     const abas = main.querySelector<HTMLElement>('[data-fixo="abas"]');
     const hTopo = topo ? Math.round(topo.getBoundingClientRect().height) : 0;
     const hAbas = abas ? Math.round(abas.getBoundingClientRect().height) : 0;
+    // Usa a margem real abaixo da barra de abas: assim a barra fixa de cada tela já começa
+    // na posição em que vai ficar presa e não "pula" ao rolar.
+    const mAbas = abas ? Math.round(parseFloat(getComputedStyle(abas).marginBottom) || 0) : 0;
     main.style.setProperty('--topbar-h', `${hTopo}px`);
-    main.style.setProperty('--sticky-offset', `${hTopo + hAbas + (hAbas ? 8 : 0) || 72}px`);
+    main.style.setProperty('--sticky-offset', `${hTopo + hAbas + mAbas || 72}px`);
   };
   const registrarBarraFixa = (el: HTMLElement | null) => {
     if (!el) {
@@ -18685,7 +18688,7 @@ export default function App() {
                   ref={registrarBarraFixa}
                   data-fixo="abas"
                   style={{ top: 'var(--topbar-h, 0px)' }}
-                  className="sticky z-[25] -mt-3 pt-2 pb-2 mb-6 -mx-2 px-2 bg-slate-50/95 backdrop-blur-md print:hidden print:static"
+                  className="sticky z-[25] -mt-3 pt-2 pb-2 mb-3 -mx-2 px-2 bg-slate-50/95 backdrop-blur-md print:hidden print:static"
                 >
                   <div className="flex items-center gap-2 mb-1.5 px-1 text-[11px] font-black uppercase tracking-widest text-slate-400">
                     <SectionIcon size={13} />
