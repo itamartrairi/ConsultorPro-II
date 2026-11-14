@@ -221,6 +221,8 @@ export const MacroDashboardView = ({
   const [clientFilter, setClientFilter] = useState('Todos');
   const matchesClient = (empresaId?: string) => clientFilter === 'Todos' || empresaId === clientFilter;
   const [isSyncLogExpanded, setIsSyncLogExpanded] = useState(false);
+  /** Painel de sincronização com o Firestore começa oculto; o botão "Mostrar" abre. */
+  const [mostrarPainelSync, setMostrarPainelSync] = useState(false);
   const [segmentoRelatorio, setSegmentoRelatorio] = useState('Todos');
   const tiposRelatorio = useMemo(() => tiposDeNegocio(empresas as any, diagnosticos as any), [empresas, diagnosticos]);
 
@@ -1082,6 +1084,7 @@ export const MacroDashboardView = ({
       )}
 
       {/* Detailed Firestore Cloud Sync Status Log */}
+      {mostrarPainelSync ? (
       <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden transition-all">
         {/* Subtle decorative background glow */}
         <div className="absolute -right-12 -top-12 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -1144,6 +1147,15 @@ export const MacroDashboardView = ({
               >
                 <span>{isSyncLogExpanded ? 'Ocultar Detalhes' : 'Ver Detalhes'}</span>
                 {isSyncLogExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMostrarPainelSync(false)}
+                className="flex items-center gap-1.5 px-3 py-2 bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/60 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                title="Ocultar o painel de sincronização"
+              >
+                <span>Ocultar Painel</span>
+                <ChevronUp size={14} />
               </button>
             </div>
           </div>
@@ -1328,6 +1340,20 @@ export const MacroDashboardView = ({
           </AnimatePresence>
         </div>
       </div>
+      ) : (
+        <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setMostrarPainelSync(true)}
+          className="flex items-center gap-1.5 px-3 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm"
+          title="Mostrar o painel de sincronização com o Firestore"
+        >
+          <Database size={14} className="text-emerald-400" />
+          <span>Mostrar Sincronização com Firestore</span>
+          <ChevronDown size={14} />
+        </button>
+      </div>
+      )}
 
       {diagnosticos.length === 0 ? (
         <div className="bg-white rounded-3xl border border-slate-100 p-16 text-center flex flex-col items-center justify-center shadow-sm">
