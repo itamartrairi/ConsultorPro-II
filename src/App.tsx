@@ -52,8 +52,10 @@ import {
   Award,
   FileText, 
   Building2, 
-  ChevronRight, 
-  CheckCircle2, 
+  ChevronRight,
+  Eye,
+  EyeOff,
+  CheckCircle2,
   CreditCard,
   XCircle, 
   AlertCircle, 
@@ -2119,6 +2121,16 @@ const CronogramaView = ({
   setView?: (v: string) => void
 }) => {
   const [selectedModeloId, setSelectedModeloId] = useState<string>('financas');
+  const [mostrarModelosRelatorio, setMostrarModelosRelatorio] = useState<boolean>(() => {
+    try { return localStorage.getItem('cp_mostrar_modelos_relatorio') === '1'; } catch { return false; }
+  });
+  const toggleModelosRelatorio = () => {
+    setMostrarModelosRelatorio(prev => {
+      const next = !prev;
+      try { localStorage.setItem('cp_mostrar_modelos_relatorio', next ? '1' : '0'); } catch { /* ignore */ }
+      return next;
+    });
+  };
   const [atividades, setAtividades] = useState<AtividadeCronograma[]>(() => {
     let rawList: AtividadeCronograma[] = [];
     if (selectedDiagnostico.cronograma && selectedDiagnostico.cronograma.length > 0 && selectedDiagnostico.cronograma.some(atv => atv.nome && atv.nome.trim() !== '')) {
@@ -3919,6 +3931,19 @@ const CronogramaView = ({
         </Card>
 
         {/* Modelos de Relatório de Consultoria Baseados no Diagnóstico */}
+        <div className="flex justify-end mb-3 print:hidden">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={toggleModelosRelatorio}
+            className="text-xs font-bold flex items-center gap-1.5"
+            title={mostrarModelosRelatorio ? 'Ocultar os modelos de relatório' : 'Mostrar os modelos de relatório'}
+          >
+            {mostrarModelosRelatorio ? <EyeOff size={14} /> : <Eye size={14} />}
+            {mostrarModelosRelatorio ? 'Ocultar Modelos de Relatório' : 'Mostrar Modelos de Relatório'}
+          </Button>
+        </div>
+        {mostrarModelosRelatorio && (
         <Card className="p-6 mb-8 border-slate-800 shadow-md bg-slate-900 text-white">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
             <div className="flex items-center gap-3">
@@ -4131,6 +4156,7 @@ const CronogramaView = ({
             );
           })()}
         </Card>
+        )}
 
         {/* Modal para Criação/Edição do Modelo de Relatório */}
         {editingModelo && (
