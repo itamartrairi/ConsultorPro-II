@@ -954,25 +954,38 @@ export const MacroDashboardView = ({
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* Title Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      {/* Title Header - Fixado no Topo (Sticky, fundo sólido) */}
+      <div
+        ref={(el) => {
+          // Mede a altura do cabeçalho para a barra de filtros ficar logo abaixo (sem vão).
+          if (!el) return;
+          const medir = () => el.parentElement?.style.setProperty('--macro-head-h', `${Math.round(el.getBoundingClientRect().height)}px`);
+          const marcado = el as HTMLDivElement & { __obsMacro?: ResizeObserver };
+          if (!marcado.__obsMacro && typeof ResizeObserver !== 'undefined') {
+            marcado.__obsMacro = new ResizeObserver(medir);
+            marcado.__obsMacro.observe(el);
+          }
+          medir();
+        }}
+        className="sticky top-[var(--sticky-offset,72px)] z-[21] bg-slate-50 -mt-3 pt-2 pb-3 -mx-2 px-2 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 print:static"
+      >
         <div>
           <div className="flex items-center gap-2">
-            <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border border-emerald-100">Macro</span>
+            <span className="bg-emerald-50 text-emerald-700 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider border border-emerald-100">Macro</span>
             <span className="text-slate-400 text-xs font-mono">• Últimos 12 Meses</span>
           </div>
-          <h2 className="text-3xl font-black tracking-tight text-slate-800 mt-1">Evolução Histórica da Maturidade</h2>
-          <p className="text-slate-500 text-sm mt-0.5 font-sans">Estatísticas, análises comparativas e linha do tempo de desempenho da carteira de clientes</p>
+          <h2 className="text-2xl font-black tracking-tight text-slate-800 mt-0.5 leading-tight">Evolução Histórica da Maturidade</h2>
+          <p className="text-slate-500 text-xs mt-0.5 font-sans line-clamp-1">Estatísticas, análises comparativas e linha do tempo de desempenho da carteira de clientes</p>
         </div>
         
         {/* Navigation & Export Action Header */}
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
           {onGerarRelatorioSegmentos && (
             <button
               onClick={() => { if (!gerandoRelatorioSegmentos) onGerarRelatorioSegmentos(sectorFilter); }}
               disabled={gerandoRelatorioSegmentos}
               title="Resumo do diagnóstico de todos os clientes, agrupado por tipo de negócio (PDF)"
-              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer disabled:opacity-60 disabled:cursor-wait"
             >
               {gerandoRelatorioSegmentos ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
               <span>{gerandoRelatorioSegmentos ? 'Gerando relatório...' : 'Relatório por Tipo de Negócio'}</span>
@@ -982,7 +995,7 @@ export const MacroDashboardView = ({
             <button
               onClick={onOpenRelatorioConsolidadoSgf}
               title="Abrir Relatório Consolidado SGF & Áreas com filtros, tabelas e gráficos comparativos"
-              className="flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer"
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer"
             >
               <Layers size={16} />
               <span>Relatório SGF & Áreas</span>
@@ -991,7 +1004,7 @@ export const MacroDashboardView = ({
           <button
             onClick={exportPortfolioData}
             disabled={clientSummary.length === 0}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <FileSpreadsheet size={16} className="text-emerald-600" />
             <span>Exportar CSV</span>
@@ -1032,7 +1045,7 @@ export const MacroDashboardView = ({
       {diagnosticos.length > 0 && (
         <>
           {/* Filters & Control bar - Fixado no Topo (Sticky) */}
-          <div className="sticky top-[var(--sticky-offset,72px)] z-20 bg-slate-50 rounded-b-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row gap-4 items-center justify-between transition-all">
+          <div className="!mt-0 sticky top-[calc(var(--sticky-offset,72px)_+_var(--macro-head-h,0px))] z-20 bg-slate-50 rounded-b-2xl px-4 py-3 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row gap-4 items-center justify-between transition-all">
             <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
               <div className="relative flex-grow sm:flex-grow-0 sm:w-64">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
