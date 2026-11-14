@@ -384,20 +384,22 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
 
   return (
     <div className="space-y-6 pb-16">
+      {/* Cabeçalho e filtros fixos no topo (sticky, fundo sólido) */}
+      <div className="sticky top-[var(--sticky-offset,72px)] z-20 bg-slate-50 -mx-2 px-2 pb-3 space-y-3 print:static">
       {/* Cabeçalho da Página */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm">
+      <div className="bg-white rounded-2xl border border-slate-200/80 px-5 py-3 shadow-sm">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="flex items-center gap-2 mb-0.5">
               <span className="bg-emerald-100 text-emerald-800 text-xs font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                 Módulo Gerencial
               </span>
               <span className="text-slate-400 text-xs font-medium">Relatório Consolidado SGF</span>
             </div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <h1 className="text-xl md:text-2xl font-extrabold text-slate-900 tracking-tight leading-tight">
               Diagnósticos por Tipo de Negócio, SGF e Áreas
             </h1>
-            <p className="text-slate-500 text-sm mt-1 max-w-3xl">
+            <p className="text-slate-500 text-xs mt-0.5 max-w-3xl line-clamp-1">
               Concatenação analítica dos diagnósticos por segmento, contrato SGF e área diagnosticada, com tabela comparativa de clientes, perguntas, respostas, pontos fortes e pontos críticos.
             </p>
           </div>
@@ -407,7 +409,7 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
             <button
               onClick={carregarTabelasDoSistema}
               disabled={carregandoTabelas}
-              className="flex items-center justify-center gap-1.5 px-3 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition-all cursor-pointer disabled:opacity-50"
+              className="flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition-all cursor-pointer disabled:opacity-50"
               title="Recarregar dados das tabelas do sistema"
             >
               <RefreshCw size={14} className={carregandoTabelas ? "animate-spin text-emerald-600" : "text-slate-600"} />
@@ -417,7 +419,7 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
             <button
               onClick={handleExportarCsv}
               disabled={dadosConsolidados.totalItens === 0}
-              className="flex items-center justify-center gap-2 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition-all cursor-pointer disabled:opacity-50"
+              className="flex items-center justify-center gap-2 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs transition-all cursor-pointer disabled:opacity-50"
               title="Exportar planilha CSV dos dados filtrados"
             >
               <FileSpreadsheet size={15} className="text-slate-600" />
@@ -427,7 +429,7 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
             <button
               onClick={handleGerarPdf}
               disabled={gerandoPdf || dadosConsolidados.totalItens === 0}
-              className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-md shadow-emerald-200 transition-all cursor-pointer disabled:opacity-60"
+              className="flex-1 md:flex-initial flex items-center justify-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-md shadow-emerald-200 transition-all cursor-pointer disabled:opacity-60"
             >
               <FileText size={16} />
               <span>{gerandoPdf ? 'Gerando PDF...' : 'Gerar Relatório PDF'}</span>
@@ -436,7 +438,7 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
         </div>
 
         {/* Status de Conexão com as Tabelas */}
-        <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div className="mt-2 pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-2 text-slate-600">
             <Database size={14} className="text-emerald-600" />
             <span className="font-semibold">Tabelas conectadas:</span>
@@ -460,8 +462,8 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
       </div>
 
       {/* Barra de Filtros Avançados */}
-      <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm">
-        <div className="flex items-center justify-between gap-2 mb-3 pb-2 border-b border-slate-100">
+      <div className="bg-white rounded-2xl border border-slate-200/80 px-5 py-3 shadow-sm">
+        <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-slate-100">
           <div className="flex items-center gap-2 text-slate-700 font-bold text-sm">
             <Filter size={16} className="text-emerald-600" />
             <span>Filtros do Relatório</span>
@@ -589,6 +591,7 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       {/* Cartões de Indicadores (KPIs) */}
