@@ -17400,10 +17400,12 @@ export default function App() {
 
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        {/* Cabeçalho, abas e filtros fixos no topo */}
+        <div className="sticky top-[var(--sticky-offset,72px)] z-20 bg-slate-50/95 backdrop-blur-md -mt-3 pt-2 pb-2 -mx-2 px-2 transition-all">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <div>
-            <h1 className="text-3xl font-black text-slate-800 tracking-tight">Biblioteca de Conhecimento</h1>
-            <p className="text-slate-500 font-medium">Gestão de Problemas e Perguntas</p>
+            <h1 className="text-2xl font-black leading-tight text-slate-800 tracking-tight">Biblioteca de Conhecimento</h1>
+            <p className="text-sm text-slate-500 font-medium">Gestão de Problemas e Perguntas</p>
           </div>
           <div className="flex gap-2 flex-wrap">
             <input 
@@ -17413,18 +17415,18 @@ export default function App() {
               accept=".xlsx, .xls"
               onChange={handleImportExcel}
             />
-            <Button variant="outline" onClick={downloadTemplate} title="Baixar modelo Excel">
+            <Button size="sm" variant="outline" onClick={downloadTemplate} title="Baixar modelo Excel">
               <Download size={18} /> Modelo
             </Button>
-            <Button variant="outline" onClick={baixarDadosFiltrados} title="Baixar os dados da biblioteca conforme os filtros de área, tipo de negócio e tag">
+            <Button size="sm" variant="outline" onClick={baixarDadosFiltrados} title="Baixar os dados da biblioteca conforme os filtros de área, tipo de negócio e tag">
               <Download size={18} /> Baixar Dados
             </Button>
-            <Button variant="outline" onClick={() => document.getElementById('excel-import')?.click()}>
+            <Button size="sm" variant="outline" onClick={() => document.getElementById('excel-import')?.click()}>
               <Upload size={18} /> Importar Excel
             </Button>
             <div className="flex gap-2 flex-wrap items-center">
               {(problemas.length > 0 || premissas.length > 0 || solucoes.length > 0) && (
-                <Button 
+                <Button size="sm" 
                   variant="outline" 
                   className="text-rose-700 bg-rose-50/50 border-rose-200 hover:bg-rose-100 hover:border-rose-300 transition-colors" 
                   onClick={() => {
@@ -17438,7 +17440,7 @@ export default function App() {
               )}
               {libraryTab === 'problemas' ? (
                 <>
-                  <Button
+                  <Button size="sm"
                     variant="outline"
                     className="text-rose-600 border-rose-100 hover:bg-rose-50"
                     title="Exclui os problemas, perguntas e soluções do Tipo de Empresa e da Área selecionados nos filtros"
@@ -17454,7 +17456,7 @@ export default function App() {
                   >
                     <Trash2 size={18} /> Excluir Problemas
                   </Button>
-                  <Button onClick={() => {
+                  <Button size="sm" onClick={() => {
                     setModalType('createProblema');
                     setProblemaForm({ descricao_problemas: '', area: '', impacto: '', tipoEmpresa: '', tags: [] });
                     setIsModalOpen(true);
@@ -17464,13 +17466,13 @@ export default function App() {
                 </>
                 ) : libraryTab === 'premissas' ? (
                   <>
-                    <Button variant="outline" className="text-rose-600 border-rose-100 hover:bg-rose-50" onClick={() => {
+                    <Button size="sm" variant="outline" className="text-rose-600 border-rose-100 hover:bg-rose-50" onClick={() => {
                       setModalType('deleteAllPremissas');
                       setIsModalOpen(true);
                     }}>
                       <Trash2 size={18} /> Excluir Perguntas
                     </Button>
-                    <Button onClick={() => {
+                    <Button size="sm" onClick={() => {
                       setModalType('createPremissa');
                       setPremissaForm({ idProblema: '', problema: '', pergunta: '', peso: 1, tipoEmpresa: '' });
                       setSelectedAreaFilter('');
@@ -17481,13 +17483,13 @@ export default function App() {
                   </>
                 ) : libraryTab === 'solucoes' ? (
                   <>
-                    <Button variant="outline" className="text-rose-600 border-rose-100 hover:bg-rose-50" onClick={() => {
+                    <Button size="sm" variant="outline" className="text-rose-600 border-rose-100 hover:bg-rose-50" onClick={() => {
                       setModalType('deleteAllSolucoes');
                       setIsModalOpen(true);
                     }}>
                       <Trash2 size={18} /> Excluir Soluções
                     </Button>
-                    <Button onClick={() => {
+                    <Button size="sm" onClick={() => {
                       setModalType('createSolucao');
                       setSolucaoForm({ idProblema: '', problema: '', area: '', solucao_recomendada: '', acoes_sugeridas: '', prazo_sugerido: '', responsavel_sugerido: '', kpis_sugeridos: '', resultado_esperado: '', comentario_sucesso: '', tipoEmpresa: '', tags: [] });
                       setSelectedAreaFilter('');
@@ -17497,7 +17499,7 @@ export default function App() {
                     </Button>
                   </>
                 ) : libraryTab === 'areas' ? (
-                  <Button onClick={() => {
+                  <Button size="sm" onClick={() => {
                     setNewAreaInput('');
                     setModalType('createArea');
                     setIsModalOpen(true);
@@ -17505,7 +17507,7 @@ export default function App() {
                     <Plus size={18} /> Nova Área
                   </Button>
                 ) : (
-                  <Button onClick={() => {
+                  <Button size="sm" onClick={() => {
                     setNewSegmentInput('');
                     setModalType('createSegmento');
                     setIsModalOpen(true);
@@ -17518,12 +17520,12 @@ export default function App() {
         </div>
 
         {/* Abas e Painel de Filtros Fixados (Sticky) */}
-        <div className="sticky top-[var(--sticky-offset,72px)] z-20 bg-slate-50/95 backdrop-blur-md pt-2 pb-1 mb-6 -mx-2 px-2 rounded-2xl transition-all">
-          <div className="flex border-b border-slate-200 mb-4 overflow-x-auto bg-white/60 p-1 rounded-xl">
+        <div >
+          <div className="flex border-b border-slate-200 mb-2 overflow-x-auto bg-white/60 p-1 rounded-xl">
             <button 
               onClick={() => setLibraryTab('problemas')}
               className={cn(
-                "px-6 py-2.5 font-bold text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer",
+                "px-5 py-2 font-bold text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer",
                 libraryTab === 'problemas' ? "border-emerald-600 text-emerald-600 bg-emerald-50/40 rounded-t-lg" : "border-transparent text-slate-400 hover:text-slate-600"
               )}
             >
@@ -17532,7 +17534,7 @@ export default function App() {
             <button 
               onClick={() => setLibraryTab('premissas')}
               className={cn(
-                "px-6 py-2.5 font-bold text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer",
+                "px-5 py-2 font-bold text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer",
                 libraryTab === 'premissas' ? "border-emerald-600 text-emerald-600 bg-emerald-50/40 rounded-t-lg" : "border-transparent text-slate-400 hover:text-slate-600"
               )}
             >
@@ -17541,7 +17543,7 @@ export default function App() {
             <button 
               onClick={() => setLibraryTab('solucoes')}
               className={cn(
-                "px-6 py-2.5 font-bold text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer",
+                "px-5 py-2 font-bold text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer",
                 libraryTab === 'solucoes' ? "border-emerald-600 text-emerald-600 bg-emerald-50/40 rounded-t-lg" : "border-transparent text-slate-400 hover:text-slate-600"
               )}
             >
@@ -17550,7 +17552,7 @@ export default function App() {
             <button 
               onClick={() => setLibraryTab('areas')}
               className={cn(
-                "px-6 py-2.5 font-bold text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer",
+                "px-5 py-2 font-bold text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer",
                 libraryTab === 'areas' ? "border-emerald-600 text-emerald-600 bg-emerald-50/40 rounded-t-lg" : "border-transparent text-slate-400 hover:text-slate-600"
               )}
             >
@@ -17559,7 +17561,7 @@ export default function App() {
             <button 
               onClick={() => setLibraryTab('segmentos')}
               className={cn(
-                "px-6 py-2.5 font-bold text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer",
+                "px-5 py-2 font-bold text-sm transition-all border-b-2 whitespace-nowrap cursor-pointer",
                 libraryTab === 'segmentos' ? "border-emerald-600 text-emerald-600 bg-emerald-50/40 rounded-t-lg" : "border-transparent text-slate-400 hover:text-slate-600"
               )}
             >
@@ -17568,10 +17570,10 @@ export default function App() {
           </div>
 
           {libraryTab !== 'areas' && libraryTab !== 'segmentos' && (
-            <div id="library-filter-panel" className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm space-y-3 mb-2">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div id="library-filter-panel" className="bg-white px-4 py-3 rounded-2xl border border-slate-200/80 shadow-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Filtrar por Área</label>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Filtrar por Área</label>
                   <select 
                     className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-slate-800 transition-colors"
                     value={selectedAreaFilter}
@@ -17582,7 +17584,7 @@ export default function App() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5">Filtrar por Tipo de Empresa</label>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Filtrar por Tipo de Empresa</label>
                   <select 
                     className="w-full px-3.5 py-2 text-sm rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white text-slate-800 transition-colors"
                     value={selectedTipoEmpresaFilter}
@@ -17598,6 +17600,7 @@ export default function App() {
               </div>
             </div>
           )}
+        </div>
         </div>
 
         {libraryTab === 'problemas' ? (
