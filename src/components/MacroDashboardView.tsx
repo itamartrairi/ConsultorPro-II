@@ -1030,7 +1030,7 @@ export const MacroDashboardView = ({
       {diagnosticos.length > 0 && (
         <>
           {/* Filters & Control bar - Fixado no Topo (Sticky) */}
-          <div className="sticky top-[72px] z-20 bg-slate-50/95 backdrop-blur-md rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row gap-4 items-center justify-between transition-all">
+          <div className="sticky top-[var(--sticky-offset,72px)] z-20 bg-slate-50/95 backdrop-blur-md rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row gap-4 items-center justify-between transition-all">
             <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
               <div className="relative flex-grow sm:flex-grow-0 sm:w-64">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
