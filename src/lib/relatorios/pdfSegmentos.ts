@@ -70,7 +70,7 @@ function acoesPosConsultoria(s: ResumoSegmento, area: string): string[] {
 
 export function gerarPdfDevolutivaCliente(
   historico: [ResumoCliente, ...ResumoCliente[]] | ResumoCliente[],
-  { logo }: { logo?: string | null } = {}
+  { logo, consultor }: { logo?: string | null; consultor?: string | null } = {}
 ): jsPDF {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const margin = 16;
@@ -108,6 +108,8 @@ export function gerarPdfDevolutivaCliente(
   }
   escrever('Devolutiva da consultoria', 21, true);
   escrever(historico[0].cliente, 14, true);
+  const nomeConsultor = (consultor || '').trim();
+  if (nomeConsultor) escrever('Consultor(a): ' + nomeConsultor, 11);
   escrever('Resultados dos diagnósticos', 14, true);
 
   historico.forEach((diagnostico) => {
@@ -178,6 +180,25 @@ export function gerarPdfDevolutivaCliente(
   }
   escrever('Condição para alcançar os resultados', 13, true);
   escrever('Todos os resultados esperados da consultoria só poderão ser alcançados se o cliente colocar em prática as soluções sugeridas.', 11, true);
+
+  if (nomeConsultor) {
+    reservar(30);
+    y += 14;
+    const centro = 105;
+    doc.setDrawColor(148, 163, 184);
+    doc.line(centro - 40, y, centro + 40, y);
+    y += 5;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(15, 23, 42);
+    doc.text(nomeConsultor, centro, y, { align: 'center' });
+    y += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(...CINZA);
+    doc.text('Consultor(a) responsável', centro, y, { align: 'center' });
+    y += 6;
+  }
   return doc;
 }
 
