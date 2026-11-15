@@ -10336,7 +10336,12 @@ export default function App() {
   const isSubmittingCredenciadaRef = useRef(false);
   const [calculatingMaturity, setCalculatingMaturity] = useState(false);
   const [generatingPlan, setGeneratingPlan] = useState(false);
-  const [view, setViewInternal] = useState<'home' | 'companies' | 'credenciadas' | 'licenses' | 'diagnosis' | 'dashboard' | 'premises' | 'cronograma' | 'relatorio' | 'kanban' | 'settings' | 'landing' | 'checkout' | 'licensing' | 'dados-consultoria' | 'agenda' | 'macro-dashboard' | 'maturity-assessment' | 'projects' | 'plan' | 'resultado-consultoria' | 'relatorio-consolidado-sgf' | 'help' | 'modelos-relatorio'>('landing');
+  const [view, setViewInternal] = useState<'home' | 'companies' | 'credenciadas' | 'licenses' | 'diagnosis' | 'dashboard' | 'premises' | 'cronograma' | 'relatorio' | 'kanban' | 'settings' | 'landing' | 'checkout' | 'licensing' | 'dados-consultoria' | 'agenda' | 'central-relatorios' | 'macro-dashboard' | 'maturity-assessment' | 'projects' | 'plan' | 'resultado-consultoria' | 'relatorio-consolidado-sgf' | 'help' | 'modelos-relatorio'>('landing');
+  const [clienteRelatorios, setClienteRelatorios] = useState('');
+  const [atividadeRelatorios, setAtividadeRelatorios] = useState('');
+  const [diagnosticoRelatorios, setDiagnosticoRelatorios] = useState('');
+  const [mostrarSgfRelatorios, setMostrarSgfRelatorios] = useState(false);
+
   const setView = (v: any) => {
     if (pendingResponsesBuffer.current.size > 0 && flushPendingResponsesRef.current) {
       try {
@@ -13247,6 +13252,12 @@ export default function App() {
             onClick={() => { setView('macro-dashboard'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }}
           />
           <NavItem
+            icon={FileText}
+            label="Relatórios"
+            active={view === 'central-relatorios'}
+            onClick={() => setView('central-relatorios')}
+          />
+          <NavItem
             icon={Gauge}
             label="Maturidade Empresarial"
             active={view === 'maturity-assessment'}
@@ -15171,7 +15182,7 @@ export default function App() {
    * Relatório "Resumo dos Diagnósticos por Tipo de Negócio": todos os clientes, agrupados por
    * segmento, com a mesma classificação de criticidade dos relatórios individuais.
    */
-  const gerarRelatorioSegmentos = async (tipoDeNegocio?: string, empresaId?: string) => {
+  const gerarRelatorioSegmentos = async (tipoDeNegocio?: string, empresaId?: string, recorte?: Diagnostico[]) => {
     setGerandoRelatorioSegmentos(true);
     try {
       // Respostas de TODOS os diagnósticos: cópia local + nuvem (a nuvem prevalece)
@@ -15193,7 +15204,7 @@ export default function App() {
           alert('Cliente não encontrado.');
           return;
         }
-        const historico = diagnosticos
+        const historico = (recorte ?? diagnosticos)
           .filter((item) => item.empresaId === empresaId)
           .flatMap((diagnostico) => montarRelatorioSegmentos({
             empresas: [empresa],
@@ -15212,9 +15223,10 @@ export default function App() {
         playSuccessSound();
         return;
       }
+      const idsEmpresas = recorte ? new Set(recorte.map((item) => item.empresaId)) : null;
       const rel = montarRelatorioSegmentos({
-        empresas,
-        diagnosticos,
+        empresas: idsEmpresas ? empresas.filter((item) => idsEmpresas.has(item.id)) : empresas,
+        diagnosticos: recorte ?? diagnosticos,
         respostas: Array.from(mapa.values()),
         problemas,
         solucoes,
@@ -18887,10 +18899,6 @@ export default function App() {
                     onStartSync={performSmartCloudSync}
                     userEmail={user?.email}
                     storageMode={storageMode}
-                    onGerarRelatorioSegmentos={gerarRelatorioSegmentos}
-                    onGerarDevolutivaCliente={(empresaId) => gerarRelatorioSegmentos(undefined, empresaId)}
-                    gerandoRelatorioSegmentos={gerandoRelatorioSegmentos}
-                    onOpenRelatorioConsolidadoSgf={() => setView('relatorio-consolidado-sgf')}
                     onNavigateToDiagnosis={(diag) => {
                       setSelectedDiagnostico(diag);
                       const emp = empresas.find(e => e.id === diag.empresaId);
@@ -18922,6 +18930,82 @@ export default function App() {
                   />
                 </motion.div>
               )}
+              {view === 'central-relatorios' && (() => {
+                const base = diagnosticos.filter((item) => !clienteRelatorios || item.empresaId === clienteRelatorios);
+                const nomesAtividades = [...new Set(base.flatMap((item) =>
+                  (item.cronograma ?? []).map((atividade) => atividade.nome?.trim()).filter(Boolean)
+                ))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+                const filtrados = base.filter((item) => !atividadeRelatorios ||
+                  item.cronograma?.some((atividade) => atividade.nome?.trim() === atividadeRelatorios));
+                const recorte = clienteRelatorios || atividadeRelatorios ? filtrados : undefined;
+                const atendimento = filtrados.find((item) => item.id === diagnosticoRelatorios)
+                  ?? (filtrados.length === 1 ? filtrados[0] : undefined);
+                const abrirAtendimento = (destino: 'cronograma' | 'relatorio' | 'resultado-consultoria') => {
+                  if (!atendimento) return;
+                  setSelectedEmpresa(empresas.find((empresa) => empresa.id === atendimento.empresaId) ?? null);
+                  setSelectedDiagnostico(atendimento);
+                  setView(destino);
+                };
+                const filtroClass = 'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm';
+                const botaoClass = 'rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50';
+                return (
+                  <section className="space-y-5" key="central-relatorios">
+                    <h1 className="text-2xl font-bold text-slate-900">Relatórios</h1>
+                    <div className="grid gap-4 rounded-xl border bg-white p-4 md:grid-cols-3">
+                      <label className="space-y-1 text-sm font-semibold">Cliente
+                        <select className={filtroClass} value={clienteRelatorios} onChange={(e) => {
+                          setClienteRelatorios(e.target.value);
+                          setAtividadeRelatorios('');
+                          setDiagnosticoRelatorios('');
+                        }}>
+                          <option value="">Todos os clientes</option>
+                          {empresas.map((empresa) => <option key={empresa.id} value={empresa.id}>{empresa.nomeFantasia || empresa.nome}</option>)}
+                        </select>
+                      </label>
+                      <label className="space-y-1 text-sm font-semibold">Atividade
+                        <select className={filtroClass} value={atividadeRelatorios} onChange={(e) => {
+                          setAtividadeRelatorios(e.target.value);
+                          setDiagnosticoRelatorios('');
+                        }}>
+                          <option value="">Todas as atividades</option>
+                          {nomesAtividades.map((nome) => <option key={nome}>{nome}</option>)}
+                        </select>
+                      </label>
+                      <label className="space-y-1 text-sm font-semibold">Atendimento
+                        <select className={filtroClass} value={atendimento?.id ?? ''} onChange={(e) => setDiagnosticoRelatorios(e.target.value)}>
+                          <option value="">Selecione o atendimento</option>
+                          {filtrados.map((item) => <option key={item.id} value={item.id}>
+                            {[empresas.find((empresa) => empresa.id === item.empresaId)?.nome, item.nomeProjeto || item.nome || item.tipoEmpresa, formatFirestoreDate(item.dataDiagnostico, 'dd/MM/yyyy')].filter(Boolean).join(' · ')}
+                          </option>)}
+                        </select>
+                      </label>
+                    </div>
+                    {filtrados.length === 0 && <p role="status">Nenhum atendimento encontrado com os filtros selecionados.</p>}
+                    <div className="flex flex-wrap gap-2 rounded-xl border bg-white p-4">
+                      <button type="button" className={botaoClass} disabled={gerandoRelatorioSegmentos || filtrados.length === 0} onClick={() => gerarRelatorioSegmentos(undefined, undefined, recorte)}>Relatório por Tipo de Negócio</button>
+                      <button type="button" className={botaoClass} disabled={gerandoRelatorioSegmentos || !clienteRelatorios || filtrados.length === 0} onClick={() => gerarRelatorioSegmentos(undefined, clienteRelatorios, recorte)}>Devolutiva do cliente (PDF)</button>
+                      <button type="button" className={botaoClass} disabled={filtrados.length === 0} onClick={() => setMostrarSgfRelatorios((aberto) => !aberto)}>Relatório SGF & Áreas</button>
+                      <button type="button" className={botaoClass} disabled={!atendimento} onClick={() => abrirAtendimento('cronograma')}>Relatório de Consultoria</button>
+                      <button type="button" className={botaoClass} disabled={!atendimento} onClick={() => abrirAtendimento('relatorio')}>Relatório do Diagnóstico</button>
+                      <button type="button" className={botaoClass} disabled={!atendimento} onClick={() => abrirAtendimento('resultado-consultoria')}>Resultado da Consultoria</button>
+                    </div>
+                    {mostrarSgfRelatorios && filtrados.length > 0 && (
+                      <RelatorioConsolidadoSgfView
+                        empresas={clienteRelatorios ? empresas.filter((empresa) => empresa.id === clienteRelatorios) : empresas}
+                        diagnosticos={filtrados}
+                        respostas={respostas}
+                        premissas={premissas}
+                        problemas={problemas}
+                        user={user}
+                        customLogo={customLogo}
+                        customConsultoraLogo={customConsultoraLogo}
+                        logoChoice={logoChoice}
+                        setPdfUrl={setPdfUrl}
+                      />
+                    )}
+                  </section>
+                );
+              })()}
               {view === 'resultado-consultoria' && (
                 <motion.div 
                   key="resultado-consultoria"
