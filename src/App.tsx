@@ -3048,11 +3048,28 @@ const CronogramaView = ({
     playSuccessSound();
   };
 
-  // Programação Parcial/Final: 1ª metade das atividades no Relatório Parcial e 2ª metade no Final,
-  // ou todas no Final. Com número ímpar, a atividade do meio fica no Parcial.
+  // Programação Parcial/Final pela CARGA HORÁRIA: as atividades (na ordem) que somam a 1ª metade
+  // das horas vão para o Relatório Parcial e as da 2ª metade para o Final — ou todas no Final.
+  // Uma atividade fica no Parcial quando o "meio" dela cai até a metade da carga horária total;
+  // assim a divisão fica o mais perto possível de 50% das horas. Sem horas lançadas, divide pela quantidade.
   const divisaoRelatorio: 'metade' | 'tudoFinal' = dadosConsultoria.divisaoRelatorio || 'metade';
-  const etapaDaAtividade = (idx: number, total: number, div: 'metade' | 'tudoFinal' = divisaoRelatorio): 'Parcial' | 'Final' =>
-    div === 'tudoFinal' ? 'Final' : (idx < Math.ceil(total / 2) ? 'Parcial' : 'Final');
+  const horasDaAtividade = (a?: AtividadeCronograma) => parseInt((a?.cargaHoraria || '0').toString().replace(/\D/g, '')) || 0;
+  const etapasAtividades: ('Parcial' | 'Final')[] = (() => {
+    if (divisaoRelatorio === 'tudoFinal') return atividades.map(() => 'Final' as const);
+    const totalHoras = atividades.reduce((acc, a) => acc + horasDaAtividade(a), 0);
+    if (totalHoras <= 0) {
+      const metade = Math.ceil(atividades.length / 2);
+      return atividades.map((_, i) => (i < metade ? 'Parcial' : 'Final'));
+    }
+    let acumulado = 0;
+    return atividades.map(a => {
+      const h = horasDaAtividade(a);
+      const etapa = (acumulado + h / 2) <= totalHoras / 2 ? 'Parcial' : 'Final';
+      acumulado += h;
+      return etapa;
+    });
+  })();
+  const etapaDaAtividade = (idx: number, _total?: number): 'Parcial' | 'Final' => etapasAtividades[idx] || 'Final';
   const definirDivisaoRelatorio = (div: 'metade' | 'tudoFinal') => {
     setDadosConsultoria(prev => ({ ...prev, divisaoRelatorio: div, ...(div === 'tudoFinal' ? { tipoRelatorio: 'Final' as const } : {}) }));
   };
@@ -3691,10 +3708,11 @@ const CronogramaView = ({
               const total = atividades.length;
               const conta = (etapa: 'Parcial' | 'Final' | 'Total') => atividades.filter((a, i) => isAtividadeConcluida(a.status) && (etapa === 'Total' || etapaDaAtividade(i, total) === etapa)).length;
               const programadas = (etapa: 'Parcial' | 'Final') => atividades.filter((_, i) => etapaDaAtividade(i, total) === etapa).length;
+              const horasImpressas = (etapa: 'Parcial' | 'Final' | 'Total') => atividades.reduce((acc, a, i) => acc + (isAtividadeConcluida(a.status) && (etapa === 'Total' || etapaDaAtividade(i, total) === etapa) ? horasDaAtividade(a) : 0), 0);
               const opcoes: { escopo: 'Parcial' | 'Final' | 'Total'; titulo: string; detalhe: string; cor: string; desativado?: boolean }[] = [
-                { escopo: 'Parcial', titulo: 'Imprimir Relatório Parcial', detalhe: divisaoRelatorio === 'tudoFinal' ? 'Esta consultoria está com todas as atividades no Final' : `${conta('Parcial')} de ${programadas('Parcial')} atividades programadas (concluídas)`, cor: 'text-amber-700', desativado: divisaoRelatorio === 'tudoFinal' },
-                { escopo: 'Final', titulo: 'Imprimir Relatório Final', detalhe: `${conta('Final')} de ${programadas('Final')} atividades programadas (concluídas)`, cor: 'text-emerald-700' },
-                { escopo: 'Total', titulo: 'Imprimir Relatório Total', detalhe: `Todas as atividades: ${conta('Total')} de ${total} (concluídas)`, cor: 'text-indigo-700' },
+                { escopo: 'Parcial', titulo: 'Imprimir Relatório Parcial', detalhe: divisaoRelatorio === 'tudoFinal' ? 'Esta consultoria está com todas as atividades no Final' : `${conta('Parcial')} de ${programadas('Parcial')} atividades concluídas · ${horasImpressas('Parcial')}hs`, cor: 'text-amber-700', desativado: divisaoRelatorio === 'tudoFinal' },
+                { escopo: 'Final', titulo: 'Imprimir Relatório Final', detalhe: `${conta('Final')} de ${programadas('Final')} atividades concluídas · ${horasImpressas('Final')}hs`, cor: 'text-emerald-700' },
+                { escopo: 'Total', titulo: 'Imprimir Relatório Total', detalhe: `${conta('Total')} de ${total} atividades concluídas · ${horasImpressas('Total')}hs`, cor: 'text-indigo-700' },
               ];
               return (
                 <>
@@ -4593,16 +4611,19 @@ const CronogramaView = ({
           {/* Programação das atividades entre Relatório Parcial e Final */}
           {(() => {
             const total = atividades.length;
-            const nParcial = divisaoRelatorio === 'tudoFinal' ? 0 : Math.ceil(total / 2);
+            const nParcial = etapasAtividades.filter(e => e === 'Parcial').length;
             const nFinal = total - nParcial;
+            const hTotal = atividades.reduce((acc, a) => acc + horasDaAtividade(a), 0);
+            const hParcial = atividades.reduce((acc, a, i) => acc + (etapasAtividades[i] === 'Parcial' ? horasDaAtividade(a) : 0), 0);
+            const hFinal = hTotal - hParcial;
             return (
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 py-3.5 border-b border-slate-100">
                 <div>
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Programação das Atividades</span>
                   <p className="text-xs text-slate-600 mt-0.5">
                     {divisaoRelatorio === 'tudoFinal'
-                      ? <>Todas as <strong>{total}</strong> atividades ficam no <strong className="text-emerald-700">Relatório Final</strong>.</>
-                      : <>Atividades <strong>1 a {nParcial}</strong> no <strong className="text-amber-700">Relatório Parcial</strong>{nFinal > 0 && <> e <strong>{nParcial + 1} a {total}</strong> no <strong className="text-emerald-700">Relatório Final</strong></>}.</>}
+                      ? <>Todas as <strong>{total}</strong> atividades (<strong>{hTotal}hs</strong>) ficam no <strong className="text-emerald-700">Relatório Final</strong>.</>
+                      : <>Divisão por carga horária ({hTotal}hs): {nParcial > 0 ? <>atividades <strong>1 a {nParcial}</strong> no <strong className="text-amber-700">Relatório Parcial ({hParcial}hs)</strong></> : <>nenhuma atividade no <strong className="text-amber-700">Parcial</strong></>}{nFinal > 0 && <> e <strong>{nParcial + 1} a {total}</strong> no <strong className="text-emerald-700">Relatório Final ({hFinal}hs)</strong></>}.</>}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl self-start md:self-auto">
