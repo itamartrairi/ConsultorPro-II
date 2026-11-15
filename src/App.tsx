@@ -9609,6 +9609,19 @@ const HomeView = ({
   onSelectCredenciadaAtiva?: (id: string) => void,
   consultorLogado?: string | null
 }) => {
+  const atividadesPorDiagnostico = new Map<string, TarefaPlanoAcao[]>();
+  for (const tarefa of tarefas) {
+    const atividades = atividadesPorDiagnostico.get(tarefa.diagnosticoId) ?? [];
+    atividades.push(tarefa);
+    atividadesPorDiagnostico.set(tarefa.diagnosticoId, atividades);
+  }
+  const diagnosticosFinalizados = diagnosticos.filter((diagnostico) => {
+    const tarefasDoDiagnostico = atividadesPorDiagnostico.get(diagnostico.id);
+    const atividades = tarefasDoDiagnostico?.length ? tarefasDoDiagnostico : diagnostico.cronograma;
+    if (atividades?.length) return atividades.every((atividade) => atividade.status === 'Concluído');
+    const status = String(diagnostico.status ?? '');
+    return status === 'Finalizado' || status === 'Concluído';
+  }).length;
   const pendingTasks = tarefas.filter(t => t.status !== 'Concluído');
   
   // Credenciada ativa (escolhida pelo admin) ou a do usuário logado / a primeira cadastrada
@@ -9757,7 +9770,7 @@ const HomeView = ({
            </div>
           <p className="text-slate-500 text-xs mb-3 font-medium leading-snug">Execute novos diagnósticos e visualize a evolução da maturidade.</p>
           <div className="pt-3 border-t border-slate-50 flex justify-between items-center">
-            <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full uppercase tracking-widest">{diagnosticos.filter(d => !d.status || d.status === 'Finalizado').length} finalizados de {diagnosticos.length} cadastrados</span>
+            <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full uppercase tracking-widest">{diagnosticosFinalizados} finalizados de {diagnosticos.length} cadastrados</span>
             <ChevronRight size={16} className="text-slate-300 group-hover:text-amber-600 transform group-hover:translate-x-1 transition-all" />
           </div>
         </Card>
