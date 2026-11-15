@@ -9585,10 +9585,83 @@ const LicensingDataView = ({ setView }: { setView?: (v: any) => void }) => {
   );
 };
 
+const perguntasDoDiagnostico = (diagnostico: Diagnostico, currentDiagRespostas: Resposta[], premissas: Premissa[], problemas: Problema[], ownerId = 'local') => {
+  const diagAreas = diagnostico.areasDiagnostico || [];
+  const companyTypeFilter = (diagnostico.tipoEmpresa || 'Geral').trim().toLowerCase();
+
+  const existingMap = new Map<string, Resposta>();
+  currentDiagRespostas.forEach(r => {
+    const rArea = normalizeAndFormatArea(r.area || 'Geral').toLowerCase();
+    if (r.id) existingMap.set(`raw:${r.id}`, r);
+    if (r.premissaId) {
+      existingMap.set(`prem:${r.premissaId}`, r);
+      existingMap.set(`${rArea}::prem:${r.premissaId}`, r);
+    }
+    if (r.pergunta) {
+      const qKey = `${rArea}::q:${r.pergunta.trim().toLowerCase()}`;
+      // Only set qKey if not already set by an answered response
+      if (!existingMap.has(qKey) || (r.resposta && !existingMap.get(qKey)?.resposta)) {
+        existingMap.set(qKey, r);
+      }
+    }
+  });
+
+  const fullQuestionsList: Resposta[] = [...currentDiagRespostas];
+
+  premissas.forEach(p => {
+    const normQ = (p.pergunta || '').trim().toLowerCase();
+    const prob = problemas.find(prob => prob.id === p.idProblema || prob.descricao_problemas === p.problema);
+    const pType = (p.tipoEmpresa || prob?.tipoEmpresa || 'Geral').trim().toLowerCase();
+
+    if (companyTypeFilter && companyTypeFilter !== 'geral' && companyTypeFilter !== '') {
+      if (pType !== companyTypeFilter && pType !== 'geral' && pType !== '') return;
+    } else {
+      if (pType !== 'geral' && pType !== '') return;
+    }
+
+    const area = prob?.area || p.area || 'Geral';
+    const normArea = normalizeAndFormatArea(area).toLowerCase();
+    if (diagAreas.length > 0) {
+      const isAreaSelected = diagAreas.some(a => normalizeAndFormatArea(a).toLowerCase() === normArea);
+      if (!isAreaSelected) return;
+    }
+
+    const hasMatch = (p.id && existingMap.has(`${normArea}::prem:${p.id}`)) || (normQ && existingMap.has(`${normArea}::q:${normQ}`));
+    if (!hasMatch) {
+      const unasked: Resposta = {
+        id: `q_${diagnostico.id}_${p.id}`,
+        diagnosticoId: diagnostico.id,
+        premissaId: p.id,
+        idProblema: p.idProblema || prob?.id || '',
+        problema: p.problema || prob?.descricao_problemas || '',
+        pergunta: p.pergunta || '',
+        peso: p?.peso !== undefined ? p.peso : 1,
+        area: area,
+        observacao: '',
+        score: 0,
+        resposta: '',
+        ownerId: ownerId
+      };
+      fullQuestionsList.push(unasked);
+      if (p.id) {
+        existingMap.set(`prem:${p.id}`, unasked);
+        existingMap.set(`${normArea}::prem:${p.id}`, unasked);
+      }
+      if (normQ && !existingMap.has(`${normArea}::q:${normQ}`)) {
+        existingMap.set(`${normArea}::q:${normQ}`, unasked);
+      }
+    }
+  });
+
+  return deduplicateRespostas(fullQuestionsList);
+};
+
 const HomeView = ({ 
   empresas, 
   diagnosticos, 
   tarefas,
+  respostas,
+  premissas,
   problemas,
   setView, 
   isAdmin,
@@ -9601,6 +9674,8 @@ const HomeView = ({
   empresas: Empresa[], 
   diagnosticos: Diagnostico[], 
   tarefas: TarefaPlanoAcao[],
+  respostas: Resposta[],
+  premissas: Premissa[],
   problemas: Problema[],
   setView: (view: any) => void, 
   isAdmin: boolean,
@@ -9623,7 +9698,12 @@ const HomeView = ({
     const atividades = diagnostico.cronograma?.length
       ? diagnostico.cronograma
       : atividadesPorDiagnostico.get(diagnostico.id);
-    return !!atividades?.length && atividades.every((atividade) => atividade.status === 'Concluído');
+    if (atividades?.length && atividades.every((atividade) => atividade.status === 'Concluído')) return true;
+
+    const excluidas = new Set(diagnostico.excludedPremissaIds || []);
+    const perguntas = perguntasDoDiagnostico(diagnostico, respostas.filter(r => r.diagnosticoId === diagnostico.id), premissas, problemas)
+      .filter(r => !excluidas.has(r.id) && !(r.premissaId && excluidas.has(r.premissaId)));
+    return perguntas.length > 0 && perguntas.every(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'Não');
   }).length;
   const pendingTasks = tarefas.filter(t => t.status !== 'Concluído');
   
@@ -18853,6 +18933,8 @@ export default function App() {
                     exit={{ opacity: 0, y: -10 }}
                   >
                     <HomeView 
+                      respostas={respostas}
+                      premissas={premissas}
                       empresas={empresas} 
                       diagnosticos={diagnosticos} 
                       tarefas={tarefasPlano}
@@ -19710,75 +19792,7 @@ export default function App() {
                   const currentDiagRespostas = (respostas || []).filter(r => r.diagnosticoId === selectedDiagnostico.id);
 
                   // 2. Ensure all applicable questions from premissas are present for this diagnosis
-                  const diagAreas = selectedDiagnostico.areasDiagnostico || [];
-                  const companyTypeFilter = (selectedDiagnostico.tipoEmpresa || 'Geral').trim().toLowerCase();
-
-                  const existingMap = new Map<string, Resposta>();
-                  currentDiagRespostas.forEach(r => {
-                    const rArea = normalizeAndFormatArea(r.area || 'Geral').toLowerCase();
-                    if (r.id) existingMap.set(`raw:${r.id}`, r);
-                    if (r.premissaId) {
-                      existingMap.set(`prem:${r.premissaId}`, r);
-                      existingMap.set(`${rArea}::prem:${r.premissaId}`, r);
-                    }
-                    if (r.pergunta) {
-                      const qKey = `${rArea}::q:${r.pergunta.trim().toLowerCase()}`;
-                      // Only set qKey if not already set by an answered response
-                      if (!existingMap.has(qKey) || (r.resposta && !existingMap.get(qKey)?.resposta)) {
-                        existingMap.set(qKey, r);
-                      }
-                    }
-                  });
-
-                  const fullQuestionsList: Resposta[] = [...currentDiagRespostas];
-
-                  premissas.forEach(p => {
-                    const normQ = (p.pergunta || '').trim().toLowerCase();
-                    const prob = problemas.find(prob => prob.id === p.idProblema || prob.descricao_problemas === p.problema);
-                    const pType = (p.tipoEmpresa || prob?.tipoEmpresa || 'Geral').trim().toLowerCase();
-
-                    if (companyTypeFilter && companyTypeFilter !== 'geral' && companyTypeFilter !== '') {
-                      if (pType !== companyTypeFilter && pType !== 'geral' && pType !== '') return;
-                    } else {
-                      if (pType !== 'geral' && pType !== '') return;
-                    }
-
-                    const area = prob?.area || p.area || 'Geral';
-                    const normArea = normalizeAndFormatArea(area).toLowerCase();
-                    if (diagAreas.length > 0) {
-                      const isAreaSelected = diagAreas.some(a => normalizeAndFormatArea(a).toLowerCase() === normArea);
-                      if (!isAreaSelected) return;
-                    }
-
-                    const hasMatch = (p.id && existingMap.has(`${normArea}::prem:${p.id}`)) || (normQ && existingMap.has(`${normArea}::q:${normQ}`));
-                    if (!hasMatch) {
-                      const unasked: Resposta = {
-                        id: `q_${selectedDiagnostico.id}_${p.id}`,
-                        diagnosticoId: selectedDiagnostico.id,
-                        premissaId: p.id,
-                        idProblema: p.idProblema || prob?.id || '',
-                        problema: p.problema || prob?.descricao_problemas || '',
-                        pergunta: p.pergunta || '',
-                        peso: p?.peso !== undefined ? p.peso : 1,
-                        area: area,
-                        observacao: '',
-                        score: 0,
-                        resposta: '',
-                        ownerId: user?.uid || 'local'
-                      };
-                      fullQuestionsList.push(unasked);
-                      if (p.id) {
-                        existingMap.set(`prem:${p.id}`, unasked);
-                        existingMap.set(`${normArea}::prem:${p.id}`, unasked);
-                      }
-                      if (normQ && !existingMap.has(`${normArea}::q:${normQ}`)) {
-                        existingMap.set(`${normArea}::q:${normQ}`, unasked);
-                      }
-                    }
-                  });
-
-                  // 3. Deduplicate responses so every question appears only once, prioritizing answered ones
-                  const uniqueRespostas = deduplicateRespostas(fullQuestionsList);
+                  const uniqueRespostas = perguntasDoDiagnostico(selectedDiagnostico, currentDiagRespostas, premissas, problemas, user?.uid);
 
                   // 2. Group deduplicated answers by Area
                   const groupedByAreaDiag: Record<string, Resposta[]> = {};
