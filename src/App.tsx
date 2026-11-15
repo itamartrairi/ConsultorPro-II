@@ -3112,6 +3112,21 @@ const CronogramaView = ({
     setAtividades(prev => prev.map(a => ({ ...a, incluirNoRelatorio: false })));
   };
 
+  // Programação Parcial/Final: 1ª metade das atividades no Relatório Parcial e 2ª metade no Final,
+  // ou todas no Final. Com número ímpar, a atividade do meio fica no Parcial.
+  const divisaoRelatorio: 'metade' | 'tudoFinal' = dadosConsultoria.divisaoRelatorio || 'metade';
+  const tipoRelatorioAtual: 'Parcial' | 'Final' = divisaoRelatorio === 'tudoFinal' ? 'Final' : (dadosConsultoria.tipoRelatorio || 'Final');
+  const etapaDaAtividade = (idx: number, total: number, div: 'metade' | 'tudoFinal' = divisaoRelatorio): 'Parcial' | 'Final' =>
+    div === 'tudoFinal' ? 'Final' : (idx < Math.ceil(total / 2) ? 'Parcial' : 'Final');
+  const aplicarProgramacaoRelatorio = (tipo: 'Parcial' | 'Final', div: 'metade' | 'tudoFinal') => {
+    const tipoFinal: 'Parcial' | 'Final' = div === 'tudoFinal' ? 'Final' : tipo;
+    setDadosConsultoria(prev => ({ ...prev, tipoRelatorio: tipoFinal, divisaoRelatorio: div }));
+    setAtividades(prev => prev.map((a, i) => ({
+      ...a,
+      incluirNoRelatorio: isAtividadeConcluida(a.status) && etapaDaAtividade(i, prev.length, div) === tipoFinal
+    })));
+  };
+
   const generateCronogramaPDF = () => {
     try {
       if (!selectedEmpresa || !selectedDiagnostico || atividades.length === 0) {
@@ -4601,11 +4616,11 @@ const CronogramaView = ({
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tipo do Documento</span>
                 <span className={cn(
                   "text-[10px] font-black uppercase px-2 py-0.5 rounded-full border",
-                  (dadosConsultoria.tipoRelatorio || 'Final') === 'Parcial' 
+                  tipoRelatorioAtual === 'Parcial' 
                     ? "bg-amber-50 text-amber-700 border-amber-200" 
                     : "bg-emerald-50 text-emerald-700 border-emerald-200"
                 )}>
-                  {(dadosConsultoria.tipoRelatorio || 'Final') === 'Parcial' ? 'Relatório Parcial' : 'Relatório Final'}
+                  {tipoRelatorioAtual === 'Parcial' ? 'Relatório Parcial' : 'Relatório Final'}
                 </span>
               </div>
               <h3 className="font-bold text-slate-800 text-base mt-0.5">RELATÓRIO DE CONSULTORIA</h3>
@@ -4616,32 +4631,83 @@ const CronogramaView = ({
             <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
               <button
                 type="button"
-                onClick={() => setDadosConsultoria({ ...dadosConsultoria, tipoRelatorio: 'Parcial' })}
+                onClick={() => aplicarProgramacaoRelatorio('Parcial', divisaoRelatorio)}
+                disabled={divisaoRelatorio === 'tudoFinal'}
+                title={divisaoRelatorio === 'tudoFinal' ? 'Nesta consultoria todas as atividades ficam no Relatório Final' : 'Marca a 1ª metade das atividades (concluídas) para o Relatório Parcial'}
                 className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer",
-                  dadosConsultoria.tipoRelatorio === 'Parcial'
-                    ? "bg-white text-amber-700 shadow-sm border border-amber-200 ring-1 ring-amber-400/20"
-                    : "text-slate-600 hover:text-slate-900"
+                  "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all",
+                  divisaoRelatorio === 'tudoFinal' ? "text-slate-300 cursor-not-allowed" :
+                  tipoRelatorioAtual === 'Parcial'
+                    ? "bg-white text-amber-700 shadow-sm border border-amber-200 ring-1 ring-amber-400/20 cursor-pointer"
+                    : "text-slate-600 hover:text-slate-900 cursor-pointer"
                 )}
               >
-                <Clock size={14} className={dadosConsultoria.tipoRelatorio === 'Parcial' ? "text-amber-600" : "text-slate-400"} />
+                <Clock size={14} className={tipoRelatorioAtual === 'Parcial' ? "text-amber-600" : "text-slate-400"} />
                 <span>Relatório Parcial</span>
               </button>
               <button
                 type="button"
-                onClick={() => setDadosConsultoria({ ...dadosConsultoria, tipoRelatorio: 'Final' })}
+                onClick={() => aplicarProgramacaoRelatorio('Final', divisaoRelatorio)}
+                title={divisaoRelatorio === 'tudoFinal' ? 'Marca todas as atividades (concluídas) para o Relatório Final' : 'Marca a 2ª metade das atividades (concluídas) para o Relatório Final'}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer",
-                  (dadosConsultoria.tipoRelatorio || 'Final') === 'Final'
+                  tipoRelatorioAtual === 'Final'
                     ? "bg-white text-emerald-700 shadow-sm border border-emerald-200 ring-1 ring-emerald-400/20"
                     : "text-slate-600 hover:text-slate-900"
                 )}
               >
-                <CheckCircle2 size={14} className={(dadosConsultoria.tipoRelatorio || 'Final') === 'Final' ? "text-emerald-600" : "text-slate-400"} />
+                <CheckCircle2 size={14} className={tipoRelatorioAtual === 'Final' ? "text-emerald-600" : "text-slate-400"} />
                 <span>Relatório Final</span>
               </button>
             </div>
           </div>
+
+          {/* Programação das atividades entre Relatório Parcial e Final */}
+          {(() => {
+            const total = atividades.length;
+            const nParcial = divisaoRelatorio === 'tudoFinal' ? 0 : Math.ceil(total / 2);
+            const nFinal = total - nParcial;
+            return (
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 py-3.5 border-b border-slate-100">
+                <div>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Programação das Atividades</span>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    {divisaoRelatorio === 'tudoFinal'
+                      ? <>Todas as <strong>{total}</strong> atividades ficam no <strong className="text-emerald-700">Relatório Final</strong>.</>
+                      : <>Atividades <strong>1 a {nParcial}</strong> no <strong className="text-amber-700">Relatório Parcial</strong>{nFinal > 0 && <> e <strong>{nParcial + 1} a {total}</strong> no <strong className="text-emerald-700">Relatório Final</strong></>}.</>}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl self-start md:self-auto">
+                  <button
+                    type="button"
+                    onClick={() => aplicarProgramacaoRelatorio(tipoRelatorioAtual, 'metade')}
+                    title="1ª metade das atividades no Relatório Parcial e 2ª metade no Relatório Final"
+                    className={cn(
+                      "px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                      divisaoRelatorio === 'metade'
+                        ? "bg-white text-slate-800 shadow-sm border border-slate-200"
+                        : "text-slate-600 hover:text-slate-900"
+                    )}
+                  >
+                    50% Parcial / 50% Final
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => aplicarProgramacaoRelatorio('Final', 'tudoFinal')}
+                    title="Todas as atividades no Relatório Final (sem Relatório Parcial)"
+                    className={cn(
+                      "px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                      divisaoRelatorio === 'tudoFinal'
+                        ? "bg-white text-emerald-700 shadow-sm border border-emerald-200"
+                        : "text-slate-600 hover:text-slate-900"
+                    )}
+                  >
+                    Todas no Final
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Seleção Rápida de Atividades */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3.5">
@@ -4702,9 +4768,25 @@ const CronogramaView = ({
                   {idx + 1}
                 </div>
                 <div>
-                  <h4 className={cn("text-lg font-bold", isIncluded ? "text-slate-800" : "text-slate-600")}>
-                    {atv.nome || "Nova Atividade"}
-                  </h4>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h4 className={cn("text-lg font-bold", isIncluded ? "text-slate-800" : "text-slate-600")}>
+                      {atv.nome || "Nova Atividade"}
+                    </h4>
+                    {(() => {
+                      const etapa = etapaDaAtividade(idx, atividades.length);
+                      return (
+                        <span
+                          className={cn(
+                            "text-[10px] font-black uppercase px-2 py-0.5 rounded-full border",
+                            etapa === 'Parcial' ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          )}
+                          title={`Programada para o Relatório ${etapa}`}
+                        >
+                          {etapa}
+                        </span>
+                      );
+                    })()}
+                  </div>
                   {atv.idProblema && (
                     <div className="mt-0.5">
                       <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100">
