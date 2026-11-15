@@ -3689,9 +3689,16 @@ const CronogramaView = ({
       {!isModoModelos && (
       <div className="sticky top-[var(--sticky-offset,72px)] z-20 bg-slate-50 -mt-3 pt-2 pb-3 -mx-2 px-2 space-y-3 rounded-b-2xl transition-all print:static">
       <div className="flex flex-wrap justify-between items-center gap-3">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Relatório de Consultoria</h2>
-          <p className="text-slate-500 font-medium">Defina as etapas do projeto e as soluções propostas</p>
+        <div className="flex items-center gap-3 min-w-0">
+          <Button variant="ghost" onClick={() => setView?.('dashboard')} className="px-2 shrink-0" title="Voltar">
+            <ArrowLeft size={18} /> Voltar
+          </Button>
+          <div className="min-w-0">
+            <h2 className="text-2xl font-bold text-slate-800 tracking-tight leading-tight">Relatório de Consultoria</h2>
+            <p className="text-sm text-slate-500 font-medium truncate">
+              {selectedEmpresa?.nome ? `${selectedEmpresa.nome} · ` : ''}Defina as etapas do projeto e as soluções propostas
+            </p>
+          </div>
         </div>
         <div className="flex flex-wrap gap-3">
           <Button variant="outline" onClick={() => setAtividades([...atividades, { nome: '', descricao: '', cargaHoraria: '', solucaoProposta: '', responsavel: '', status: 'Pendente', prioridade: 'Média' }])} className="px-4 text-emerald-600 border-emerald-100">
@@ -20763,15 +20770,6 @@ export default function App() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
-              <div className="flex items-center gap-4 mb-8">
-                <Button variant="ghost" onClick={() => setView('dashboard')}>
-                  <ArrowLeft size={18} /> Voltar
-                </Button>
-                <div>
-                  <h2 className="text-2xl font-bold">Relatório de Consultoria</h2>
-                  <p className="text-slate-500">{selectedEmpresa?.nome}</p>
-                </div>
-              </div>
               <CronogramaView 
                 selectedDiagnostico={selectedDiagnostico}
                 selectedEmpresa={selectedEmpresa}
