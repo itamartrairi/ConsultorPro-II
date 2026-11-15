@@ -157,6 +157,8 @@ export interface DadosConsultoria {
   evidencias?: string[];
   cargaHoraria?: string;
   tipoRelatorio?: 'Parcial' | 'Final';
+  /** Como as atividades se dividem entre os relatórios: 1ª metade no Parcial e 2ª no Final, ou todas no Final. */
+  divisaoRelatorio?: 'metade' | 'tudoFinal';
   tipoProdutoServico?: string;
 }
 
