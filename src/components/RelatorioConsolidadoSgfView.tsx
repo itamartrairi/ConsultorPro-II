@@ -56,7 +56,7 @@ interface RelatorioConsolidadoSgfViewProps {
   customLogo?: string | null;
   customConsultoraLogo?: string | null;
   logoChoice?: 'sebrae' | 'consultora' | 'none';
-  setPdfUrl: (url: string) => void;
+  setPdfUrl: (url: string, titulo?: string, cliente?: string) => void;
   onNavigateToDiagnosis?: (diag: Diagnostico) => void;
 }
 
@@ -325,7 +325,9 @@ export const RelatorioConsolidadoSgfView: React.FC<RelatorioConsolidadoSgfViewPr
       });
 
       const url = doc.output('bloburl').toString();
-      setPdfUrl(url);
+      const cliente = empresas.find((empresa) => empresa.id === empresaId)
+        ?? (empresas.length === 1 ? empresas[0] : undefined);
+      setPdfUrl(url, 'Relatório SGF e Áreas', cliente?.nomeFantasia || cliente?.nome);
       playSuccessSound();
     } catch (e: any) {
       console.error('Erro ao gerar PDF consolidado SGF:', e);
