@@ -18931,12 +18931,13 @@ export default function App() {
                 </motion.div>
               )}
               {view === 'central-relatorios' && (() => {
-                const base = diagnosticos.filter((item) => !clienteRelatorios || item.empresaId === clienteRelatorios);
-                const nomesAtividades = [...new Set(base.flatMap((item) =>
+                const nomesAtividades = [...new Set(diagnosticos.flatMap((item) =>
                   (item.cronograma ?? []).map((atividade) => atividade.nome?.trim()).filter(Boolean)
                 ))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-                const filtrados = base.filter((item) => !atividadeRelatorios ||
+                const porAtividade = diagnosticos.filter((item) => !atividadeRelatorios ||
                   item.cronograma?.some((atividade) => atividade.nome?.trim() === atividadeRelatorios));
+                const clientesDaAtividade = new Set(porAtividade.map((item) => item.empresaId));
+                const filtrados = porAtividade.filter((item) => !clienteRelatorios || item.empresaId === clienteRelatorios);
                 const recorte = clienteRelatorios || atividadeRelatorios ? filtrados : undefined;
                 const atendimento = filtrados.find((item) => item.id === diagnosticoRelatorios)
                   ?? (filtrados.length === 1 ? filtrados[0] : undefined);
@@ -18952,23 +18953,23 @@ export default function App() {
                   <section className="space-y-5" key="central-relatorios">
                     <h1 className="text-2xl font-bold text-slate-900">Relatórios</h1>
                     <div className="grid gap-4 rounded-xl border bg-white p-4 md:grid-cols-3">
-                      <label className="space-y-1 text-sm font-semibold">Cliente
-                        <select className={filtroClass} value={clienteRelatorios} onChange={(e) => {
-                          setClienteRelatorios(e.target.value);
-                          setAtividadeRelatorios('');
-                          setDiagnosticoRelatorios('');
-                        }}>
-                          <option value="">Todos os clientes</option>
-                          {empresas.map((empresa) => <option key={empresa.id} value={empresa.id}>{empresa.nomeFantasia || empresa.nome}</option>)}
-                        </select>
-                      </label>
                       <label className="space-y-1 text-sm font-semibold">Atividade
                         <select className={filtroClass} value={atividadeRelatorios} onChange={(e) => {
                           setAtividadeRelatorios(e.target.value);
+                          setClienteRelatorios('');
                           setDiagnosticoRelatorios('');
                         }}>
                           <option value="">Todas as atividades</option>
                           {nomesAtividades.map((nome) => <option key={nome}>{nome}</option>)}
+                        </select>
+                      </label>
+                      <label className="space-y-1 text-sm font-semibold">Cliente
+                        <select className={filtroClass} value={clienteRelatorios} onChange={(e) => {
+                          setClienteRelatorios(e.target.value);
+                          setDiagnosticoRelatorios('');
+                        }}>
+                          <option value="">Todos os clientes</option>
+                          {empresas.filter((empresa) => !atividadeRelatorios || clientesDaAtividade.has(empresa.id)).map((empresa) => <option key={empresa.id} value={empresa.id}>{empresa.nomeFantasia || empresa.nome}</option>)}
                         </select>
                       </label>
                       <label className="space-y-1 text-sm font-semibold">Atendimento
