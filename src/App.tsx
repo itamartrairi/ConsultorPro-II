@@ -1155,6 +1155,20 @@ const MODELOS_RELATORIO: ModeloRelatorio[] = [
     ]
   }
 ];
+/** Nome do cliente em destaque (etiqueta verde) usado nos cabeçalhos fixos do Diagnóstico Ativo. */
+const ClienteDestaque = ({ nome }: { nome?: string | null }) => {
+  if (!nome) return null;
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 max-w-full px-3 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-base font-extrabold uppercase tracking-tight truncate"
+      title={nome}
+    >
+      <Building2 size={16} className="shrink-0 text-emerald-600" />
+      <span className="truncate">{nome}</span>
+    </span>
+  );
+};
+
 const DadosConsultoriaView = ({
   selectedDiagnostico,
   selectedEmpresa,
@@ -1379,17 +1393,27 @@ const DadosConsultoriaView = ({
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto pb-12">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="px-2.5 py-0.5 text-xs font-bold bg-blue-50 text-blue-700 rounded-full uppercase tracking-wider">
-              Aba Dedicada de Cadastro
-            </span>
+      {/* Cabeçalho fixo no topo ao rolar */}
+      <div className="sticky top-[var(--sticky-offset,72px)] z-20 bg-slate-50 -mt-3 pt-2 pb-3 print:static">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+        <div className="flex items-center gap-3 min-w-0">
+          <Button variant="ghost" onClick={() => setView(selectedDiagnostico ? 'cronograma' : 'companies')} className="px-2 shrink-0" title="Voltar">
+            <ArrowLeft size={18} /> Voltar
+          </Button>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="px-2.5 py-0.5 text-xs font-bold bg-blue-50 text-blue-700 rounded-full uppercase tracking-wider">
+                Aba Dedicada de Cadastro
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h2 className="text-2xl font-bold text-slate-800 tracking-tight leading-tight">Dados da Consultoria Gerencial</h2>
+              <ClienteDestaque nome={selectedEmpresa?.nome || (selectedDiagnostico as any)?.nomeEmpresa} />
+            </div>
+            <p className="text-slate-500 text-sm">
+              Preencha e gerencie as informações contratuais e técnicas conectadas ao cliente cadastrado.
+            </p>
           </div>
-          <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Dados da Consultoria Gerencial</h2>
-          <p className="text-slate-500 text-sm">
-            Preencha e gerencie as informações contratuais e técnicas conectadas ao cliente cadastrado.
-          </p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -1425,6 +1449,7 @@ const DadosConsultoriaView = ({
             )}
           </Button>
         </div>
+      </div>
       </div>
 
       {/* Componente: Resumo de Progresso (Campos Obrigatórios vs. Diagnóstico Total) */}
@@ -3696,15 +3721,7 @@ const CronogramaView = ({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <h2 className="text-2xl font-bold text-slate-800 tracking-tight leading-tight">Relatório de Consultoria</h2>
-              {selectedEmpresa?.nome && (
-                <span
-                  className="inline-flex items-center gap-1.5 max-w-full px-3 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-base font-extrabold uppercase tracking-tight truncate"
-                  title={selectedEmpresa.nome}
-                >
-                  <Building2 size={16} className="shrink-0 text-emerald-600" />
-                  <span className="truncate">{selectedEmpresa.nome}</span>
-                </span>
-              )}
+              <ClienteDestaque nome={selectedEmpresa?.nome} />
             </div>
             <p className="text-sm text-slate-500 font-medium truncate">Defina as etapas do projeto e as soluções propostas</p>
           </div>
@@ -5431,8 +5448,10 @@ const RelatorioView = ({
   logoChoice,
   setLogoChoice,
   historicalData = [],
-  onUpdateCronograma
+  onUpdateCronograma,
+  onVoltar
 }: {
+  onVoltar?: () => void,
   selectedDiagnostico: Diagnostico,
   selectedEmpresa: Empresa | null,
   respostas: Resposta[],
@@ -6267,7 +6286,20 @@ const RelatorioView = ({
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+      {/* Cabeçalho fixo no topo ao rolar (título, cliente, logotipo e impressão) */}
+      <div className="sticky top-[var(--sticky-offset,72px)] z-20 bg-slate-50 -mt-3 pt-2 pb-3 space-y-3 print:hidden">
+      <div className="flex items-center gap-3 min-w-0">
+        {onVoltar && (
+          <Button variant="ghost" onClick={onVoltar} className="px-2 shrink-0" title="Voltar">
+            <ArrowLeft size={18} /> Voltar
+          </Button>
+        )}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
+          <h2 className="text-2xl font-bold text-slate-800 tracking-tight leading-tight">Relatório Final</h2>
+          <ClienteDestaque nome={selectedEmpresa?.nome} />
+        </div>
+      </div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
         <div className="flex-1">
           <LogoSelector 
             logoChoice={logoChoice}
@@ -6281,6 +6313,7 @@ const RelatorioView = ({
             <Printer size={18} className="mr-2" /> Imprimir Relatório
           </Button>
         </div>
+      </div>
       </div>
 
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 print:shadow-none print:border-none print:p-0">
@@ -20744,15 +20777,6 @@ export default function App() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
-              <div className="flex items-center gap-4 mb-6">
-                <Button variant="ghost" onClick={() => setView(selectedDiagnostico ? 'cronograma' : 'companies')}>
-                  <ArrowLeft size={18} /> Voltar
-                </Button>
-                <div>
-                  <h2 className="text-2xl font-bold">Dados da Consultoria Gerencial</h2>
-                  <p className="text-slate-500">{selectedEmpresa?.nome || selectedDiagnostico?.nomeEmpresa || 'Cliente'}</p>
-                </div>
-              </div>
               <DadosConsultoriaView 
                 selectedDiagnostico={selectedDiagnostico}
                 selectedEmpresa={selectedEmpresa}
@@ -20865,16 +20889,8 @@ export default function App() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
-              <div className="flex items-center gap-4 mb-8 print:hidden">
-                <Button variant="ghost" onClick={() => setView('dashboard')}>
-                  <ArrowLeft size={18} /> Voltar
-                </Button>
-                <div>
-                  <h2 className="text-2xl font-bold">Relatório Final</h2>
-                  <p className="text-slate-500">{selectedEmpresa?.nome}</p>
-                </div>
-              </div>
               <RelatorioView 
+                onVoltar={() => setView('dashboard')}
                 selectedDiagnostico={selectedDiagnostico}
                 selectedEmpresa={selectedEmpresa}
                 respostas={respostas}
