@@ -122,27 +122,37 @@ export function gerarPdfDevolutivaCliente(
     y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
     escrever('Problemas identificados e soluções sugeridas', 12, true);
     if (!diagnostico.problemas.length) escrever('Nenhuma lacuna registrada neste diagnóstico.');
-    diagnostico.problemas.forEach((problema) => {
+    const porArea = new Map<string, { nome: string; problemas: ResumoCliente['problemas'] }>();
+    for (const problema of diagnostico.problemas) {
+      const nome = problema.area?.trim() || 'Geral';
+      const chave = normArea(nome);
+      const grupo = porArea.get(chave) ?? { nome, problemas: [] };
+      grupo.problemas.push(problema);
+      porArea.set(chave, grupo);
+    }
+    for (const { nome, problemas } of porArea.values()) {
       if (y > 250) {
         doc.addPage();
         y = 20;
       }
-      escrever('ÁREA DIAGNOSTICADA: ' + problema.area.toLocaleUpperCase('pt-BR'), 13, true);
-      escrever(problema.problema + ' (' + problema.nivel + ')', 11);
-      problema.evidencias.forEach((evidencia) => escrever(evidencia));
-      if (problema.solucao) {
-        if (y > 260) {
-          doc.addPage();
-          y = 20;
+      escrever('ÁREA DIAGNOSTICADA: ' + nome.toLocaleUpperCase('pt-BR'), 13, true);
+      for (const problema of problemas) {
+        escrever(problema.problema + ' (' + problema.nivel + ')', 11);
+        problema.evidencias.forEach((evidencia) => escrever(evidencia));
+        if (problema.solucao) {
+          if (y > 260) {
+            doc.addPage();
+            y = 20;
+          }
+          escrever('SOLUÇÃO SUGERIDA', 10, true);
+          escrever(problema.solucao, 11, true);
+        } else {
+          escrever('Solução específica ainda não registrada.');
         }
-        escrever('SOLUÇÃO SUGERIDA', 10, true);
-        escrever(problema.solucao, 11, true);
-      } else {
-        escrever('Solução específica ainda não registrada.');
+        if (problema.acoes) escrever('Ações sugeridas: ' + problema.acoes);
+        if (problema.kpis) escrever('Indicadores sugeridos: ' + problema.kpis);
       }
-      if (problema.acoes) escrever('Ações sugeridas: ' + problema.acoes);
-      if (problema.kpis) escrever('Indicadores sugeridos: ' + problema.kpis);
-    });
+    }
   });
 
   escrever('Orientações após a consultoria', 14, true);
