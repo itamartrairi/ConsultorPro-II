@@ -15364,7 +15364,11 @@ export default function App() {
           alert('Este cliente ainda não possui diagnóstico com respostas avaliadas.');
           return;
         }
-        const doc = gerarPdfDevolutivaCliente(historico, { logo });
+        const consultor = (recorte ?? diagnosticos)
+          .filter((item) => item.empresaId === empresaId)
+          .map((item) => item.dadosConsultoria?.consultor)
+          .find((nome) => !!nome && nome.trim().length > 0) || user?.displayName || '';
+        const doc = gerarPdfDevolutivaCliente(historico, { logo, consultor });
         setPdfUrl(doc.output('bloburl').toString(), 'Devolutiva do Cliente', historico[0].cliente);
         playSuccessSound();
         return;
