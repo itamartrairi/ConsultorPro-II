@@ -192,6 +192,7 @@ export const MacroDashboardView = ({
   userEmail,
   storageMode = 'cloud',
   onGerarRelatorioSegmentos,
+  onGerarDevolutivaCliente,
   gerandoRelatorioSegmentos = false,
   onOpenRelatorioConsolidadoSgf
 }: {
@@ -208,6 +209,7 @@ export const MacroDashboardView = ({
   storageMode?: 'cloud' | 'local';
   /** Gera o PDF "Resumo dos Diagnósticos por Tipo de Negócio" com todos os clientes. */
   onGerarRelatorioSegmentos?: (tipoDeNegocio?: string) => void;
+  onGerarDevolutivaCliente?: (empresaId: string) => void;
   gerandoRelatorioSegmentos?: boolean;
   /** Abre a visão interativa do Relatório Consolidado SGF & Áreas */
   onOpenRelatorioConsolidadoSgf?: () => void;
@@ -219,6 +221,11 @@ export const MacroDashboardView = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [sectorFilter, setSectorFilter] = useState('Todos');
   const [clientFilter, setClientFilter] = useState('Todos');
+  const [clienteDevolutiva, setClienteDevolutiva] = useState('');
+  const clientesComDiagnostico = useMemo(() => {
+    const ids = new Set(diagnosticos.map((item) => item.empresaId));
+    return empresas.filter((empresa) => ids.has(empresa.id));
+  }, [diagnosticos, empresas]);
   const matchesClient = (empresaId?: string) => clientFilter === 'Todos' || empresaId === clientFilter;
   const [segmentoRelatorio, setSegmentoRelatorio] = useState('Todos');
   const tiposRelatorio = useMemo(() => tiposDeNegocio(empresas as any, diagnosticos as any), [empresas, diagnosticos]);
@@ -987,6 +994,31 @@ export const MacroDashboardView = ({
               {gerandoRelatorioSegmentos ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
               <span>{gerandoRelatorioSegmentos ? 'Gerando relatório...' : 'Relatório por Tipo de Negócio'}</span>
             </button>
+          )}
+          {onGerarDevolutivaCliente && (
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                aria-label="Cliente da devolutiva"
+                value={clienteDevolutiva}
+                onChange={(event) => setClienteDevolutiva(event.target.value)}
+                disabled={gerandoRelatorioSegmentos}
+                className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs"
+              >
+                <option value="">Selecione o cliente</option>
+                {clientesComDiagnostico.map((empresa) => (
+                  <option key={empresa.id} value={empresa.id}>{empresa.nome}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                disabled={!clienteDevolutiva || gerandoRelatorioSegmentos}
+                onClick={() => onGerarDevolutivaCliente(clienteDevolutiva)}
+                className="flex items-center gap-2 rounded-xl bg-indigo-700 px-4 py-2 text-xs font-bold text-white disabled:opacity-50"
+              >
+                <FileText size={16} />
+                Devolutiva do cliente (PDF)
+              </button>
+            </div>
           )}
           {onOpenRelatorioConsolidadoSgf && (
             <button
