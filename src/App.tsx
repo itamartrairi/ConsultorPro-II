@@ -9867,7 +9867,7 @@ import {
 } from './lib/domain/planoAcao';
 import { carregarModelos, salvarModelos, criarModeloPadrao, garantirModeloPadrao, encontrarModeloDoSegmento, MODELOS_EVENTO } from './lib/domain/modelosRelatorio';
 import { montarRelatorioSegmentos } from './lib/domain/relatorioSegmentos';
-import { gerarPdfRelatorioSegmentos } from './lib/relatorios/pdfSegmentos';
+import { gerarPdfDevolutivaCliente, gerarPdfRelatorioSegmentos } from './lib/relatorios/pdfSegmentos';
 import {
   deduplicateRespostas,
   loadAllLocalRespostas,
@@ -15171,7 +15171,7 @@ export default function App() {
    * Relatório "Resumo dos Diagnósticos por Tipo de Negócio": todos os clientes, agrupados por
    * segmento, com a mesma classificação de criticidade dos relatórios individuais.
    */
-  const gerarRelatorioSegmentos = async (tipoDeNegocio?: string) => {
+  const gerarRelatorioSegmentos = async (tipoDeNegocio?: string, empresaId?: string) => {
     setGerandoRelatorioSegmentos(true);
     try {
       // Respostas de TODOS os diagnósticos: cópia local + nuvem (a nuvem prevalece)
@@ -15185,6 +15185,32 @@ export default function App() {
         } catch (e) {
           console.warn('[Relatório por segmento] Respostas da nuvem indisponíveis; usando as locais.', e);
         }
+      }
+      const logo = logoChoice === 'consultora' ? customConsultoraLogo : logoChoice === 'sebrae' ? customLogo : null;
+      if (empresaId) {
+        const empresa = empresas.find((item) => item.id === empresaId);
+        if (!empresa) {
+          alert('Cliente não encontrado.');
+          return;
+        }
+        const historico = diagnosticos
+          .filter((item) => item.empresaId === empresaId)
+          .flatMap((diagnostico) => montarRelatorioSegmentos({
+            empresas: [empresa],
+            diagnosticos: [diagnostico],
+            respostas: Array.from(mapa.values()).filter((r) => r.diagnosticoId === diagnostico.id),
+            problemas,
+            solucoes,
+          }).segmentos.flatMap((segmento) => segmento.clientes))
+          .sort((a, b) => (b.data?.getTime() ?? 0) - (a.data?.getTime() ?? 0));
+        if (!historico.length) {
+          alert('Este cliente ainda não possui diagnóstico com respostas avaliadas.');
+          return;
+        }
+        const doc = gerarPdfDevolutivaCliente(historico, { logo });
+        setPdfUrl(doc.output('bloburl').toString());
+        playSuccessSound();
+        return;
       }
       const rel = montarRelatorioSegmentos({
         empresas,
@@ -15200,7 +15226,6 @@ export default function App() {
           : 'Não há clientes cadastrados para gerar o relatório.');
         return;
       }
-      const logo = logoChoice === 'consultora' ? customConsultoraLogo : logoChoice === 'sebrae' ? customLogo : null;
       const doc = gerarPdfRelatorioSegmentos(rel, { consultor: user?.email || undefined, logo });
       setPdfUrl(doc.output('bloburl').toString());
       playSuccessSound();
@@ -18863,6 +18888,7 @@ export default function App() {
                     userEmail={user?.email}
                     storageMode={storageMode}
                     onGerarRelatorioSegmentos={gerarRelatorioSegmentos}
+                    onGerarDevolutivaCliente={(empresaId) => gerarRelatorioSegmentos(undefined, empresaId)}
                     gerandoRelatorioSegmentos={gerandoRelatorioSegmentos}
                     onOpenRelatorioConsolidadoSgf={() => setView('relatorio-consolidado-sgf')}
                     onNavigateToDiagnosis={(diag) => {
