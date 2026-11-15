@@ -75,6 +75,12 @@ export function gerarPdfDevolutivaCliente(
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const margin = 16;
   let y = 20;
+  const reservar = (altura: number) => {
+    if (y + altura > 278) {
+      doc.addPage();
+      y = 20;
+    }
+  };
   const escrever = (texto: string, tamanho = 10, destaque = false) => {
     doc.setFont('helvetica', destaque ? 'bold' : 'normal');
     doc.setFontSize(tamanho);
@@ -120,6 +126,7 @@ export function gerarPdfDevolutivaCliente(
       ),
     });
     y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
+    reservar(26);
     escrever('Problemas identificados e soluções sugeridas', 12, true);
     if (!diagnostico.problemas.length) escrever('Nenhuma lacuna registrada neste diagnóstico.');
     const porArea = new Map<string, { nome: string; problemas: ResumoCliente['problemas'] }>();
@@ -137,6 +144,7 @@ export function gerarPdfDevolutivaCliente(
       }
       escrever('ÁREA DIAGNOSTICADA: ' + nome.toLocaleUpperCase('pt-BR'), 13, true);
       for (const problema of problemas) {
+        reservar(14);
         escrever(problema.problema + ' (' + problema.nivel + ')', 11);
         problema.evidencias.forEach((evidencia) => escrever(evidencia));
         if (problema.solucao) {
@@ -155,6 +163,7 @@ export function gerarPdfDevolutivaCliente(
     }
   });
 
+  reservar(24);
   escrever('Orientações após a consultoria', 14, true);
   ACOES_GERAIS.forEach((acao) => escrever(acao));
   const areas = new Set(historico.flatMap((diagnostico) => Object.keys(diagnostico.areas)));
