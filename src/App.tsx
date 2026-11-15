@@ -7310,111 +7310,179 @@ const GestaoPlanoView = ({
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+    <div className="space-y-3 max-w-7xl mx-auto pb-12">
       {!selectedDiagnostico && (
         <div className="p-8 bg-amber-50 border border-amber-200 rounded-2xl text-center">
           <p className="text-amber-800 font-bold">Nenhum diagnóstico selecionado.</p>
           <p className="text-amber-600 text-sm">Por favor, selecione um diagnóstico na tela de "Diagnósticos" para visualizar o plano de ação.</p>
         </div>
       )}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-black text-slate-800 tracking-tight">Gestão do Plano de Ação</h2>
-          <p className="text-slate-500 font-medium tracking-tight">Acompanhe a execução das melhorias sugeridas nos diagnósticos.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-           <button
-             onClick={() => { if (!generatingPlan) onGenerateActionPlan(); }}
-             disabled={generatingPlan || !selectedDiagnostico}
-             title="Gera o plano a partir do diagnóstico: diagnóstico, devolutiva, ferramentas de gestão, solução dos problemas críticos, análise final e relatórios (até 10 atividades)"
-             className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md shadow-indigo-200 transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
-           >
-             {generatingPlan ? <Loader2 className="animate-spin" size={14} /> : <Sparkles size={14} />}
-             <span>{generatingPlan ? 'Gerando plano...' : 'Gerar pelo Diagnóstico'}</span>
-           </button>
-           {onReplicateActionPlan && (
+      <div className="space-y-2 pb-2 lg:sticky lg:top-[var(--diagnosis-header-offset,72px)] lg:-mx-10 lg:px-10 z-20 bg-slate-50 print:static print:mx-0 print:px-0">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div>
+            <h2 className="text-3xl font-black text-slate-800 tracking-tight">Gestão do Plano de Ação</h2>
+            <p className="text-slate-500 font-medium tracking-tight">Acompanhe a execução das melhorias sugeridas nos diagnósticos.</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
              <button
-               onClick={() => { if (!generatingPlan) onReplicateActionPlan(); }}
+               onClick={() => { if (!generatingPlan) onGenerateActionPlan(); }}
                disabled={generatingPlan || !selectedDiagnostico}
-               title="Replica o plano de outro cliente ou o modelo do mesmo segmento. Se o segmento ainda não tiver modelo, cria um Modelo Padrão."
-               className="bg-sky-50 text-sky-700 px-4 py-2 rounded-xl text-xs font-bold border border-sky-100 hover:bg-sky-100 transition-colors flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+               title="Gera o plano a partir do diagnóstico: diagnóstico, devolutiva, ferramentas de gestão, solução dos problemas críticos, análise final e relatórios (até 10 atividades)"
+               className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-md shadow-indigo-200 transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
              >
-               <Copy size={14} />
-               <span>Replicar do Segmento</span>
+               {generatingPlan ? <Loader2 className="animate-spin" size={14} /> : <Sparkles size={14} />}
+               <span>{generatingPlan ? 'Gerando plano...' : 'Gerar pelo Diagnóstico'}</span>
              </button>
-           )}
-           <button
-             onClick={handleSavePlanoAcao}
-             disabled={isSavingPlano}
-             className={cn(
-               "text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer",
-               saveSuccessPlano ? "bg-emerald-700 shadow-sm" : "bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-200"
+             {onReplicateActionPlan && (
+               <button
+                 onClick={() => { if (!generatingPlan) onReplicateActionPlan(); }}
+                 disabled={generatingPlan || !selectedDiagnostico}
+                 title="Replica o plano de outro cliente ou o modelo do mesmo segmento. Se o segmento ainda não tiver modelo, cria um Modelo Padrão."
+                 className="bg-sky-50 text-sky-700 px-4 py-2 rounded-xl text-xs font-bold border border-sky-100 hover:bg-sky-100 transition-colors flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+               >
+                 <Copy size={14} />
+                 <span>Replicar do Segmento</span>
+               </button>
              )}
-           >
-             {isSavingPlano ? (
-               <>
-                 <Loader2 className="animate-spin" size={14} />
-                 <span>Salvando...</span>
-               </>
-             ) : saveSuccessPlano ? (
-               <>
-                 <CheckCircle2 size={14} className="text-white" />
-                 <span>Salvo com Sucesso!</span>
-               </>
-             ) : (
-               <>
-                 <Save size={14} />
-                 <span>Salvar Alterações</span>
-               </>
-             )}
-           </button>
-           <button
-             onClick={onGeneratePDF}
-             className="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-xs font-bold border border-emerald-100 hover:bg-emerald-100 transition-colors flex items-center gap-2"
-           >
-             <FileText size={14} />
-             Imprimir Plano
-           </button>
-           <button 
-             onClick={() => {
-               setModalType('deletePlanoAcao');
-               setModalData(selectedDiagnostico);
-               setIsModalOpen(true);
-             }}
-             className="bg-rose-50 text-rose-600 px-4 py-2 rounded-xl text-xs font-bold border border-rose-100 hover:bg-rose-100 transition-colors"
-           >
-             Excluir Plano
-           </button>
-           <button 
-             onClick={() => {
-               setTarefaForm({
-                 diagnosticoId: selectedDiagnostico?.id || '',
-                 empresaId: selectedEmpresa?.id || '', lembreteDiasAntes: 1, lembreteEmail: false, lembreteWhatsapp: false, lembretePush: false, lembreteContato: ''
-               });
-               setModalType('createTarefa');
-               setIsModalOpen(true);
-             }}
-             className="bg-sky-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-sky-200 hover:bg-sky-700 transition-colors"
-           >
-             + Nova Tarefa
-           </button>
-           <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2">
-             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-             <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">{tarefas.length} Tarefas Ativas</span>
-           </div>
+             <button
+               onClick={handleSavePlanoAcao}
+               disabled={isSavingPlano}
+               className={cn(
+                 "text-white px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer",
+                 saveSuccessPlano ? "bg-emerald-700 shadow-sm" : "bg-emerald-600 hover:bg-emerald-700 shadow-md shadow-emerald-200"
+               )}
+             >
+               {isSavingPlano ? (
+                 <>
+                   <Loader2 className="animate-spin" size={14} />
+                   <span>Salvando...</span>
+                 </>
+               ) : saveSuccessPlano ? (
+                 <>
+                   <CheckCircle2 size={14} className="text-white" />
+                   <span>Salvo com Sucesso!</span>
+                 </>
+               ) : (
+                 <>
+                   <Save size={14} />
+                   <span>Salvar Alterações</span>
+                 </>
+               )}
+             </button>
+             <button
+               onClick={onGeneratePDF}
+               className="bg-emerald-50 text-emerald-600 px-4 py-2 rounded-xl text-xs font-bold border border-emerald-100 hover:bg-emerald-100 transition-colors flex items-center gap-2"
+             >
+               <FileText size={14} />
+               Imprimir Plano
+             </button>
+             <button 
+               onClick={() => {
+                 setModalType('deletePlanoAcao');
+                 setModalData(selectedDiagnostico);
+                 setIsModalOpen(true);
+               }}
+               className="bg-rose-50 text-rose-600 px-4 py-2 rounded-xl text-xs font-bold border border-rose-100 hover:bg-rose-100 transition-colors"
+             >
+               Excluir Plano
+             </button>
+             <button 
+               onClick={() => {
+                 setTarefaForm({
+                   diagnosticoId: selectedDiagnostico?.id || '',
+                   empresaId: selectedEmpresa?.id || '', lembreteDiasAntes: 1, lembreteEmail: false, lembreteWhatsapp: false, lembretePush: false, lembreteContato: ''
+                 });
+                 setModalType('createTarefa');
+                 setIsModalOpen(true);
+               }}
+               className="bg-sky-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg shadow-sky-200 hover:bg-sky-700 transition-colors"
+             >
+               + Nova Tarefa
+             </button>
+             <div className="bg-white px-4 py-2 rounded-xl border border-slate-200 shadow-sm flex items-center gap-2">
+               <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+               <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">{tarefas.length} Tarefas Ativas</span>
+             </div>
+          </div>
+        </div>
+
+        {selectedDiagnostico && (
+          <div className="bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm">
+            <LogoSelector 
+              logoChoice={logoChoice}
+              setLogoChoice={setLogoChoice}
+              customLogo={customLogo}
+              customConsultoraLogo={customConsultoraLogo}
+            />
+          </div>
+        )}
+        {/* Barra de Ferramentas / Filtros e Modos de Visualização */}
+        <div className="bg-white px-4 py-2 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Visualização:</span>
+            <div className="bg-slate-100 p-1 rounded-xl flex gap-1">
+              <button
+                onClick={() => setViewMode('kanban')}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                  viewMode === 'kanban' 
+                    ? "bg-white text-sky-600 shadow-sm font-black" 
+                    : "text-slate-500 hover:text-slate-700"
+                )}
+              >
+                <Layout size={13} />
+                Quadro Kanban
+              </button>
+              <button
+                onClick={() => setViewMode('timeline')}
+                className={cn(
+                  "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                  viewMode === 'timeline' 
+                    ? "bg-white text-sky-600 shadow-sm font-black" 
+                    : "text-slate-500 hover:text-slate-700"
+                )}
+              >
+                <CalendarDays size={13} />
+                Cronograma Sequencial
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto justify-end">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Organizar por:</span>
+              <select
+                value={groupBy}
+                onChange={(e) => setGroupBy(e.target.value as any)}
+                className="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 cursor-pointer"
+              >
+                <option value="atividade">📋 Atividades do Relatório (Idêntico)</option>
+                <option value="status">📊 Status de Execução</option>
+                <option value="data">📅 Data de Execução (Mês)</option>
+                <option value="problema">❓ Problema Associado</option>
+                <option value="area">🗂️ Área de Consultoria</option>
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Ordenar por:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 cursor-pointer"
+              >
+                <option value="ordem">🔢 Ordem Manual das Ações (#1, #2...)</option>
+                <option value="cronograma">📋 Ordem do Relatório de Consultoria</option>
+                <option value="dataInicio">📅 Ordem de Início</option>
+                <option value="dataVencimento">⏰ Ordem de Vencimento</option>
+                <option value="prioridade">🔥 Nível de Prioridade</option>
+                <option value="problema">❓ Nome do Problema</option>
+                <option value="area">🗂️ Área de Consultoria</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
-
-      {selectedDiagnostico && (
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-          <LogoSelector 
-            logoChoice={logoChoice}
-            setLogoChoice={setLogoChoice}
-            customLogo={customLogo}
-            customConsultoraLogo={customConsultoraLogo}
-          />
-        </div>
-      )}
 
       {/* Seção de Lembretes / Alertas Ativos */}
       {tarefAsComLembreteProximo.length > 0 && (
@@ -7498,75 +7566,8 @@ const GestaoPlanoView = ({
         </motion.div>
       )}
 
-      {/* Barra de Ferramentas / Filtros e Modos de Visualização */}
-      <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Visualização:</span>
-          <div className="bg-slate-100 p-1 rounded-xl flex gap-1">
-            <button
-              onClick={() => setViewMode('kanban')}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer",
-                viewMode === 'kanban' 
-                  ? "bg-white text-sky-600 shadow-sm font-black" 
-                  : "text-slate-500 hover:text-slate-700"
-              )}
-            >
-              <Layout size={13} />
-              Quadro Kanban
-            </button>
-            <button
-              onClick={() => setViewMode('timeline')}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer",
-                viewMode === 'timeline' 
-                  ? "bg-white text-sky-600 shadow-sm font-black" 
-                  : "text-slate-500 hover:text-slate-700"
-              )}
-            >
-              <CalendarDays size={13} />
-              Cronograma Sequencial
-            </button>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-4 w-full sm:w-auto justify-end">
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Organizar por:</span>
-            <select
-              value={groupBy}
-              onChange={(e) => setGroupBy(e.target.value as any)}
-              className="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 cursor-pointer"
-            >
-              <option value="atividade">📋 Atividades do Relatório (Idêntico)</option>
-              <option value="status">📊 Status de Execução</option>
-              <option value="data">📅 Data de Execução (Mês)</option>
-              <option value="problema">❓ Problema Associado</option>
-              <option value="area">🗂️ Área de Consultoria</option>
-            </select>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Ordenar por:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 cursor-pointer"
-            >
-              <option value="ordem">🔢 Ordem Manual das Ações (#1, #2...)</option>
-              <option value="cronograma">📋 Ordem do Relatório de Consultoria</option>
-              <option value="dataInicio">📅 Ordem de Início</option>
-              <option value="dataVencimento">⏰ Ordem de Vencimento</option>
-              <option value="prioridade">🔥 Nível de Prioridade</option>
-              <option value="problema">❓ Nome do Problema</option>
-              <option value="area">🗂️ Área de Consultoria</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
       {viewMode === 'kanban' ? (
-        <div className="flex flex-col lg:flex-row gap-6 min-h-[600px] overflow-x-auto pb-4">
+        <div className="flex flex-col lg:flex-row gap-3 overflow-x-auto pb-4">
           {computedColumns.map(col => (
             <div key={col.id} className={cn("flex-1 flex flex-col rounded-3xl border min-w-[320px] max-w-[380px] shadow-sm", col.border, col.color)}>
               <div className="p-5 border-b border-inherit flex items-center justify-between">
@@ -7576,7 +7577,7 @@ const GestaoPlanoView = ({
                 </span>
               </div>
               
-              <div className="flex-1 p-4 space-y-4 overflow-y-auto max-h-[650px]">
+              <div className="flex-1 p-3 space-y-2 overflow-y-auto max-h-[650px]">
                 {(groupedTasksMap[col.id] || []).length === 0 ? (
                   <div className="h-40 flex items-center justify-center border-2 border-dashed border-slate-200/50 rounded-2xl bg-white/50">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sem tarefas</p>
@@ -7588,7 +7589,7 @@ const GestaoPlanoView = ({
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       whileHover={{ y: -2 }}
-                      className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl hover:border-sky-100 transition-all cursor-pointer group relative overflow-hidden"
+                      className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 hover:shadow-xl hover:border-sky-100 transition-all cursor-pointer group relative overflow-hidden"
                       onClick={() => onEdit(tarefa)}
                     >
                       <div className={cn(
@@ -18604,7 +18605,7 @@ export default function App() {
 
           <div className="max-w-7xl mx-auto p-6 lg:p-10 print:p-0 print:max-w-none">
             {/* Top Bar - Modo de Salvamento (Nuvem vs. Local) - Fixada no Topo (Sticky) */}
-            <div ref={registrarBarraFixa} data-fixo="topo" className={cn("sticky top-0 z-30 bg-slate-50 -mt-6 lg:-mt-10 pt-3 pb-3 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-4 print:hidden transition-all shadow-xs", view === "diagnosis" || view === "dashboard" ? "mb-3 lg:mb-0 lg:-mx-10 lg:px-10" : "mb-3")}>
+            <div ref={registrarBarraFixa} data-fixo="topo" className={cn("sticky top-0 z-30 bg-slate-50 -mt-6 lg:-mt-10 pt-3 pb-3 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-4 print:hidden transition-all shadow-xs", view === "diagnosis" || view === "dashboard" || view === "kanban" ? "mb-3 lg:mb-0 lg:-mx-10 lg:px-10" : "mb-3")}>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-1.5 bg-slate-200/70 p-1 rounded-xl text-xs font-bold">
                   <button
@@ -18806,9 +18807,9 @@ export default function App() {
                 {view === 'kanban' && (
                 <motion.div 
                   key="kanban"
-                  initial={{ opacity: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                 >
                   <GestaoPlanoView 
                     tarefas={deduplicateTarefasPlano(tarefasPlano.filter(t => selectedDiagnostico && t.diagnosticoId === selectedDiagnostico.id))}
