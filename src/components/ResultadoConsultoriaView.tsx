@@ -1582,14 +1582,8 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
             </div>
 
             {/* BLOCO DE ASSINATURAS */}
-            <div data-pdf-block="true" className="pt-8 border-t border-slate-200 grid grid-cols-2 gap-12 text-center text-xs">
-              <div>
-                <div className="border-b border-slate-400 pb-1 mb-1.5 w-4/5 mx-auto" />
-                <div className="font-bold text-slate-900">{consultorNome || 'Consultor Responsável'}</div>
-                <div className="text-[10px] text-slate-500">{credenciadaNome || 'Consultoria Empresarial'}</div>
-              </div>
-
-              <div>
+            <div data-pdf-block="true" className="pt-8 border-t border-slate-200 flex justify-center text-center text-xs">
+              <div className="w-1/2">
                 <div className="border-b border-slate-400 pb-1 mb-1.5 w-4/5 mx-auto" />
                 <div className="font-bold text-slate-900">{responsavelClienteNome || currentEmpresa?.representante || 'Representante Legal'}</div>
                 <div className="text-[10px] text-slate-500">{responsavelClienteCargo} — {currentEmpresa?.nome || 'Empresa Cliente'}</div>
