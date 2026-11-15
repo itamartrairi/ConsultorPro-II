@@ -9757,7 +9757,7 @@ const HomeView = ({
            </div>
           <p className="text-slate-500 text-xs mb-3 font-medium leading-snug">Execute novos diagnósticos e visualize a evolução da maturidade.</p>
           <div className="pt-3 border-t border-slate-50 flex justify-between items-center">
-            <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full uppercase tracking-widest">{diagnosticos.filter(d => !d.status || d.status === 'Finalizado').length} Realizados</span>
+            <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full uppercase tracking-widest">{diagnosticos.filter(d => !d.status || d.status === 'Finalizado').length} finalizados de {diagnosticos.length} cadastrados</span>
             <ChevronRight size={16} className="text-slate-300 group-hover:text-amber-600 transform group-hover:translate-x-1 transition-all" />
           </div>
         </Card>
@@ -13257,12 +13257,6 @@ export default function App() {
             onClick={() => { setView('macro-dashboard'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }}
           />
           <NavItem
-            icon={FileText}
-            label="Relatórios"
-            active={view === 'central-relatorios'}
-            onClick={() => setView('central-relatorios')}
-          />
-          <NavItem
             icon={Gauge}
             label="Maturidade Empresarial"
             active={view === 'maturity-assessment'}
@@ -13277,6 +13271,12 @@ export default function App() {
               onClick={() => openNavSection('diagnosticoAtivo')}
             />
           )}
+          <NavItem
+            icon={FileText}
+            label="Relatórios"
+            active={view === 'central-relatorios'}
+            onClick={() => setView('central-relatorios')}
+          />
           {isAdmin && (
             <NavItem
               icon={Trophy}
