@@ -10338,7 +10338,7 @@ export default function App() {
   const [generatingPlan, setGeneratingPlan] = useState(false);
   const [view, setViewInternal] = useState<'home' | 'companies' | 'credenciadas' | 'licenses' | 'diagnosis' | 'dashboard' | 'premises' | 'cronograma' | 'relatorio' | 'kanban' | 'settings' | 'landing' | 'checkout' | 'licensing' | 'dados-consultoria' | 'agenda' | 'central-relatorios' | 'macro-dashboard' | 'maturity-assessment' | 'projects' | 'plan' | 'resultado-consultoria' | 'relatorio-consolidado-sgf' | 'help' | 'modelos-relatorio'>('landing');
   const [clienteRelatorios, setClienteRelatorios] = useState('');
-  const [atividadeRelatorios, setAtividadeRelatorios] = useState('');
+  const [tipoRelatorios, setTipoRelatorios] = useState('');
   const [diagnosticoRelatorios, setDiagnosticoRelatorios] = useState('');
   const [mostrarSgfRelatorios, setMostrarSgfRelatorios] = useState(false);
 
@@ -18931,14 +18931,14 @@ export default function App() {
                 </motion.div>
               )}
               {view === 'central-relatorios' && (() => {
-                const nomesAtividades = [...new Set(diagnosticos.flatMap((item) =>
-                  (item.cronograma ?? []).map((atividade) => atividade.nome?.trim()).filter(Boolean)
-                ))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-                const porAtividade = diagnosticos.filter((item) => !atividadeRelatorios ||
-                  item.cronograma?.some((atividade) => atividade.nome?.trim() === atividadeRelatorios));
-                const clientesDaAtividade = new Set(porAtividade.map((item) => item.empresaId));
-                const filtrados = porAtividade.filter((item) => !clienteRelatorios || item.empresaId === clienteRelatorios);
-                const recorte = clienteRelatorios || atividadeRelatorios ? filtrados : undefined;
+                const tiposPorEmpresa = new Map(empresas.map((empresa) => [empresa.id, empresa.tipoEmpresa?.trim()]));
+                const tipoDeNegocio = (item: Diagnostico) =>
+                  tiposPorEmpresa.get(item.empresaId) || item.tipoEmpresa?.trim() || 'Não informado';
+                const tipos = [...new Set(diagnosticos.map(tipoDeNegocio))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+                const porTipo = diagnosticos.filter((item) => !tipoRelatorios || tipoDeNegocio(item) === tipoRelatorios);
+                const clientesDoTipo = new Set(porTipo.map((item) => item.empresaId));
+                const filtrados = porTipo.filter((item) => !clienteRelatorios || item.empresaId === clienteRelatorios);
+                const recorte = clienteRelatorios || tipoRelatorios ? filtrados : undefined;
                 const atendimento = filtrados.find((item) => item.id === diagnosticoRelatorios)
                   ?? (filtrados.length === 1 ? filtrados[0] : undefined);
                 const abrirAtendimento = (destino: 'cronograma' | 'relatorio' | 'resultado-consultoria') => {
@@ -18953,14 +18953,14 @@ export default function App() {
                   <section className="space-y-5" key="central-relatorios">
                     <h1 className="text-2xl font-bold text-slate-900">Relatórios</h1>
                     <div className="grid gap-4 rounded-xl border bg-white p-4 md:grid-cols-3">
-                      <label className="space-y-1 text-sm font-semibold">Atividade
-                        <select className={filtroClass} value={atividadeRelatorios} onChange={(e) => {
-                          setAtividadeRelatorios(e.target.value);
+                      <label className="space-y-1 text-sm font-semibold">Tipo de negócio
+                        <select className={filtroClass} value={tipoRelatorios} onChange={(e) => {
+                          setTipoRelatorios(e.target.value);
                           setClienteRelatorios('');
                           setDiagnosticoRelatorios('');
                         }}>
-                          <option value="">Todas as atividades</option>
-                          {nomesAtividades.map((nome) => <option key={nome}>{nome}</option>)}
+                          <option value="">Todos os tipos de negócio</option>
+                          {tipos.map((nome) => <option key={nome}>{nome}</option>)}
                         </select>
                       </label>
                       <label className="space-y-1 text-sm font-semibold">Cliente
@@ -18969,7 +18969,7 @@ export default function App() {
                           setDiagnosticoRelatorios('');
                         }}>
                           <option value="">Todos os clientes</option>
-                          {empresas.filter((empresa) => !atividadeRelatorios || clientesDaAtividade.has(empresa.id)).map((empresa) => <option key={empresa.id} value={empresa.id}>{empresa.nomeFantasia || empresa.nome}</option>)}
+                          {empresas.filter((empresa) => !tipoRelatorios || clientesDoTipo.has(empresa.id)).map((empresa) => <option key={empresa.id} value={empresa.id}>{empresa.nomeFantasia || empresa.nome}</option>)}
                         </select>
                       </label>
                       <label className="space-y-1 text-sm font-semibold">Atendimento
