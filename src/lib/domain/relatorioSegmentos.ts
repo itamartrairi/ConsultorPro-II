@@ -6,7 +6,7 @@
  * Para cada cliente considera o diagnóstico MAIS RECENTE que tenha respostas.
  */
 import type { Diagnostico, Empresa, Problema, Resposta, Solucao } from '../../types/domain';
-import { analisarDiagnostico, grauLacuna, limparEvidenciasAcoes, type AnaliseDiagnostico, type NivelCriticidade } from './planoAcao';
+import { analisarDiagnostico, grauLacuna, limparEvidenciasAcoes, type NivelCriticidade } from './planoAcao';
 
 export interface ResumoCliente {
   empresaId: string;
@@ -116,58 +116,21 @@ function conformidadePorArea(respostas: Resposta[]): Record<string, number> {
   return out;
 }
 
-/** Teto de conformidade esperado após implementar as soluções indicadas na consultoria. */
+/** Meta mínima de conformidade para o cenário pós-consultoria. */
 export const META_POS_CONSULTORIA = 95;
 
-const chaveProblema = (s: unknown) =>
-  String(s ?? '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim();
-
-/**
- * Projeção da conformidade após a consultoria: as lacunas ligadas a problemas com solução
- * indicada no plano de ação são consideradas resolvidas após a implementação; as demais
- * permanecem. O resultado é limitado a META_POS_CONSULTORIA (95%) e nunca fica abaixo do atual.
- * Se nenhuma solução estiver cadastrada para o cliente, considera-se que a consultoria trata
- * todos os problemas diagnosticados.
- */
+/** Cenário de atingimento da meta, preservando os índices que já a superam. */
 function projetarConformidade(
-  respostas: Resposta[],
-  an: AnaliseDiagnostico,
-  atuais: Record<string, number>
+  atual: number,
+  areasAtuais: Record<string, number>
 ): { geral: number; areas: Record<string, number> } {
-  const algumaSolucao = an.problemas.some((p) => p.solucao);
-  const cobertos = new Set<string>();
-  an.problemas.forEach((p) => {
-    if (!algumaSolucao || p.solucao) {
-      cobertos.add(chaveProblema(p.idProblema));
-      cobertos.add(chaveProblema(p.problema));
-    }
-  });
-  cobertos.delete('');
-  const acc: Record<string, { lac: number; max: number }> = {};
-  let lacT = 0;
-  let maxT = 0;
-  for (const r of respostas) {
-    const g = grauLacuna(r);
-    if (g === null) continue;
-    const area = (r.area || 'Geral').trim() || 'Geral';
-    const peso = Number(r.peso) > 0 ? Number(r.peso) : 1;
-    const coberta = cobertos.has(chaveProblema(r.idProblema)) || cobertos.has(chaveProblema(r.problema));
-    const lac = coberta ? 0 : g * peso;
-    acc[area] ||= { lac: 0, max: 0 };
-    acc[area].lac += lac;
-    acc[area].max += 2 * peso;
-    lacT += lac;
-    maxT += 2 * peso;
-  }
-  const projetar = (atual: number, v: { lac: number; max: number }) =>
-    Math.max(atual, Math.min(META_POS_CONSULTORIA, v.max ? Math.round((1 - v.lac / v.max) * 100) : atual));
-  const areas: Record<string, number> = {};
-  for (const [area, v] of Object.entries(acc)) areas[area] = projetar(atuais[area] ?? 0, v);
-  return { geral: projetar(an.scoreGeral, { lac: lacT, max: maxT }), areas };
+  const projetar = (valor: number) => Math.max(valor, META_POS_CONSULTORIA);
+  return {
+    geral: projetar(atual),
+    areas: Object.fromEntries(
+      Object.entries(areasAtuais).map(([area, valor]) => [area, projetar(valor)])
+    ),
+  };
 }
 
 /** Remove respostas repetidas da mesma pergunta (fica a mais recente respondida). */
@@ -247,7 +210,7 @@ export function montarRelatorioSegmentos(params: {
     const an = analisarDiagnostico(resps, problemas, solucoes);
     analises.set(d.id, an);
     const areasAtuais = conformidadePorArea(resps);
-    const proj = projetarConformidade(resps, an, areasAtuais);
+    const proj = projetarConformidade(an.scoreGeral, areasAtuais);
     grupo.clientes.push({
       empresaId: emp.id,
       cliente: nome,
