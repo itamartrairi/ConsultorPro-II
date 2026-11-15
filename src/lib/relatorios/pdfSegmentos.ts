@@ -138,7 +138,7 @@ export function gerarPdfRelatorioSegmentos(
     });
     y += h + 8;
   };
-  /** Gráfico comparativo: conformidade atual x projetada após a consultoria, com a meta de 90%. */
+  /** Gráfico comparativo: conformidade atual x projetada após a consultoria, com a meta pós-consultoria. */
   const graficoComparativo = (itens: { rotulo: string; atual: number; projetada: number }[]) => {
     const bar = 3.6;
     const gap = 3;
@@ -334,8 +334,7 @@ export function gerarPdfRelatorioSegmentos(
         quebra(30);
         titulo('Conformidade projetada após a consultoria', 11);
         texto(
-          `Projeção considerando que o cliente implemente as soluções indicadas nas atividades da consultoria para os problemas ` +
-            `diagnosticados, com teto de ${META_POS_CONSULTORIA}% de conformidade. Conformidade média do segmento: de ` +
+          `Cenário de atingimento da meta mínima de ${META_POS_CONSULTORIA}% em cada área avaliada. Conformidade média do segmento: de ` +
             `${s.conformidadeMedia}% para ${s.conformidadeProjetada ?? s.conformidadeMedia}%.`,
           8.5
         );
@@ -450,8 +449,8 @@ export function gerarPdfRelatorioSegmentos(
     y = 20;
     titulo('Sugestões de ações após a consultoria', 15);
     texto(
-      `Com a implementação das soluções indicadas nas atividades da consultoria, a projeção é de até ${META_POS_CONSULTORIA}% de ` +
-        'conformidade. Para chegar a 100%, recomenda-se dar continuidade às ações abaixo, definidas a partir das atividades ' +
+      `A meta pós-consultoria é de pelo menos ${META_POS_CONSULTORIA}% de ` +
+        'conformidade por área avaliada. Para avançar em direção a 100%, recomenda-se dar continuidade às ações abaixo, definidas a partir das atividades ' +
         'realizadas na consultoria e das lacunas que permanecem em cada área.',
       9.5
     );
