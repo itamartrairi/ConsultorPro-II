@@ -664,9 +664,22 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
             <title>Laudo de Resultado da Consultoria - ${clientNameClean}</title>
             ${styleTags}
             <style>
-              @page { margin: 15mm; }
+              @page { size: A4 portrait; margin: 10mm; }
               html, body { background: #fff; margin: 0; padding: 0; }
-              body { display: flex; justify-content: center; padding: 16px; }
+              body { display: block; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              /* Versão compacta do laudo para caber em uma única página A4 */
+              #consultancy-result-pdf-report {
+                width: 860px !important;
+                max-width: none !important;
+                min-height: 0 !important;
+                margin: 0 auto !important;
+                padding: 0 !important;
+                border: none !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                transform-origin: top left;
+              }
+              #consultancy-result-pdf-report > * + * { margin-top: 14px !important; }
               [data-pdf-block="true"] { break-inside: avoid; page-break-inside: avoid; }
             </style>
           </head>
@@ -677,9 +690,27 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
       `);
       printWindow.document.close();
 
+      // Reduz proporcionalmente o laudo para que todos os cards caibam em uma única página A4
+      const fitToSinglePage = () => {
+        const report = printWindow.document.getElementById('consultancy-result-pdf-report') as HTMLElement | null;
+        if (!report) return;
+        const mmToPx = 96 / 25.4;
+        const pageWidthPx = (210 - 20) * mmToPx;  // A4 menos margens laterais de 10mm
+        const pageHeightPx = (297 - 20) * mmToPx; // A4 menos margens superior/inferior de 10mm
+        report.style.zoom = '1';
+        const scale = Math.min(
+          pageWidthPx / report.scrollWidth,
+          pageHeightPx / report.scrollHeight,
+          1
+        ) * 0.98;
+        report.style.zoom = String(scale);
+        report.style.margin = '0';
+      };
+
       // Wait for stylesheets/fonts/logo images to finish loading before opening the print dialog
       printWindow.onload = () => {
         setTimeout(() => {
+          fitToSinglePage();
           printWindow.focus();
           printWindow.print();
         }, 300);
@@ -1427,26 +1458,14 @@ export const ResultadoConsultoriaView: React.FC<ResultadoConsultoriaViewProps> =
                 </div>
               </div>
 
-              {/* Grid com Dados da Consultoria e do Cliente */}
-              <div className="mt-5 grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
-                <div>
-                  <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Empresa Cliente</div>
-                  <div className="font-bold text-slate-900 text-sm">{currentEmpresa?.nome || currentEmpresa?.razaoSocial || 'Cliente'}</div>
-                  {currentEmpresa?.cnpj && <div className="text-slate-600">CNPJ: {currentEmpresa.cnpj}</div>}
-                  {currentEmpresa?.representante && <div className="text-slate-600">Representante: {currentEmpresa.representante}</div>}
-                  {currentEmpresa?.enderecoComercial && <div className="text-slate-500 text-[11px]">{currentEmpresa.enderecoComercial}</div>}
-                </div>
-
-                <div>
-                  <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Dados do Atendimento</div>
-                  <div className="font-semibold text-slate-900">Projeto: {currentDiagnostico?.nomeProjeto || currentDiagnostico?.nome || 'Consultoria Gerencial'}</div>
-                  <div className="text-slate-600">Consultor(a): <strong>{consultorNome || 'Consultor Especialista'}</strong></div>
-                  {credenciadaNome && <div className="text-slate-600">Credenciada: {credenciadaNome}</div>}
-                  <div className="flex items-center gap-3 text-slate-600 mt-0.5">
-                    {codigoSgf && <span>Código SGF: <strong>{codigoSgf}</strong></span>}
-                    <span>Carga Horária: <strong>{cargaHoraria}</strong></span>
-                    <span>Data: <strong>{dataAnalise}</strong></span>
-                  </div>
+              {/* Dados do Cliente */}
+              <div className="mt-4 bg-slate-50 px-4 py-3 rounded-xl border border-slate-200 text-xs">
+                <div className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Empresa Cliente</div>
+                <div className="font-bold text-slate-900 text-sm">{currentEmpresa?.nome || currentEmpresa?.razaoSocial || 'Cliente'}</div>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-0.5">
+                  {currentEmpresa?.cnpj && <span className="text-slate-600">CNPJ: {currentEmpresa.cnpj}</span>}
+                  {currentEmpresa?.representante && <span className="text-slate-600">Representante: {currentEmpresa.representante}</span>}
+                  {currentEmpresa?.enderecoComercial && <span className="text-slate-500 text-[11px]">{currentEmpresa.enderecoComercial}</span>}
                 </div>
               </div>
             </div>
