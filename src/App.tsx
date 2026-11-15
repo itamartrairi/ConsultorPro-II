@@ -18553,6 +18553,9 @@ export default function App() {
     const mAbas = abas ? Math.round(parseFloat(getComputedStyle(abas).marginBottom) || 0) : 0;
     main.style.setProperty('--topbar-h', `${hTopo}px`);
     main.style.setProperty('--sticky-offset', `${hTopo + hAbas + mAbas || 72}px`);
+    const mTopo = topo ? parseFloat(getComputedStyle(topo).marginBottom) || 0 : 0;
+    const topOffset = hTopo + (hAbas ? hAbas + mAbas : mTopo);
+    main.style.setProperty('--diagnosis-header-offset', `${topOffset}px`);
   };
   const registrarBarraFixa = (el: HTMLElement | null) => {
     if (!el) {
@@ -18579,7 +18582,7 @@ export default function App() {
 
         <Sidebar />
 
-        <main id="main-scroll" className="flex-1 h-screen overflow-y-auto relative print:h-auto print:overflow-visible print:block print:static">
+        <main id="main-scroll" style={{ overflowAnchor: view === 'diagnosis' || view === 'dashboard' ? 'none' : undefined }} className="flex-1 h-screen overflow-y-auto relative print:h-auto print:overflow-visible print:block print:static">
           {/* Mobile Header */}
           <header className="lg:hidden sticky top-0 z-40 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between print:hidden">
             <div className="flex items-center gap-3">
@@ -19696,9 +19699,9 @@ export default function App() {
               {view === 'diagnosis' && selectedDiagnostico && (
             <motion.div 
               key="diagnosis"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
             >
               <div className="space-y-12">
                 {(() => {
@@ -19884,7 +19887,7 @@ export default function App() {
 
                   return (
                     <div className="space-y-6">
-                      <div className="lg:sticky lg:top-[var(--sticky-offset,72px)] z-20 bg-slate-50 py-2 print:static">
+                      <div className="lg:sticky lg:top-[var(--diagnosis-header-offset,72px)] z-20 bg-slate-50 py-2 print:static">
                         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                           <div className="flex items-center gap-4">
                             <Button variant="ghost" onClick={() => setView('companies')}>
@@ -20459,11 +20462,11 @@ export default function App() {
           {view === 'dashboard' && selectedDiagnostico && (
             <motion.div 
               key="dashboard"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 lg:sticky lg:top-[var(--diagnosis-header-offset,72px)] z-20 bg-slate-50 py-2 print:static">
                 <div className="flex items-center gap-4">
                   <Button variant="ghost" onClick={() => setView('diagnosis')}>
                     <ArrowLeft size={18} /> Voltar
