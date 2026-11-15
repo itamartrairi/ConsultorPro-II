@@ -7317,7 +7317,7 @@ const GestaoPlanoView = ({
           <p className="text-amber-600 text-sm">Por favor, selecione um diagnóstico na tela de "Diagnósticos" para visualizar o plano de ação.</p>
         </div>
       )}
-      <div className="space-y-2 pb-2 lg:sticky lg:top-[var(--diagnosis-header-offset,72px)] lg:-mx-10 lg:px-10 z-20 bg-slate-50 opacity-100 print:static print:mx-0 print:px-0">
+      <div className="space-y-2 pb-2 lg:sticky lg:top-[calc(var(--diagnosis-header-offset,72px)_-_1px)] lg:-mx-10 lg:px-10 z-20 bg-slate-50 opacity-100 print:static print:mx-0 print:px-0">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
           <div>
             <h2 className="text-3xl font-black text-slate-800 tracking-tight">Gestão do Plano de Ação</h2>
@@ -18605,7 +18605,7 @@ export default function App() {
 
           <div className="max-w-7xl mx-auto p-6 lg:p-10 print:p-0 print:max-w-none">
             {/* Top Bar - Modo de Salvamento (Nuvem vs. Local) - Fixada no Topo (Sticky) */}
-            <div ref={registrarBarraFixa} data-fixo="topo" className={cn("sticky top-0 z-30 bg-slate-50 -mt-6 lg:-mt-10 pt-3 pb-3 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-4 print:hidden transition-all shadow-xs", view === "diagnosis" || view === "dashboard" || view === "kanban" ? "mb-3 lg:mb-0 lg:-mx-10 lg:px-10" : "mb-3")}>
+            <div ref={registrarBarraFixa} data-fixo="topo" className={cn("sticky top-0 z-30 bg-slate-50 -mt-6 lg:-mt-10 pt-3 pb-3 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-4 print:hidden transition-all shadow-xs", view === "diagnosis" || view === "dashboard" || view === "kanban" || view === "plan" ? "mb-3 lg:mb-0 lg:-mx-10 lg:px-10" : "mb-3")}>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-1.5 bg-slate-200/70 p-1 rounded-xl text-xs font-bold">
                   <button
@@ -18773,7 +18773,7 @@ export default function App() {
                   ref={registrarBarraFixa}
                   data-fixo="abas"
                   style={{ top: 'var(--topbar-h, 0px)' }}
-                  className={cn("sticky z-[25] pt-2 pb-4 bg-slate-50 print:hidden print:static", view === "diagnosis" || view === "dashboard" || view === "kanban" ? "-mt-3 -mx-2 px-2 lg:mt-0 lg:-mx-10 lg:px-10" : "-mt-3 -mx-2 px-2")}
+                  className={cn("sticky z-[25] pt-2 pb-4 bg-slate-50 print:hidden print:static", view === "diagnosis" || view === "dashboard" || view === "kanban" || view === "plan" ? "-mt-3 -mx-2 px-2 lg:mt-0 lg:-mx-10 lg:px-10" : "-mt-3 -mx-2 px-2")}
                 >
                   <div className="flex items-center gap-2 mb-1.5 px-1 text-[11px] font-black uppercase tracking-widest text-slate-400">
                     <SectionIcon size={13} />
@@ -19886,7 +19886,7 @@ export default function App() {
 
                   return (
                     <div className="space-y-6">
-                      <div className="lg:sticky lg:top-[var(--diagnosis-header-offset,72px)] z-20 bg-slate-50 py-2 lg:-mx-10 lg:px-10 print:static print:mx-0 print:px-0">
+                      <div className="lg:sticky lg:top-[calc(var(--diagnosis-header-offset,72px)_-_1px)] z-20 bg-slate-50 py-2 lg:-mx-10 lg:px-10 print:static print:mx-0 print:px-0">
                         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                           <div className="flex items-center gap-4">
                             <Button variant="ghost" onClick={() => setView('companies')}>
@@ -20465,7 +20465,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 lg:sticky lg:top-[var(--diagnosis-header-offset,72px)] z-20 bg-slate-50 py-2 lg:-mx-10 lg:px-10 print:static print:mx-0 print:px-0">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 lg:sticky lg:top-[calc(var(--diagnosis-header-offset,72px)_-_1px)] z-20 bg-slate-50 py-2 lg:-mx-10 lg:px-10 print:static print:mx-0 print:px-0">
                 <div className="flex items-center gap-4">
                   <Button variant="ghost" onClick={() => setView('diagnosis')}>
                     <ArrowLeft size={18} /> Voltar
@@ -21016,9 +21016,7 @@ export default function App() {
           {view === 'plan' && (
             <motion.div 
               key="plan"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
+              
             >
               <GestaoPlanoView 
                 tarefas={deduplicateTarefasPlano(tarefasPlano.filter(t => selectedDiagnostico && t.diagnosticoId === selectedDiagnostico.id))}
