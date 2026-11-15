@@ -190,6 +190,8 @@ import {
   isAtividadeNoRelatorio,
   deduplicateTarefasPlano,
   findDuplicateTarefaIds,
+  horasDeTexto,
+  formatarHoras,
 } from './lib/domain/planoAcao';
 
 // --- Safe LocalStorage with AES-256 Encryption at Rest ---
@@ -2367,7 +2369,7 @@ const CronogramaView = ({
     }
 
     const segmentoAtual = (selectedDiagnostico?.tipoEmpresa || 'Geral').trim() || 'Geral';
-    const totalHorasAtv = validAtividades.reduce((acc, a) => acc + (parseInt(a?.cargaHoraria?.replace(/\D/g, '') || '0', 10) || 0), 0);
+    const totalHorasAtv = validAtividades.reduce((acc, a) => acc + horasDeTexto(a?.cargaHoraria), 0);
     const cargaFormatada = totalHorasAtv > 0 ? `${totalHorasAtv}hs` : (dadosConsultoria?.cargaHoraria || `${validAtividades.length * 4}hs`);
 
     const nomeRef = modeloAlvo ? `modelo "${modeloAlvo.nome}"` : `biblioteca de modelos para o segmento "${segmentoAtual}"`;
@@ -3053,7 +3055,7 @@ const CronogramaView = ({
   // Uma atividade fica no Parcial quando o "meio" dela cai até a metade da carga horária total;
   // assim a divisão fica o mais perto possível de 50% das horas. Sem horas lançadas, divide pela quantidade.
   const divisaoRelatorio: 'metade' | 'tudoFinal' = dadosConsultoria.divisaoRelatorio || 'metade';
-  const horasDaAtividade = (a?: AtividadeCronograma) => parseInt((a?.cargaHoraria || '0').toString().replace(/\D/g, '')) || 0;
+  const horasDaAtividade = (a?: AtividadeCronograma) => horasDeTexto(a?.cargaHoraria);
   const etapasAtividades: ('Parcial' | 'Final')[] = (() => {
     if (divisaoRelatorio === 'tudoFinal') return atividades.map(() => 'Final' as const);
     const totalHoras = atividades.reduce((acc, a) => acc + horasDaAtividade(a), 0);
@@ -3310,7 +3312,7 @@ const CronogramaView = ({
     currentY += 1;
 
     const totalHoras = atividades.reduce((acc, atv) => {
-      const horas = parseInt((atv.cargaHoraria || '').toString().replace(/\D/g, '')) || 0;
+      const horas = horasDeTexto(atv.cargaHoraria);
       return acc + horas;
     }, 0);
 
@@ -3320,7 +3322,7 @@ const CronogramaView = ({
       .filter(item => isAtividadeConcluida(item.atv.status) && (escopo === 'Total' || etapaDaAtividade(item.originalIndex, atividades.length) === escopo));
 
     const totalHorasSelecionadas = atividadesSelecionadas.reduce((acc, item) => {
-      const horas = parseInt((item.atv.cargaHoraria || '').toString().replace(/\D/g, '')) || 0;
+      const horas = horasDeTexto(item.atv.cargaHoraria);
       return acc + horas;
     }, 0);
 
@@ -3347,11 +3349,11 @@ const CronogramaView = ({
         [{ content: 'CÓDIGO SGF:', styles: { fontStyle: 'bold', cellWidth: 40 } }, { content: dadosConsultoria.codigoSgf || '', colSpan: 3 }],
         [
           { content: 'PERÍODO:', styles: { fontStyle: 'bold' } }, { content: dadosConsultoria.periodoConsultoria || '' },
-          { content: 'CARGA HORÁRIA TOTAL:', styles: { fontStyle: 'bold', cellWidth: 40 } }, { content: dadosConsultoria.cargaHoraria || `${totalHoras} HS` }
+          { content: 'CARGA HORÁRIA TOTAL:', styles: { fontStyle: 'bold', cellWidth: 40 } }, { content: dadosConsultoria.cargaHoraria || `${formatarHoras(totalHoras)} HS` }
         ],
         [
           { content: 'HORAS NO RELATÓRIO:', styles: { fontStyle: 'bold', cellWidth: 40 } },
-          { content: `${totalHorasSelecionadas} HS (${atividadesSelecionadas.length} atividade(s) selecionada(s))`, colSpan: 3, styles: { fontStyle: 'bold', textColor: [5, 150, 105] } }
+          { content: `${formatarHoras(totalHorasSelecionadas)} HS (${atividadesSelecionadas.length} atividade(s) selecionada(s))`, colSpan: 3, styles: { fontStyle: 'bold', textColor: [5, 150, 105] } }
         ],
         [{ content: 'TÉCNICO SEBRAE:', styles: { fontStyle: 'bold' } }, { content: dadosConsultoria.tecnicoSebrae || '', colSpan: 3 }]
       ]
@@ -3429,12 +3431,12 @@ const CronogramaView = ({
 
     atividadesBody.push([
       { content: `CARGA HORÁRIA DO RELATÓRIO (${rotuloRelatorio}):`, styles: { fontStyle: 'bold', fillColor: [236, 253, 245], textColor: [5, 150, 105] } },
-      { content: `${totalHorasSelecionadas} hs (${atividadesSelecionadas.length} de ${atividades.length} atividades)`, styles: { fontStyle: 'bold', fillColor: [236, 253, 245], textColor: [5, 150, 105] } }
+      { content: `${formatarHoras(totalHorasSelecionadas)} hs (${atividadesSelecionadas.length} de ${atividades.length} atividades)`, styles: { fontStyle: 'bold', fillColor: [236, 253, 245], textColor: [5, 150, 105] } }
     ]);
 
     atividadesBody.push([
       { content: `CARGA HORÁRIA TOTAL DA CONSULTORIA:`, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } },
-      { content: `${totalHoras} hs`, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }
+      { content: `${formatarHoras(totalHoras)} hs`, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }
     ]);
 
     autoTable(doc, {
@@ -3710,9 +3712,9 @@ const CronogramaView = ({
               const programadas = (etapa: 'Parcial' | 'Final') => atividades.filter((_, i) => etapaDaAtividade(i, total) === etapa).length;
               const horasImpressas = (etapa: 'Parcial' | 'Final' | 'Total') => atividades.reduce((acc, a, i) => acc + (isAtividadeConcluida(a.status) && (etapa === 'Total' || etapaDaAtividade(i, total) === etapa) ? horasDaAtividade(a) : 0), 0);
               const opcoes: { escopo: 'Parcial' | 'Final' | 'Total'; titulo: string; detalhe: string; cor: string; desativado?: boolean }[] = [
-                { escopo: 'Parcial', titulo: 'Imprimir Relatório Parcial', detalhe: divisaoRelatorio === 'tudoFinal' ? 'Esta consultoria está com todas as atividades no Final' : `${conta('Parcial')} de ${programadas('Parcial')} atividades concluídas · ${horasImpressas('Parcial')}hs`, cor: 'text-amber-700', desativado: divisaoRelatorio === 'tudoFinal' },
-                { escopo: 'Final', titulo: 'Imprimir Relatório Final', detalhe: `${conta('Final')} de ${programadas('Final')} atividades concluídas · ${horasImpressas('Final')}hs`, cor: 'text-emerald-700' },
-                { escopo: 'Total', titulo: 'Imprimir Relatório Total', detalhe: `${conta('Total')} de ${total} atividades concluídas · ${horasImpressas('Total')}hs`, cor: 'text-indigo-700' },
+                { escopo: 'Parcial', titulo: 'Imprimir Relatório Parcial', detalhe: divisaoRelatorio === 'tudoFinal' ? 'Esta consultoria está com todas as atividades no Final' : `${conta('Parcial')} de ${programadas('Parcial')} atividades concluídas · ${formatarHoras(horasImpressas('Parcial'))}hs`, cor: 'text-amber-700', desativado: divisaoRelatorio === 'tudoFinal' },
+                { escopo: 'Final', titulo: 'Imprimir Relatório Final', detalhe: `${conta('Final')} de ${programadas('Final')} atividades concluídas · ${formatarHoras(horasImpressas('Final'))}hs`, cor: 'text-emerald-700' },
+                { escopo: 'Total', titulo: 'Imprimir Relatório Total', detalhe: `${conta('Total')} de ${total} atividades concluídas · ${formatarHoras(horasImpressas('Total'))}hs`, cor: 'text-indigo-700' },
               ];
               return (
                 <>
@@ -4019,7 +4021,7 @@ const CronogramaView = ({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {modelosDoCliente.map((modelo) => {
               const isSelected = selectedModeloId === modelo.id;
-              const totalHoras = modelo.atividades.reduce((acc, a) => acc + (parseInt(a.cargaHoraria?.replace(/\D/g, '') || '0', 10) || 0), 0);
+              const totalHoras = modelo.atividades.reduce((acc, a) => acc + horasDeTexto(a.cargaHoraria), 0);
               return (
                 <div 
                   key={modelo.id}
@@ -4036,7 +4038,7 @@ const CronogramaView = ({
                         {modelo.categoria}
                       </span>
                       <span className="text-[10px] font-bold text-emerald-400 bg-slate-950/60 px-2 py-0.5 rounded-md border border-slate-700/60">
-                        {totalHoras > 0 ? `${totalHoras}hs` : `${modelo.atividades.length} atv`} • {modelo.atividades.length} Atividades
+                        {totalHoras > 0 ? `${formatarHoras(totalHoras)}hs` : `${modelo.atividades.length} atv`} • {modelo.atividades.length} Atividades
                       </span>
                     </div>
                     <h4 className="font-bold text-sm text-slate-100 mb-1.5">{modelo.nome}</h4>
@@ -4061,7 +4063,7 @@ const CronogramaView = ({
 
                         const totalHorasCalculado = totalHoras > 0 
                           ? totalHoras 
-                          : atvsModelo.reduce((acc, a) => acc + (parseInt(a?.cargaHoraria?.replace(/\D/g, '') || '0', 10) || 0), 0);
+                          : atvsModelo.reduce((acc, a) => acc + horasDeTexto(a?.cargaHoraria), 0);
                         const cargaFormatada = totalHorasCalculado > 0 
                           ? `${totalHorasCalculado}hs` 
                           : (dadosConsultoria?.cargaHoraria || `${atvsModelo.length * 4}hs`);
@@ -4269,7 +4271,7 @@ const CronogramaView = ({
                     <h4 className="font-bold text-sm text-slate-800">Atividades do Modelo ({editingModelo.atividades.length})</h4>
                     <p className="text-xs text-slate-500">
                       Carga Horária Total do Modelo: <span className="font-bold text-emerald-600">
-                        {editingModelo.atividades.reduce((acc, a) => acc + (parseInt(a.cargaHoraria?.replace(/\D/g, '') || '0', 10) || 0), 0)} hs
+                        {formatarHoras(editingModelo.atividades.reduce((acc, a) => acc + horasDeTexto(a.cargaHoraria), 0))} hs
                       </span>
                     </p>
                   </div>
@@ -4622,8 +4624,8 @@ const CronogramaView = ({
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Programação das Atividades</span>
                   <p className="text-xs text-slate-600 mt-0.5">
                     {divisaoRelatorio === 'tudoFinal'
-                      ? <>Todas as <strong>{total}</strong> atividades (<strong>{hTotal}hs</strong>) ficam no <strong className="text-emerald-700">Relatório Final</strong>.</>
-                      : <>Divisão por carga horária ({hTotal}hs): {nParcial > 0 ? <>atividades <strong>1 a {nParcial}</strong> no <strong className="text-amber-700">Relatório Parcial ({hParcial}hs)</strong></> : <>nenhuma atividade no <strong className="text-amber-700">Parcial</strong></>}{nFinal > 0 && <> e <strong>{nParcial + 1} a {total}</strong> no <strong className="text-emerald-700">Relatório Final ({hFinal}hs)</strong></>}.</>}
+                      ? <>Todas as <strong>{total}</strong> atividades (<strong>{formatarHoras(hTotal)}hs</strong>) ficam no <strong className="text-emerald-700">Relatório Final</strong>.</>
+                      : <>Divisão por carga horária ({formatarHoras(hTotal)}hs): {nParcial > 0 ? <>atividades <strong>1 a {nParcial}</strong> no <strong className="text-amber-700">Relatório Parcial ({formatarHoras(hParcial)}hs)</strong></> : <>nenhuma atividade no <strong className="text-amber-700">Parcial</strong></>}{nFinal > 0 && <> e <strong>{nParcial + 1} a {total}</strong> no <strong className="text-emerald-700">Relatório Final ({formatarHoras(hFinal)}hs)</strong></>}.</>}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl self-start md:self-auto">
@@ -4660,13 +4662,13 @@ const CronogramaView = ({
 
           {/* Resumo: só atividades Concluídas entram nos PDFs */}
           {(() => {
-            const horas = (a: AtividadeCronograma) => parseInt((a.cargaHoraria || '0').replace(/\D/g, '')) || 0;
+            const horas = (a: AtividadeCronograma) => horasDeTexto(a.cargaHoraria);
             const concluidas = atividades.filter(a => isAtividadeConcluida(a.status));
             return (
               <div className="flex items-center gap-2 pt-3.5 text-xs text-slate-700 font-medium">
                 <CheckCircle size={15} className="text-emerald-600 shrink-0" />
                 <span>
-                  <strong>{concluidas.length} de {atividades.length}</strong> atividades concluídas (<strong>{concluidas.reduce((acc, a) => acc + horas(a), 0)}hs</strong> de {atividades.reduce((acc, a) => acc + horas(a), 0)}hs). Só as atividades concluídas entram nos relatórios impressos.
+                  <strong>{concluidas.length} de {atividades.length}</strong> atividades concluídas (<strong>{formatarHoras(concluidas.reduce((acc, a) => acc + horas(a), 0))}hs</strong> de {formatarHoras(atividades.reduce((acc, a) => acc + horas(a), 0))}hs). Só as atividades concluídas entram nos relatórios impressos.
                 </span>
               </div>
             );
