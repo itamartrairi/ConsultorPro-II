@@ -691,6 +691,20 @@ console.log('  OK: textos do relatório');
   console.log('  OK: deduplicação de tarefas do plano de ação e identificação de IDs redundantes');
 }
 
+{
+  const { horasDeTexto, formatarHoras } = await import('../src/lib/domain/planoAcao');
+  assert.equal(horasDeTexto('4h'), 4);
+  assert.equal(horasDeTexto('40hs'), 40);
+  assert.equal(horasDeTexto('1,5h'), 1.5);
+  assert.equal(horasDeTexto('1.5 h'), 1.5);
+  assert.equal(horasDeTexto('2h30'), 2.5);
+  assert.equal(horasDeTexto(''), 0);
+  assert.equal(horasDe({ cargaHoraria: '1,5h' }), 1.5);
+  assert.equal(formatarHoras(34.5), '34,5');
+  assert.equal(formatarHoras(40), '40');
+  console.log('  OK: carga horária com vírgula/minutos (1,5h e 2h30) lida corretamente');
+}
+
 console.log('Todos os testes de planoAcao passaram.');
 
 
