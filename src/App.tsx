@@ -1425,7 +1425,7 @@ const DadosConsultoriaView = ({
             className="border-slate-200 text-slate-700 hover:bg-slate-50"
           >
             <Calendar className="mr-2 h-4 w-4 text-emerald-600" />
-            Ir para Relatório de Consultoria (8 Atividades)
+            Ir para Relatório de Consultoria{(() => { const n = (selectedDiagnostico?.cronograma || []).length; return n > 0 ? ` (${n} ${n === 1 ? 'Atividade' : 'Atividades'})` : ''; })()}
           </Button>
 
           <Button 
