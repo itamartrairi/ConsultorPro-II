@@ -3694,10 +3694,19 @@ const CronogramaView = ({
             <ArrowLeft size={18} /> Voltar
           </Button>
           <div className="min-w-0">
-            <h2 className="text-2xl font-bold text-slate-800 tracking-tight leading-tight">Relatório de Consultoria</h2>
-            <p className="text-sm text-slate-500 font-medium truncate">
-              {selectedEmpresa?.nome ? `${selectedEmpresa.nome} · ` : ''}Defina as etapas do projeto e as soluções propostas
-            </p>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h2 className="text-2xl font-bold text-slate-800 tracking-tight leading-tight">Relatório de Consultoria</h2>
+              {selectedEmpresa?.nome && (
+                <span
+                  className="inline-flex items-center gap-1.5 max-w-full px-3 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-base font-extrabold uppercase tracking-tight truncate"
+                  title={selectedEmpresa.nome}
+                >
+                  <Building2 size={16} className="shrink-0 text-emerald-600" />
+                  <span className="truncate">{selectedEmpresa.nome}</span>
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-slate-500 font-medium truncate">Defina as etapas do projeto e as soluções propostas</p>
           </div>
         </div>
         <div className="flex flex-wrap gap-3">
