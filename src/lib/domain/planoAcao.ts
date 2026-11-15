@@ -1036,14 +1036,35 @@ function pesoDaAtividade(a: AtividadeCronograma): number {
   return itens.reduce((s, p) => s + PESO_NIVEL[p.nivel], 0);
 }
 
-/** Horas (número) de uma atividade. */
-export function horasDe(a?: Pick<AtividadeCronograma, 'cargaHoraria'>): number {
-  const n = parseInt(String(a?.cargaHoraria || '').replace(/\D/g, ''), 10);
+/**
+ * Converte um texto de carga horária em número de horas.
+ * Aceita "4h", "4hs", "1,5h", "1.5 h", "2h30" (2,5h) e números. Antes, "1,5h" era lido como 15h.
+ */
+export function horasDeTexto(valor?: string | number | null): number {
+  if (typeof valor === 'number') return Number.isFinite(valor) ? valor : 0;
+  const s = String(valor ?? '').toLowerCase().trim();
+  if (!s) return 0;
+  const hMin = s.match(/(\d+)\s*h\s*(\d{1,2})\b/);
+  if (hMin) return parseInt(hMin[1], 10) + parseInt(hMin[2], 10) / 60;
+  const num = s.match(/\d+(?:[.,]\d+)?/);
+  if (!num) return 0;
+  const n = parseFloat(num[0].replace(',', '.'));
   return Number.isFinite(n) ? n : 0;
 }
 
+/** Formata horas para exibição: 4 → "4", 1.5 → "1,5". */
+export function formatarHoras(n: number): string {
+  const r = Math.round(n * 10) / 10;
+  return Number.isInteger(r) ? String(r) : r.toFixed(1).replace('.', ',');
+}
+
+/** Horas (número) de uma atividade. */
+export function horasDe(a?: Pick<AtividadeCronograma, 'cargaHoraria'>): number {
+  return horasDeTexto(a?.cargaHoraria);
+}
+
 export function parseCargaHoraria(total?: string | number, padrao = 34): number {
-  const n = typeof total === 'number' ? total : parseInt(String(total || '').replace(/\D/g, ''), 10);
+  const n = horasDeTexto(total);
   return Number.isFinite(n) && n > 0 ? n : padrao;
 }
 
