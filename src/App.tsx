@@ -9685,6 +9685,29 @@ const HomeView = ({
   onSelectCredenciadaAtiva?: (id: string) => void,
   consultorLogado?: string | null
 }) => {
+  const [respostasNuvem, setRespostasNuvem] = useState<Resposta[]>([]);
+  useEffect(() => {
+    setRespostasNuvem([]);
+    if (!user?.uid) return;
+    return onSnapshot(query(collection(db, 'respostas'), ownerFilter()), snapshot => {
+      setRespostasNuvem(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Resposta)));
+    }, error => console.warn('Respostas indisponíveis para o cartão de diagnósticos:', error));
+  }, [user?.uid]);
+
+  const respostasPorDiagnostico = useMemo(() => {
+    const porId = new Map<string, Resposta>();
+    for (const resposta of [...loadAllLocalRespostas(), ...respostas, ...respostasNuvem]) {
+      porId.set(resposta.id, resposta);
+    }
+    const porDiagnostico = new Map<string, Resposta[]>();
+    for (const resposta of porId.values()) {
+      const lista = porDiagnostico.get(resposta.diagnosticoId) ?? [];
+      lista.push(resposta);
+      porDiagnostico.set(resposta.diagnosticoId, lista);
+    }
+    return porDiagnostico;
+  }, [respostas, respostasNuvem]);
+
   const atividadesPorDiagnostico = new Map<string, TarefaPlanoAcao[]>();
   for (const tarefa of tarefas) {
     const atividades = atividadesPorDiagnostico.get(tarefa.diagnosticoId) ?? [];
@@ -9701,7 +9724,7 @@ const HomeView = ({
     if (atividades?.length && atividades.every((atividade) => atividade.status === 'Concluído')) return true;
 
     const excluidas = new Set(diagnostico.excludedPremissaIds || []);
-    const perguntas = perguntasDoDiagnostico(diagnostico, respostas.filter(r => r.diagnosticoId === diagnostico.id), premissas, problemas)
+    const perguntas = perguntasDoDiagnostico(diagnostico, respostasPorDiagnostico.get(diagnostico.id) ?? [], premissas, problemas)
       .filter(r => !excluidas.has(r.id) && !(r.premissaId && excluidas.has(r.premissaId)));
     return perguntas.length > 0 && perguntas.every(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'Não');
   };
