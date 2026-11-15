@@ -2099,7 +2099,7 @@ const CronogramaView = ({
   setSelectedDiagnostico: (d: Diagnostico) => void,
   setDiagnosticos?: React.Dispatch<React.SetStateAction<Diagnostico[]>>,
   playSuccessSound: () => void,
-  setPdfUrl: (url: string) => void,
+  setPdfUrl: (url: string, titulo?: string, cliente?: string) => void,
   empresasCredenciadas: EmpresaCredenciada[],
   setCredenciadaForm: (f: any) => void,
   setModalType: (t: any) => void,
@@ -3673,7 +3673,7 @@ const CronogramaView = ({
       ]
     });
 
-    setPdfUrl(doc.output('bloburl').toString());
+    setPdfUrl(doc.output('bloburl').toString(), 'Relatório de Consultoria', selectedEmpresa?.nomeFantasia || selectedEmpresa?.nome || selectedDiagnostico?.nomeEmpresa);
     } catch (error) {
       console.error("Error generating Cronograma PDF:", error);
       alert("Ocorreu um erro ao gerar o PDF do cronograma. Por favor, tente novamente.");
@@ -5395,7 +5395,7 @@ const RelatorioView = ({
   selectedEmpresa: Empresa | null,
   respostas: Resposta[],
   solucoes: Solucao[],
-  setPdfUrl: (url: string) => void,
+  setPdfUrl: (url: string, titulo?: string, cliente?: string) => void,
   problemas: Problema[],
   tarefasPlano?: TarefaPlanoAcao[],
   customLogo: string | null,
@@ -6216,7 +6216,7 @@ const RelatorioView = ({
         });
       }
 
-      setPdfUrl(doc.output('bloburl').toString());
+      setPdfUrl(doc.output('bloburl').toString(), 'Relatório do Diagnóstico', selectedEmpresa?.nomeFantasia || selectedEmpresa?.nome || selectedDiagnostico?.nomeEmpresa);
     } catch (error) {
       console.error("Error generating Relatorio PDF:", error);
       alert("Ocorreu um erro ao gerar o PDF do relatório. Por favor, tente novamente.");
@@ -10363,7 +10363,12 @@ export default function App() {
     return (localStorage.getItem('preferred_logo') as 'sebrae' | 'consultora' | 'none') || 'sebrae';
   });
   const activeLogo = logoChoice === 'sebrae' ? customLogo : logoChoice === 'consultora' ? customConsultoraLogo : null;
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdf, setPdf] = useState<{ url: string; nome: string } | null>(null);
+  const pdfUrl = pdf?.url;
+  const setPdfUrl = (url: string | null, titulo = 'Relatório de Consultoria', cliente?: string) => {
+    const nomeCliente = cliente?.replace(/[\\/:*?"<>|]/g, '_').trim().replace(/[. ]+$/, '');
+    setPdf(url ? { url, nome: [titulo, nomeCliente].filter(Boolean).join(' - ') + '.pdf' } : null);
+  };
   const [gerandoRelatorioSegmentos, setGerandoRelatorioSegmentos] = useState(false);
   const [libraryTab, setLibraryTab] = useState<'problemas' | 'premissas' | 'solucoes' | 'areas' | 'segmentos'>('problemas');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -15219,7 +15224,7 @@ export default function App() {
           return;
         }
         const doc = gerarPdfDevolutivaCliente(historico, { logo });
-        setPdfUrl(doc.output('bloburl').toString());
+        setPdfUrl(doc.output('bloburl').toString(), 'Devolutiva do Cliente', historico[0].cliente);
         playSuccessSound();
         return;
       }
@@ -15239,7 +15244,7 @@ export default function App() {
         return;
       }
       const doc = gerarPdfRelatorioSegmentos(rel, { consultor: user?.email || undefined, logo });
-      setPdfUrl(doc.output('bloburl').toString());
+      setPdfUrl(doc.output('bloburl').toString(), 'Relatório por Tipo de Negócio', rel.totalClientes === 1 ? rel.segmentos[0]?.clientes[0]?.cliente || rel.segmentos[0]?.clientesSemDiagnostico[0] : undefined);
       playSuccessSound();
     } catch (e: any) {
       console.error('Erro ao gerar o relatório por tipo de negócio:', e);
@@ -17241,7 +17246,7 @@ export default function App() {
       }
     }
 
-    setPdfUrl(doc.output('bloburl').toString());
+    setPdfUrl(doc.output('bloburl').toString(), 'Relatório da Consultoria', selectedEmpresa?.nomeFantasia || selectedEmpresa?.nome || selectedDiagnostico?.nomeEmpresa);
   };
 
   const PremisesView = () => {
@@ -23248,7 +23253,7 @@ export default function App() {
                 <Button variant="primary" size="sm" onClick={() => {
                   const a = document.createElement('a');
                   a.href = pdfUrl;
-                  a.download = 'Relatorio_Consultoria.pdf';
+                  a.download = pdf?.nome ?? 'Relatório de Consultoria.pdf';
                   a.click();
                 }}>
                   <Download size={18} className="mr-2" /> Baixar PDF
