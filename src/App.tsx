@@ -9617,11 +9617,13 @@ const HomeView = ({
     atividadesPorDiagnostico.set(tarefa.diagnosticoId, atividades);
   }
   const diagnosticosFinalizados = diagnosticos.filter((diagnostico) => {
-    const tarefasDoDiagnostico = atividadesPorDiagnostico.get(diagnostico.id);
-    const atividades = tarefasDoDiagnostico?.length ? tarefasDoDiagnostico : diagnostico.cronograma;
-    if (atividades?.length) return atividades.every((atividade) => atividade.status === 'Concluído');
-    const status = String(diagnostico.status ?? '');
-    return status === 'Finalizado' || status === 'Concluído';
+    const status = String(diagnostico.status ?? '').trim();
+    if (status === 'Finalizado' || status === 'Concluído') return true;
+
+    const atividades = diagnostico.cronograma?.length
+      ? diagnostico.cronograma
+      : atividadesPorDiagnostico.get(diagnostico.id);
+    return !!atividades?.length && atividades.every((atividade) => atividade.status === 'Concluído');
   }).length;
   const pendingTasks = tarefas.filter(t => t.status !== 'Concluído');
   
