@@ -53,6 +53,7 @@ import {
   FileText, 
   Building2, 
   ChevronRight,
+  ChevronDown,
   CheckCircle2,
   CreditCard,
   XCircle, 
@@ -3115,19 +3116,21 @@ const CronogramaView = ({
   // Programação Parcial/Final: 1ª metade das atividades no Relatório Parcial e 2ª metade no Final,
   // ou todas no Final. Com número ímpar, a atividade do meio fica no Parcial.
   const divisaoRelatorio: 'metade' | 'tudoFinal' = dadosConsultoria.divisaoRelatorio || 'metade';
-  const tipoRelatorioAtual: 'Parcial' | 'Final' = divisaoRelatorio === 'tudoFinal' ? 'Final' : (dadosConsultoria.tipoRelatorio || 'Final');
   const etapaDaAtividade = (idx: number, total: number, div: 'metade' | 'tudoFinal' = divisaoRelatorio): 'Parcial' | 'Final' =>
     div === 'tudoFinal' ? 'Final' : (idx < Math.ceil(total / 2) ? 'Parcial' : 'Final');
-  const aplicarProgramacaoRelatorio = (tipo: 'Parcial' | 'Final', div: 'metade' | 'tudoFinal') => {
-    const tipoFinal: 'Parcial' | 'Final' = div === 'tudoFinal' ? 'Final' : tipo;
-    setDadosConsultoria(prev => ({ ...prev, tipoRelatorio: tipoFinal, divisaoRelatorio: div }));
-    setAtividades(prev => prev.map((a, i) => ({
-      ...a,
-      incluirNoRelatorio: isAtividadeConcluida(a.status) && etapaDaAtividade(i, prev.length, div) === tipoFinal
-    })));
+  const definirDivisaoRelatorio = (div: 'metade' | 'tudoFinal') => {
+    setDadosConsultoria(prev => ({ ...prev, divisaoRelatorio: div, ...(div === 'tudoFinal' ? { tipoRelatorio: 'Final' as const } : {}) }));
   };
 
-  const generateCronogramaPDF = () => {
+  const [menuPdfAberto, setMenuPdfAberto] = useState(false);
+
+  /**
+   * Gera o PDF do Relatório de Consultoria.
+   * escopo 'Parcial' = atividades programadas para o Parcial; 'Final' = programadas para o Final;
+   * 'Total' = todas. Em todos os casos só entram atividades com status Concluído.
+   * Sem escopo, usa a seleção manual ("No Relatório") e o tipo escolhido.
+   */
+  const generateCronogramaPDF = (escopo?: 'Parcial' | 'Final' | 'Total') => {
     try {
       if (!selectedEmpresa || !selectedDiagnostico || atividades.length === 0) {
         alert("Dados insuficientes para gerar o relatório. Verifique se a empresa e o diagnóstico estão selecionados e se há atividades no cronograma.");
@@ -3267,7 +3270,10 @@ const CronogramaView = ({
     addHeader(doc);
     let currentY = ((doc as any).lastAutoTable?.finalY || 40) + 5;
 
-    const tipoRelatorioVal = (dadosConsultoria.tipoRelatorio || 'Final').toUpperCase();
+    const tipoRelatorioVal = escopo
+      ? (escopo === 'Parcial' ? 'PARCIAL' : 'FINAL')
+      : (dadosConsultoria.tipoRelatorio || 'Final').toUpperCase();
+    const rotuloRelatorio = escopo === 'Total' ? 'TOTAL' : tipoRelatorioVal;
 
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
@@ -3282,7 +3288,7 @@ const CronogramaView = ({
     } else {
       doc.setTextColor(5, 150, 105);
     }
-    doc.text(`(${tipoRelatorioVal === 'PARCIAL' ? 'RELATÓRIO PARCIAL DE ACOMPANHAMENTO' : 'RELATÓRIO FINAL DE CONSULTORIA GERENCIAL'})`, 105, currentY, { align: 'center' });
+    doc.text(`(${tipoRelatorioVal === 'PARCIAL' ? 'RELATÓRIO PARCIAL DE ACOMPANHAMENTO' : rotuloRelatorio === 'TOTAL' ? 'RELATÓRIO TOTAL DE CONSULTORIA GERENCIAL' : 'RELATÓRIO FINAL DE CONSULTORIA GERENCIAL'})`, 105, currentY, { align: 'center' });
     currentY += 6;
 
     doc.setTextColor(30, 41, 59);
@@ -3362,7 +3368,9 @@ const CronogramaView = ({
     // Selected activities for the report
     const atividadesSelecionadas = atividades
       .map((atv, originalIndex) => ({ atv, originalIndex, activityNumber: originalIndex + 1 }))
-      .filter(item => isAtividadeNoRelatorio(item.atv));
+      .filter(item => escopo
+        ? isAtividadeConcluida(item.atv.status) && (escopo === 'Total' || etapaDaAtividade(item.originalIndex, atividades.length) === escopo)
+        : isAtividadeNoRelatorio(item.atv));
 
     const totalHorasSelecionadas = atividadesSelecionadas.reduce((acc, item) => {
       const horas = parseInt((item.atv.cargaHoraria || '').toString().replace(/\D/g, '')) || 0;
@@ -3383,7 +3391,7 @@ const CronogramaView = ({
         [
           { content: 'TIPO DE RELATÓRIO:', styles: { fontStyle: 'bold', cellWidth: 40 } },
           { 
-            content: `RELATÓRIO ${tipoRelatorioVal}`, 
+            content: `RELATÓRIO ${rotuloRelatorio}`, 
             colSpan: 3, 
             styles: { fontStyle: 'bold', textColor: tipoRelatorioVal === 'PARCIAL' ? [217, 119, 6] : [5, 150, 105] } 
           }
@@ -3473,7 +3481,7 @@ const CronogramaView = ({
     }
 
     atividadesBody.push([
-      { content: `CARGA HORÁRIA DO RELATÓRIO (${tipoRelatorioVal}):`, styles: { fontStyle: 'bold', fillColor: [236, 253, 245], textColor: [5, 150, 105] } },
+      { content: `CARGA HORÁRIA DO RELATÓRIO (${rotuloRelatorio}):`, styles: { fontStyle: 'bold', fillColor: [236, 253, 245], textColor: [5, 150, 105] } },
       { content: `${totalHorasSelecionadas} hs (${atividadesSelecionadas.length} de ${atividades.length} atividades)`, styles: { fontStyle: 'bold', fillColor: [236, 253, 245], textColor: [5, 150, 105] } }
     ]);
 
@@ -3745,9 +3753,46 @@ const CronogramaView = ({
           <Button variant="outline" onClick={() => setAtividades([...atividades, { nome: '', descricao: '', cargaHoraria: '', solucaoProposta: '', responsavel: '', status: 'Pendente', prioridade: 'Média' }])} className="px-4 text-emerald-600 border-emerald-100">
             <Plus size={18} /> Adicionar Atividade
           </Button>
-          <Button variant="outline" onClick={generateCronogramaPDF} className="px-4 text-emerald-600 hover:bg-emerald-50 border-emerald-100">
-            <Printer size={18} /> Relatório (PDF)
-          </Button>
+          <div className="relative">
+            <Button variant="outline" onClick={() => setMenuPdfAberto(v => !v)} className="px-4 text-emerald-600 hover:bg-emerald-50 border-emerald-100" title="Escolha imprimir o Relatório Parcial, Final ou Total">
+              <Printer size={18} /> Relatório (PDF) <ChevronDown size={14} className={cn("transition-transform", menuPdfAberto && "rotate-180")} />
+            </Button>
+            {menuPdfAberto && (() => {
+              const total = atividades.length;
+              const conta = (etapa: 'Parcial' | 'Final' | 'Total') => atividades.filter((a, i) => isAtividadeConcluida(a.status) && (etapa === 'Total' || etapaDaAtividade(i, total) === etapa)).length;
+              const programadas = (etapa: 'Parcial' | 'Final') => atividades.filter((_, i) => etapaDaAtividade(i, total) === etapa).length;
+              const opcoes: { escopo: 'Parcial' | 'Final' | 'Total'; titulo: string; detalhe: string; cor: string; desativado?: boolean }[] = [
+                { escopo: 'Parcial', titulo: 'Imprimir Relatório Parcial', detalhe: divisaoRelatorio === 'tudoFinal' ? 'Esta consultoria está com todas as atividades no Final' : `${conta('Parcial')} de ${programadas('Parcial')} atividades programadas (concluídas)`, cor: 'text-amber-700', desativado: divisaoRelatorio === 'tudoFinal' },
+                { escopo: 'Final', titulo: 'Imprimir Relatório Final', detalhe: `${conta('Final')} de ${programadas('Final')} atividades programadas (concluídas)`, cor: 'text-emerald-700' },
+                { escopo: 'Total', titulo: 'Imprimir Relatório Total', detalhe: `Todas as atividades: ${conta('Total')} de ${total} (concluídas)`, cor: 'text-indigo-700' },
+              ];
+              return (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setMenuPdfAberto(false)} />
+                  <div className="absolute left-0 top-full mt-2 z-40 w-80 bg-white border border-slate-200 rounded-xl shadow-lg p-1.5">
+                    {opcoes.map(op => (
+                      <button
+                        key={op.escopo}
+                        type="button"
+                        disabled={op.desativado}
+                        onClick={() => { setMenuPdfAberto(false); generateCronogramaPDF(op.escopo); }}
+                        className={cn(
+                          "w-full text-left px-3 py-2.5 rounded-lg flex items-start gap-2.5 transition-colors",
+                          op.desativado ? "opacity-50 cursor-not-allowed" : "hover:bg-slate-50 cursor-pointer"
+                        )}
+                      >
+                        <Printer size={16} className={cn("mt-0.5 shrink-0", op.cor)} />
+                        <span>
+                          <span className={cn("block text-sm font-bold", op.cor)}>{op.titulo}</span>
+                          <span className="block text-[11px] text-slate-500">{op.detalhe}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
           <Button 
             variant="outline" 
             onClick={() => {
@@ -4610,56 +4655,9 @@ const CronogramaView = ({
         {!isModoModelos && (<>
         {/* Painel de Controle: Relatório de Consultoria & Seleção de Atividades */}
         <Card className="p-5 border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tipo do Documento</span>
-                <span className={cn(
-                  "text-[10px] font-black uppercase px-2 py-0.5 rounded-full border",
-                  tipoRelatorioAtual === 'Parcial' 
-                    ? "bg-amber-50 text-amber-700 border-amber-200" 
-                    : "bg-emerald-50 text-emerald-700 border-emerald-200"
-                )}>
-                  {tipoRelatorioAtual === 'Parcial' ? 'Relatório Parcial' : 'Relatório Final'}
-                </span>
-              </div>
-              <h3 className="font-bold text-slate-800 text-base mt-0.5">RELATÓRIO DE CONSULTORIA</h3>
-              <p className="text-xs text-slate-500">Selecione se o relatório gerado é Parcial ou Final e marque as atividades que devem constar no PDF impresso.</p>
-            </div>
-
-            {/* Tipo de Relatório Toggle */}
-            <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl">
-              <button
-                type="button"
-                onClick={() => aplicarProgramacaoRelatorio('Parcial', divisaoRelatorio)}
-                disabled={divisaoRelatorio === 'tudoFinal'}
-                title={divisaoRelatorio === 'tudoFinal' ? 'Nesta consultoria todas as atividades ficam no Relatório Final' : 'Marca a 1ª metade das atividades (concluídas) para o Relatório Parcial'}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all",
-                  divisaoRelatorio === 'tudoFinal' ? "text-slate-300 cursor-not-allowed" :
-                  tipoRelatorioAtual === 'Parcial'
-                    ? "bg-white text-amber-700 shadow-sm border border-amber-200 ring-1 ring-amber-400/20 cursor-pointer"
-                    : "text-slate-600 hover:text-slate-900 cursor-pointer"
-                )}
-              >
-                <Clock size={14} className={tipoRelatorioAtual === 'Parcial' ? "text-amber-600" : "text-slate-400"} />
-                <span>Relatório Parcial</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => aplicarProgramacaoRelatorio('Final', divisaoRelatorio)}
-                title={divisaoRelatorio === 'tudoFinal' ? 'Marca todas as atividades (concluídas) para o Relatório Final' : 'Marca a 2ª metade das atividades (concluídas) para o Relatório Final'}
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer",
-                  tipoRelatorioAtual === 'Final'
-                    ? "bg-white text-emerald-700 shadow-sm border border-emerald-200 ring-1 ring-emerald-400/20"
-                    : "text-slate-600 hover:text-slate-900"
-                )}
-              >
-                <CheckCircle2 size={14} className={tipoRelatorioAtual === 'Final' ? "text-emerald-600" : "text-slate-400"} />
-                <span>Relatório Final</span>
-              </button>
-            </div>
+          <div className="pb-4 border-b border-slate-100">
+            <h3 className="font-bold text-slate-800 text-base">RELATÓRIO DE CONSULTORIA</h3>
+            <p className="text-xs text-slate-500">Defina como as atividades se dividem entre os relatórios. Para imprimir, use "Relatório (PDF)" e escolha Parcial, Final ou Total.</p>
           </div>
 
           {/* Programação das atividades entre Relatório Parcial e Final */}
@@ -4680,7 +4678,7 @@ const CronogramaView = ({
                 <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl self-start md:self-auto">
                   <button
                     type="button"
-                    onClick={() => aplicarProgramacaoRelatorio(tipoRelatorioAtual, 'metade')}
+                    onClick={() => definirDivisaoRelatorio('metade')}
                     title="1ª metade das atividades no Relatório Parcial e 2ª metade no Relatório Final"
                     className={cn(
                       "px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer",
@@ -4693,7 +4691,7 @@ const CronogramaView = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => aplicarProgramacaoRelatorio('Final', 'tudoFinal')}
+                    onClick={() => definirDivisaoRelatorio('tudoFinal')}
                     title="Todas as atividades no Relatório Final (sem Relatório Parcial)"
                     className={cn(
                       "px-3 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer",
