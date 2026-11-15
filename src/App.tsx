@@ -1222,7 +1222,6 @@ const DadosConsultoriaView = ({
   // --- Mandatory Fields & Diagnostic Progress Calculations ---
   const mandatoryFields = useMemo(() => [
     { id: 'cliente', label: 'Cliente Vinculado', isFilled: Boolean(selectedEmpresa?.id || selectedDiagnostico?.empresaId || selectedDiagnostico?.nomeEmpresa) },
-    { id: 'tipoRelatorio', label: 'Tipo do Relatório', isFilled: Boolean(dadosConsultoria.tipoRelatorio) },
     { id: 'areaConsultoria', label: 'Área da Consultoria', isFilled: Boolean(dadosConsultoria.areaConsultoria?.trim()) },
     { id: 'codigoSgf', label: 'Código SGF', isFilled: Boolean(dadosConsultoria.codigoSgf?.trim()) },
     { id: 'periodoConsultoria', label: 'Período da Consultoria', isFilled: Boolean(dadosConsultoria.periodoConsultoria?.trim()) },
@@ -1725,36 +1724,6 @@ const DadosConsultoriaView = ({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div>
-            <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Tipo do Relatório</label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setDadosConsultoria({ ...dadosConsultoria, tipoRelatorio: 'Final' })}
-                className={cn(
-                  "py-2 px-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5",
-                  (dadosConsultoria.tipoRelatorio === 'Final' || !dadosConsultoria.tipoRelatorio)
-                    ? "bg-emerald-600 text-white border-emerald-600 shadow-xs"
-                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                )}
-              >
-                <CheckCircle2 size={14} /> Relatório Final
-              </button>
-              <button
-                type="button"
-                onClick={() => setDadosConsultoria({ ...dadosConsultoria, tipoRelatorio: 'Parcial' })}
-                className={cn(
-                  "py-2 px-3 rounded-xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5",
-                  dadosConsultoria.tipoRelatorio === 'Parcial'
-                    ? "bg-amber-500 text-white border-amber-500 shadow-xs"
-                    : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                )}
-              >
-                <Clock size={14} /> Relatório Parcial
-              </button>
-            </div>
-          </div>
-
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="block text-[10px] font-bold text-slate-400 uppercase">Área da Consultoria</label>
@@ -3079,40 +3048,6 @@ const CronogramaView = ({
     playSuccessSound();
   };
 
-  const toggleAtividadeRelatorio = (index: number) => {
-    setAtividades(prev => {
-      const updated = [...prev];
-      const current = updated[index];
-      if (!isAtividadeConcluida(current.status)) {
-        return prev;
-      }
-      const isCurrentlyIncluded = isAtividadeNoRelatorio(current);
-      updated[index] = {
-        ...current,
-        incluirNoRelatorio: !isCurrentlyIncluded
-      };
-      return updated;
-    });
-  };
-
-  const selectAllAtividadesRelatorio = () => {
-    setAtividades(prev => prev.map(a => ({
-      ...a,
-      incluirNoRelatorio: isAtividadeConcluida(a.status)
-    })));
-  };
-
-  const selectConcluidasAtividadesRelatorio = () => {
-    setAtividades(prev => prev.map(a => ({
-      ...a,
-      incluirNoRelatorio: isAtividadeConcluida(a.status)
-    })));
-  };
-
-  const clearSelectionAtividadesRelatorio = () => {
-    setAtividades(prev => prev.map(a => ({ ...a, incluirNoRelatorio: false })));
-  };
-
   // Programação Parcial/Final: 1ª metade das atividades no Relatório Parcial e 2ª metade no Final,
   // ou todas no Final. Com número ímpar, a atividade do meio fica no Parcial.
   const divisaoRelatorio: 'metade' | 'tudoFinal' = dadosConsultoria.divisaoRelatorio || 'metade';
@@ -3128,9 +3063,8 @@ const CronogramaView = ({
    * Gera o PDF do Relatório de Consultoria.
    * escopo 'Parcial' = atividades programadas para o Parcial; 'Final' = programadas para o Final;
    * 'Total' = todas. Em todos os casos só entram atividades com status Concluído.
-   * Sem escopo, usa a seleção manual ("No Relatório") e o tipo escolhido.
    */
-  const generateCronogramaPDF = (escopo?: 'Parcial' | 'Final' | 'Total') => {
+  const generateCronogramaPDF = (escopo: 'Parcial' | 'Final' | 'Total') => {
     try {
       if (!selectedEmpresa || !selectedDiagnostico || atividades.length === 0) {
         alert("Dados insuficientes para gerar o relatório. Verifique se a empresa e o diagnóstico estão selecionados e se há atividades no cronograma.");
@@ -3270,9 +3204,7 @@ const CronogramaView = ({
     addHeader(doc);
     let currentY = ((doc as any).lastAutoTable?.finalY || 40) + 5;
 
-    const tipoRelatorioVal = escopo
-      ? (escopo === 'Parcial' ? 'PARCIAL' : 'FINAL')
-      : (dadosConsultoria.tipoRelatorio || 'Final').toUpperCase();
+    const tipoRelatorioVal = escopo === 'Parcial' ? 'PARCIAL' : 'FINAL';
     const rotuloRelatorio = escopo === 'Total' ? 'TOTAL' : tipoRelatorioVal;
 
     doc.setFontSize(12);
@@ -3368,9 +3300,7 @@ const CronogramaView = ({
     // Selected activities for the report
     const atividadesSelecionadas = atividades
       .map((atv, originalIndex) => ({ atv, originalIndex, activityNumber: originalIndex + 1 }))
-      .filter(item => escopo
-        ? isAtividadeConcluida(item.atv.status) && (escopo === 'Total' || etapaDaAtividade(item.originalIndex, atividades.length) === escopo)
-        : isAtividadeNoRelatorio(item.atv));
+      .filter(item => isAtividadeConcluida(item.atv.status) && (escopo === 'Total' || etapaDaAtividade(item.originalIndex, atividades.length) === escopo));
 
     const totalHorasSelecionadas = atividadesSelecionadas.reduce((acc, item) => {
       const horas = parseInt((item.atv.cargaHoraria || '').toString().replace(/\D/g, '')) || 0;
@@ -4707,41 +4637,24 @@ const CronogramaView = ({
             );
           })()}
 
-          {/* Seleção Rápida de Atividades */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3.5">
-            <div className="flex items-center gap-2">
-              <ListFilter size={16} className="text-slate-400 shrink-0" />
-              <div className="text-xs text-slate-700 font-medium">
-                <strong>{atividades.filter(isAtividadeNoRelatorio).length} de {atividades.length}</strong> atividades selecionadas para o relatório (<strong>{atividades.filter(isAtividadeNoRelatorio).reduce((acc, a) => acc + (parseInt((a.cargaHoraria || '0').replace(/\D/g, '')) || 0), 0)}hs</strong> de {atividades.reduce((acc, a) => acc + (parseInt((a.cargaHoraria || '0').replace(/\D/g, '')) || 0), 0)}hs)
+          {/* Resumo: só atividades Concluídas entram nos PDFs */}
+          {(() => {
+            const horas = (a: AtividadeCronograma) => parseInt((a.cargaHoraria || '0').replace(/\D/g, '')) || 0;
+            const concluidas = atividades.filter(a => isAtividadeConcluida(a.status));
+            return (
+              <div className="flex items-center gap-2 pt-3.5 text-xs text-slate-700 font-medium">
+                <CheckCircle size={15} className="text-emerald-600 shrink-0" />
+                <span>
+                  <strong>{concluidas.length} de {atividades.length}</strong> atividades concluídas (<strong>{concluidas.reduce((acc, a) => acc + horas(a), 0)}hs</strong> de {atividades.reduce((acc, a) => acc + horas(a), 0)}hs). Só as atividades concluídas entram nos relatórios impressos.
+                </span>
               </div>
-            </div>
-
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                type="button"
-                onClick={selectConcluidasAtividadesRelatorio}
-                className="px-2.5 py-1 text-xs font-bold bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-700 rounded-lg border border-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
-                title="Incluir todas as atividades que possuem status Concluído"
-              >
-                <CheckCircle size={13} className="text-emerald-600" />
-                <span>Selecionar Concluídas</span>
-              </button>
-              <button
-                type="button"
-                onClick={clearSelectionAtividadesRelatorio}
-                className="px-2.5 py-1 text-xs font-bold bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 rounded-lg border border-slate-200 transition-colors flex items-center gap-1 cursor-pointer"
-                title="Limpar seleção do relatório"
-              >
-                <Square size={13} className="text-slate-400" />
-                <span>Desmarcar Todas</span>
-              </button>
-            </div>
-          </div>
+            );
+          })()}
         </Card>
 
         {atividades.map((atv, idx) => {
           const isConcluida = isAtividadeConcluida(atv.status);
-          const isIncluded = isAtividadeNoRelatorio(atv);
+          const isIncluded = isConcluida;
 
           return (
           <Card 
@@ -4796,32 +4709,6 @@ const CronogramaView = ({
               </div>
 
               <div className="flex items-center gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
-                {/* Botão de Inclusão no Relatório */}
-                <button
-                  type="button"
-                  disabled={!isConcluida}
-                  onClick={() => {
-                    if (!isConcluida) return;
-                    toggleAtividadeRelatorio(idx);
-                  }}
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border shadow-2xs",
-                    !isConcluida
-                      ? "bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60"
-                      : isIncluded
-                        ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100 cursor-pointer"
-                        : "bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200 cursor-pointer"
-                  )}
-                  title={
-                    !isConcluida
-                      ? "Apenas atividades com status Concluído podem ser incluídas no relatório"
-                      : "Clique para incluir ou remover esta atividade do Relatório de Consultoria"
-                  }
-                >
-                  {isIncluded ? <CheckSquare size={15} className="text-emerald-600" /> : <Square size={15} className="text-slate-400" />}
-                  <span>{isIncluded ? "No Relatório" : isConcluida ? "Oculta do Relatório" : "Oculta (Requer Concluído)"}</span>
-                </button>
-
                 <div className="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200">
                   <span className="text-[10px] font-bold text-slate-400 uppercase px-1">Ordem:</span>
                   <select
@@ -5116,57 +5003,6 @@ const CronogramaView = ({
                 <Trash2 size={14} className="mr-1" /> Excluir Atividade
               </Button>
             </div>
-            {/* Toggle para inclusão no relatório */}
-            {(() => {
-              const isConcluida = isAtividadeConcluida(editingActivity.status);
-              const isIncluded = isConcluida && (editingActivity.incluirNoRelatorio !== false);
-
-              return (
-                <div className={cn(
-                  "p-3 border rounded-xl flex items-center justify-between transition-colors",
-                  isConcluida ? "bg-slate-50 border-slate-200" : "bg-slate-100/70 border-slate-200/80"
-                )}>
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 block">Incluir esta Atividade no Relatório de Consultoria</label>
-                    <p className="text-[11px] text-slate-500">
-                      {isConcluida 
-                        ? "Atividade com status Concluído. Se desmarcado, esta atividade não aparecerá no PDF gerado." 
-                        : "Apenas atividades com status Concluído podem ser incluídas no relatório."}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    disabled={!isConcluida}
-                    onClick={() => {
-                      if (!isConcluida) return;
-                      setEditingActivity({ ...editingActivity, incluirNoRelatorio: !isIncluded });
-                    }}
-                    className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border",
-                      !isConcluida
-                        ? "bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed opacity-60"
-                        : isIncluded
-                          ? "bg-emerald-50 text-emerald-800 border-emerald-300 cursor-pointer hover:bg-emerald-100"
-                          : "bg-white text-slate-600 border-slate-200 cursor-pointer hover:bg-slate-50"
-                    )}
-                    title={!isConcluida ? "Apenas atividades com status Concluído podem ser incluídas" : undefined}
-                  >
-                    {isIncluded ? (
-                      <>
-                        <CheckSquare size={16} className="text-emerald-600" />
-                        <span>No Relatório</span>
-                      </>
-                    ) : (
-                      <>
-                        <Square size={16} className="text-slate-400" />
-                        <span>{isConcluida ? "Oculta do Relatório" : "Bloqueado"}</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              );
-            })()}
-
             <div>
               <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">Vincular a Problema Diagnosticado</label>
               <select 
