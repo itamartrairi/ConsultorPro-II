@@ -18604,7 +18604,7 @@ export default function App() {
 
           <div className="max-w-7xl mx-auto p-6 lg:p-10 print:p-0 print:max-w-none">
             {/* Top Bar - Modo de Salvamento (Nuvem vs. Local) - Fixada no Topo (Sticky) */}
-            <div ref={registrarBarraFixa} data-fixo="topo" className="sticky top-0 z-30 bg-slate-50 -mt-6 lg:-mt-10 pt-3 mb-3 pb-3 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-4 print:hidden transition-all shadow-xs">
+            <div ref={registrarBarraFixa} data-fixo="topo" className={cn("sticky top-0 z-30 bg-slate-50 -mt-6 lg:-mt-10 pt-3 pb-3 border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-4 print:hidden transition-all shadow-xs", view === "diagnosis" || view === "dashboard" ? "mb-3 lg:mb-0 lg:-mx-10 lg:px-10" : "mb-3")}>
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-1.5 bg-slate-200/70 p-1 rounded-xl text-xs font-bold">
                   <button
@@ -19887,7 +19887,7 @@ export default function App() {
 
                   return (
                     <div className="space-y-6">
-                      <div className="lg:sticky lg:top-[var(--diagnosis-header-offset,72px)] z-20 bg-slate-50 py-2 print:static">
+                      <div className="lg:sticky lg:top-[var(--diagnosis-header-offset,72px)] z-20 bg-slate-50 py-2 lg:-mx-10 lg:px-10 print:static print:mx-0 print:px-0">
                         <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
                           <div className="flex items-center gap-4">
                             <Button variant="ghost" onClick={() => setView('companies')}>
@@ -20466,7 +20466,7 @@ export default function App() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 lg:sticky lg:top-[var(--diagnosis-header-offset,72px)] z-20 bg-slate-50 py-2 print:static">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 lg:sticky lg:top-[var(--diagnosis-header-offset,72px)] z-20 bg-slate-50 py-2 lg:-mx-10 lg:px-10 print:static print:mx-0 print:px-0">
                 <div className="flex items-center gap-4">
                   <Button variant="ghost" onClick={() => setView('diagnosis')}>
                     <ArrowLeft size={18} /> Voltar
