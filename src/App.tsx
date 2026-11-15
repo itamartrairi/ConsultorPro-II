@@ -19700,133 +19700,6 @@ export default function App() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
             >
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center gap-4">
-                  <Button variant="ghost" onClick={() => setView('companies')}>
-                    <ArrowLeft size={18} /> Voltar
-                  </Button>
-                  <div>
-                    <h2 className="text-2xl font-bold">Realizando Diagnóstico</h2>
-                    <div className="flex flex-wrap items-center gap-2 text-slate-500 mt-1">
-                      <span className="text-sm font-semibold">{selectedEmpresa?.nome}</span>
-                      <span className="text-slate-300 text-xs">•</span>
-                      <span className="inline-flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 transition-colors">
-                        <Calendar size={13} className="text-emerald-600" />
-                        <span>{formatFirestoreDate(selectedDiagnostico.dataDiagnostico)}</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDiagToEditDate(selectedDiagnostico);
-                            setIsEditDateModalOpen(true);
-                          }}
-                          className="text-slate-400 hover:text-emerald-600 ml-0.5 p-0.5 rounded hover:bg-slate-200 transition-colors"
-                          title="Alterar Data do Diagnóstico"
-                        >
-                          <Edit2 size={11} />
-                        </button>
-                      </span>
-                      <span className="text-slate-300 text-xs">•</span>
-                      <span className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
-                        Segmento: {selectedDiagnostico.tipoEmpresa || 'Geral'}
-                        <button
-                          onClick={() => {
-                            const seg = selectedDiagnostico.tipoEmpresa || 'Geral';
-                            setSelectedSegmentForEdit(seg);
-                            setCustomSegmentForEdit(!TIPOS_EMPRESA.includes(seg) ? seg : '');
-                            setEditSegmentTarget('diagnostico');
-                            setIsEditSegmentModalOpen(true);
-                          }}
-                          className="hover:text-emerald-600 transition-colors p-0.5 rounded bg-slate-200/50 cursor-pointer flex items-center justify-center border-none"
-                          title="Editar Tipo de Negócio para este Diagnóstico"
-                        >
-                          <Edit2 size={10} />
-                        </button>
-                      </span>
-                    </div>
-                    {selectedDiagnostico.areasDiagnostico && selectedDiagnostico.areasDiagnostico.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {selectedDiagnostico.areasDiagnostico.map(area => (
-                          <span key={area} className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[10px] font-bold uppercase tracking-wider border border-emerald-100">
-                            {area}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Status and Action Buttons */}
-                <div className="flex flex-wrap items-center gap-3">
-                  {/* Save Status Feedback */}
-                  <div className={cn(
-                    "flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-xs font-semibold",
-                    saveStatus === 'saved' || manualSaveSuccess
-                      ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                      : "bg-amber-50 text-amber-800 border-amber-200 animate-pulse"
-                  )}>
-                    {saveStatus === 'saving' ? (
-                      <>
-                        <RefreshCw size={14} className="animate-spin text-amber-600" />
-                        <span>Salvando alterações...</span>
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 size={14} className="text-emerald-600" />
-                        <span>Salvamento Concluído {lastSavedTime ? `(${lastSavedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })})` : ''}</span>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Manual Save Button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                    disabled={isManualSaving}
-                    onClick={handleManualSaveDiagnostico}
-                    title="Forçar salvamento de todas as respostas"
-                  >
-                    {isManualSaving ? (
-                      <RefreshCw size={15} className="animate-spin mr-1.5" />
-                    ) : (
-                      <Save size={15} className="mr-1.5 text-emerald-600" />
-                    )}
-                    {isManualSaving ? "Salvando..." : "Salvar Agora"}
-                  </Button>
-
-                  {/* Replicate Button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="border-sky-200 text-sky-700 hover:bg-sky-50"
-                    onClick={() => {
-                      setReplicateSourceDiagId(selectedDiagnostico.id);
-                      setIsReplicateModalOpen(true);
-                    }}
-                    title="Replicar este diagnóstico para clientes do mesmo segmento ou outros segmentos"
-                  >
-                    <Copy size={15} className="mr-1.5 text-sky-600" /> Replicar Diagnóstico
-                  </Button>
-
-                  {/* Delete Button */}
-                  {(isAdmin || selectedDiagnostico.ownerId === user?.uid) && (
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      className="text-rose-600 border-rose-200 hover:bg-rose-50"
-                      onClick={() => {
-                        setModalType('deleteDiagnostico');
-                        setModalData(selectedDiagnostico);
-                        setIsModalOpen(true);
-                      }}
-                      title="Excluir este diagnóstico e todas as suas respostas"
-                    >
-                      <Trash2 size={15} className="mr-1.5" /> Excluir Diagnóstico
-                    </Button>
-                  )}
-                </div>
-              </div>
-
               <div className="space-y-12">
                 {(() => {
                   // 1. Get responses for this specific diagnosis
@@ -20011,34 +19884,162 @@ export default function App() {
 
                   return (
                     <div className="space-y-6">
-                      {/* Overall Progress Banner */}
-                      <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-black uppercase tracking-wider text-slate-500">Progresso Geral do Diagnóstico</span>
-                            {isAllPremissasAnswered ? (
-                              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
-                                <CheckCircle2 size={12} /> 100% Preenchido
-                              </span>
-                            ) : (
-                              <span className="bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200">
-                                Faltam {totalOverall - answeredOverall} de {totalOverall} premissas
-                              </span>
+                      <div className="lg:sticky lg:top-[var(--sticky-offset,72px)] z-20 bg-slate-50 py-2 print:static">
+                        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                          <div className="flex items-center gap-4">
+                            <Button variant="ghost" onClick={() => setView('companies')}>
+                              <ArrowLeft size={18} /> Voltar
+                            </Button>
+                            <div>
+                              <h2 className="text-2xl font-bold">Realizando Diagnóstico</h2>
+                              <div className="flex flex-wrap items-center gap-2 text-slate-500 mt-1">
+                                <span className="text-sm font-semibold">{selectedEmpresa?.nome}</span>
+                                <span className="text-slate-300 text-xs">•</span>
+                                <span className="inline-flex items-center gap-1.5 bg-slate-50 hover:bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 transition-colors">
+                                  <Calendar size={13} className="text-emerald-600" />
+                                  <span>{formatFirestoreDate(selectedDiagnostico.dataDiagnostico)}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setDiagToEditDate(selectedDiagnostico);
+                                      setIsEditDateModalOpen(true);
+                                    }}
+                                    className="text-slate-400 hover:text-emerald-600 ml-0.5 p-0.5 rounded hover:bg-slate-200 transition-colors"
+                                    title="Alterar Data do Diagnóstico"
+                                  >
+                                    <Edit2 size={11} />
+                                  </button>
+                                </span>
+                                <span className="text-slate-300 text-xs">•</span>
+                                <span className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                                  Segmento: {selectedDiagnostico.tipoEmpresa || 'Geral'}
+                                  <button
+                                    onClick={() => {
+                                      const seg = selectedDiagnostico.tipoEmpresa || 'Geral';
+                                      setSelectedSegmentForEdit(seg);
+                                      setCustomSegmentForEdit(!TIPOS_EMPRESA.includes(seg) ? seg : '');
+                                      setEditSegmentTarget('diagnostico');
+                                      setIsEditSegmentModalOpen(true);
+                                    }}
+                                    className="hover:text-emerald-600 transition-colors p-0.5 rounded bg-slate-200/50 cursor-pointer flex items-center justify-center border-none"
+                                    title="Editar Tipo de Negócio para este Diagnóstico"
+                                  >
+                                    <Edit2 size={10} />
+                                  </button>
+                                </span>
+                              </div>
+                              {selectedDiagnostico.areasDiagnostico && selectedDiagnostico.areasDiagnostico.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                  {selectedDiagnostico.areasDiagnostico.map(area => (
+                                    <span key={area} className="px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded text-[10px] font-bold uppercase tracking-wider border border-emerald-100">
+                                      {area}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+          
+                          {/* Status and Action Buttons */}
+                          <div className="flex flex-wrap items-center gap-3">
+                            {/* Save Status Feedback */}
+                            <div className={cn(
+                              "flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all text-xs font-semibold",
+                              saveStatus === 'saved' || manualSaveSuccess
+                                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                : "bg-amber-50 text-amber-800 border-amber-200 animate-pulse"
+                            )}>
+                              {saveStatus === 'saving' ? (
+                                <>
+                                  <RefreshCw size={14} className="animate-spin text-amber-600" />
+                                  <span>Salvando alterações...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle2 size={14} className="text-emerald-600" />
+                                  <span>Salvamento Concluído {lastSavedTime ? `(${lastSavedTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })})` : ''}</span>
+                                </>
+                              )}
+                            </div>
+          
+                            {/* Manual Save Button */}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
+                              disabled={isManualSaving}
+                              onClick={handleManualSaveDiagnostico}
+                              title="Forçar salvamento de todas as respostas"
+                            >
+                              {isManualSaving ? (
+                                <RefreshCw size={15} className="animate-spin mr-1.5" />
+                              ) : (
+                                <Save size={15} className="mr-1.5 text-emerald-600" />
+                              )}
+                              {isManualSaving ? "Salvando..." : "Salvar Agora"}
+                            </Button>
+          
+                            {/* Replicate Button */}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="border-sky-200 text-sky-700 hover:bg-sky-50"
+                              onClick={() => {
+                                setReplicateSourceDiagId(selectedDiagnostico.id);
+                                setIsReplicateModalOpen(true);
+                              }}
+                              title="Replicar este diagnóstico para clientes do mesmo segmento ou outros segmentos"
+                            >
+                              <Copy size={15} className="mr-1.5 text-sky-600" /> Replicar Diagnóstico
+                            </Button>
+          
+                            {/* Delete Button */}
+                            {(isAdmin || selectedDiagnostico.ownerId === user?.uid) && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                className="text-rose-600 border-rose-200 hover:bg-rose-50"
+                                onClick={() => {
+                                  setModalType('deleteDiagnostico');
+                                  setModalData(selectedDiagnostico);
+                                  setIsModalOpen(true);
+                                }}
+                                title="Excluir este diagnóstico e todas as suas respostas"
+                              >
+                                <Trash2 size={15} className="mr-1.5" /> Excluir Diagnóstico
+                              </Button>
                             )}
                           </div>
-                          <div className="w-full bg-slate-100 rounded-full h-2.5 mt-2 overflow-hidden border border-slate-200/50">
-                            <div 
-                              className={cn("h-full transition-all duration-500 rounded-full", isAllPremissasAnswered ? "bg-emerald-600" : "bg-emerald-500")}
-                              style={{ width: `${pctOverall}%` }}
-                            />
-                          </div>
                         </div>
-                        <div className="flex items-center gap-4 text-right justify-between md:justify-end">
-                          <div>
-                            <span className="text-2xl font-black text-slate-800 font-mono">{pctOverall}%</span>
-                            <span className="text-xs text-slate-400 block font-semibold">
-                              {answeredOverall} de {totalOverall} respondidas
-                            </span>
+                        {/* Overall Progress Banner */}
+                        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-black uppercase tracking-wider text-slate-500">Progresso Geral do Diagnóstico</span>
+                              {isAllPremissasAnswered ? (
+                                <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full flex items-center gap-1">
+                                  <CheckCircle2 size={12} /> 100% Preenchido
+                                </span>
+                              ) : (
+                                <span className="bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200">
+                                  Faltam {totalOverall - answeredOverall} de {totalOverall} premissas
+                                </span>
+                              )}
+                            </div>
+                            <div className="w-full bg-slate-100 rounded-full h-2.5 mt-2 overflow-hidden border border-slate-200/50">
+                              <div 
+                                className={cn("h-full transition-all duration-500 rounded-full", isAllPremissasAnswered ? "bg-emerald-600" : "bg-emerald-500")}
+                                style={{ width: `${pctOverall}%` }}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4 text-right justify-between md:justify-end">
+                            <div>
+                              <span className="text-2xl font-black text-slate-800 font-mono">{pctOverall}%</span>
+                              <span className="text-xs text-slate-400 block font-semibold">
+                                {answeredOverall} de {totalOverall} respondidas
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>
