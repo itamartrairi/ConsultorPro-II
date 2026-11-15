@@ -123,7 +123,12 @@ export function gerarPdfDevolutivaCliente(
     escrever('Problemas identificados e soluções sugeridas', 12, true);
     if (!diagnostico.problemas.length) escrever('Nenhuma lacuna registrada neste diagnóstico.');
     diagnostico.problemas.forEach((problema) => {
-      escrever(problema.area + ' | ' + problema.problema + ' (' + problema.nivel + ')', 11, true);
+      if (y > 250) {
+        doc.addPage();
+        y = 20;
+      }
+      escrever('ÁREA DIAGNOSTICADA: ' + problema.area.toLocaleUpperCase('pt-BR'), 13, true);
+      escrever(problema.problema + ' (' + problema.nivel + ')', 11);
       problema.evidencias.forEach((evidencia) => escrever(evidencia));
       if (problema.solucao) {
         if (y > 260) {
