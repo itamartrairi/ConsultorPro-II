@@ -5,7 +5,7 @@
  */
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import type { RelatorioSegmentos, ResumoSegmento } from '../domain/relatorioSegmentos';
+import type { RelatorioSegmentos, ResumoCliente, ResumoSegmento } from '../domain/relatorioSegmentos';
 import { faixaConformidade, META_POS_CONSULTORIA } from '../domain/relatorioSegmentos';
 
 const AZUL: [number, number, number] = [0, 90, 160];
@@ -66,6 +66,86 @@ function acoesPosConsultoria(s: ResumoSegmento, area: string): string[] {
   if (semSolucao.length) add(`Elaborar plano específico para: ${curto(semSolucao.slice(0, 2).join('; '), 120)}`);
   add(ACAO_AREA[normArea(area)] || `Revisar as práticas de ${area.toLowerCase()} e corrigir as lacunas restantes do diagnóstico.`);
   return out.slice(0, 4);
+}
+
+export function gerarPdfDevolutivaCliente(
+  historico: [ResumoCliente, ...ResumoCliente[]] | ResumoCliente[],
+  { logo }: { logo?: string | null } = {}
+): jsPDF {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const margin = 16;
+  let y = 20;
+  const escrever = (texto: string, tamanho = 10, destaque = false) => {
+    doc.setFont('helvetica', destaque ? 'bold' : 'normal');
+    doc.setFontSize(tamanho);
+    doc.setTextColor(...(destaque ? AZUL : CINZA));
+    const linhas: string[] = doc.splitTextToSize(texto, 210 - 2 * margin);
+    for (const linha of linhas) {
+      if (y > 278) {
+        doc.addPage();
+        y = 20;
+      }
+      doc.text(linha, margin, y);
+      y += tamanho * 0.45;
+    }
+    y += 3;
+  };
+  if (logo) {
+    try {
+      const dimensoes = doc.getImageProperties(logo);
+      const escala = Math.min(42 / dimensoes.width, 16 / dimensoes.height);
+      doc.addImage(logo, dimensoes.fileType, margin, y, dimensoes.width * escala, dimensoes.height * escala);
+      y += dimensoes.height * escala + 8;
+    } catch {
+      // Continua a geração quando o logotipo cadastrado não pode ser lido.
+    }
+  }
+  escrever('Devolutiva da consultoria', 21, true);
+  escrever(historico[0].cliente, 14, true);
+  escrever('Resultados dos diagnósticos', 14, true);
+
+  historico.forEach((diagnostico) => {
+    if (y > 234) {
+      doc.addPage();
+      y = 20;
+    }
+    escrever('Diagnóstico de ' + dataBR(diagnostico.data), 13, true);
+    escrever('Conformidade geral: ' + diagnostico.conformidade + '%. Respostas avaliadas: ' + diagnostico.respondidas + '.');
+    autoTable(doc, {
+      startY: y,
+      margin: { left: margin, right: margin, bottom: 16 },
+      head: [['Área avaliada', 'Diagnóstico', 'Meta pós-consultoria']],
+      body: Object.entries(diagnostico.areas).map(([area, percentual]) =>
+        [area, percentual + '%', META_POS_CONSULTORIA + '%']
+      ),
+    });
+    y = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 8;
+    escrever('Problemas identificados e soluções sugeridas', 12, true);
+    if (!diagnostico.problemas.length) escrever('Nenhuma lacuna registrada neste diagnóstico.');
+    diagnostico.problemas.forEach((problema) => {
+      escrever(problema.area + ' | ' + problema.problema + ' (' + problema.nivel + ')', 11, true);
+      problema.evidencias.forEach((evidencia) => escrever(evidencia));
+      escrever(problema.solucao ? 'Solução sugerida: ' + problema.solucao : 'Solução específica ainda não registrada.');
+      if (problema.acoes) escrever('Ações sugeridas: ' + problema.acoes);
+      if (problema.kpis) escrever('Indicadores sugeridos: ' + problema.kpis);
+    });
+  });
+
+  escrever('Orientações após a consultoria', 14, true);
+  ACOES_GERAIS.forEach((acao) => escrever(acao));
+  const areas = new Set(historico.flatMap((diagnostico) => Object.keys(diagnostico.areas)));
+  areas.forEach((area) => {
+    const acao = ACAO_AREA[normArea(area)];
+    if (acao) escrever(area + ': ' + acao);
+  });
+
+  if (y > 250) {
+    doc.addPage();
+    y = 20;
+  }
+  escrever('Condição para alcançar os resultados', 13, true);
+  escrever('Todos os resultados esperados da consultoria só poderão ser alcançados se o cliente colocar em prática as soluções sugeridas.', 11, true);
+  return doc;
 }
 
 export function gerarPdfRelatorioSegmentos(
