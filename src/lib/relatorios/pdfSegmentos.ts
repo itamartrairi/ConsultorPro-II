@@ -125,7 +125,16 @@ export function gerarPdfDevolutivaCliente(
     diagnostico.problemas.forEach((problema) => {
       escrever(problema.area + ' | ' + problema.problema + ' (' + problema.nivel + ')', 11, true);
       problema.evidencias.forEach((evidencia) => escrever(evidencia));
-      escrever(problema.solucao ? 'Solução sugerida: ' + problema.solucao : 'Solução específica ainda não registrada.');
+      if (problema.solucao) {
+        if (y > 260) {
+          doc.addPage();
+          y = 20;
+        }
+        escrever('SOLUÇÃO SUGERIDA', 10, true);
+        escrever(problema.solucao, 11, true);
+      } else {
+        escrever('Solução específica ainda não registrada.');
+      }
       if (problema.acoes) escrever('Ações sugeridas: ' + problema.acoes);
       if (problema.kpis) escrever('Indicadores sugeridos: ' + problema.kpis);
     });
