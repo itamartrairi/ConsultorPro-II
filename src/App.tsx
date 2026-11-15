@@ -9691,7 +9691,7 @@ const HomeView = ({
     atividades.push(tarefa);
     atividadesPorDiagnostico.set(tarefa.diagnosticoId, atividades);
   }
-  const diagnosticosFinalizados = diagnosticos.filter((diagnostico) => {
+  const diagnosticoConcluido = (diagnostico: Diagnostico) => {
     const status = String(diagnostico.status ?? '').trim();
     if (status === 'Finalizado' || status === 'Concluído') return true;
 
@@ -9704,7 +9704,9 @@ const HomeView = ({
     const perguntas = perguntasDoDiagnostico(diagnostico, respostas.filter(r => r.diagnosticoId === diagnostico.id), premissas, problemas)
       .filter(r => !excluidas.has(r.id) && !(r.premissaId && excluidas.has(r.premissaId)));
     return perguntas.length > 0 && perguntas.every(r => r.resposta === 'Sim' || r.resposta === 'Parcial' || r.resposta === 'Não');
-  }).length;
+  };
+  const diagnosticosPendentes = diagnosticos.filter(diagnostico => !diagnosticoConcluido(diagnostico));
+  const diagnosticosFinalizados = diagnosticos.length - diagnosticosPendentes.length;
   const pendingTasks = tarefas.filter(t => t.status !== 'Concluído');
   
   // Credenciada ativa (escolhida pelo admin) ou a do usuário logado / a primeira cadastrada
@@ -9856,6 +9858,26 @@ const HomeView = ({
             <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full uppercase tracking-widest">{diagnosticosFinalizados} finalizados de {diagnosticos.length} cadastrados</span>
             <ChevronRight size={16} className="text-slate-300 group-hover:text-amber-600 transform group-hover:translate-x-1 transition-all" />
           </div>
+          {diagnosticosPendentes.length > 0 && (
+            <div className="mt-3 border-t border-slate-100 pt-2">
+              <p className="text-xs font-semibold text-slate-700">Diagnósticos pendentes</p>
+              <ul className="mt-1 space-y-1 text-xs text-slate-600">
+                {diagnosticosPendentes.map(diagnostico => {
+                  const empresa = empresas.find(item => item.id === diagnostico.empresaId);
+                  const cliente = empresa?.nome || diagnostico.nomeEmpresa;
+                  const projeto = diagnostico.nomeProjeto || diagnostico.nome;
+                  return (
+                    <li key={diagnostico.id} className="break-words">
+                      {cliente || projeto || "Diagnóstico sem nome"}
+                      {cliente && projeto && projeto !== cliente && (
+                        <span className="block text-slate-500">{projeto}</span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
         </Card>
 
         <Card className="p-5 hover:shadow-2xl transition-all cursor-pointer border-slate-100 group rounded-2xl bg-white relative overflow-hidden" onClick={() => setView('premises')}>
