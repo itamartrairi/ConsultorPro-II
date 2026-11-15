@@ -53,8 +53,6 @@ import {
   FileText, 
   Building2, 
   ChevronRight,
-  Eye,
-  EyeOff,
   CheckCircle2,
   CreditCard,
   XCircle, 
@@ -2091,8 +2089,10 @@ const CronogramaView = ({
   setTarefasPlano,
   setView,
   podeCriarCredenciada = false,
-  loginEmail = null
+  loginEmail = null,
+  modo = 'relatorio'
 }: { 
+  modo?: 'relatorio' | 'modelos',
   podeCriarCredenciada?: boolean,
   loginEmail?: string | null,
   selectedDiagnostico: Diagnostico, 
@@ -2121,16 +2121,7 @@ const CronogramaView = ({
   setView?: (v: string) => void
 }) => {
   const [selectedModeloId, setSelectedModeloId] = useState<string>('financas');
-  const [mostrarModelosRelatorio, setMostrarModelosRelatorio] = useState<boolean>(() => {
-    try { return localStorage.getItem('cp_mostrar_modelos_relatorio') === '1'; } catch { return false; }
-  });
-  const toggleModelosRelatorio = () => {
-    setMostrarModelosRelatorio(prev => {
-      const next = !prev;
-      try { localStorage.setItem('cp_mostrar_modelos_relatorio', next ? '1' : '0'); } catch { /* ignore */ }
-      return next;
-    });
-  };
+  const isModoModelos = modo === 'modelos';
   const [atividades, setAtividades] = useState<AtividadeCronograma[]>(() => {
     let rawList: AtividadeCronograma[] = [];
     if (selectedDiagnostico.cronograma && selectedDiagnostico.cronograma.length > 0 && selectedDiagnostico.cronograma.some(atv => atv.nome && atv.nome.trim() !== '')) {
@@ -3694,12 +3685,15 @@ const CronogramaView = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      {/* Cabeçalho do Relatório (título, botões e logotipo) fixo no topo ao rolar */}
+      {!isModoModelos && (
+      <div className="sticky top-[var(--sticky-offset,72px)] z-20 bg-slate-50 -mt-3 pt-2 pb-3 -mx-2 px-2 space-y-3 rounded-b-2xl transition-all print:static">
+      <div className="flex flex-wrap justify-between items-center gap-3">
         <div>
           <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Relatório de Consultoria</h2>
           <p className="text-slate-500 font-medium">Defina as etapas do projeto e as soluções propostas</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           <Button variant="outline" onClick={() => setAtividades([...atividades, { nome: '', descricao: '', cargaHoraria: '', solucaoProposta: '', responsavel: '', status: 'Pendente', prioridade: 'Média' }])} className="px-4 text-emerald-600 border-emerald-100">
             <Plus size={18} /> Adicionar Atividade
           </Button>
@@ -3777,8 +3771,11 @@ const CronogramaView = ({
           customConsultoraLogo={customConsultoraLogo}
         />
       </div>
+      </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4">
+        {!isModoModelos && (<>
         {/* 2. Empresa Credenciada - Apenas Seleção e Resumo */}
         <Card className="p-6 mb-8 border-slate-100 shadow-sm">
           <div className="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
@@ -3930,20 +3927,10 @@ const CronogramaView = ({
           </div>
         </Card>
 
-        {/* Modelos de Relatório de Consultoria Baseados no Diagnóstico */}
-        <div className="flex justify-end mb-3 print:hidden">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={toggleModelosRelatorio}
-            className="text-xs font-bold flex items-center gap-1.5"
-            title={mostrarModelosRelatorio ? 'Ocultar os modelos de relatório' : 'Mostrar os modelos de relatório'}
-          >
-            {mostrarModelosRelatorio ? <EyeOff size={14} /> : <Eye size={14} />}
-            {mostrarModelosRelatorio ? 'Ocultar Modelos de Relatório' : 'Mostrar Modelos de Relatório'}
-          </Button>
-        </div>
-        {mostrarModelosRelatorio && (
+        </>)}
+
+        {/* Modelos de Relatório de Consultoria (aba própria "Modelos de Relatório") */}
+        {isModoModelos && (
         <Card className="p-6 mb-8 border-slate-800 shadow-md bg-slate-900 text-white">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
             <div className="flex items-center gap-3">
@@ -4572,6 +4559,7 @@ const CronogramaView = ({
         </Card>
         )}
 
+        {!isModoModelos && (<>
         {/* Painel de Controle: Relatório de Consultoria & Seleção de Atividades */}
         <Card className="p-5 border-slate-200 bg-white shadow-sm">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
@@ -4931,6 +4919,7 @@ const CronogramaView = ({
             </div>
           </Card>
         ); })}
+        </>)}
       </div>
 
       {editingActivityIndex !== null && editingActivity && (
@@ -10359,7 +10348,7 @@ export default function App() {
   const isSubmittingCredenciadaRef = useRef(false);
   const [calculatingMaturity, setCalculatingMaturity] = useState(false);
   const [generatingPlan, setGeneratingPlan] = useState(false);
-  const [view, setViewInternal] = useState<'home' | 'companies' | 'credenciadas' | 'licenses' | 'diagnosis' | 'dashboard' | 'premises' | 'cronograma' | 'relatorio' | 'kanban' | 'settings' | 'landing' | 'checkout' | 'licensing' | 'dados-consultoria' | 'agenda' | 'macro-dashboard' | 'maturity-assessment' | 'projects' | 'plan' | 'resultado-consultoria' | 'relatorio-consolidado-sgf' | 'help'>('landing');
+  const [view, setViewInternal] = useState<'home' | 'companies' | 'credenciadas' | 'licenses' | 'diagnosis' | 'dashboard' | 'premises' | 'cronograma' | 'relatorio' | 'kanban' | 'settings' | 'landing' | 'checkout' | 'licensing' | 'dados-consultoria' | 'agenda' | 'macro-dashboard' | 'maturity-assessment' | 'projects' | 'plan' | 'resultado-consultoria' | 'relatorio-consolidado-sgf' | 'help' | 'modelos-relatorio'>('landing');
   const setView = (v: any) => {
     if (pendingResponsesBuffer.current.size > 0 && flushPendingResponsesRef.current) {
       try {
@@ -13127,7 +13116,7 @@ export default function App() {
       setExpandedMenu(prev => ({ ...prev, gestao: true }));
     } else if (['maturity-assessment', 'resultado-consultoria', 'premises'].includes(view) || (view === 'dashboard' && !selectedDiagnostico)) {
       setExpandedMenu(prev => ({ ...prev, diagnosticos: true }));
-    } else if (['dados-consultoria', 'cronograma', 'relatorio'].includes(view)) {
+    } else if (['dados-consultoria', 'cronograma', 'modelos-relatorio', 'relatorio'].includes(view)) {
       setExpandedMenu(prev => ({ ...prev, diagnosticoAtivo: true }));
     } else if (['licenses', 'licensing'].includes(view)) {
       setExpandedMenu(prev => ({ ...prev, licencas: true }));
@@ -13201,6 +13190,7 @@ export default function App() {
     { key: 'diagnosticoAtivo', label: "Diagnóstico Ativo", icon: FileSpreadsheet, show: !!selectedDiagnostico, tabs: [
       { label: "Dados da Consultoria", icon: FileSpreadsheet, active: view === 'dados-consultoria', onClick: () => setView('dados-consultoria') },
       { label: "Relatório de Consultoria", icon: Calendar, active: view === 'cronograma', onClick: () => setView('cronograma') },
+      { label: "Modelos de Relatório", icon: Sparkles, active: view === 'modelos-relatorio', onClick: () => setView('modelos-relatorio') },
       { label: "Relatório", icon: FileText, active: view === 'relatorio', onClick: () => setView('relatorio') },
     ] },
     { key: 'licencas', label: "Licenças & Acesso", icon: Trophy, show: isAdmin, tabs: [
@@ -14785,7 +14775,7 @@ export default function App() {
 
       if (selectedDiagnostico?.id === diagId) {
         setSelectedDiagnostico(null);
-        if (view === 'diagnosis' || view === 'dashboard' || view === 'cronograma' || view === 'kanban' || view === 'relatorio') {
+        if (view === 'diagnosis' || view === 'dashboard' || view === 'cronograma' || view === 'modelos-relatorio' || view === 'kanban' || view === 'relatorio') {
           setView('projects');
         }
       }
@@ -20809,6 +20799,54 @@ export default function App() {
                 tarefasPlano={tarefasPlano}
                 setTarefasPlano={setTarefasPlano}
                 setView={setView}
+              />
+            </motion.div>
+          )}
+
+          {view === 'modelos-relatorio' && selectedDiagnostico && (
+            <motion.div 
+              key="modelos-relatorio"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+            >
+              <div className="flex items-center gap-4 mb-8">
+                <Button variant="ghost" onClick={() => setView('dashboard')}>
+                  <ArrowLeft size={18} /> Voltar
+                </Button>
+                <div>
+                  <h2 className="text-2xl font-bold">Modelos de Relatório</h2>
+                  <p className="text-slate-500">{selectedEmpresa?.nome}</p>
+                </div>
+              </div>
+              <CronogramaView 
+                selectedDiagnostico={selectedDiagnostico}
+                selectedEmpresa={selectedEmpresa}
+                respostas={respostas}
+                solucoes={solucoes}
+                setSelectedDiagnostico={setSelectedDiagnostico}
+                setDiagnosticos={setDiagnosticos}
+                playSuccessSound={playSuccessSound}
+                setPdfUrl={setPdfUrl}
+                empresasCredenciadas={empresasCredenciadas}
+                podeCriarCredenciada={podeCriarCredenciada}
+                loginEmail={rawUser?.email || null}
+                setCredenciadaForm={setCredenciadaForm}
+                setModalType={setModalType}
+                setIsModalOpen={setIsModalOpen}
+                customLogo={customLogo}
+                customConsultoraLogo={customConsultoraLogo}
+                logoChoice={logoChoice}
+                setLogoChoice={setLogoChoice}
+                problemas={problemas}
+                historicalData={historicalData}
+                onGenerateActionPlan={generateActionPlan}
+                generatingPlan={generatingPlan}
+                onReplicateActionPlan={replicateActionPlanFromSameActivity}
+                tarefasPlano={tarefasPlano}
+                setTarefasPlano={setTarefasPlano}
+                setView={setView}
+                modo="modelos"
               />
             </motion.div>
           )}
