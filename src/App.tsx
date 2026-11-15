@@ -7317,7 +7317,7 @@ const GestaoPlanoView = ({
           <p className="text-amber-600 text-sm">Por favor, selecione um diagnóstico na tela de "Diagnósticos" para visualizar o plano de ação.</p>
         </div>
       )}
-      <div className="space-y-2 pb-2 lg:sticky lg:top-[var(--diagnosis-header-offset,72px)] lg:-mx-10 lg:px-10 z-20 bg-slate-50 print:static print:mx-0 print:px-0">
+      <div className="space-y-2 pb-2 lg:sticky lg:top-[var(--diagnosis-header-offset,72px)] lg:-mx-10 lg:px-10 z-20 bg-slate-50 opacity-100 print:static print:mx-0 print:px-0">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
           <div>
             <h2 className="text-3xl font-black text-slate-800 tracking-tight">Gestão do Plano de Ação</h2>
@@ -18773,7 +18773,7 @@ export default function App() {
                   ref={registrarBarraFixa}
                   data-fixo="abas"
                   style={{ top: 'var(--topbar-h, 0px)' }}
-                  className="sticky z-[25] -mt-3 pt-2 pb-4 -mx-2 px-2 bg-slate-50 print:hidden print:static"
+                  className={cn("sticky z-[25] pt-2 pb-4 bg-slate-50 print:hidden print:static", view === "diagnosis" || view === "dashboard" || view === "kanban" ? "-mt-3 -mx-2 px-2 lg:mt-0 lg:-mx-10 lg:px-10" : "-mt-3 -mx-2 px-2")}
                 >
                   <div className="flex items-center gap-2 mb-1.5 px-1 text-[11px] font-black uppercase tracking-widest text-slate-400">
                     <SectionIcon size={13} />
@@ -18807,9 +18807,7 @@ export default function App() {
                 {view === 'kanban' && (
                 <motion.div 
                   key="kanban"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
+                  
                 >
                   <GestaoPlanoView 
                     tarefas={deduplicateTarefasPlano(tarefasPlano.filter(t => selectedDiagnostico && t.diagnosticoId === selectedDiagnostico.id))}
