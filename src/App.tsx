@@ -10546,6 +10546,8 @@ export default function App() {
   const [inputValue, setInputValue] = useState('');
   const [historicalData, setHistoricalData] = useState<any[]>([]);
   const [empresaForm, setEmpresaForm] = useState<Partial<Empresa>>({});
+  const [isPreparingEmpresaPhoto, setIsPreparingEmpresaPhoto] = useState(false);
+  const empresaPhotoRequest = useRef(0);
   const [isFetchingCnpjData, setIsFetchingCnpjData] = useState(false);
   const [cnpjLookupError, setCnpjLookupError] = useState<string | null>(null);
   const lastLookedUpCnpjRef = useRef<string | null>(null);
@@ -13533,6 +13535,35 @@ export default function App() {
     }
   };
 
+  const prepareEmpresaPhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = '';
+    if (!file) return;
+
+    const request = ++empresaPhotoRequest.current;
+    setIsPreparingEmpresaPhoto(true);
+    try {
+      let photo = await compressImageToDataUrl(file, 480, 0.66);
+      if (photo.length > 30_000) {
+        photo = await compressImageToDataUrl(file, 280, 0.5);
+      }
+      if (!photo.startsWith('data:image/jpeg;base64,') || photo.length > 30_000) {
+        throw new Error('Imagem excede o tamanho permitido');
+      }
+      if (request === empresaPhotoRequest.current) {
+        setEmpresaForm(prev => ({ ...prev, fotoDataUrl: photo }));
+      }
+    } catch {
+      if (request === empresaPhotoRequest.current) {
+        showToast('Não foi possível preparar a foto. Escolha uma imagem JPG, PNG ou WebP.', 'error');
+      }
+    } finally {
+      if (request === empresaPhotoRequest.current) {
+        setIsPreparingEmpresaPhoto(false);
+      }
+    }
+  };
+
   const createEmpresa = async () => {
     if (isSubmittingEmpresaRef.current) return;
     if (!empresaForm.razaoSocial?.trim()) {
@@ -13612,6 +13643,9 @@ export default function App() {
           await setDoc(doc(db, 'empresas', newEmpId), sanitized);
         } catch (error) {
           console.error("Error saving empresa in cloud:", error);
+          if (formCopy.fotoDataUrl !== undefined) {
+            showToast('Falha ao sincronizar o cadastro com foto na nuvem.', 'error');
+          }
         }
       }
     } catch (error) {
@@ -13666,6 +13700,7 @@ export default function App() {
 
       const sanitized = sanitizeForFirestore({
         ...formCopy,
+        ...(formCopy.fotoDataUrl !== initialData.fotoDataUrl ? { updatedAt: new Date().toISOString() } : {}),
         nome: razaoSocialTrimmed,
         razaoSocial: razaoSocialTrimmed,
         cnpj: formattedCnpj,
@@ -13683,6 +13718,9 @@ export default function App() {
           await updateDoc(doc(db, 'empresas', targetId), sanitized);
         } catch (error) {
           console.error("Error updating empresa in cloud:", error);
+          if (formCopy.fotoDataUrl !== undefined) {
+            showToast('Falha ao sincronizar o cadastro com foto na nuvem.', 'error');
+          }
         }
       }
     } catch (error) {
@@ -19547,7 +19585,9 @@ export default function App() {
                                 <div className="p-3.5">
                                   <div className="flex items-start gap-2.5 mb-2">
                                     <div className="w-9 h-9 shrink-0 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center group-hover:bg-emerald-50 group-hover:text-emerald-600 transition-colors">
-                                      <Building2 size={18} />
+                                      {emp.fotoDataUrl ? (
+                                        <img src={emp.fotoDataUrl} alt="" loading="lazy" className="h-full w-full rounded-lg object-cover" />
+                                      ) : <Building2 size={18} />}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                   <h3 className="font-bold text-[15px] leading-tight line-clamp-2" title={emp.nome}>{emp.nome}</h3>
@@ -21371,11 +21411,13 @@ export default function App() {
           title={modalType === 'create' ? "Nova Empresa" : "Editar Empresa"} 
           onClose={() => {
             setIsModalOpen(false);
+            empresaPhotoRequest.current++;
+            setIsPreparingEmpresaPhoto(false);
             setEmpresaForm({});
           }}
           onConfirm={modalType === 'create' ? createEmpresa : editEmpresa}
           confirmText={modalType === 'create' ? "Criar Empresa" : "Salvar Alterações"}
-          disabled={!empresaForm.razaoSocial?.trim()}
+          disabled={!empresaForm.razaoSocial?.trim() || isPreparingEmpresaPhoto}
           size="4xl"
         >
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-slate-700">
@@ -21661,6 +21703,36 @@ export default function App() {
 
             {/* LADO DIREITO: Contato, Endereço e Representação */}
             <div className="lg:col-span-5 space-y-4">
+              <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100/80 space-y-3">
+                <h4 className="text-xs font-black text-sky-600 uppercase tracking-wider">Foto do cliente ou da empresa</h4>
+                {empresaForm.fotoDataUrl && (
+                  <img src={empresaForm.fotoDataUrl} alt="Prévia da foto do cadastro" className="max-h-40 w-full rounded-xl object-contain bg-white" />
+                )}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <label className="relative inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold focus-within:ring-2 focus-within:ring-sky-500">
+                    <Paperclip size={16} />
+                    {empresaForm.fotoDataUrl ? 'Trocar foto' : 'Anexar foto'}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="sr-only"
+                      onChange={prepareEmpresaPhoto}
+                      disabled={isPreparingEmpresaPhoto}
+                    />
+                  </label>
+                  {empresaForm.fotoDataUrl && (
+                    <button
+                      type="button"
+                      className="text-sm font-semibold text-rose-600 hover:underline disabled:opacity-50"
+                      disabled={isPreparingEmpresaPhoto}
+                      onClick={() => setEmpresaForm(prev => ({ ...prev, fotoDataUrl: null }))}
+                    >
+                      Remover foto
+                    </button>
+                  )}
+                </div>
+                {isPreparingEmpresaPhoto && <p role="status" className="text-sm text-slate-500">Preparando foto…</p>}
+              </div>
               <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100/80 space-y-4">
                 <h4 className="text-xs font-black text-sky-600 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-100">
                   <span className="flex items-center justify-center w-5 h-5 bg-sky-50 rounded-full text-sky-600 text-[10px]">2</span>

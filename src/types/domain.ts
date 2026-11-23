@@ -52,6 +52,8 @@ export interface Empresa {
   dataCadastro: any;
   ownerId: string;
   anexoUrl?: string;
+  fotoDataUrl?: string | null;
+  updatedAt?: string;
   tipoEmpresa?: string;
   ramoAtividade?: string;
   cafNumero?: string;
