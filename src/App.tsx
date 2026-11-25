@@ -91,6 +91,7 @@ import {
   Clock,
   CheckCircle,
   Paperclip,
+  Camera,
   Image as ImageIcon,
   History as HistoryIcon,
   Settings,
@@ -12536,6 +12537,69 @@ export default function App() {
     }
   }, [user, view, loading]);
 
+  const openEmpresaEditor = (empresa: Empresa) => {
+    setModalType('edit');
+    setModalData(empresa);
+    setEmpresaForm({
+      ...empresa,
+      razaoSocial: empresa.razaoSocial || empresa.nome,
+      tipoEmpresa: empresa.tipoEmpresa || 'Geral',
+      cafNumero: empresa.cafNumero || '',
+    });
+    setCustomEmpresaType(empresa.tipoEmpresa && !TIPOS_EMPRESA.includes(empresa.tipoEmpresa) ? empresa.tipoEmpresa : '');
+    setIsModalOpen(true);
+  };
+
+  const copyEmpresaLink = async (empresaId: string) => {
+    const url = new URL(window.location.pathname, window.location.origin);
+    url.searchParams.set('cadastro', empresaId);
+    try {
+      await navigator.clipboard.writeText(url.href);
+      showToast('Link copiado. Abra no celular e entre na mesma conta de trabalho.');
+    } catch {
+      showToast('Não foi possível copiar o link neste navegador.', 'error');
+    }
+  };
+
+  const [linkedEmpresaId] = useState(() => new URLSearchParams(window.location.search).get('cadastro'));
+  const openedEmpresaLink = useRef(false);
+  const photoSectionRef = useRef<HTMLDivElement>(null);
+  const [showLinkedPhoto, setShowLinkedPhoto] = useState(false);
+  const workspaceUid = user?.uid;
+
+  useEffect(() => {
+    if (!workspaceUid || !linkedEmpresaId || openedEmpresaLink.current) return;
+    let active = true;
+
+    const openLinkedEmpresa = async () => {
+      try {
+        if (linkedEmpresaId.includes('/')) throw new Error('ID inválido');
+        const snapshot = await getDocFromServer(doc(db, 'empresas', linkedEmpresaId));
+        if (!active) return;
+        const empresa = snapshot.data();
+        if (empresa?.ownerId !== workspaceUid) throw new Error('Cadastro indisponível');
+        openedEmpresaLink.current = true;
+        setView('companies');
+        openEmpresaEditor({ ...empresa, id: snapshot.id } as Empresa);
+        setShowLinkedPhoto(true);
+      } catch {
+        if (!active) return;
+        openedEmpresaLink.current = true;
+        showToast('Não foi possível abrir o cadastro. Confira a conta de trabalho e a conexão.', 'error');
+      }
+    };
+
+    void openLinkedEmpresa();
+    return () => { active = false; };
+  }, [workspaceUid, linkedEmpresaId]);
+
+  useEffect(() => {
+    const section = photoSectionRef.current;
+    if (!showLinkedPhoto || !section) return;
+    section.scrollIntoView({ block: 'nearest' });
+    setShowLinkedPhoto(false);
+  });
+
   // Listen to All Diagnosticos for the user (sempre isolado pelo ownerId)
   useEffect(() => {
     if (!user) {
@@ -19673,15 +19737,7 @@ export default function App() {
                                     <div className="flex items-center gap-0.5">
                                       <Button variant="ghost" className="p-1 text-slate-400 hover:text-emerald-500" onClick={(e: any) => {
                                         e.stopPropagation();
-                                        setModalType('edit');
-                                        setModalData(emp);
-                                        setEmpresaForm({ ...emp, razaoSocial: emp.razaoSocial || emp.nome, tipoEmpresa: emp.tipoEmpresa || 'Geral', cafNumero: emp.cafNumero || '' });
-                                        if (emp.tipoEmpresa && !TIPOS_EMPRESA.includes(emp.tipoEmpresa)) {
-                                          setCustomEmpresaType(emp.tipoEmpresa);
-                                        } else {
-                                          setCustomEmpresaType('');
-                                        }
-                                        setIsModalOpen(true);
+                                        openEmpresaEditor(emp);
                                       }}>
                                         <FileText size={16} />
                                       </Button>
@@ -21703,7 +21759,7 @@ export default function App() {
 
             {/* LADO DIREITO: Contato, Endereço e Representação */}
             <div className="lg:col-span-5 space-y-4">
-              <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100/80 space-y-3">
+              <div ref={photoSectionRef} className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100/80 space-y-3">
                 <h4 className="text-xs font-black text-sky-600 uppercase tracking-wider">Foto do cliente ou da empresa</h4>
                 {empresaForm.fotoDataUrl && (
                   <img src={empresaForm.fotoDataUrl} alt="Prévia da foto do cadastro" className="max-h-40 w-full rounded-xl object-contain bg-white" />
@@ -21720,6 +21776,27 @@ export default function App() {
                       disabled={isPreparingEmpresaPhoto}
                     />
                   </label>
+                  <label className="relative inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold focus-within:ring-2 focus-within:ring-sky-500">
+                    <Camera size={16} />
+                    Tirar foto
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="sr-only"
+                      onChange={prepareEmpresaPhoto}
+                      disabled={isPreparingEmpresaPhoto}
+                    />
+                  </label>
+                  {modalType === 'edit' && empresaForm.id && (
+                    <button
+                      type="button"
+                      className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold hover:bg-slate-50"
+                      onClick={() => void copyEmpresaLink(empresaForm.id!)}
+                    >
+                      Copiar link para celular
+                    </button>
+                  )}
                   {empresaForm.fotoDataUrl && (
                     <button
                       type="button"
