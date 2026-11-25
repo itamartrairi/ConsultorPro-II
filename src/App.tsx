@@ -18,6 +18,8 @@ import {
   writeBatch,
   setDoc,
   getDocFromServer,
+  getDocsFromServer,
+  documentId,
   deleteField,
   runTransaction, getDoc, ownerFilter, setWorkspaceOwnerUid, currentWorkspaceUser, workspaceUser } from './lib/firestoreOwned';
 import { 
@@ -12562,43 +12564,48 @@ export default function App() {
   };
 
   const [linkedEmpresaId] = useState(() => new URLSearchParams(window.location.search).get('cadastro'));
-  const openedEmpresaLink = useRef(false);
-  const photoSectionRef = useRef<HTMLDivElement>(null);
-  const [showLinkedPhoto, setShowLinkedPhoto] = useState(false);
+  const [linkedLoadAttempt, setLinkedLoadAttempt] = useState(0);
+  const [linkedError, setLinkedError] = useState('');
+  const [linkedSaveStatus, setLinkedSaveStatus] = useState('');
+  const [savingLinkedEmpresa, setSavingLinkedEmpresa] = useState(false);
   const workspaceUid = user?.uid;
 
   useEffect(() => {
-    if (!workspaceUid || !linkedEmpresaId || openedEmpresaLink.current) return;
+    if (!workspaceUid || !linkedEmpresaId) return;
     let active = true;
+    setLinkedError('');
+    setLinkedSaveStatus('');
+    setModalData(null);
 
     const openLinkedEmpresa = async () => {
       try {
-        if (linkedEmpresaId.includes('/')) throw new Error('ID inválido');
-        const snapshot = await getDocFromServer(doc(db, 'empresas', linkedEmpresaId));
+        if (linkedEmpresaId.includes('/')) {
+          setLinkedError('Este link de cadastro é inválido.');
+          return;
+        }
+        const snapshot = await getDocsFromServer(query(
+          collection(db, 'empresas'),
+          where('ownerId', '==', workspaceUid),
+          where(documentId(), '==', linkedEmpresaId),
+        ));
         if (!active) return;
-        const empresa = snapshot.data();
-        if (empresa?.ownerId !== workspaceUid) throw new Error('Cadastro indisponível');
-        openedEmpresaLink.current = true;
-        setView('companies');
-        openEmpresaEditor({ ...empresa, id: snapshot.id } as Empresa);
-        setShowLinkedPhoto(true);
-      } catch {
+        const record = snapshot.docs[0];
+        if (!record) {
+          setLinkedError('Cadastro não encontrado nesta conta de trabalho. Confira a conta usada e se o cadastro foi sincronizado na nuvem.');
+          return;
+        }
+        openEmpresaEditor({ ...record.data(), id: record.id } as Empresa);
+      } catch (error) {
         if (!active) return;
-        openedEmpresaLink.current = true;
-        showToast('Não foi possível abrir o cadastro. Confira a conta de trabalho e a conexão.', 'error');
+        setLinkedError((error as { code?: string })?.code === 'permission-denied'
+          ? 'Esta conta de trabalho não tem acesso ao cadastro. Entre com a conta autorizada.'
+          : 'Não foi possível consultar a nuvem. Confira a conexão e tente novamente.');
       }
     };
 
     void openLinkedEmpresa();
     return () => { active = false; };
-  }, [workspaceUid, linkedEmpresaId]);
-
-  useEffect(() => {
-    const section = photoSectionRef.current;
-    if (!showLinkedPhoto || !section) return;
-    section.scrollIntoView({ block: 'nearest' });
-    setShowLinkedPhoto(false);
-  });
+  }, [workspaceUid, linkedEmpresaId, linkedLoadAttempt]);
 
   // Listen to All Diagnosticos for the user (sempre isolado pelo ownerId)
   useEffect(() => {
@@ -13789,6 +13796,52 @@ export default function App() {
       }
     } catch (error) {
       console.error("Error editing empresa:", error);
+    }
+  };
+
+  const saveLinkedEmpresa = async () => {
+    if (isSubmittingEmpresaRef.current || !user || !modalData || modalData.ownerId !== user.uid || modalData.id !== linkedEmpresaId) return;
+    const name = empresaForm.razaoSocial?.trim();
+    if (!name) {
+      setLinkedSaveStatus('Informe o nome ou a razão social.');
+      return;
+    }
+
+    const changes = Object.fromEntries(Object.entries(empresaForm).filter(([key, value]) => {
+      if (key === 'id' || key === 'ownerId') return false;
+      const original = key === 'razaoSocial' ? modalData.razaoSocial || modalData.nome
+        : key === 'tipoEmpresa' ? modalData.tipoEmpresa || 'Geral' : modalData[key];
+      return value !== original && (value != null && value !== '' || original != null && original !== '');
+    }));
+    if (changes.cnpj && !isValidCNPJ(String(changes.cnpj))) {
+      setLinkedSaveStatus('Informe um CNPJ válido.');
+      return;
+    }
+    if (changes.cpfRepresentante && !isValidCPF(String(changes.cpfRepresentante))) {
+      setLinkedSaveStatus('Informe um CPF válido.');
+      return;
+    }
+    if ('razaoSocial' in changes) {
+      changes.nome = name;
+      changes.razaoSocial = name;
+    }
+    if (!Object.keys(changes).length) {
+      setLinkedSaveStatus('Nenhuma alteração para salvar.');
+      return;
+    }
+
+    isSubmittingEmpresaRef.current = true;
+    setSavingLinkedEmpresa(true);
+    setLinkedSaveStatus('');
+    try {
+      await updateDoc(doc(db, 'empresas', modalData.id), { ...changes, updatedAt: new Date().toISOString() });
+      setModalData({ ...modalData, ...changes });
+      setLinkedSaveStatus('Alterações salvas na nuvem.');
+    } catch {
+      setLinkedSaveStatus('Falha ao salvar na nuvem. Seus dados continuam no formulário para tentar novamente.');
+    } finally {
+      isSubmittingEmpresaRef.current = false;
+      setSavingLinkedEmpresa(false);
     }
   };
 
@@ -18804,6 +18857,487 @@ export default function App() {
     requestAnimationFrame(atualizarAlturasFixas);
   };
 
+  const empresaFields = (isModalOpen || linkedEmpresaId) ? (
+          <div className={linkedEmpresaId ? "grid gap-4 text-slate-700 [&_input:not([type=file])]:text-base" : "grid grid-cols-1 lg:grid-cols-12 gap-6 text-slate-700"}>
+            {/* LADO ESQUERDO: Identificação do Cliente */}
+            <div className={linkedEmpresaId ? "space-y-4" : "lg:col-span-7 space-y-4"}>
+              <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100/80 space-y-4">
+                <h4 className="text-xs font-black text-sky-600 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-100">
+                  <span className="flex items-center justify-center w-5 h-5 bg-sky-50 rounded-full text-sky-600 text-[10px]">1</span>
+                  Identificação da Empresa
+                </h4>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Razão Social (Obrigatório)</label>
+                    <input 
+                      type="text" 
+                      className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
+                      value={empresaForm.razaoSocial || ''}
+                      onChange={(e) => setEmpresaForm({...empresaForm, razaoSocial: e.target.value})}
+                      autoFocus={!linkedEmpresaId}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nome Fantasia</label>
+                      <input 
+                        type="text" 
+                        className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
+                        value={empresaForm.nomeFantasia || ''}
+                        onChange={(e) => setEmpresaForm({...empresaForm, nomeFantasia: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">CNPJ</label>
+                        {isFetchingCnpjData ? (
+                          <span className="text-[10px] font-bold text-sky-600 flex items-center gap-1">
+                            <RefreshCw size={10} className="animate-spin" /> Consultando Receita Federal...
+                          </span>
+                        ) : empresaForm.cnpj && cleanDigits(empresaForm.cnpj).length === 14 && (
+                          isValidCNPJ(empresaForm.cnpj) ? (
+                            <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                              ✓ Válido
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1">
+                              ✗ Inválido
+                            </span>
+                          )
+                        )}
+                      </div>
+                      <input 
+                        type="text" 
+                        placeholder="00.000.000/0000-00"
+                        maxLength={18}
+                        className={cn(
+                          "w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 bg-white text-sm transition-all font-mono",
+                          empresaForm.cnpj && cleanDigits(empresaForm.cnpj).length === 14
+                            ? (isValidCNPJ(empresaForm.cnpj) 
+                                ? "border-emerald-300 focus:ring-emerald-500/20 focus:border-emerald-500 text-emerald-900" 
+                                : "border-rose-300 focus:ring-rose-500/20 focus:border-rose-500 text-rose-900 bg-rose-50/20")
+                            : "border-slate-200 focus:ring-sky-500/20 focus:border-sky-500"
+                        )}
+                        value={empresaForm.cnpj || ''}
+                        onChange={(e) => {
+                          const formatted = formatCNPJ(e.target.value);
+                          setEmpresaForm({...empresaForm, cnpj: formatted});
+                          setCnpjLookupError(null);
+                          if (cleanDigits(formatted).length === 14 && isValidCNPJ(formatted)) {
+                            fetchCnpjData(formatted);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (cleanDigits(e.target.value).length === 14 && isValidCNPJ(e.target.value)) {
+                            fetchCnpjData(e.target.value);
+                          }
+                        }}
+                      />
+                      {cnpjLookupError && (
+                        <p className="text-[10px] font-semibold text-amber-600 mt-1 flex items-center gap-1">
+                          <AlertTriangle size={10} /> {cnpjLookupError}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* --- Dados da Receita Federal (preenchidos automaticamente ao digitar o CNPJ) --- */}
+                  {(empresaForm.situacaoCadastral || empresaForm.naturezaJuridica || empresaForm.cnaePrincipalDescricao || empresaForm.logradouro || (empresaForm.cnpj && isValidCNPJ(empresaForm.cnpj))) && (
+                    <div className="p-3.5 bg-sky-50/50 border border-sky-100 rounded-xl space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black text-sky-700 uppercase tracking-widest flex items-center gap-1.5">
+                          <ShieldCheck size={12} /> Dados da Receita Federal
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {empresaForm.situacaoCadastral && (
+                            <span className={cn(
+                              "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase",
+                              empresaForm.situacaoCadastral.toUpperCase().includes('ATIVA')
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-rose-100 text-rose-700"
+                            )}>
+                              {empresaForm.situacaoCadastral}
+                            </span>
+                          )}
+                          <button
+                            type="button"
+                            title="Atualizar dados direto da Receita Federal"
+                            disabled={isFetchingCnpjData || !empresaForm.cnpj}
+                            onClick={() => {
+                              lastLookedUpCnpjRef.current = null;
+                              if (empresaForm.cnpj) fetchCnpjData(empresaForm.cnpj);
+                            }}
+                            className="text-sky-500 hover:text-sky-700 disabled:opacity-40 transition-colors"
+                          >
+                            <RefreshCw size={12} className={isFetchingCnpjData ? "animate-spin" : ""} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {(empresaForm.naturezaJuridica || empresaForm.cnaePrincipalDescricao || empresaForm.logradouro) ? (
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Natureza Jurídica</p>
+                            <p className="font-semibold text-slate-700">{empresaForm.naturezaJuridica || '—'}</p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Porte</p>
+                            <p className="font-semibold text-slate-700">{empresaForm.porteEmpresa || '—'}</p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Data de Abertura</p>
+                            <p className="font-semibold text-slate-700">
+                              {empresaForm.dataAberturaReceita ? formatFirestoreDate(empresaForm.dataAberturaReceita, 'dd/MM/yyyy') : '—'}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Capital Social</p>
+                            <p className="font-semibold text-slate-700">
+                              {empresaForm.capitalSocial ? `R$ ${Number(empresaForm.capitalSocial).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}
+                            </p>
+                          </div>
+                          <div className="col-span-2">
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Atividade Principal (CNAE)</p>
+                            <p className="font-semibold text-slate-700">
+                              {empresaForm.cnaePrincipalCodigo ? `${empresaForm.cnaePrincipalCodigo} - ` : ''}{empresaForm.cnaePrincipalDescricao || '—'}
+                            </p>
+                          </div>
+                          <div className="col-span-2">
+                            <p className="text-[9px] font-bold text-slate-400 uppercase">Endereço</p>
+                            <p className="font-semibold text-slate-700">
+                              {[
+                                empresaForm.logradouro,
+                                empresaForm.numeroEndereco,
+                                empresaForm.complementoEndereco,
+                                empresaForm.bairro,
+                                empresaForm.municipio && empresaForm.uf ? `${empresaForm.municipio}/${empresaForm.uf}` : null,
+                                empresaForm.cep ? `CEP ${empresaForm.cep}` : null,
+                              ].filter(Boolean).join(', ') || '—'}
+                            </p>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-slate-500 italic flex items-center gap-1.5">
+                          <Info size={12} /> Dados ainda não consultados. Clique no ícone de atualizar acima para buscar direto da Receita Federal.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Número da CAF</label>
+                      <input 
+                        type="text" 
+                        placeholder="Cadastro Atividade Florestal / Familiar"
+                        className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white placeholder-slate-300"
+                        value={empresaForm.cafNumero || ''}
+                        onChange={(e) => setEmpresaForm({...empresaForm, cafNumero: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Mês/Ano de Abertura</label>
+                      <input 
+                        type="text" 
+                        className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
+                        placeholder="Ex: 05/2010"
+                        value={empresaForm.mesAnoAbertura || ''}
+                        onChange={(e) => setEmpresaForm({...empresaForm, mesAnoAbertura: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
+                  {/* --- Cadastro MDA (Ministério do Desenvolvimento Agrário), vinculado à CAF --- */}
+                  <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-1.5">
+                        <ShieldCheck size={12} className="text-emerald-600" /> Cadastro MDA (vinculado à CAF)
+                      </span>
+                      {empresaForm.mdaDataValidade && (() => {
+                        const mdaStatus = getMdaExpirationStatus(empresaForm.mdaDataValidade);
+                        if (!mdaStatus) return null;
+                        if (mdaStatus.status === 'vencido') {
+                          return (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 flex items-center gap-1">
+                              <AlertTriangle size={10} /> {mdaStatus.label}
+                            </span>
+                          );
+                        }
+                        if (mdaStatus.status === 'proximo') {
+                          return (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 flex items-center gap-1">
+                              <AlertTriangle size={10} /> {mdaStatus.label}
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                            {mdaStatus.label}
+                          </span>
+                        );
+                      })()}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Número do Cadastro MDA</label>
+                        <input 
+                          type="text" 
+                          placeholder="Ex: MDA-000000000"
+                          className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white placeholder-slate-300"
+                          value={empresaForm.mdaNumeroCadastro || ''}
+                          onChange={(e) => setEmpresaForm({...empresaForm, mdaNumeroCadastro: e.target.value})}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Data de Validade</label>
+                        <input 
+                          type="date" 
+                          className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
+                          value={empresaForm.mdaDataValidade || ''}
+                          onChange={(e) => setEmpresaForm({...empresaForm, mdaDataValidade: e.target.value})}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tipo de Negócio / Segmento</label>
+                    <select
+                      className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
+                      value={availableSegments.includes(empresaForm.tipoEmpresa || 'Geral') ? (empresaForm.tipoEmpresa || 'Geral') : 'Outro'}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === 'Outro') {
+                          setEmpresaForm({ ...empresaForm, tipoEmpresa: customEmpresaType || '' });
+                        } else {
+                          setEmpresaForm({ ...empresaForm, tipoEmpresa: val });
+                        }
+                      }}
+                    >
+                      {availableSegments.map((tipo) => (
+                        <option key={tipo} value={tipo}>{tipo}</option>
+                      ))}
+                      <option value="Outro">Outro...</option>
+                    </select>
+                    {(empresaForm.tipoEmpresa === 'Outro' || (!availableSegments.includes(empresaForm.tipoEmpresa || 'Geral') && (empresaForm.tipoEmpresa || 'Geral') !== 'Geral')) && (
+                      <input 
+                        type="text" 
+                        className="w-full mt-2 px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 font-sans bg-white"
+                        placeholder="Especifique o tipo de negócio / segmento"
+                        value={customEmpresaType}
+                        onChange={(e) => {
+                          const cVal = e.target.value;
+                          setCustomEmpresaType(cVal);
+                          setEmpresaForm({ ...empresaForm, tipoEmpresa: cVal });
+                        }}
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* LADO DIREITO: Contato, Endereço e Representação */}
+            <div className={linkedEmpresaId ? "contents" : "lg:col-span-5 space-y-4"}>
+              <div className={`bg-slate-50/50 p-5 rounded-2xl border border-slate-100/80 space-y-3 ${linkedEmpresaId ? "order-first" : ""}`}>
+                <h4 className="text-xs font-black text-sky-600 uppercase tracking-wider">Foto do cliente ou da empresa</h4>
+                {empresaForm.fotoDataUrl && (
+                  <img src={empresaForm.fotoDataUrl} alt="Prévia da foto do cadastro" className="max-h-40 w-full rounded-xl object-contain bg-white" />
+                )}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <label className="relative inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold focus-within:ring-2 focus-within:ring-sky-500">
+                    <Paperclip size={16} />
+                    {empresaForm.fotoDataUrl ? 'Trocar foto' : 'Anexar foto'}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="sr-only"
+                      onChange={prepareEmpresaPhoto}
+                      disabled={isPreparingEmpresaPhoto}
+                    />
+                  </label>
+                  <label className="relative inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-semibold focus-within:ring-2 focus-within:ring-sky-500">
+                    <Camera size={16} />
+                    Tirar foto
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      className="sr-only"
+                      onChange={prepareEmpresaPhoto}
+                      disabled={isPreparingEmpresaPhoto}
+                    />
+                  </label>
+                  {!linkedEmpresaId && modalType === 'edit' && empresaForm.id && (
+                    <button
+                      type="button"
+                      className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold hover:bg-slate-50"
+                      onClick={() => void copyEmpresaLink(empresaForm.id!)}
+                    >
+                      Copiar link para celular
+                    </button>
+                  )}
+                  {empresaForm.fotoDataUrl && (
+                    <button
+                      type="button"
+                      className="text-sm font-semibold text-rose-600 hover:underline disabled:opacity-50"
+                      disabled={isPreparingEmpresaPhoto}
+                      onClick={() => setEmpresaForm(prev => ({ ...prev, fotoDataUrl: null }))}
+                    >
+                      Remover foto
+                    </button>
+                  )}
+                </div>
+                {isPreparingEmpresaPhoto && <p role="status" className="text-sm text-slate-500">Preparando foto…</p>}
+              </div>
+              <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100/80 space-y-4">
+                <h4 className="text-xs font-black text-sky-600 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-100">
+                  <span className="flex items-center justify-center w-5 h-5 bg-sky-50 rounded-full text-sky-600 text-[10px]">2</span>
+                  Contato & Localização
+                </h4>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Endereço Comercial</label>
+                    <input 
+                      type="text" 
+                      className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
+                      value={empresaForm.enderecoComercial || ''}
+                      onChange={(e) => setEmpresaForm({...empresaForm, enderecoComercial: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Telefone Fixo</label>
+                      <input 
+                        type="text" 
+                        className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
+                        value={empresaForm.telefoneFixo || ''}
+                        onChange={(e) => setEmpresaForm({...empresaForm, telefoneFixo: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Celular</label>
+                      <input 
+                        type="text" 
+                        className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
+                        value={empresaForm.celular || ''}
+                        onChange={(e) => setEmpresaForm({...empresaForm, celular: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Email de Contato</label>
+                    <input 
+                      type="email" 
+                      className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
+                      value={empresaForm.email || ''}
+                      onChange={(e) => setEmpresaForm({...empresaForm, email: e.target.value})}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100/80 space-y-4">
+                <h4 className="text-xs font-black text-sky-600 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-100">
+                  <span className="flex items-center justify-center w-5 h-5 bg-sky-50 rounded-full text-sky-600 text-[10px]">3</span>
+                  Representante Legal
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+                  <div>
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nome do Representante</label>
+                    <input 
+                      type="text" 
+                      className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
+                      value={empresaForm.representante || ''}
+                      onChange={(e) => setEmpresaForm({...empresaForm, representante: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">CPF do Representante</label>
+                      {empresaForm.cpfRepresentante && cleanDigits(empresaForm.cpfRepresentante).length === 11 && (
+                        isValidCPF(empresaForm.cpfRepresentante) ? (
+                          <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
+                            ✓ Válido
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1">
+                            ✗ Inválido
+                          </span>
+                        )
+                      )}
+                    </div>
+                    <input 
+                      type="text" 
+                      placeholder="000.000.000-00"
+                      maxLength={14}
+                      className={cn(
+                        "w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 bg-white text-sm transition-all font-mono",
+                        empresaForm.cpfRepresentante && cleanDigits(empresaForm.cpfRepresentante).length === 11
+                          ? (isValidCPF(empresaForm.cpfRepresentante) 
+                              ? "border-emerald-300 focus:ring-emerald-500/20 focus:border-emerald-500 text-emerald-900" 
+                              : "border-rose-300 focus:ring-rose-500/20 focus:border-rose-500 text-rose-900 bg-rose-50/20")
+                          : "border-slate-200 focus:ring-sky-500/20 focus:border-sky-500"
+                      )}
+                      value={empresaForm.cpfRepresentante || ''}
+                      onChange={(e) => setEmpresaForm({...empresaForm, cpfRepresentante: formatCPF(e.target.value)})}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+  ) : null;
+
+  if (linkedEmpresaId) {
+    const linkedReady = modalData?.id === linkedEmpresaId && modalData?.ownerId === user.uid;
+    return (
+      <main className="min-h-dvh bg-slate-50 text-slate-900">
+        <header className="border-b border-slate-200 bg-white">
+          <div className="mx-auto max-w-xl px-4 py-4">
+            <h1 className="text-xl font-bold">Cadastro do cliente</h1>
+            {linkedReady && <p className="mt-1 break-words text-sm text-slate-600">{modalData.razaoSocial || modalData.nome}</p>}
+          </div>
+        </header>
+        {linkedReady ? (
+          <>
+            <fieldset disabled={savingLinkedEmpresa} className="mx-auto min-w-0 max-w-xl px-3 py-4 sm:px-5">
+              {empresaFields}
+            </fieldset>
+            <footer className="sticky bottom-0 border-t border-slate-200 bg-white px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              <div className="mx-auto max-w-xl">
+                {linkedSaveStatus && <p role="status" className="mb-2 text-sm text-slate-700">{linkedSaveStatus}</p>}
+                <Button className="min-h-12 w-full" onClick={saveLinkedEmpresa} disabled={savingLinkedEmpresa || isPreparingEmpresaPhoto}>
+                  {savingLinkedEmpresa ? 'Salvando na nuvem…' : 'Salvar alterações'}
+                </Button>
+              </div>
+            </footer>
+          </>
+        ) : (
+          <section className="mx-auto max-w-xl space-y-4 px-4 py-6">
+            <p role="status" className="text-slate-700">{linkedError || 'Carregando cadastro da nuvem…'}</p>
+            {linkedError && (
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={() => setLinkedLoadAttempt(attempt => attempt + 1)}>Tentar novamente</Button>
+                {temContaPropria && acessoDisponivel && (
+                  <Button variant="outline" onClick={() => alternarContaDeTrabalho(!!consultorAcesso)}>Trocar conta de trabalho</Button>
+                )}
+                <Button variant="outline" onClick={() => signOut(auth)}>Entrar com outra conta</Button>
+              </div>
+            )}
+          </section>
+        )}
+        <ToastContainer toasts={toasts} onDismiss={removeToast} />
+      </main>
+    );
+  }
+
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50 font-sans text-slate-900 print:bg-white print:overflow-visible print:block print:h-auto print:min-h-0">
         {/* Sidebar Overlay */}
@@ -21476,441 +22010,7 @@ export default function App() {
           disabled={!empresaForm.razaoSocial?.trim() || isPreparingEmpresaPhoto}
           size="4xl"
         >
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-slate-700">
-            {/* LADO ESQUERDO: Identificação do Cliente */}
-            <div className="lg:col-span-7 space-y-4">
-              <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100/80 space-y-4">
-                <h4 className="text-xs font-black text-sky-600 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="flex items-center justify-center w-5 h-5 bg-sky-50 rounded-full text-sky-600 text-[10px]">1</span>
-                  Identificação da Empresa
-                </h4>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Razão Social (Obrigatório)</label>
-                    <input 
-                      type="text" 
-                      className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
-                      value={empresaForm.razaoSocial || ''}
-                      onChange={(e) => setEmpresaForm({...empresaForm, razaoSocial: e.target.value})}
-                      autoFocus
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nome Fantasia</label>
-                      <input 
-                        type="text" 
-                        className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
-                        value={empresaForm.nomeFantasia || ''}
-                        onChange={(e) => setEmpresaForm({...empresaForm, nomeFantasia: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">CNPJ</label>
-                        {isFetchingCnpjData ? (
-                          <span className="text-[10px] font-bold text-sky-600 flex items-center gap-1">
-                            <RefreshCw size={10} className="animate-spin" /> Consultando Receita Federal...
-                          </span>
-                        ) : empresaForm.cnpj && cleanDigits(empresaForm.cnpj).length === 14 && (
-                          isValidCNPJ(empresaForm.cnpj) ? (
-                            <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
-                              ✓ Válido
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1">
-                              ✗ Inválido
-                            </span>
-                          )
-                        )}
-                      </div>
-                      <input 
-                        type="text" 
-                        placeholder="00.000.000/0000-00"
-                        maxLength={18}
-                        className={cn(
-                          "w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 bg-white text-sm transition-all font-mono",
-                          empresaForm.cnpj && cleanDigits(empresaForm.cnpj).length === 14
-                            ? (isValidCNPJ(empresaForm.cnpj) 
-                                ? "border-emerald-300 focus:ring-emerald-500/20 focus:border-emerald-500 text-emerald-900" 
-                                : "border-rose-300 focus:ring-rose-500/20 focus:border-rose-500 text-rose-900 bg-rose-50/20")
-                            : "border-slate-200 focus:ring-sky-500/20 focus:border-sky-500"
-                        )}
-                        value={empresaForm.cnpj || ''}
-                        onChange={(e) => {
-                          const formatted = formatCNPJ(e.target.value);
-                          setEmpresaForm({...empresaForm, cnpj: formatted});
-                          setCnpjLookupError(null);
-                          if (cleanDigits(formatted).length === 14 && isValidCNPJ(formatted)) {
-                            fetchCnpjData(formatted);
-                          }
-                        }}
-                        onBlur={(e) => {
-                          if (cleanDigits(e.target.value).length === 14 && isValidCNPJ(e.target.value)) {
-                            fetchCnpjData(e.target.value);
-                          }
-                        }}
-                      />
-                      {cnpjLookupError && (
-                        <p className="text-[10px] font-semibold text-amber-600 mt-1 flex items-center gap-1">
-                          <AlertTriangle size={10} /> {cnpjLookupError}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* --- Dados da Receita Federal (preenchidos automaticamente ao digitar o CNPJ) --- */}
-                  {(empresaForm.situacaoCadastral || empresaForm.naturezaJuridica || empresaForm.cnaePrincipalDescricao || empresaForm.logradouro || (empresaForm.cnpj && isValidCNPJ(empresaForm.cnpj))) && (
-                    <div className="p-3.5 bg-sky-50/50 border border-sky-100 rounded-xl space-y-3">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-black text-sky-700 uppercase tracking-widest flex items-center gap-1.5">
-                          <ShieldCheck size={12} /> Dados da Receita Federal
-                        </span>
-                        <div className="flex items-center gap-2">
-                          {empresaForm.situacaoCadastral && (
-                            <span className={cn(
-                              "text-[10px] font-bold px-2 py-0.5 rounded-full uppercase",
-                              empresaForm.situacaoCadastral.toUpperCase().includes('ATIVA')
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-rose-100 text-rose-700"
-                            )}>
-                              {empresaForm.situacaoCadastral}
-                            </span>
-                          )}
-                          <button
-                            type="button"
-                            title="Atualizar dados direto da Receita Federal"
-                            disabled={isFetchingCnpjData || !empresaForm.cnpj}
-                            onClick={() => {
-                              lastLookedUpCnpjRef.current = null;
-                              if (empresaForm.cnpj) fetchCnpjData(empresaForm.cnpj);
-                            }}
-                            className="text-sky-500 hover:text-sky-700 disabled:opacity-40 transition-colors"
-                          >
-                            <RefreshCw size={12} className={isFetchingCnpjData ? "animate-spin" : ""} />
-                          </button>
-                        </div>
-                      </div>
-
-                      {(empresaForm.naturezaJuridica || empresaForm.cnaePrincipalDescricao || empresaForm.logradouro) ? (
-                        <div className="grid grid-cols-2 gap-3 text-xs">
-                          <div>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase">Natureza Jurídica</p>
-                            <p className="font-semibold text-slate-700">{empresaForm.naturezaJuridica || '—'}</p>
-                          </div>
-                          <div>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase">Porte</p>
-                            <p className="font-semibold text-slate-700">{empresaForm.porteEmpresa || '—'}</p>
-                          </div>
-                          <div>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase">Data de Abertura</p>
-                            <p className="font-semibold text-slate-700">
-                              {empresaForm.dataAberturaReceita ? formatFirestoreDate(empresaForm.dataAberturaReceita, 'dd/MM/yyyy') : '—'}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase">Capital Social</p>
-                            <p className="font-semibold text-slate-700">
-                              {empresaForm.capitalSocial ? `R$ ${Number(empresaForm.capitalSocial).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '—'}
-                            </p>
-                          </div>
-                          <div className="col-span-2">
-                            <p className="text-[9px] font-bold text-slate-400 uppercase">Atividade Principal (CNAE)</p>
-                            <p className="font-semibold text-slate-700">
-                              {empresaForm.cnaePrincipalCodigo ? `${empresaForm.cnaePrincipalCodigo} - ` : ''}{empresaForm.cnaePrincipalDescricao || '—'}
-                            </p>
-                          </div>
-                          <div className="col-span-2">
-                            <p className="text-[9px] font-bold text-slate-400 uppercase">Endereço</p>
-                            <p className="font-semibold text-slate-700">
-                              {[
-                                empresaForm.logradouro,
-                                empresaForm.numeroEndereco,
-                                empresaForm.complementoEndereco,
-                                empresaForm.bairro,
-                                empresaForm.municipio && empresaForm.uf ? `${empresaForm.municipio}/${empresaForm.uf}` : null,
-                                empresaForm.cep ? `CEP ${empresaForm.cep}` : null,
-                              ].filter(Boolean).join(', ') || '—'}
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-[11px] text-slate-500 italic flex items-center gap-1.5">
-                          <Info size={12} /> Dados ainda não consultados. Clique no ícone de atualizar acima para buscar direto da Receita Federal.
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Número da CAF</label>
-                      <input 
-                        type="text" 
-                        placeholder="Cadastro Atividade Florestal / Familiar"
-                        className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white placeholder-slate-300"
-                        value={empresaForm.cafNumero || ''}
-                        onChange={(e) => setEmpresaForm({...empresaForm, cafNumero: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Mês/Ano de Abertura</label>
-                      <input 
-                        type="text" 
-                        className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
-                        placeholder="Ex: 05/2010"
-                        value={empresaForm.mesAnoAbertura || ''}
-                        onChange={(e) => setEmpresaForm({...empresaForm, mesAnoAbertura: e.target.value})}
-                      />
-                    </div>
-                  </div>
-
-                  {/* --- Cadastro MDA (Ministério do Desenvolvimento Agrário), vinculado à CAF --- */}
-                  <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest flex items-center gap-1.5">
-                        <ShieldCheck size={12} className="text-emerald-600" /> Cadastro MDA (vinculado à CAF)
-                      </span>
-                      {empresaForm.mdaDataValidade && (() => {
-                        const mdaStatus = getMdaExpirationStatus(empresaForm.mdaDataValidade);
-                        if (!mdaStatus) return null;
-                        if (mdaStatus.status === 'vencido') {
-                          return (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 flex items-center gap-1">
-                              <AlertTriangle size={10} /> {mdaStatus.label}
-                            </span>
-                          );
-                        }
-                        if (mdaStatus.status === 'proximo') {
-                          return (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 flex items-center gap-1">
-                              <AlertTriangle size={10} /> {mdaStatus.label}
-                            </span>
-                          );
-                        }
-                        return (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-                            {mdaStatus.label}
-                          </span>
-                        );
-                      })()}
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Número do Cadastro MDA</label>
-                        <input 
-                          type="text" 
-                          placeholder="Ex: MDA-000000000"
-                          className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white placeholder-slate-300"
-                          value={empresaForm.mdaNumeroCadastro || ''}
-                          onChange={(e) => setEmpresaForm({...empresaForm, mdaNumeroCadastro: e.target.value})}
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Data de Validade</label>
-                        <input 
-                          type="date" 
-                          className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
-                          value={empresaForm.mdaDataValidade || ''}
-                          onChange={(e) => setEmpresaForm({...empresaForm, mdaDataValidade: e.target.value})}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Tipo de Negócio / Segmento</label>
-                    <select
-                      className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
-                      value={availableSegments.includes(empresaForm.tipoEmpresa || 'Geral') ? (empresaForm.tipoEmpresa || 'Geral') : 'Outro'}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === 'Outro') {
-                          setEmpresaForm({ ...empresaForm, tipoEmpresa: customEmpresaType || '' });
-                        } else {
-                          setEmpresaForm({ ...empresaForm, tipoEmpresa: val });
-                        }
-                      }}
-                    >
-                      {availableSegments.map((tipo) => (
-                        <option key={tipo} value={tipo}>{tipo}</option>
-                      ))}
-                      <option value="Outro">Outro...</option>
-                    </select>
-                    {(empresaForm.tipoEmpresa === 'Outro' || (!availableSegments.includes(empresaForm.tipoEmpresa || 'Geral') && (empresaForm.tipoEmpresa || 'Geral') !== 'Geral')) && (
-                      <input 
-                        type="text" 
-                        className="w-full mt-2 px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 font-sans bg-white"
-                        placeholder="Especifique o tipo de negócio / segmento"
-                        value={customEmpresaType}
-                        onChange={(e) => {
-                          const cVal = e.target.value;
-                          setCustomEmpresaType(cVal);
-                          setEmpresaForm({ ...empresaForm, tipoEmpresa: cVal });
-                        }}
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* LADO DIREITO: Contato, Endereço e Representação */}
-            <div className="lg:col-span-5 space-y-4">
-              <div ref={photoSectionRef} className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100/80 space-y-3">
-                <h4 className="text-xs font-black text-sky-600 uppercase tracking-wider">Foto do cliente ou da empresa</h4>
-                {empresaForm.fotoDataUrl && (
-                  <img src={empresaForm.fotoDataUrl} alt="Prévia da foto do cadastro" className="max-h-40 w-full rounded-xl object-contain bg-white" />
-                )}
-                <div className="flex items-center gap-3 flex-wrap">
-                  <label className="relative inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold focus-within:ring-2 focus-within:ring-sky-500">
-                    <Paperclip size={16} />
-                    {empresaForm.fotoDataUrl ? 'Trocar foto' : 'Anexar foto'}
-                    <input
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      className="sr-only"
-                      onChange={prepareEmpresaPhoto}
-                      disabled={isPreparingEmpresaPhoto}
-                    />
-                  </label>
-                  <label className="relative inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold focus-within:ring-2 focus-within:ring-sky-500">
-                    <Camera size={16} />
-                    Tirar foto
-                    <input
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      className="sr-only"
-                      onChange={prepareEmpresaPhoto}
-                      disabled={isPreparingEmpresaPhoto}
-                    />
-                  </label>
-                  {modalType === 'edit' && empresaForm.id && (
-                    <button
-                      type="button"
-                      className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold hover:bg-slate-50"
-                      onClick={() => void copyEmpresaLink(empresaForm.id!)}
-                    >
-                      Copiar link para celular
-                    </button>
-                  )}
-                  {empresaForm.fotoDataUrl && (
-                    <button
-                      type="button"
-                      className="text-sm font-semibold text-rose-600 hover:underline disabled:opacity-50"
-                      disabled={isPreparingEmpresaPhoto}
-                      onClick={() => setEmpresaForm(prev => ({ ...prev, fotoDataUrl: null }))}
-                    >
-                      Remover foto
-                    </button>
-                  )}
-                </div>
-                {isPreparingEmpresaPhoto && <p role="status" className="text-sm text-slate-500">Preparando foto…</p>}
-              </div>
-              <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100/80 space-y-4">
-                <h4 className="text-xs font-black text-sky-600 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="flex items-center justify-center w-5 h-5 bg-sky-50 rounded-full text-sky-600 text-[10px]">2</span>
-                  Contato & Localização
-                </h4>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Endereço Comercial</label>
-                    <input 
-                      type="text" 
-                      className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
-                      value={empresaForm.enderecoComercial || ''}
-                      onChange={(e) => setEmpresaForm({...empresaForm, enderecoComercial: e.target.value})}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Telefone Fixo</label>
-                      <input 
-                        type="text" 
-                        className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
-                        value={empresaForm.telefoneFixo || ''}
-                        onChange={(e) => setEmpresaForm({...empresaForm, telefoneFixo: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Celular</label>
-                      <input 
-                        type="text" 
-                        className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
-                        value={empresaForm.celular || ''}
-                        onChange={(e) => setEmpresaForm({...empresaForm, celular: e.target.value})}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Email de Contato</label>
-                    <input 
-                      type="email" 
-                      className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
-                      value={empresaForm.email || ''}
-                      onChange={(e) => setEmpresaForm({...empresaForm, email: e.target.value})}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-slate-50/50 p-5 rounded-2xl border border-slate-100/80 space-y-4">
-                <h4 className="text-xs font-black text-sky-600 uppercase tracking-wider flex items-center gap-2 pb-2 border-b border-slate-100">
-                  <span className="flex items-center justify-center w-5 h-5 bg-sky-50 rounded-full text-sky-600 text-[10px]">3</span>
-                  Representante Legal
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Nome do Representante</label>
-                    <input 
-                      type="text" 
-                      className="w-full px-4 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500 bg-white"
-                      value={empresaForm.representante || ''}
-                      onChange={(e) => setEmpresaForm({...empresaForm, representante: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest">CPF do Representante</label>
-                      {empresaForm.cpfRepresentante && cleanDigits(empresaForm.cpfRepresentante).length === 11 && (
-                        isValidCPF(empresaForm.cpfRepresentante) ? (
-                          <span className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
-                            ✓ Válido
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-bold text-rose-500 flex items-center gap-1">
-                            ✗ Inválido
-                          </span>
-                        )
-                      )}
-                    </div>
-                    <input 
-                      type="text" 
-                      placeholder="000.000.000-00"
-                      maxLength={14}
-                      className={cn(
-                        "w-full px-4 py-2 rounded-xl border focus:outline-none focus:ring-2 bg-white text-sm transition-all font-mono",
-                        empresaForm.cpfRepresentante && cleanDigits(empresaForm.cpfRepresentante).length === 11
-                          ? (isValidCPF(empresaForm.cpfRepresentante) 
-                              ? "border-emerald-300 focus:ring-emerald-500/20 focus:border-emerald-500 text-emerald-900" 
-                              : "border-rose-300 focus:ring-rose-500/20 focus:border-rose-500 text-rose-900 bg-rose-50/20")
-                          : "border-slate-200 focus:ring-sky-500/20 focus:border-sky-500"
-                      )}
-                      value={empresaForm.cpfRepresentante || ''}
-                      onChange={(e) => setEmpresaForm({...empresaForm, cpfRepresentante: formatCPF(e.target.value)})}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          {empresaFields}
         </Modal>
       )}
 
