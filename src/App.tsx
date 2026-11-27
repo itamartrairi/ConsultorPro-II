@@ -13465,12 +13465,6 @@ export default function App() {
           />
 
           <NavItem
-            icon={BarChart3}
-            label="Dashboard Macro"
-            active={view === 'macro-dashboard'}
-            onClick={() => { setView('macro-dashboard'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }}
-          />
-          <NavItem
             icon={Gauge}
             label="Maturidade Empresarial"
             active={view === 'maturity-assessment'}
@@ -13490,6 +13484,12 @@ export default function App() {
             label="Relatórios"
             active={view === 'central-relatorios'}
             onClick={() => setView('central-relatorios')}
+          />
+          <NavItem
+            icon={BarChart3}
+            label="Dashboard Macro"
+            active={view === 'macro-dashboard'}
+            onClick={() => { setView('macro-dashboard'); setSelectedEmpresa(null); setSelectedDiagnostico(null); }}
           />
           {isAdmin && (
             <NavItem
