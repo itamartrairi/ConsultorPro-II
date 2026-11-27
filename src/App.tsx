@@ -13394,7 +13394,7 @@ export default function App() {
       { label: "Agenda do Consultor", icon: CalendarDays, active: view === 'agenda', onClick: () => { setView('agenda'); } },
       { label: "Credenciadas", icon: Building2, active: view === 'credenciadas', onClick: () => { setView('credenciadas'); } },
     ] },
-    { key: 'diagnosticos', label: "Diagnósticos & Avaliação", icon: TrendingUp, show: true, tabs: [
+    { key: 'diagnosticos', label: "Avaliação", icon: TrendingUp, show: true, tabs: [
       { label: "Resultado da Consultoria", icon: CheckSquare, active: view === 'resultado-consultoria', onClick: () => { setView('resultado-consultoria'); } },
       { label: "Relatório SGF & Áreas", icon: FileSpreadsheet, active: view === 'relatorio-consolidado-sgf', onClick: () => { setView('relatorio-consolidado-sgf'); } },
       { label: "Histórico", icon: History, active: view === 'dashboard' && !selectedDiagnostico, onClick: () => { setView('companies'); } },
@@ -13459,7 +13459,7 @@ export default function App() {
           />
           <NavItem
             icon={TrendingUp}
-            label="Diagnósticos & Avaliação"
+            label="Avaliação"
             active={isNavSectionActive('diagnosticos')}
             onClick={() => openNavSection('diagnosticos')}
           />
@@ -20416,7 +20416,7 @@ export default function App() {
                                   onClick={(e: any) => {
                                     e.stopPropagation();
                                     setSelectedDiagnostico(diag);
-                                    setView('dashboard');
+                                    setView('diagnosis');
                                   }}
                                 >
                                   <ExternalLink size={16} /> Abrir
